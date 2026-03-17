@@ -1,0 +1,85 @@
+# =============================================================================
+# Terraform Variable Values — Example
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in your values:
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# NEVER commit terraform.tfvars to version control — it may contain secrets.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# General
+# ---------------------------------------------------------------------------
+project_name = "myapp"
+environment  = "prod"
+aws_region   = "us-east-1"
+
+# ---------------------------------------------------------------------------
+# Networking
+# ---------------------------------------------------------------------------
+vpc_cidr             = "10.0.0.0/16"
+enable_vpc_flow_logs = true
+
+# ---------------------------------------------------------------------------
+# Application (ECS)
+# ---------------------------------------------------------------------------
+app_image             = "123456789012.dkr.ecr.us-east-1.amazonaws.com/myapp:latest"
+app_port              = 3000
+app_cpu               = 512    # 0.5 vCPU
+app_memory            = 1024   # 1 GB
+app_desired_count     = 2
+app_min_count         = 2
+app_max_count         = 10
+app_health_check_path = "/health"
+
+# Non-sensitive environment variables
+app_environment_variables = {
+  LOG_LEVEL    = "info"
+  CORS_ORIGIN  = "https://myapp.com"
+}
+
+# Secrets (SSM Parameter Store or Secrets Manager ARNs)
+# app_secrets = {
+#   DATABASE_URL = "arn:aws:secretsmanager:us-east-1:123456789012:secret:myapp/prod/db-url-AbCdEf"
+#   JWT_SECRET   = "arn:aws:ssm:us-east-1:123456789012:parameter/myapp/prod/jwt-secret"
+# }
+
+# ---------------------------------------------------------------------------
+# Database (RDS PostgreSQL)
+# ---------------------------------------------------------------------------
+db_instance_class          = "db.t3.medium"
+db_allocated_storage       = 20
+db_max_allocated_storage   = 100
+db_name                    = "myappdb"
+db_username                = "dbadmin"
+db_multi_az                = true
+db_backup_retention_period = 7
+db_engine_version          = "15.4"
+db_deletion_protection     = true
+
+# ---------------------------------------------------------------------------
+# Cache (ElastiCache Redis)
+# ---------------------------------------------------------------------------
+redis_node_type          = "cache.t3.medium"
+redis_num_cache_nodes    = 2
+redis_engine_version     = "7.0"
+redis_snapshot_retention = 5
+
+# ---------------------------------------------------------------------------
+# Load Balancer / HTTPS
+# ---------------------------------------------------------------------------
+domain_name     = "myapp.com"
+certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-ef56-gh78-ij90-klmnopqrstuv"
+
+# ---------------------------------------------------------------------------
+# CloudFront CDN
+# ---------------------------------------------------------------------------
+enable_cloudfront         = true
+cloudfront_price_class    = "PriceClass_100"  # US, Canada, Europe
+cloudfront_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/wxyz1234-ab56-cd78-ef90-ghijklmnopqr"
+
+# ---------------------------------------------------------------------------
+# Monitoring
+# ---------------------------------------------------------------------------
+alert_email                = "ops@myapp.com"
+enable_detailed_monitoring = true

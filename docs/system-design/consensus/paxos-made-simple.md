@@ -492,6 +492,147 @@ The following systems use Paxos internally. Each one filled in the gaps differen
 
 **"You should just use Raft instead of Paxos."** Raft sacrifices some of Paxos's flexibility (out-of-order commits, asymmetric quorums) for understandability. For some workloads, Paxos's flexibility provides significant performance advantages.
 
+## Paxos Correctness: The Invariants
+
+Understanding Paxos deeply requires understanding the invariants that hold throughout any execution. These are the properties that the safety proof depends on.
+
+### Invariant 1: Uniqueness of Proposal Numbers
+
+No two proposals ever have the same proposal number. This is enforced by the proposer's allocation scheme (e.g., interleaving by proposer ID). Without this, two proposers could issue Accept messages with the same number but different values, breaking agreement.
+
+### Invariant 2: Promise Constraint
+
+If an acceptor has promised not to accept proposals with numbers less than $n$, it will never accept a proposal with a number less than $n$. This is the "one-way ratchet" property. An acceptor's `maxPrepare` value only increases; it never decreases.
+
+### Invariant 3: Value Selection Constraint
+
+A proposer that completes Phase 1 with proposal number $n$ must propose the value from the highest-numbered accepted proposal among the responses, if any such proposal exists. If no acceptor in the responding quorum has accepted any proposal, the proposer is free to choose any value. This constraint is what ensures that once a value is chosen, all subsequent proposals will propose the same value.
+
+### Invariant 4: Quorum Overlap
+
+Any two quorums intersect in at least one acceptor. For majority quorums of size $\lfloor n/2 \rfloor + 1$ out of $n$ acceptors, the minimum intersection size is 1. This overlap is the mechanism through which Phase 1 of a new proposal discovers the value (if any) chosen by a previous proposal.
+
+### Invariant 5: Monotonic Acceptance
+
+Once a value $v$ is chosen (accepted by a quorum with some proposal number $n$), every proposal with a number $m > n$ that completes Phase 1 will discover $v$ (or a later proposal also carrying $v$) and will propose $v$ in Phase 2. This follows from the combination of quorum overlap and the value selection constraint.
+
+## The Acceptor State Machine
+
+An acceptor's behavior can be described as a simple state machine with two variables and three transitions:
+
+```
+State:
+  maxPrepare: number = 0          // highest prepare seen
+  accepted: (number, value) | null = null  // highest accepted proposal
+
+Transition 1: Receive Prepare(n)
+  if n > maxPrepare:
+    maxPrepare = n
+    respond Promise(n, accepted)
+  else:
+    respond Nack(maxPrepare)
+
+Transition 2: Receive Accept(n, v)
+  if n >= maxPrepare:
+    maxPrepare = n
+    accepted = (n, v)
+    respond Accepted(n, v)
+  else:
+    respond Nack(maxPrepare)
+
+Transition 3: Crash and recover
+  Load maxPrepare and accepted from stable storage.
+  (Both must be persisted before responding to any message.)
+```
+
+This state machine is deceptively simple. The entire correctness of Paxos rests on these three transitions and the persistence requirement. If an acceptor responds to a Prepare or Accept without first persisting its state, a crash and recovery could violate the promise constraint.
+
+## Multi-Paxos: Filling in the Gaps
+
+The Multi-Paxos optimization is where theory meets engineering. Here is how a practical Multi-Paxos system handles the problems that Lamport's papers leave open.
+
+### Leader Election
+
+The system designates one proposer as the "distinguished proposer" or leader. Only the leader proposes. Other replicas forward client requests to the leader. If the leader crashes, a new leader is elected.
+
+Common election mechanisms:
+- **Lease-based**: The leader periodically obtains a lease from a quorum of acceptors. The lease has a bounded duration. If the leader fails to renew, another proposer can claim leadership.
+- **Heartbeat-based**: The leader sends periodic heartbeats. If a replica does not receive a heartbeat within a timeout, it suspects the leader has failed and attempts to become the new leader by running Phase 1 with a higher proposal number.
+- **External coordinator**: A separate service (like ZooKeeper, ironically) manages leader election for the Paxos group.
+
+### Handling Gaps During Leader Change
+
+When a new leader takes over, it must determine the state of every log slot. For each slot, it runs Phase 1 (Prepare) and learns one of three things:
+
+1. **Slot was decided**: Some acceptor reports an accepted value, and the new leader can determine (from the quorum) that the value was chosen. The new leader commits this value.
+2. **Slot has an accepted but uncommitted value**: Some acceptor reports an accepted value, but it may not have been chosen. The new leader must re-propose this value (it cannot choose a different one, per the value selection constraint).
+3. **Slot is empty**: No acceptor has accepted a value for this slot. The new leader can propose any value (or a no-op to fill the gap).
+
+```mermaid
+sequenceDiagram
+    participant NL as New Leader
+    participant A1 as Acceptor 1
+    participant A2 as Acceptor 2
+    participant A3 as Acceptor 3
+
+    Note over NL: Taking over. Run Phase 1 for slots 1-10.
+
+    NL->>A1: Prepare(n=100) for slots 1-10
+    NL->>A2: Prepare(n=100) for slots 1-10
+    NL->>A3: Prepare(n=100) for slots 1-10
+
+    A1-->>NL: Promise(100): slot 1=(5,"A"), slot 2=(5,"B"), slot 3=empty, ...
+    A2-->>NL: Promise(100): slot 1=(5,"A"), slot 2=empty, slot 3=empty, ...
+    A3-->>NL: Promise(100): slot 1=(5,"A"), slot 2=(5,"B"), slot 3=(7,"C"), ...
+
+    Note over NL: Slot 1: all agree on (5,"A") → committed. Re-accept "A".
+    Note over NL: Slot 2: A1,A3 accepted (5,"B") → re-propose "B".
+    Note over NL: Slot 3: only A3 accepted (7,"C") → re-propose "C".
+    Note over NL: Slots 4-10: empty → propose no-ops.
+```
+
+### Read Operations in Multi-Paxos
+
+Multi-Paxos provides the same read consistency challenges as Raft. The leader must confirm it is still the leader before servicing a read. Three approaches (identical to Raft):
+
+1. **Log the read as a write**: Run full Paxos for the read operation. Guarantees linearizability but is slow.
+2. **Leader lease**: The leader maintains a time-bounded lease from a quorum. Reads can be served without running Paxos during the lease period. Requires bounded clock skew.
+3. **Read quorum**: The leader contacts a quorum to confirm it is still the leader (a "heartbeat round") before servicing the read. No log entry is created, but one network round trip is required.
+
+### Persistent State and fsync
+
+For correctness, an acceptor MUST persist the following to stable storage BEFORE responding to any message:
+
+- `maxPrepare` (the highest proposal number promised)
+- `accepted` (the highest-numbered accepted proposal and its value)
+
+Failure to fsync before responding means that a crash could lose the promise, allowing the acceptor to inadvertently break its promise after recovery. This is the single most common source of correctness bugs in Paxos implementations.
+
+The fsync requirement is the performance bottleneck of Paxos (and all consensus protocols). Each proposal requires at least one fsync at the proposer and one at each acceptor. With rotating disks, fsync takes 5-15ms. With NVMe SSDs, it takes 10-100 microseconds. Batching multiple proposals into a single fsync is the primary optimization for throughput.
+
+## Paxos in Distributed Databases
+
+### Google Spanner's Use of Multi-Paxos
+
+Spanner uses Multi-Paxos for replication within each shard (called a "split"). Each split is a Paxos group with 3 or 5 replicas, typically spread across data centers for geographic fault tolerance.
+
+Spanner's key innovations on top of Multi-Paxos:
+
+1. **TrueTime**: GPS and atomic clocks provide a globally synchronized clock with bounded uncertainty. This enables Spanner to assign globally consistent timestamps to transactions without requiring cross-shard consensus.
+2. **Long-lived leaders**: Spanner uses 10-second leader leases, renewed automatically. Leader changes are rare, so the Phase 1 cost is amortized over millions of operations.
+3. **Pipelined Paxos**: Spanner pipelines multiple Paxos instances, overlapping Phase 2 of one instance with Phase 2 of the next.
+4. **Witness replicas**: Some replicas are "witnesses" that vote in Paxos but do not store full data. This reduces storage costs for replicas whose primary purpose is to provide a quorum.
+
+### Apache Cassandra's Lightweight Transactions
+
+Cassandra uses single-decree Paxos for its "lightweight transactions" (LWTs). Each LWT runs a complete Paxos round (Phase 1 + Phase 2 + Learn) for a single partition key. This is significantly slower than normal Cassandra reads and writes because:
+
+1. Four network round trips (Prepare, Promise, Accept, Accepted).
+2. Each round trip requires coordination across replicas.
+3. No Multi-Paxos optimization (each LWT is independent).
+
+The performance penalty is 4-10x compared to normal operations. For this reason, Cassandra documentation recommends using LWTs sparingly — only for operations that truly require linearizability (like unique username registration).
+
 ## References
 
 1. Lamport, L. (1998). "The Part-Time Parliament." *ACM TOCS*.
