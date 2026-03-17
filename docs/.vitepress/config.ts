@@ -17,12 +17,12 @@ export default withMermaid(
     ],
 
     ignoreDeadLinks: true,
-    lastUpdated: true,
+    lastUpdated: false,
     cleanUrls: true,
 
     markdown: {
       math: true,
-      lineNumbers: true,
+      lineNumbers: false,
       image: {
         lazyLoading: true,
       },
@@ -140,6 +140,19 @@ export default withMermaid(
       },
       server: {
         allowedHosts: true,
+      },
+      build: {
+        sourcemap: false,
+        chunkSizeWarningLimit: 5000,
+        rollupOptions: {
+          output: {
+            manualChunks(id) {
+              if (id.includes('mermaid')) return 'mermaid'
+              if (id.includes('mathjax') || id.includes('tex-svg') || id.includes('tex-chtml')) return 'mathjax'
+              if (id.includes('minisearch')) return 'search'
+            },
+          },
+        },
       },
     },
   })

@@ -2,7 +2,7 @@
 
 **Project:** `E:\Web dev\projects\knowledge-vault\`
 **Built with:** VitePress + Mermaid + KaTeX
-**Current state:** 187 docs written (~152,000 lines), ~188 pages remaining
+**Current state:** 327 docs written (~284,758 lines), ~112 pages remaining
 **Deploy:** Vercel (`vercel.json` already configured, `ignoreDeadLinks: true` set in config)
 
 ---
@@ -19,7 +19,7 @@ description: "One-line description"
 tags: [tag1, tag2, tag3]
 difficulty: "beginner | intermediate | advanced | expert"
 prerequisites: [page-name-1, page-name-2]
-lastReviewed: "2026-03-17"
+lastReviewed: "2026-03-18"
 ---
 ```
 
@@ -51,254 +51,264 @@ The sidebar is defined in `docs/.vitepress/sidebar.ts` — if you add new subsec
 
 ---
 
-## REMAINING PAGES BY SECTION
+## COMPLETED SECTIONS (ALL DONE)
 
-### System Design — Load Balancing (2 pages)
-- [ ] `system-design/load-balancing/haproxy-config.md` — Complete HAProxy config, frontends/backends, ACLs, stick tables, health checks, SSL, stats page
-- [ ] `system-design/load-balancing/envoy-config.md` — Envoy architecture, xDS API, circuit breaking, outlier detection, service mesh data plane
+### System Design — Load Balancing (ALL DONE)
+- [x] `system-design/load-balancing/haproxy-config.md`
+- [x] `system-design/load-balancing/envoy-config.md`
 
-### System Design — Message Queues (1 page)
-- [ ] `system-design/message-queues/queue-selection-guide.md` — Decision framework: Kafka vs RabbitMQ vs Redis Streams vs SQS vs NATS vs Pulsar, comparison table, decision flowchart
+### System Design — Message Queues (ALL DONE)
+- [x] `system-design/message-queues/queue-selection-guide.md`
 
-### System Design — Networking (4 pages remaining, 5 done)
-- [x] `system-design/networking/index.md` — DONE
-- [x] `system-design/networking/tcp-ip-deep-dive.md` — DONE
-- [x] `system-design/networking/http2-http3.md` — DONE
-- [x] `system-design/networking/grpc-internals.md` — DONE
-- [x] `system-design/networking/websockets.md` — DONE
-- [ ] `system-design/networking/dns-deep-dive.md` — DNS resolution, record types, DNSSEC, DNS-based load balancing
-- [ ] `system-design/networking/tls-handshake.md` — TLS 1.2 vs 1.3, certificate chain, ALPN, mTLS, Let's Encrypt
-- [ ] `system-design/networking/service-discovery.md` — Client-side vs server-side, Consul, etcd, K8s Services
-- [ ] `system-design/networking/network-debugging.md` — tcpdump, Wireshark, ss, traceroute, debugging methodology
+### System Design — Networking (ALL DONE)
+- [x] `system-design/networking/index.md`
+- [x] `system-design/networking/tcp-ip-deep-dive.md`
+- [x] `system-design/networking/http2-http3.md`
+- [x] `system-design/networking/grpc-internals.md`
+- [x] `system-design/networking/websockets.md`
+- [x] `system-design/networking/dns-deep-dive.md`
+- [x] `system-design/networking/tls-handshake.md`
+- [x] `system-design/networking/service-discovery.md`
+- [x] `system-design/networking/network-debugging.md`
 
-### Architecture Patterns — Event-Driven (1 page)
-- [ ] `architecture-patterns/event-driven/eventual-consistency.md` — Patterns for handling eventual consistency in event-driven systems
+### Architecture Patterns — Event-Driven (ALL DONE)
+- [x] `architecture-patterns/event-driven/eventual-consistency.md`
 
-### Architecture Patterns — CQRS & Event Sourcing (3 pages remaining, 5 done)
-- [x] `architecture-patterns/cqrs-event-sourcing/index.md` — DONE
-- [x] `architecture-patterns/cqrs-event-sourcing/cqrs-deep-dive.md` — DONE
-- [x] `architecture-patterns/cqrs-event-sourcing/event-sourcing-deep-dive.md` — DONE
-- [x] `architecture-patterns/cqrs-event-sourcing/aggregate-design.md` — DONE
-- [x] `architecture-patterns/cqrs-event-sourcing/projections.md` — DONE
-- [ ] `architecture-patterns/cqrs-event-sourcing/snapshots.md` — Snapshot strategies, snapshot store design
-- [ ] `architecture-patterns/cqrs-event-sourcing/sagas-process-managers.md` — Long-running processes, state machines, TypeScript saga
-- [ ] `architecture-patterns/cqrs-event-sourcing/event-upcasting.md` — Schema evolution for events, upcaster chain
+### Architecture Patterns — CQRS & Event Sourcing (ALL DONE)
+- [x] `architecture-patterns/cqrs-event-sourcing/index.md`
+- [x] `architecture-patterns/cqrs-event-sourcing/cqrs-deep-dive.md`
+- [x] `architecture-patterns/cqrs-event-sourcing/event-sourcing-deep-dive.md`
+- [x] `architecture-patterns/cqrs-event-sourcing/aggregate-design.md`
+- [x] `architecture-patterns/cqrs-event-sourcing/projections.md`
+- [x] `architecture-patterns/cqrs-event-sourcing/snapshots.md`
+- [x] `architecture-patterns/cqrs-event-sourcing/sagas-process-managers.md`
+- [x] `architecture-patterns/cqrs-event-sourcing/event-upcasting.md`
 
-### Architecture Patterns — Hexagonal (0 pages remaining, ALL DONE)
-- [x] `architecture-patterns/hexagonal/index.md` — DONE
-- [x] `architecture-patterns/hexagonal/ports-and-adapters.md` — DONE
-- [x] `architecture-patterns/hexagonal/dependency-inversion.md` — DONE
-- [x] `architecture-patterns/hexagonal/typescript-implementation.md` — DONE
+### Architecture Patterns — Hexagonal (ALL DONE)
+- [x] `architecture-patterns/hexagonal/index.md`
+- [x] `architecture-patterns/hexagonal/ports-and-adapters.md`
+- [x] `architecture-patterns/hexagonal/dependency-inversion.md`
+- [x] `architecture-patterns/hexagonal/typescript-implementation.md`
 
-### Architecture Patterns — Clean Architecture (5 pages)
-- [ ] `architecture-patterns/clean-architecture/index.md` — Overview (200 lines)
-- [ ] `architecture-patterns/clean-architecture/layers-and-boundaries.md` — Entities, use cases, interface adapters, frameworks
-- [ ] `architecture-patterns/clean-architecture/use-cases.md` — Use case interactors, input/output boundaries
-- [ ] `architecture-patterns/clean-architecture/entities-vs-models.md` — Domain entities vs persistence vs API models
-- [ ] `architecture-patterns/clean-architecture/typescript-implementation.md` — Complete clean architecture TypeScript project
+### Architecture Patterns — Clean Architecture (ALL DONE)
+- [x] `architecture-patterns/clean-architecture/index.md`
+- [x] `architecture-patterns/clean-architecture/layers-and-boundaries.md`
+- [x] `architecture-patterns/clean-architecture/use-cases.md`
+- [x] `architecture-patterns/clean-architecture/entities-vs-models.md`
+- [x] `architecture-patterns/clean-architecture/typescript-implementation.md`
 
-### Architecture Patterns — DDD (3 pages remaining, 4 done)
-- [x] `architecture-patterns/domain-driven-design/index.md` — DONE
-- [x] `architecture-patterns/domain-driven-design/strategic-design.md` — DONE
-- [x] `architecture-patterns/domain-driven-design/tactical-design.md` — DONE
-- [x] `architecture-patterns/domain-driven-design/domain-events.md` — DONE
-- [ ] `architecture-patterns/domain-driven-design/anti-corruption-layer.md` — ACL implementation
-- [ ] `architecture-patterns/domain-driven-design/specification-pattern.md` — Business rules as specifications
-- [ ] `architecture-patterns/domain-driven-design/typescript-implementation.md` — Complete DDD TypeScript project
+### Architecture Patterns — DDD (ALL DONE)
+- [x] `architecture-patterns/domain-driven-design/index.md`
+- [x] `architecture-patterns/domain-driven-design/strategic-design.md`
+- [x] `architecture-patterns/domain-driven-design/tactical-design.md`
+- [x] `architecture-patterns/domain-driven-design/domain-events.md`
+- [x] `architecture-patterns/domain-driven-design/anti-corruption-layer.md`
+- [x] `architecture-patterns/domain-driven-design/specification-pattern.md`
+- [x] `architecture-patterns/domain-driven-design/typescript-implementation.md`
 
-### Infrastructure — Kubernetes (5 pages remaining, 2 done)
-- [x] `infrastructure/kubernetes/network-policies.md` — DONE
-- [x] `infrastructure/kubernetes/rbac.md` — DONE
-- [ ] `infrastructure/kubernetes/secrets-management.md` — sealed-secrets, external-secrets-operator, CSI driver
-- [ ] `infrastructure/kubernetes/helm-charts.md` — Chart structure, values, hooks, Helmfile
-- [ ] `infrastructure/kubernetes/operators.md` — Operator pattern, CRDs, controller pattern, Operator SDK
-- [ ] `infrastructure/kubernetes/troubleshooting.md` — ImagePullBackOff, CrashLoopBackOff, DNS issues, debugging
-- [ ] `infrastructure/kubernetes/production-checklist.md` — Resource limits, PDB, anti-affinity, security contexts
+### Infrastructure — Kubernetes (ALL DONE)
+- [x] `infrastructure/kubernetes/network-policies.md`
+- [x] `infrastructure/kubernetes/rbac.md`
+- [x] `infrastructure/kubernetes/secrets-management.md`
+- [x] `infrastructure/kubernetes/helm-charts.md`
+- [x] `infrastructure/kubernetes/operators.md`
+- [x] `infrastructure/kubernetes/troubleshooting.md`
+- [x] `infrastructure/kubernetes/production-checklist.md`
 
-### Infrastructure — Docker (7 pages)
-- [ ] `infrastructure/docker/index.md` — Overview
-- [ ] `infrastructure/docker/internals.md` — Linux namespaces, cgroups, overlay FS
-- [ ] `infrastructure/docker/multi-stage-builds.md` — Builder pattern, caching optimization
-- [ ] `infrastructure/docker/security-hardening.md` — Non-root, read-only FS, Trivy, distroless
-- [ ] `infrastructure/docker/production-dockerfiles.md` — Complete Dockerfiles for Node, Go, Python
-- [ ] `infrastructure/docker/compose-patterns.md` — Dev/staging/prod compose patterns
-- [ ] `infrastructure/docker/image-optimization.md` — Layer caching, .dockerignore, dive
+### Infrastructure — Docker (ALL DONE)
+- [x] `infrastructure/docker/index.md`
+- [x] `infrastructure/docker/internals.md`
+- [x] `infrastructure/docker/multi-stage-builds.md`
+- [x] `infrastructure/docker/security-hardening.md`
+- [x] `infrastructure/docker/production-dockerfiles.md`
+- [x] `infrastructure/docker/compose-patterns.md`
+- [x] `infrastructure/docker/image-optimization.md`
 
-### Infrastructure — AWS (8 pages remaining, 2 done)
-- [x] `infrastructure/aws/index.md` — DONE
-- [x] `infrastructure/aws/vpc-networking.md` — DONE
-- [ ] `infrastructure/aws/ecs-vs-eks.md` — ECS Fargate vs EKS, decision framework
-- [ ] `infrastructure/aws/rds-aurora.md` — Multi-AZ, Aurora architecture, Performance Insights
-- [ ] `infrastructure/aws/elasticache.md` — Redis vs Memcached, cluster mode, failover
-- [ ] `infrastructure/aws/s3-cloudfront.md` — Storage classes, lifecycle, CloudFront, OAI, Lambda@Edge
-- [ ] `infrastructure/aws/lambda.md` — Cold start, layers, VPC, provisioned concurrency
-- [ ] `infrastructure/aws/iam-deep-dive.md` — Policy evaluation, least privilege, cross-account
-- [ ] `infrastructure/aws/cost-optimization.md` — Reserved, Savings Plans, Spot, data transfer costs
-- [ ] `infrastructure/aws/well-architected.md` — Six pillars
+### Infrastructure — AWS (ALL DONE)
+- [x] `infrastructure/aws/index.md`
+- [x] `infrastructure/aws/vpc-networking.md`
+- [x] `infrastructure/aws/ecs-vs-eks.md`
+- [x] `infrastructure/aws/rds-aurora.md`
+- [x] `infrastructure/aws/elasticache.md`
+- [x] `infrastructure/aws/s3-cloudfront.md`
+- [x] `infrastructure/aws/lambda.md`
+- [x] `infrastructure/aws/iam-deep-dive.md`
+- [x] `infrastructure/aws/cost-optimization.md`
+- [x] `infrastructure/aws/well-architected.md`
 
-### Infrastructure — GCP (7 pages)
-- [ ] `infrastructure/gcp/index.md` — Overview
-- [ ] `infrastructure/gcp/cloud-run.md` — Container-to-production, scaling to zero, concurrency
-- [ ] `infrastructure/gcp/gke.md` — Standard vs Autopilot, Workload Identity
-- [ ] `infrastructure/gcp/cloud-sql.md` — HA, read replicas, Cloud SQL Proxy
-- [ ] `infrastructure/gcp/pub-sub.md` — Topics, subscriptions, exactly-once, dead letter
-- [ ] `infrastructure/gcp/iam.md` — IAM model, custom roles, Workload Identity Federation
-- [ ] `infrastructure/gcp/cost-optimization.md` — CUDs, preemptible VMs, Active Assist
+### Infrastructure — GCP (6/7 done — 1 remaining)
+- [x] `infrastructure/gcp/index.md`
+- [x] `infrastructure/gcp/cloud-run.md`
+- [x] `infrastructure/gcp/gke.md`
+- [x] `infrastructure/gcp/cloud-sql.md`
+- [x] `infrastructure/gcp/pub-sub.md`
+- [x] `infrastructure/gcp/iam.md`
+- [ ] `infrastructure/gcp/cost-optimization.md` — CUDs, preemptible VMs, Active Assist **(agent running)**
 
-### Infrastructure — CI/CD (7 pages)
-- [ ] `infrastructure/ci-cd/index.md` — Overview
-- [ ] `infrastructure/ci-cd/github-actions-deep-dive.md` — Workflows, matrix, caching, OIDC, reusable workflows
-- [ ] `infrastructure/ci-cd/gitlab-ci.md` — Stages, jobs, pipelines, runners
-- [ ] `infrastructure/ci-cd/pipeline-patterns.md` — Trunk-based, monorepo, parallel testing
-- [ ] `infrastructure/ci-cd/artifact-management.md` — Container registries, npm packages, versioning
-- [ ] `infrastructure/ci-cd/environment-promotion.md` — Dev → staging → prod, gitops
-- [ ] `infrastructure/ci-cd/security-scanning.md` — SAST, DAST, dependency scanning, Trivy
+### Infrastructure — CI/CD (ALL DONE)
+- [x] `infrastructure/ci-cd/index.md`
+- [x] `infrastructure/ci-cd/github-actions-deep-dive.md`
+- [x] `infrastructure/ci-cd/gitlab-ci.md`
+- [x] `infrastructure/ci-cd/pipeline-patterns.md`
+- [x] `infrastructure/ci-cd/artifact-management.md`
+- [x] `infrastructure/ci-cd/environment-promotion.md`
+- [x] `infrastructure/ci-cd/security-scanning.md`
 
-### Infrastructure — Multi-Region (6 pages)
-- [ ] `infrastructure/multi-region/index.md` — Overview
-- [ ] `infrastructure/multi-region/architecture-patterns.md` — Active-passive, active-active, cell-based
-- [ ] `infrastructure/multi-region/data-replication.md` — Cross-region replication, conflict resolution
-- [ ] `infrastructure/multi-region/traffic-routing.md` — GeoDNS, latency-based, Global Accelerator
-- [ ] `infrastructure/multi-region/failover-strategies.md` — DNS failover, RPO/RTO
-- [ ] `infrastructure/multi-region/cost-analysis.md` — Data transfer costs, compute duplication
+### Infrastructure — Multi-Region (ALL DONE)
+- [x] `infrastructure/multi-region/index.md`
+- [x] `infrastructure/multi-region/architecture-patterns.md`
+- [x] `infrastructure/multi-region/data-replication.md`
+- [x] `infrastructure/multi-region/traffic-routing.md`
+- [x] `infrastructure/multi-region/failover-strategies.md`
+- [x] `infrastructure/multi-region/cost-analysis.md`
 
-### Security — Authentication (3 pages remaining)
-- [ ] `security/authentication/passwordless.md` — Magic links, passkeys, email OTP
-- [ ] `security/authentication/api-key-design.md` — Key generation, hashing, rotation, rate limiting
-- [ ] `security/authentication/biometric-auth.md` — WebAuthn API, FIDO2, platform authenticators
+### Security — Authentication (ALL DONE)
+- [x] `security/authentication/passwordless.md`
+- [x] `security/authentication/api-key-design.md`
+- [x] `security/authentication/biometric-auth.md`
 
-### Security — Encryption (7 pages)
-- [ ] `security/encryption/index.md` — Overview
-- [ ] `security/encryption/symmetric-vs-asymmetric.md` — AES, RSA, ECDSA, Ed25519, Node.js crypto
-- [ ] `security/encryption/hashing-algorithms.md` — bcrypt, scrypt, Argon2, password hashing
-- [ ] `security/encryption/encryption-at-rest.md` — Database-level, application-level, full-disk
-- [ ] `security/encryption/encryption-in-transit.md` — TLS config, mTLS, HSTS
-- [ ] `security/encryption/key-management.md` — Key lifecycle, KMS, key hierarchy
-- [ ] `security/encryption/envelope-encryption.md` — Envelope encryption, AWS KMS implementation
+### Security — Encryption (ALL DONE)
+- [x] `security/encryption/index.md`
+- [x] `security/encryption/symmetric-vs-asymmetric.md`
+- [x] `security/encryption/hashing-algorithms.md`
+- [x] `security/encryption/encryption-at-rest.md`
+- [x] `security/encryption/encryption-in-transit.md`
+- [x] `security/encryption/key-management.md`
+- [x] `security/encryption/envelope-encryption.md`
 
-### Security — Secrets Management (5 pages)
-- [ ] `security/secrets-management/index.md` — Overview
-- [ ] `security/secrets-management/vault-deep-dive.md` — HashiCorp Vault architecture, dynamic secrets
-- [ ] `security/secrets-management/aws-secrets-manager.md` — Secrets Manager vs Parameter Store
-- [ ] `security/secrets-management/rotation-automation.md` — Zero-downtime rotation strategies
-- [ ] `security/secrets-management/secrets-in-ci-cd.md` — GitHub Actions secrets, sealed-secrets
+### Security — Secrets Management (ALL DONE)
+- [x] `security/secrets-management/index.md`
+- [x] `security/secrets-management/vault-deep-dive.md`
+- [x] `security/secrets-management/aws-secrets-manager.md`
+- [x] `security/secrets-management/rotation-automation.md`
+- [x] `security/secrets-management/secrets-in-ci-cd.md`
 
-### Security — Zero Trust (6 pages)
-- [ ] `security/zero-trust/index.md` — Overview
-- [ ] `security/zero-trust/principles.md` — Never trust always verify, BeyondCorp
-- [ ] `security/zero-trust/identity-verification.md` — Device trust, SPIFFE/SPIRE
-- [ ] `security/zero-trust/network-segmentation.md` — Micro-segmentation, ZTNA vs VPN
-- [ ] `security/zero-trust/least-privilege.md` — RBAC, ABAC, ReBAC
-- [ ] `security/zero-trust/continuous-verification.md` — Continuous auth, behavioral analysis
+### Security — Zero Trust (4/6 done — 2 remaining)
+- [x] `security/zero-trust/index.md`
+- [x] `security/zero-trust/principles.md`
+- [x] `security/zero-trust/identity-verification.md`
+- [x] `security/zero-trust/network-segmentation.md`
+- [ ] `security/zero-trust/least-privilege.md` — RBAC, ABAC, ReBAC **(agent running)**
+- [ ] `security/zero-trust/continuous-verification.md` — Continuous auth, behavioral analysis **(agent running)**
 
-### Security — API Security (7 pages)
-- [ ] `security/api-security/index.md` — Overview
-- [ ] `security/api-security/rate-limiting.md` — Token bucket, sliding window, Redis, TypeScript middleware
-- [ ] `security/api-security/request-signing.md` — HMAC, webhook verification, replay prevention
-- [ ] `security/api-security/input-validation.md` — Zod, prototype pollution, ReDoS
-- [ ] `security/api-security/cors-deep-dive.md` — Same-origin policy, preflight, Access-Control headers
-- [ ] `security/api-security/csp-headers.md` — CSP directives, nonce-based CSP
-- [ ] `security/api-security/api-abuse-prevention.md` — Bot detection, credential stuffing prevention
+### Security — API Security (0/7 — all remaining)
+- [ ] `security/api-security/index.md` — Overview **(agent running)**
+- [ ] `security/api-security/rate-limiting.md` — Token bucket, sliding window, Redis, TypeScript middleware **(agent running)**
+- [ ] `security/api-security/request-signing.md` — HMAC, webhook verification, replay prevention **(agent running)**
+- [ ] `security/api-security/input-validation.md` — Zod, prototype pollution, ReDoS **(agent running)**
+- [ ] `security/api-security/cors-deep-dive.md` — Same-origin policy, preflight, Access-Control headers **(agent running)**
+- [ ] `security/api-security/csp-headers.md` — CSP directives, nonce-based CSP **(agent running)**
+- [ ] `security/api-security/api-abuse-prevention.md` — Bot detection, credential stuffing prevention **(agent running)**
 
-### DevOps — Logging (1 page)
-- [ ] `devops/logging/sensitive-data-redaction.md` — PII detection, automatic redaction, GDPR/HIPAA
+### DevOps — Logging (ALL DONE)
+- [x] `devops/logging/sensitive-data-redaction.md`
 
-### DevOps — Alerting (6 pages)
-- [ ] `devops/alerting/index.md` — Overview
-- [ ] `devops/alerting/alert-design.md` — Actionable alerts, multi-window burn-rate
-- [ ] `devops/alerting/severity-levels.md` — P0-P4 classification
-- [ ] `devops/alerting/escalation-policies.md` — PagerDuty/OpsGenie, rotation schedules
-- [ ] `devops/alerting/on-call-best-practices.md` — Rotation design, toil budget, burnout prevention
-- [ ] `devops/alerting/runbook-templates.md` — Runbook structure, templates for common incidents
+### DevOps — Alerting (ALL DONE)
+- [x] `devops/alerting/index.md`
+- [x] `devops/alerting/alert-design.md`
+- [x] `devops/alerting/severity-levels.md`
+- [x] `devops/alerting/escalation-policies.md`
+- [x] `devops/alerting/on-call-best-practices.md`
+- [x] `devops/alerting/runbook-templates.md`
 
-### DevOps — Deployment Strategies (7 pages)
-- [ ] `devops/deployment-strategies/index.md` — Overview
-- [ ] `devops/deployment-strategies/blue-green.md` — Infrastructure, switchover, rollback, K8s/ECS implementation
-- [ ] `devops/deployment-strategies/canary.md` — Progressive traffic shifting, canary analysis, Flagger
-- [ ] `devops/deployment-strategies/rolling-updates.md` — MaxSurge, MaxUnavailable, graceful shutdown
-- [ ] `devops/deployment-strategies/feature-flags-deployment.md` — Flags as deployment mechanism, trunk-based dev
-- [ ] `devops/deployment-strategies/database-migrations.md` — Expand-contract, online DDL, zero-downtime
-- [ ] `devops/deployment-strategies/rollback-procedures.md` — When to rollback, automated triggers
+### DevOps — Deployment Strategies (ALL DONE)
+- [x] `devops/deployment-strategies/index.md`
+- [x] `devops/deployment-strategies/blue-green.md`
+- [x] `devops/deployment-strategies/canary.md`
+- [x] `devops/deployment-strategies/rolling-updates.md`
+- [x] `devops/deployment-strategies/feature-flags-deployment.md`
+- [x] `devops/deployment-strategies/database-migrations.md`
+- [x] `devops/deployment-strategies/rollback-procedures.md`
 
-### DevOps — Incident Response (6 pages)
-- [ ] `devops/incident-response/index.md` — Overview
-- [ ] `devops/incident-response/incident-classification.md` — SEV levels, impact matrix
-- [ ] `devops/incident-response/communication-templates.md` — Internal updates, customer comms, status pages
-- [ ] `devops/incident-response/postmortem-framework.md` — Blameless postmortems, five whys, action items
-- [ ] `devops/incident-response/war-room-procedures.md` — IC, comms lead, roles, status cadence
-- [ ] `devops/incident-response/chaos-engineering.md` — Chaos Monkey, Litmus, GameDay, maturity model
+### DevOps — Incident Response (3/6 done — 3 remaining)
+- [x] `devops/incident-response/index.md`
+- [x] `devops/incident-response/incident-classification.md`
+- [x] `devops/incident-response/communication-templates.md`
+- [ ] `devops/incident-response/postmortem-framework.md` — Blameless postmortems, five whys, action items **(agent running)**
+- [ ] `devops/incident-response/war-room-procedures.md` — IC, comms lead, roles, status cadence **(agent running)**
+- [ ] `devops/incident-response/chaos-engineering.md` — Chaos Monkey, Litmus, GameDay, maturity model **(agent running)**
 
-### Performance — Optimization (2 pages)
-- [ ] `performance/optimization/concurrency-patterns.md` — Promise.all, p-limit, semaphores, connection pools
-- [ ] `performance/optimization/worker-threads.md` — Workers vs child processes, SharedArrayBuffer, Atomics
+### Performance — Optimization (ALL DONE)
+- [x] `performance/optimization/concurrency-patterns.md`
+- [x] `performance/optimization/worker-threads.md`
 
-### Performance — Caching Strategies (5 pages)
-- [ ] `performance/caching-strategies/index.md` — Overview
-- [ ] `performance/caching-strategies/application-level.md` — In-process LRU/LFU, memoization, request-scoped
-- [ ] `performance/caching-strategies/database-level.md` — Materialized views, denormalization
-- [ ] `performance/caching-strategies/http-caching.md` — Cache-Control, ETag, service worker strategies
-- [ ] `performance/caching-strategies/edge-caching.md` — CDN caching, edge compute, cache key design
+### Performance — Caching Strategies (ALL DONE)
+- [x] `performance/caching-strategies/index.md`
+- [x] `performance/caching-strategies/application-level.md`
+- [x] `performance/caching-strategies/database-level.md`
+- [x] `performance/caching-strategies/http-caching.md`
+- [x] `performance/caching-strategies/edge-caching.md`
 
-### Performance — Database Tuning (6 pages)
-- [ ] `performance/database-tuning/index.md` — Overview
-- [ ] `performance/database-tuning/query-optimization.md` — EXPLAIN ANALYZE, before/after examples
-- [ ] `performance/database-tuning/index-strategy.md` — Which columns, composite order, partial, unused detection
-- [ ] `performance/database-tuning/connection-pool-tuning.md` — Pool sizing (Little's Law), PgBouncer tuning
-- [ ] `performance/database-tuning/n-plus-one.md` — Detection, DataLoader pattern, TypeScript implementation
-- [ ] `performance/database-tuning/vacuum-analyze.md` — Autovacuum tuning, bloat detection, pg_repack
+### Performance — Database Tuning (ALL DONE)
+- [x] `performance/database-tuning/index.md`
+- [x] `performance/database-tuning/query-optimization.md`
+- [x] `performance/database-tuning/index-strategy.md`
+- [x] `performance/database-tuning/connection-pool-tuning.md`
+- [x] `performance/database-tuning/n-plus-one.md`
+- [x] `performance/database-tuning/vacuum-analyze.md`
 
-### Performance — Edge Computing (5 pages)
-- [ ] `performance/edge-computing/index.md` — Overview
-- [ ] `performance/edge-computing/edge-runtime-constraints.md` — No filesystem, limited memory, Web APIs only
-- [ ] `performance/edge-computing/cloudflare-workers.md` — V8 isolates, KV, Durable Objects, D1, R2
-- [ ] `performance/edge-computing/deno-deploy.md` — V8 isolates, Deno KV
-- [ ] `performance/edge-computing/vercel-edge.md` — Edge Functions, Edge Middleware, Edge Config
+### Performance — Edge Computing (ALL DONE)
+- [x] `performance/edge-computing/index.md`
+- [x] `performance/edge-computing/edge-runtime-constraints.md`
+- [x] `performance/edge-computing/cloudflare-workers.md`
+- [x] `performance/edge-computing/deno-deploy.md`
+- [x] `performance/edge-computing/vercel-edge.md`
 
-### Data Engineering — Stream Processing (5 pages)
-- [ ] `data-engineering/stream-processing/windowing.md` — Tumbling, sliding, session, triggers, lateness
-- [ ] `data-engineering/stream-processing/watermarks.md` — Event time vs processing time, watermark generators
-- [ ] `data-engineering/stream-processing/exactly-once-processing.md` — Checkpointing, two-phase commit
-- [ ] `data-engineering/stream-processing/state-management.md` — Keyed state, state backends, RocksDB
-- [ ] `data-engineering/stream-processing/backpressure.md` — Credit-based flow control, dynamic rate adjustment
+### Data Engineering — Stream Processing (ALL DONE)
+- [x] `data-engineering/stream-processing/windowing.md`
+- [x] `data-engineering/stream-processing/watermarks.md`
+- [x] `data-engineering/stream-processing/exactly-once-processing.md`
+- [x] `data-engineering/stream-processing/state-management.md`
+- [x] `data-engineering/stream-processing/backpressure.md`
 
-### Data Engineering — Data Modeling (6 pages)
-- [ ] `data-engineering/data-modeling/index.md` — Overview
-- [ ] `data-engineering/data-modeling/dimensional-modeling.md` — Star schema, snowflake, fact/dimension tables
-- [ ] `data-engineering/data-modeling/data-vault.md` — Hub-Satellite-Link model
-- [ ] `data-engineering/data-modeling/slowly-changing-dimensions.md` — SCD Type 1-6
-- [ ] `data-engineering/data-modeling/normalization-denormalization.md` — 1NF through BCNF
-- [ ] `data-engineering/data-modeling/schema-evolution.md` — Forward/backward compatibility, schema registry
+### Data Engineering — Data Modeling (ALL DONE)
+- [x] `data-engineering/data-modeling/index.md`
+- [x] `data-engineering/data-modeling/dimensional-modeling.md`
+- [x] `data-engineering/data-modeling/data-vault.md`
+- [x] `data-engineering/data-modeling/slowly-changing-dimensions.md`
+- [x] `data-engineering/data-modeling/normalization-denormalization.md`
+- [x] `data-engineering/data-modeling/schema-evolution.md`
 
-### Data Engineering — Pipeline Patterns (6 pages)
-- [ ] `data-engineering/pipeline-patterns/index.md` — Overview
-- [ ] `data-engineering/pipeline-patterns/cdc-patterns.md` — Debezium, log-based CDC, outbox integration
-- [ ] `data-engineering/pipeline-patterns/data-quality-checks.md` — Great Expectations, dbt tests, data contracts
-- [ ] `data-engineering/pipeline-patterns/data-lineage.md` — OpenLineage, Marquez, column-level lineage
-- [ ] `data-engineering/pipeline-patterns/orchestration.md` — Airflow, Dagster, Prefect comparison
-- [ ] `data-engineering/pipeline-patterns/testing-data-pipelines.md` — Unit testing transforms, data diff testing
+### Data Engineering — Pipeline Patterns (ALL DONE)
+- [x] `data-engineering/pipeline-patterns/index.md`
+- [x] `data-engineering/pipeline-patterns/cdc-patterns.md`
+- [x] `data-engineering/pipeline-patterns/data-quality-checks.md`
+- [x] `data-engineering/pipeline-patterns/data-lineage.md`
+- [x] `data-engineering/pipeline-patterns/orchestration.md`
+- [x] `data-engineering/pipeline-patterns/testing-data-pipelines.md`
 
-### Prompt Engineering (18 pages)
-- [ ] `prompt-engineering/engineering-prompts/architecture-review-prompts.md` — 50+ architecture review prompts
-- [ ] `prompt-engineering/engineering-prompts/code-generation-prompts.md` — 50+ code generation prompts
-- [ ] `prompt-engineering/engineering-prompts/refactoring-prompts.md` — 25+ refactoring prompts
-- [ ] `prompt-engineering/engineering-prompts/testing-prompts.md` — 25+ testing prompts
-- [ ] `prompt-engineering/product-prompts/index.md` — Overview
-- [ ] `prompt-engineering/product-prompts/prd-prompts.md` — 25+ PRD writing prompts
-- [ ] `prompt-engineering/product-prompts/user-story-prompts.md` — 25+ user story prompts
-- [ ] `prompt-engineering/product-prompts/competitive-analysis-prompts.md` — 25+ competitive analysis prompts
-- [ ] `prompt-engineering/product-prompts/go-to-market-prompts.md` — 25+ go-to-market prompts
-- [ ] `prompt-engineering/ui-prompts/index.md` — Overview
-- [ ] `prompt-engineering/ui-prompts/component-generation-prompts.md` — 25+ component prompts
-- [ ] `prompt-engineering/ui-prompts/design-system-prompts.md` — 25+ design system prompts
-- [ ] `prompt-engineering/ui-prompts/accessibility-prompts.md` — 25+ accessibility prompts
-- [ ] `prompt-engineering/ui-prompts/responsive-design-prompts.md` — 25+ responsive design prompts
-- [ ] `prompt-engineering/architecture-prompts/index.md` — Overview
-- [ ] `prompt-engineering/architecture-prompts/system-design-prompts.md` — 25+ system design prompts
-- [ ] `prompt-engineering/architecture-prompts/scaling-prompts.md` — 25+ scaling prompts
-- [ ] `prompt-engineering/architecture-prompts/migration-prompts.md` — 25+ migration prompts
-- [ ] `prompt-engineering/architecture-prompts/cost-optimization-prompts.md` — 25+ cost optimization prompts
+### Prompt Engineering — Engineering Prompts (ALL DONE)
+- [x] `prompt-engineering/engineering-prompts/architecture-review-prompts.md`
+- [x] `prompt-engineering/engineering-prompts/code-generation-prompts.md`
+- [x] `prompt-engineering/engineering-prompts/refactoring-prompts.md`
+- [x] `prompt-engineering/engineering-prompts/testing-prompts.md`
 
-### UI & Design Systems (27 pages)
+### Prompt Engineering — Product Prompts (ALL DONE)
+- [x] `prompt-engineering/product-prompts/index.md`
+- [x] `prompt-engineering/product-prompts/prd-prompts.md`
+- [x] `prompt-engineering/product-prompts/user-story-prompts.md`
+- [x] `prompt-engineering/product-prompts/competitive-analysis-prompts.md`
+- [x] `prompt-engineering/product-prompts/go-to-market-prompts.md`
+
+### Prompt Engineering — UI Prompts (0/5 — all remaining)
+- [ ] `prompt-engineering/ui-prompts/index.md` — Overview **(agent running)**
+- [ ] `prompt-engineering/ui-prompts/component-generation-prompts.md` — 25+ component prompts **(agent running)**
+- [ ] `prompt-engineering/ui-prompts/design-system-prompts.md` — 25+ design system prompts **(agent running)**
+- [ ] `prompt-engineering/ui-prompts/accessibility-prompts.md` — 25+ accessibility prompts **(agent running)**
+- [ ] `prompt-engineering/ui-prompts/responsive-design-prompts.md` — 25+ responsive design prompts **(agent running)**
+
+### Prompt Engineering — Architecture Prompts (0/5 — all remaining)
+- [ ] `prompt-engineering/architecture-prompts/index.md` — Overview **(agent running)**
+- [ ] `prompt-engineering/architecture-prompts/system-design-prompts.md` — 25+ system design prompts **(agent running)**
+- [ ] `prompt-engineering/architecture-prompts/scaling-prompts.md` — 25+ scaling prompts **(agent running)**
+- [ ] `prompt-engineering/architecture-prompts/migration-prompts.md` — 25+ migration prompts **(agent running)**
+- [ ] `prompt-engineering/architecture-prompts/cost-optimization-prompts.md` — 25+ cost optimization prompts **(agent running)**
+
+---
+
+## NOT YET STARTED — NEXT BATCH
+
+### UI & Design Systems (32 pages)
 - [ ] `ui-design-systems/typography/index.md` — Overview
 - [ ] `ui-design-systems/typography/type-scale.md` — Mathematical type scales, modular scale, clamp()
 - [ ] `ui-design-systems/typography/font-loading.md` — FOIT/FOUT/FOFT, font-display, preloading
@@ -321,7 +331,7 @@ The sidebar is defined in `docs/.vitepress/sidebar.ts` — if you add new subsec
 - [ ] `ui-design-systems/accessibility/focus-management.md` — Focus trapping, restoration, :focus-visible
 - [ ] `ui-design-systems/accessibility/testing-accessibility.md` — axe-core, jest-axe, manual testing
 - [ ] `ui-design-systems/dark-mode/index.md` — Overview
-- [ ] `ui-design-systems/dark-mode/token-mapping.md` — Light → dark remapping, OKLCH adjustments
+- [ ] `ui-design-systems/dark-mode/token-mapping.md` — Light -> dark remapping, OKLCH adjustments
 - [ ] `ui-design-systems/dark-mode/implementation-patterns.md` — CSS custom properties, class toggling
 - [ ] `ui-design-systems/dark-mode/image-handling.md` — Brightness adjustment, dark variants, SVG
 - [ ] `ui-design-systems/dark-mode/system-preference-detection.md` — prefers-color-scheme, matchMedia
@@ -331,7 +341,6 @@ The sidebar is defined in `docs/.vitepress/sidebar.ts` — if you add new subsec
 - [ ] `ui-design-systems/animations/css-animations.md` — Transitions, @keyframes, transform, will-change
 - [ ] `ui-design-systems/animations/framer-motion-patterns.md` — motion, variants, AnimatePresence, layout
 - [ ] `ui-design-systems/animations/gesture-animations.md` — Touch events, drag, swipe, pinch-to-zoom
-- [ ] `ui-design-systems/animations/performance-considerations.md` — FLIP, requestAnimationFrame, jank
 
 ### Production Blueprints (40 pages)
 - [ ] `production-blueprints/billing-engine/index.md` — Overview, system diagram
@@ -347,7 +356,7 @@ The sidebar is defined in `docs/.vitepress/sidebar.ts` — if you add new subsec
 - [ ] `production-blueprints/notification-service/rate-limiting.md` — Per-user limits, quiet hours, digests
 - [ ] `production-blueprints/notification-service/delivery-tracking.md` — Status tracking, bounce handling
 - [ ] `production-blueprints/realtime-pipeline/index.md` — Overview
-- [ ] `production-blueprints/realtime-pipeline/architecture.md` — Kafka → processing → ClickHouse → API
+- [ ] `production-blueprints/realtime-pipeline/architecture.md` — Kafka -> processing -> ClickHouse -> API
 - [ ] `production-blueprints/realtime-pipeline/ingestion-layer.md` — HTTP ingestion, SDK design, batching
 - [ ] `production-blueprints/realtime-pipeline/processing-layer.md` — Enrichment, sessionization, aggregation
 - [ ] `production-blueprints/realtime-pipeline/storage-layer.md` — ClickHouse schema, partitioning, TTL
@@ -397,20 +406,19 @@ The sidebar is defined in `docs/.vitepress/sidebar.ts` — if you add new subsec
 
 ---
 
-## SUMMARY (Updated 2026-03-17)
+## SUMMARY (Updated 2026-03-18)
 
-| Category | Remaining | Done This Round |
-|----------|-----------|-----------------|
-| System Design (networking, LB, MQ) | 7 | 5 (networking) |
-| Architecture Patterns | 11 | 14 (CQRS 5, Hexagonal 4, DDD 4, event-driven 1) |
-| Infrastructure | 40 | 4 (AWS 2, K8s 2) |
-| Security | 28 | 0 |
-| DevOps | 20 | 0 |
-| Performance | 18 | 0 |
-| Data Engineering | 17 | 0 |
-| Prompt Engineering | 18 | 0 |
-| UI & Design Systems | 32 | 0 |
-| Production Blueprints | 40 | 0 |
-| Clean Architecture | 5 | 0 |
-| Companion Code | ~17 files | 0 |
-| **TOTAL** | **~236 pages + ~17 code files** | **20 pages completed** |
+| Category | Total | Done | Remaining |
+|----------|-------|------|-----------|
+| System Design (networking, LB, MQ) | 12 | **12** | 0 |
+| Architecture Patterns (all) | 23 | **23** | 0 |
+| Infrastructure (K8s, Docker, AWS, GCP, CI/CD, Multi-Region) | 46 | **45** | 1 (GCP cost) |
+| Security (Auth, Encryption, Secrets, Zero Trust, API) | 28 | **19** | 9 (agent running) |
+| DevOps (Logging, Alerting, Deployment, Incident) | 20 | **17** | 3 (agent running) |
+| Performance (Optimization, Caching, DB Tuning, Edge) | 18 | **18** | 0 |
+| Data Engineering (Streams, Modeling, Pipelines) | 17 | **17** | 0 |
+| Prompt Engineering (Engineering, Product, UI, Arch) | 18 | **9** | 10 (agent running) (1 GCP) |
+| UI & Design Systems | 32 | 0 | **32** |
+| Production Blueprints | 41 | 0 | **41** |
+| Companion Code | ~17 | 0 | **~17** |
+| **TOTAL** | **~272 pages + ~17 code** | **~160 done** | **~112 pages + ~17 code remaining** |
