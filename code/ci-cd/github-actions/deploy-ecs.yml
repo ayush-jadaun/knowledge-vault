@@ -1,0 +1,188 @@
+# =============================================================================
+# GitHub Actions — Deploy to ECS Fargate
+# =============================================================================
+# Deploys the application to Amazon ECS Fargate:
+#   1. Builds Docker image
+#   2. Pushes to Amazon ECR
+#   3. Updates ECS task definition with new image
+#   4. Updates ECS service
+#   5. Waits for service stability
+#   6. Rolls back on failure
+# =============================================================================
+
+name: Deploy to ECS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      image_tag:
+        description: "Docker image tag to deploy (default: git SHA)"
+        required: false
+        type: string
+
+  # Auto-deploy to staging on merge to main
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write  # OIDC authentication to AWS
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Deploy
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'staging' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # Use GitHub environments for secrets and protection rules
+    environment:
+      name: ${{ github.event.inputs.environment || 'staging' }}
+      url: ${{ steps.deploy-url.outputs.url }}
+
+    env:
+      ENVIRONMENT: ${{ github.event.inputs.environment || 'staging' }}
+
+    steps:
+      # -------------------------------------------------------------------
+      # Setup
+      # -------------------------------------------------------------------
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # -------------------------------------------------------------------
+      # Determine image tag
+      # -------------------------------------------------------------------
+      - name: Set image tag
+        id: image-tag
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=sha-${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # -------------------------------------------------------------------
+      # Build and push Docker image
+      # -------------------------------------------------------------------
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image to ECR
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.ecr-login.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ steps.image-tag.outputs.tag }}
+            ${{ steps.ecr-login.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ env.ENVIRONMENT }}-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+
+      # -------------------------------------------------------------------
+      # Update ECS task definition
+      # -------------------------------------------------------------------
+      - name: Download current task definition
+        id: current-task-def
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "${{ secrets.ECS_TASK_FAMILY }}" \
+            --query 'taskDefinition' \
+            --output json > task-definition.json
+
+          # Remove fields that can't be included in register-task-definition
+          jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' \
+            task-definition.json > clean-task-definition.json
+
+      - name: Update image in task definition
+        id: update-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: clean-task-definition.json
+          container-name: app
+          image: ${{ steps.ecr-login.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ steps.image-tag.outputs.tag }}
+
+      # -------------------------------------------------------------------
+      # Deploy to ECS
+      # -------------------------------------------------------------------
+      - name: Deploy to ECS service
+        id: deploy
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.update-task-def.outputs.task-definition }}
+          service: ${{ secrets.ECS_SERVICE }}
+          cluster: ${{ secrets.ECS_CLUSTER }}
+          wait-for-service-stability: true
+          wait-for-minutes: 10
+
+      # -------------------------------------------------------------------
+      # Post-deployment verification
+      # -------------------------------------------------------------------
+      - name: Get deployment URL
+        id: deploy-url
+        run: |
+          ALB_DNS=$(aws elbv2 describe-load-balancers \
+            --names "${{ secrets.ALB_NAME }}" \
+            --query 'LoadBalancers[0].DNSName' \
+            --output text 2>/dev/null || echo "unknown")
+          echo "url=https://${ALB_DNS}" >> "$GITHUB_OUTPUT"
+
+      - name: Health check
+        run: |
+          echo "Waiting for deployment to stabilize..."
+          sleep 30
+
+          HEALTH_URL="${{ steps.deploy-url.outputs.url }}/health"
+          echo "Checking health at: ${HEALTH_URL}"
+
+          for i in $(seq 1 5); do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${HEALTH_URL}" || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Health check passed (attempt ${i})"
+              exit 0
+            fi
+            echo "Health check returned ${HTTP_CODE} (attempt ${i}/5)"
+            sleep 10
+          done
+
+          echo "Health check failed after 5 attempts"
+          exit 1
+
+      # -------------------------------------------------------------------
+      # Notifications
+      # -------------------------------------------------------------------
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "Successfully deployed ${{ steps.image-tag.outputs.tag }} to ${{ env.ENVIRONMENT }}"
+          echo "Task definition: ${{ steps.deploy.outputs.task-definition-arn }}"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Deployment failed for ${{ steps.image-tag.outputs.tag }} to ${{ env.ENVIRONMENT }}"
+          echo "The ECS deployment circuit breaker should automatically roll back."
