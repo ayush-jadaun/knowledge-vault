@@ -633,6 +633,61 @@ Cassandra uses single-decree Paxos for its "lightweight transactions" (LWTs). Ea
 
 The performance penalty is 4-10x compared to normal operations. For this reason, Cassandra documentation recommends using LWTs sparingly — only for operations that truly require linearizability (like unique username registration).
 
+## Paxos TLA+ Specification
+
+Lamport wrote a TLA+ specification of Paxos that serves as the definitive formal description. The key state variables and invariants from the specification are worth understanding even if you do not read TLA+.
+
+### State Variables
+
+```
+VARIABLES
+  maxBal,    \* maxBal[a] is the highest ballot number that acceptor a has responded to
+  maxVBal,   \* maxVBal[a] is the ballot number of the highest accepted proposal by a
+  maxVal     \* maxVal[a] is the value of the highest accepted proposal by a
+```
+
+### The Key Invariant (Inv)
+
+```
+Inv ==
+  /\ \A a \in Acceptors : maxBal[a] >= maxVBal[a]
+  /\ \A b \in Ballots :
+       \A v \in Values :
+         Chosen(b, v) =>
+           \A b2 \in Ballots :
+             b2 > b =>
+               \A Q \in Quorums :
+                 \E a \in Q :
+                   /\ maxBal[a] >= b2
+                   /\ (maxVBal[a] >= b => maxVal[a] = v)
+```
+
+This invariant states: if value $v$ is chosen with ballot $b$, then for any higher ballot $b_2$ and any quorum $Q$, there exists an acceptor $a$ in $Q$ that has responded to ballot $b_2$ or higher, and if $a$ has accepted any ballot $\geq b$, the accepted value is $v$.
+
+This is the formal statement of the property that makes Paxos safe: once a value is chosen, every higher ballot will propose the same value.
+
+### Model Checking
+
+TLC (the TLA+ model checker) can verify the Paxos specification for small configurations (3-5 acceptors, 2-3 proposers, 1-2 values). Model checking exhaustively explores all possible interleavings of messages and confirms that the safety invariant holds in every reachable state.
+
+For larger configurations, formal proofs (using the TLA+ Proof System, TLAPS) can verify the invariant for arbitrary numbers of acceptors and proposers.
+
+## Paxos vs. Raft: A Direct Comparison
+
+| Dimension | Paxos (Multi-Paxos) | Raft |
+|---|---|---|
+| **Publications** | "Part-Time Parliament" (1998), "Paxos Made Simple" (2001), dozens of variants | Single paper (2014) + PhD dissertation |
+| **Specification completeness** | Single-decree only. Multi-Paxos is underspecified. | Complete specification including membership changes, compaction, client interaction |
+| **Leader required?** | No (single-decree). Yes (Multi-Paxos). | Yes (always) |
+| **Log ordering** | Out-of-order commits allowed | Strict sequential log, no gaps |
+| **Commit rule** | Any quorum | Majority + current term only |
+| **Formal verification** | TLA+ spec by Lamport | TLA+ spec available |
+| **Reference implementations** | libpaxos (C), many ad hoc | etcd/raft (Go), HashiCorp raft (Go), many |
+| **Typical deployment** | Google-internal systems | etcd, CockroachDB, TiKV, Consul |
+| **Teaching** | Graduate-level courses | Undergraduate-accessible |
+
+The choice between Paxos and Raft is ultimately a choice between flexibility and simplicity. Paxos gives you more design freedom (out-of-order commits, flexible quorums, leaderless operation) at the cost of implementation complexity. Raft constrains the design space (sequential log, strong leader) but rewards you with a protocol that a single engineer can implement correctly.
+
 ## References
 
 1. Lamport, L. (1998). "The Part-Time Parliament." *ACM TOCS*.

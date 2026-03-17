@@ -1,0 +1,214 @@
+# =============================================================================
+# Deployment — Application Workload
+# =============================================================================
+# Production-grade deployment with:
+#   - Rolling update strategy
+#   - Resource limits and requests
+#   - Liveness, readiness, and startup probes
+#   - Security context (non-root, read-only FS, drop capabilities)
+#   - Pod anti-affinity (spread across nodes)
+#   - Topology spread constraints
+#   - Graceful shutdown
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/component: server
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+
+  # ---------------------------------------------------------------------------
+  # Rolling update strategy
+  # ---------------------------------------------------------------------------
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # Allow 1 extra pod during update
+      maxUnavailable: 0    # Never have fewer than desired count
+
+  # ---------------------------------------------------------------------------
+  # Pod selector
+  # ---------------------------------------------------------------------------
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: myapp
+      app.kubernetes.io/component: server
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: myapp
+        app.kubernetes.io/component: server
+        app.kubernetes.io/version: "1.0.0"
+      annotations:
+        # Force rolling restart when config changes
+        checksum/config: "PLACEHOLDER_CONFIG_HASH"
+        # Prometheus scraping
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+
+    spec:
+      # Use the dedicated service account
+      serviceAccountName: myapp
+      automountServiceAccountToken: false
+
+      # Graceful shutdown — give app time to drain connections
+      terminationGracePeriodSeconds: 30
+
+      # -----------------------------------------------------------------------
+      # Pod Security Context
+      # -----------------------------------------------------------------------
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+
+      # -----------------------------------------------------------------------
+      # Pod Anti-Affinity — spread pods across nodes
+      # -----------------------------------------------------------------------
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - myapp
+                topologyKey: kubernetes.io/hostname
+
+      # -----------------------------------------------------------------------
+      # Topology Spread — distribute across zones
+      # -----------------------------------------------------------------------
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: myapp
+              app.kubernetes.io/component: server
+
+      # -----------------------------------------------------------------------
+      # Containers
+      # -----------------------------------------------------------------------
+      containers:
+        - name: myapp
+          image: "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/myapp:latest"
+          imagePullPolicy: Always
+
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+
+          # -------------------------------------------------------------------
+          # Environment variables from ConfigMap and Secrets
+          # -------------------------------------------------------------------
+          envFrom:
+            - configMapRef:
+                name: myapp-config
+            - secretRef:
+                name: myapp-secrets
+
+          # -------------------------------------------------------------------
+          # Resource limits and requests
+          # -------------------------------------------------------------------
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+
+          # -------------------------------------------------------------------
+          # Probes
+          # -------------------------------------------------------------------
+
+          # Startup probe — generous timeout for slow-starting apps
+          # Checked every 5s, fails after 30 attempts (150s total)
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+
+          # Readiness probe — controls traffic routing
+          # Pod is removed from service if this fails
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+
+          # Liveness probe — restarts pod if this fails
+          # Less aggressive than readiness to avoid unnecessary restarts
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+
+          # -------------------------------------------------------------------
+          # Container Security Context
+          # -------------------------------------------------------------------
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop:
+                - ALL
+
+          # -------------------------------------------------------------------
+          # Volume mounts (temp directories for read-only FS)
+          # -------------------------------------------------------------------
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: app-cache
+              mountPath: /app/.cache
+
+          # -------------------------------------------------------------------
+          # Lifecycle hooks
+          # -------------------------------------------------------------------
+          lifecycle:
+            preStop:
+              exec:
+                # Give load balancer time to deregister before shutting down
+                command: ["/bin/sh", "-c", "sleep 5"]
+
+      # -----------------------------------------------------------------------
+      # Volumes
+      # -----------------------------------------------------------------------
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 100Mi
+        - name: app-cache
+          emptyDir:
+            sizeLimit: 200Mi
