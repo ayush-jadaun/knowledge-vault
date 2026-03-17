@@ -52,7 +52,7 @@ function App() {
           <div>
             <p>Mouse position: ({x}, {y})</p>
             <div
-              style={{
+              style={​{
                 position: 'fixed',
                 left: x - 10,
                 top: y - 10,
@@ -61,7 +61,7 @@ function App() {
                 borderRadius: '50%',
                 background: 'red',
                 pointerEvents: 'none',
-              }}
+              }​}
             />
           </div>
         )}
@@ -189,7 +189,7 @@ function UserList() {
               </ul>
             );
         }
-      }}
+      }​}
     </Fetch>
   );
 }
@@ -442,7 +442,7 @@ function Dashboard() {
       theme={theme}
       user={auth.user}
       data={data}
-      mouse={{ x, y }}
+      mouse={​{ x, y }​}
       windowSize={windowSize}
     />
   );
@@ -1004,9 +1004,9 @@ Hooks replaced most render prop use cases, but render props are still valuable i
 <AnimatePresence>
   {isVisible && (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      initial={​{ opacity: 0 }​}
+      animate={​{ opacity: 1 }​}
+      exit={​{ opacity: 0 }​}
     >
       Content
     </motion.div>

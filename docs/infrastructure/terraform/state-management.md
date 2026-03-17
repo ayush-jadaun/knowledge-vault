@@ -967,7 +967,7 @@ jobs:
       - name: Notify on Drift
         if: steps.plan.outcome == 'failure' && steps.plan.outputs.exitcode == '2'
         run: |
-          curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+          curl -X POST "${​{ secrets.SLACK_WEBHOOK }​}" \
             -H 'Content-type: application/json' \
             -d '{"text":"Terraform drift detected in production!"}'
 ```

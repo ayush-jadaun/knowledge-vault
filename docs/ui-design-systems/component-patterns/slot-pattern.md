@@ -339,12 +339,12 @@ function AlertDialog({ open, defaultOpen = false, onOpenChange, children }: Aler
 
   return (
     <AlertDialogContext.Provider
-      value={{
+      value={​{
         isOpen,
         onOpenChange: handleOpenChange,
         titleId: `${baseId}-title`,
         descriptionId: `${baseId}-description`,
-      }}
+      }​}
     >
       {children}
     </AlertDialogContext.Provider>
@@ -515,7 +515,7 @@ const AlertDialogAction = forwardRef<HTMLButtonElement, AlertDialogActionProps>(
         onClick={() => {
           onClick?.();
           onOpenChange(false);
-        }}
+        }​}
         className={cn(
           'inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium',
           'bg-destructive text-destructive-foreground hover:bg-destructive/90',
@@ -541,7 +541,7 @@ const AlertDialogCancel = forwardRef<HTMLButtonElement, AlertDialogActionProps>(
         onClick={() => {
           onClick?.();
           onOpenChange(false);
-        }}
+        }​}
         className={cn(
           'inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium',
           'border border-input bg-background hover:bg-accent',

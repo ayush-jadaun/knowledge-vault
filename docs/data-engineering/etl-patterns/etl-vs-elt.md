@@ -264,7 +264,7 @@ dbt (data build tool) is the standard for ELT transformations. Models are SQL SE
 -- models/staging/stg_orders.sql
 -- Bronze → Silver: Clean and type raw order data
 WITH source AS (
-    SELECT * FROM {{ source('raw', 'orders') }}
+    SELECT * FROM {​{ source('raw', 'orders') }​}
 ),
 
 renamed AS (
@@ -298,15 +298,15 @@ WHERE row_num = 1
 -- models/marts/fct_orders.sql
 -- Silver → Gold: Business logic applied
 WITH orders AS (
-    SELECT * FROM {{ ref('stg_orders') }}
+    SELECT * FROM {​{ ref('stg_orders') }​}
 ),
 
 customers AS (
-    SELECT * FROM {{ ref('stg_customers') }}
+    SELECT * FROM {​{ ref('stg_customers') }​}
 ),
 
 products AS (
-    SELECT * FROM {{ ref('stg_order_items') }}
+    SELECT * FROM {​{ ref('stg_order_items') }​}
 )
 
 SELECT
@@ -316,7 +316,7 @@ SELECT
     c.acquisition_channel,
     o.order_amount,
     o.currency_code,
-    {{ convert_to_usd('o.order_amount', 'o.currency_code') }} AS order_amount_usd,
+    {​{ convert_to_usd('o.order_amount', 'o.currency_code') }​} AS order_amount_usd,
     o.ordered_at,
     DATE_TRUNC('month', o.ordered_at) AS order_month,
     DATEDIFF('day', c.first_order_at, o.ordered_at) AS days_since_first_order,

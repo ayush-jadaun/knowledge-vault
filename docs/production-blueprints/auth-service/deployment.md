@@ -788,7 +788,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/auth-service
+  IMAGE_NAME: ${​{ github.repository }​}/auth-service
   K8S_NAMESPACE: auth-system
 
 jobs:
@@ -899,9 +899,9 @@ jobs:
           DATABASE_PASSWORD: test_password
           REDIS_HOST: localhost
           REDIS_PORT: 6379
-          JWT_PRIVATE_KEY: ${{ secrets.TEST_JWT_PRIVATE_KEY }}
+          JWT_PRIVATE_KEY: ${​{ secrets.TEST_JWT_PRIVATE_KEY }​}
           JWT_KEY_ID: test-key-001
-          MFA_ENCRYPTION_KEY: ${{ secrets.TEST_MFA_KEY }}
+          MFA_ENCRYPTION_KEY: ${​{ secrets.TEST_MFA_KEY }​}
 
   # --------------------------------------------------------
   # Security Scan
@@ -941,8 +941,8 @@ jobs:
       contents: read
       packages: write
     outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
-      image-digest: ${{ steps.build-push.outputs.digest }}
+      image-tag: ${​{ steps.meta.outputs.tags }​}
+      image-digest: ${​{ steps.build-push.outputs.digest }​}
     steps:
       - uses: actions/checkout@v4
 
@@ -950,26 +950,26 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${​{ env.REGISTRY }​}
+          username: ${​{ github.actor }​}
+          password: ${​{ secrets.GITHUB_TOKEN }​}
 
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${​{ env.REGISTRY }​}/${​{ env.IMAGE_NAME }​}
           tags: |
             type=sha,prefix=
             type=ref,event=branch
-            type=semver,pattern={{version}}
+            type=semver,pattern={​{version}​}
 
       - id: build-push
         uses: docker/build-push-action@v5
         with:
           context: services/auth
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${​{ steps.meta.outputs.tags }​}
+          labels: ${​{ steps.meta.outputs.labels }​}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
@@ -991,7 +991,7 @@ jobs:
 
       - uses: azure/k8s-set-context@v3
         with:
-          kubeconfig: ${{ secrets.STAGING_KUBECONFIG }}
+          kubeconfig: ${​{ secrets.STAGING_KUBECONFIG }​}
 
       - name: Deploy to staging
         run: |
@@ -1000,10 +1000,10 @@ jobs:
           kubectl apply -f configmap.yaml
           kubectl apply -f secret.yaml
           kubectl set image deployment/auth-service \
-            auth-service=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.image-digest }} \
-            -n ${{ env.K8S_NAMESPACE }}
+            auth-service=${​{ env.REGISTRY }​}/${​{ env.IMAGE_NAME }​}@${​{ needs.build.outputs.image-digest }​} \
+            -n ${​{ env.K8S_NAMESPACE }​}
           kubectl rollout status deployment/auth-service \
-            -n ${{ env.K8S_NAMESPACE }} \
+            -n ${​{ env.K8S_NAMESPACE }​} \
             --timeout=300s
 
       - name: Run smoke tests
@@ -1027,16 +1027,16 @@ jobs:
 
       - uses: azure/k8s-set-context@v3
         with:
-          kubeconfig: ${{ secrets.PRODUCTION_KUBECONFIG }}
+          kubeconfig: ${​{ secrets.PRODUCTION_KUBECONFIG }​}
 
       - name: Deploy to production
         run: |
           cd services/auth/k8s
           kubectl set image deployment/auth-service \
-            auth-service=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.image-digest }} \
-            -n ${{ env.K8S_NAMESPACE }}
+            auth-service=${​{ env.REGISTRY }​}/${​{ env.IMAGE_NAME }​}@${​{ needs.build.outputs.image-digest }​} \
+            -n ${​{ env.K8S_NAMESPACE }​}
           kubectl rollout status deployment/auth-service \
-            -n ${{ env.K8S_NAMESPACE }} \
+            -n ${​{ env.K8S_NAMESPACE }​} \
             --timeout=300s
 
       - name: Verify deployment
@@ -1057,9 +1057,9 @@ jobs:
       - name: Rollback on failure
         if: failure()
         run: |
-          kubectl rollout undo deployment/auth-service -n ${{ env.K8S_NAMESPACE }}
+          kubectl rollout undo deployment/auth-service -n ${​{ env.K8S_NAMESPACE }​}
           kubectl rollout status deployment/auth-service \
-            -n ${{ env.K8S_NAMESPACE }} \
+            -n ${​{ env.K8S_NAMESPACE }​} \
             --timeout=300s
 ```
 

@@ -433,7 +433,7 @@ function AvatarGroup({ max = 5, size = 'md', children, className }: AvatarGroupP
         <div
           key={index}
           className="relative ring-2 ring-background rounded-full"
-          style={{ zIndex: visible.length - index }}
+          style={​{ zIndex: visible.length - index }​}
         >
           {child}
         </div>
@@ -444,7 +444,7 @@ function AvatarGroup({ max = 5, size = 'md', children, className }: AvatarGroupP
             'relative inline-flex items-center justify-center rounded-full bg-muted ring-2 ring-background',
             size === 'sm' ? 'h-8 w-8 text-xs' : 'h-10 w-10 text-sm'
           )}
-          style={{ zIndex: 0 }}
+          style={​{ zIndex: 0 }​}
         >
           <span className="font-medium text-muted-foreground">+{remaining}</span>
         </div>

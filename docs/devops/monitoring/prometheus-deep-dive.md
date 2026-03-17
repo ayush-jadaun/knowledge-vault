@@ -931,12 +931,12 @@ groups:
           severity: critical
           team: backend
         annotations:
-          summary: "High error rate on {{ $labels.route }}"
+          summary: "High error rate on {​{ $labels.route }​}"
           description: |
-            Error rate is {{ $value | humanizePercentage }} on route {{ $labels.route }}.
+            Error rate is {​{ $value | humanizePercentage }​} on route {​{ $labels.route }​}.
             This has been above 5% for 5 minutes.
           runbook_url: "https://wiki.internal/runbooks/high-error-rate"
-          dashboard_url: "https://grafana.internal/d/http-overview?var-route={{ $labels.route }}"
+          dashboard_url: "https://grafana.internal/d/http-overview?var-route={​{ $labels.route }​}"
 
       # High latency (p95)
       - alert: HighLatencyP95
@@ -946,9 +946,9 @@ groups:
           severity: warning
           team: backend
         annotations:
-          summary: "High p95 latency on {{ $labels.route }}"
+          summary: "High p95 latency on {​{ $labels.route }​}"
           description: |
-            P95 latency is {{ $value | humanizeDuration }} on route {{ $labels.route }}.
+            P95 latency is {​{ $value | humanizeDuration }​} on route {​{ $labels.route }​}.
 
       # High latency (p99) — more severe
       - alert: HighLatencyP99
@@ -958,9 +958,9 @@ groups:
           severity: critical
           team: backend
         annotations:
-          summary: "Critical p99 latency on {{ $labels.route }}"
+          summary: "Critical p99 latency on {​{ $labels.route }​}"
           description: |
-            P99 latency is {{ $value | humanizeDuration }} on route {{ $labels.route }}.
+            P99 latency is {​{ $value | humanizeDuration }​} on route {​{ $labels.route }​}.
 
       # No requests at all (service might be down)
       - alert: NoRequests
@@ -981,8 +981,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High CPU on {{ $labels.instance }}"
-          description: "CPU usage is {{ $value | printf \"%.1f\" }}% on {{ $labels.instance }}"
+          summary: "High CPU on {​{ $labels.instance }​}"
+          description: "CPU usage is {​{ $value | printf \"%.1f\" }​}% on {​{ $labels.instance }​}"
 
       # High memory
       - alert: HighMemoryUsage
@@ -991,7 +991,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High memory on {{ $labels.instance }}"
+          summary: "High memory on {​{ $labels.instance }​}"
 
       # Disk space running low
       - alert: DiskSpaceLow
@@ -1000,8 +1000,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Disk space low on {{ $labels.instance }}:{{ $labels.mountpoint }}"
-          description: "Disk usage is {{ $value | printf \"%.1f\" }}%"
+          summary: "Disk space low on {​{ $labels.instance }​}:{​{ $labels.mountpoint }​}"
+          description: "Disk usage is {​{ $value | printf \"%.1f\" }​}%"
 
       # Disk will be full in 24 hours
       - alert: DiskWillFillIn24Hours
@@ -1011,7 +1011,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Disk on {{ $labels.instance }}:{{ $labels.mountpoint }} will be full in 24 hours"
+          summary: "Disk on {​{ $labels.instance }​}:{​{ $labels.mountpoint }​} will be full in 24 hours"
 
       # Instance down
       - alert: InstanceDown
@@ -1020,8 +1020,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "{{ $labels.instance }} is down"
-          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 3 minutes."
+          summary: "{​{ $labels.instance }​} is down"
+          description: "{​{ $labels.instance }​} of job {​{ $labels.job }​} has been down for more than 3 minutes."
 
   - name: slo_alerts
     rules:
@@ -1082,9 +1082,9 @@ global:
   smtp_from: 'alerts@company.com'
   smtp_smarthost: 'smtp.company.com:587'
   smtp_auth_username: 'alerts@company.com'
-  smtp_auth_password: '{{ .SMTP_PASSWORD }}'
+  smtp_auth_password: '{​{ .SMTP_PASSWORD }​}'
   pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
-  slack_api_url: '{{ .SLACK_WEBHOOK_URL }}'
+  slack_api_url: '{​{ .SLACK_WEBHOOK_URL }​}'
 
 templates:
   - '/etc/alertmanager/templates/*.tmpl'
@@ -1140,25 +1140,25 @@ receivers:
     slack_configs:
       - channel: '#alerts-default'
         send_resolved: true
-        title: '{{ .Status | toUpper }}: {{ .CommonLabels.alertname }}'
+        title: '{​{ .Status | toUpper }​}: {​{ .CommonLabels.alertname }​}'
         text: >-
-          {{ range .Alerts }}
-          *Alert:* {{ .Labels.alertname }}
-          *Severity:* {{ .Labels.severity }}
-          *Description:* {{ .Annotations.description }}
+          {​{ range .Alerts }​}
+          *Alert:* {​{ .Labels.alertname }​}
+          *Severity:* {​{ .Labels.severity }​}
+          *Description:* {​{ .Annotations.description }​}
           *Details:*
-          {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
-          {{ end }}
-          {{ end }}
+          {​{ range .Labels.SortedPairs }​} • *{​{ .Name }​}:* `{​{ .Value }​}`
+          {​{ end }​}
+          {​{ end }​}
 
   - name: 'pagerduty-critical'
     pagerduty_configs:
-      - routing_key: '{{ .PAGERDUTY_ROUTING_KEY }}'
+      - routing_key: '{​{ .PAGERDUTY_ROUTING_KEY }​}'
         severity: critical
-        description: '{{ .CommonAnnotations.summary }}'
+        description: '{​{ .CommonAnnotations.summary }​}'
         details:
-          firing: '{{ .Alerts.Firing | len }}'
-          num_alerts: '{{ .Alerts | len }}'
+          firing: '{​{ .Alerts.Firing | len }​}'
+          num_alerts: '{​{ .Alerts | len }​}'
 
   - name: 'team-slack'
     slack_configs:
@@ -1172,7 +1172,7 @@ receivers:
 
   - name: 'pagerduty-backend'
     pagerduty_configs:
-      - routing_key: '{{ .PAGERDUTY_BACKEND_KEY }}'
+      - routing_key: '{​{ .PAGERDUTY_BACKEND_KEY }​}'
         severity: critical
 ```
 

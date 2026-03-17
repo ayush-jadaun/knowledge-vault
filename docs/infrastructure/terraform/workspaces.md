@@ -496,7 +496,7 @@ env:
 
 jobs:
   plan:
-    name: Plan (${{ matrix.workspace }})
+    name: Plan (${​{ matrix.workspace }​})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -522,15 +522,15 @@ jobs:
           aws-region: us-east-1
 
       - name: Terraform Init
-        working-directory: ${{ env.TF_WORKING_DIR }}
+        working-directory: ${​{ env.TF_WORKING_DIR }​}
         run: terraform init
 
       - name: Select Workspace
-        working-directory: ${{ env.TF_WORKING_DIR }}
-        run: terraform workspace select ${{ matrix.workspace }} || terraform workspace new ${{ matrix.workspace }}
+        working-directory: ${​{ env.TF_WORKING_DIR }​}
+        run: terraform workspace select ${​{ matrix.workspace }​} || terraform workspace new ${​{ matrix.workspace }​}
 
       - name: Terraform Plan
-        working-directory: ${{ env.TF_WORKING_DIR }}
+        working-directory: ${​{ env.TF_WORKING_DIR }​}
         run: terraform plan -no-color -out=tfplan
         continue-on-error: true
 
@@ -542,7 +542,7 @@ jobs:
             // Post plan output as PR comment
 
   apply:
-    name: Apply (${{ matrix.workspace }})
+    name: Apply (${​{ matrix.workspace }​})
     needs: plan
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -552,7 +552,7 @@ jobs:
       max-parallel: 1  # Apply sequentially: dev → staging → production
 
     environment:
-      name: ${{ matrix.workspace }}
+      name: ${​{ matrix.workspace }​}
 
     steps:
       - uses: actions/checkout@v4
@@ -566,15 +566,15 @@ jobs:
           aws-region: us-east-1
 
       - name: Terraform Init
-        working-directory: ${{ env.TF_WORKING_DIR }}
+        working-directory: ${​{ env.TF_WORKING_DIR }​}
         run: terraform init
 
       - name: Select Workspace
-        working-directory: ${{ env.TF_WORKING_DIR }}
-        run: terraform workspace select ${{ matrix.workspace }}
+        working-directory: ${​{ env.TF_WORKING_DIR }​}
+        run: terraform workspace select ${​{ matrix.workspace }​}
 
       - name: Terraform Apply
-        working-directory: ${{ env.TF_WORKING_DIR }}
+        working-directory: ${​{ env.TF_WORKING_DIR }​}
         run: terraform apply -auto-approve
 ```
 
@@ -678,8 +678,8 @@ jobs:
         run: |
           cd infrastructure/app
           terraform init
-          terraform workspace select pr-${{ github.event.pull_request.number }} || \
-            terraform workspace new pr-${{ github.event.pull_request.number }}
+          terraform workspace select pr-${​{ github.event.pull_request.number }​} || \
+            terraform workspace new pr-${​{ github.event.pull_request.number }​}
           terraform apply -auto-approve -var-file="ephemeral.tfvars"
 
       - name: Post URL
@@ -704,10 +704,10 @@ jobs:
         run: |
           cd infrastructure/app
           terraform init
-          terraform workspace select pr-${{ github.event.pull_request.number }}
+          terraform workspace select pr-${​{ github.event.pull_request.number }​}
           terraform destroy -auto-approve
           terraform workspace select dev
-          terraform workspace delete pr-${{ github.event.pull_request.number }}
+          terraform workspace delete pr-${​{ github.event.pull_request.number }​}
 ```
 
 ## Workspace Anti-Patterns

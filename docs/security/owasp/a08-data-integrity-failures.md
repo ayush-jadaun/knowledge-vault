@@ -72,7 +72,7 @@ function deepMerge(target: any, source: any): any {
 
 app.put('/api/settings', (req: Request, res: Response) => {
   const userSettings = req.body;
-  // If userSettings = {"__proto__": {"isAdmin": true}}
+  // If userSettings = {"__proto__": {"isAdmin": true}​}
   // All objects now have isAdmin = true
   const merged = deepMerge({}, userSettings);
   res.json(merged);
@@ -320,10 +320,10 @@ jobs:
   run: |
     # GitHub automatically masks secrets in logs, but be careful with
     # commands that might encode or transform the secret
-    curl -H "Authorization: Bearer ${{ secrets.API_TOKEN }}" https://api.example.com/deploy
+    curl -H "Authorization: Bearer ${​{ secrets.API_TOKEN }​}" https://api.example.com/deploy
 
     # DANGEROUS: This might leak the secret in encoded form
-    # echo "${{ secrets.API_TOKEN }}" | base64  # DON'T DO THIS
+    # echo "${​{ secrets.API_TOKEN }​}" | base64  # DON'T DO THIS
 
 # Use OIDC federation instead of long-lived secrets
 # This eliminates the need to store cloud provider credentials as secrets

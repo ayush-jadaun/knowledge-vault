@@ -446,7 +446,7 @@ function MixedExample() {
       defaultPressed={false}
       onPressedChange={(pressed) => {
         analytics.track('toggle_bold', { pressed });
-      }}
+      }​}
     >
       Bold
     </Toggle>
@@ -504,7 +504,7 @@ function Disclosure({ open, defaultOpen = false, onOpenChange, children }: Discl
   const toggle = useCallback(() => setIsOpen((prev) => !prev), [setIsOpen]);
 
   return (
-    <DisclosureContext.Provider value={{ isOpen, toggle, triggerId, contentId }}>
+    <DisclosureContext.Provider value={​{ isOpen, toggle, triggerId, contentId }​}>
       <div data-state={isOpen ? 'open' : 'closed'}>
         {children}
       </div>
@@ -639,10 +639,10 @@ const Slider = forwardRef<HTMLInputElement, SliderProps>(
           aria-valuemax={max}
           aria-valuenow={value}
           className="w-full appearance-none bg-transparent cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-          style={{
+          style={​{
             // Custom track fill using a gradient
             background: `linear-gradient(to right, var(--primary) ${percentage}%, var(--muted) ${percentage}%)`,
-          }}
+          }​}
         />
         <div className="flex justify-between text-xs text-muted-foreground mt-1">
           <span>{min}</span>
@@ -761,7 +761,7 @@ import { Formik, Field, type FieldProps } from 'formik';
 function SettingsFormFormik() {
   return (
     <Formik
-      initialValues={{ framework: 'react', volume: 50 }}
+      initialValues={​{ framework: 'react', volume: 50 }​}
       onSubmit={(values) => console.log(values)}
     >
       {({ handleSubmit }) => (
@@ -900,12 +900,12 @@ describe('Toggle', () => {
   describe('controlled mode', () => {
     it('reflects the controlled value', () => {
       const { rerender } = render(
-        <Toggle pressed={false} onPressedChange={() => {}}>Bold</Toggle>
+        <Toggle pressed={false} onPressedChange={() => {}​}>Bold</Toggle>
       );
       expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'false');
 
       rerender(
-        <Toggle pressed={true} onPressedChange={() => {}}>Bold</Toggle>
+        <Toggle pressed={true} onPressedChange={() => {}​}>Bold</Toggle>
       );
       expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
     });

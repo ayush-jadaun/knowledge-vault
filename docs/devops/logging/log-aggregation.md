@@ -453,13 +453,13 @@ LogQL is Loki's query language. It is inspired by PromQL and operates in two mod
 {service="order-service"} | json | duration > 5000
 
 # Line format (reformat output)
-{service="order-service"} | json | line_format "{{.timestamp}} [{{.level}}] {{.msg}} ({{.duration}}ms)"
+{service="order-service"} | json | line_format "{​{.timestamp}​} [{​{.level}​}] {​{.msg}​} ({​{.duration}​}ms)"
 
 # Multiple stages
 {service="order-service", level="error"}
   | json
   | error_code != ""
-  | line_format "{{.timestamp}} {{.error_code}}: {{.error_message}}"
+  | line_format "{​{.timestamp}​} {​{.error_code}​}: {​{.error_message}​}"
 ```
 
 **Metric queries (compute values from logs):**

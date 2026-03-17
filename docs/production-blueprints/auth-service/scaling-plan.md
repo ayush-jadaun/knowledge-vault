@@ -361,7 +361,7 @@ For most auth services, strategy 1 is sufficient. Users register once and change
 Each PostgreSQL connection consumes approximately 10 MB of memory and one process slot. The maximum practical connection count for a PostgreSQL instance is:
 
 $$
-\text{Max Connections} \approx \frac{\text{Available Memory (MB)} - \text{OS Reserved (MB)}}{\text{Per-Connection Memory (MB)}}
+\text{Max Connections} \approx \frac{\text{Available Memory (MB)} - \text{OS Reserved (MB)}​}{\text{Per-Connection Memory (MB)}​}
 $$
 
 For a 16 GB instance:
@@ -389,7 +389,7 @@ Without PgBouncer, the database handles 200 connections. With PgBouncer in `tran
 The optimal pool size for each Node.js instance:
 
 $$
-\text{Pool Size} = \frac{\text{Target RPS} \times \text{Avg Query Duration (s)}}{\text{Number of Instances}}
+\text{Pool Size} = \frac{\text{Target RPS} \times \text{Avg Query Duration (s)}​}{\text{Number of Instances}​}
 $$
 
 For 500 RPS with 5ms average query duration across 5 instances:
@@ -950,7 +950,7 @@ groups:
           severity: warning
         annotations:
           summary: "Auth service login failure rate above 10%"
-          description: "{{ $value | humanizePercentage }} of login attempts are failing"
+          description: "{​{ $value | humanizePercentage }​} of login attempts are failing"
 
       # Credential stuffing detection
       - alert: AuthCredentialStuffing

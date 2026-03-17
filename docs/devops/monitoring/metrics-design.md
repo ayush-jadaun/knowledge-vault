@@ -499,8 +499,8 @@ groups:
         annotations:
           summary: "Error budget burning 14.4x — budget exhausted in ~2 days"
           description: |
-            1h error rate: {{ with printf `slo:error_rate:1h` | query }}{{ . | first | value | humanizePercentage }}{{ end }}
-            5m error rate: {{ with printf `slo:error_rate:5m` | query }}{{ . | first | value | humanizePercentage }}{{ end }}
+            1h error rate: {​{ with printf `slo:error_rate:1h` | query }​}{​{ . | first | value | humanizePercentage }​}{​{ end }​}
+            5m error rate: {​{ with printf `slo:error_rate:5m` | query }​}{​{ . | first | value | humanizePercentage }​}{​{ end }​}
 
       # ---- Critical: 6x burn rate ----
       - record: slo:error_rate:6h

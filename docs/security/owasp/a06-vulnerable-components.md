@@ -173,14 +173,14 @@ jobs:
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
         env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_TOKEN: ${​{ secrets.SNYK_TOKEN }​}
         with:
           args: --severity-threshold=high
 
       - name: Run Snyk to check Docker image
         uses: snyk/actions/docker@master
         env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_TOKEN: ${​{ secrets.SNYK_TOKEN }​}
         with:
           image: my-app:latest
           args: --severity-threshold=high
@@ -269,14 +269,14 @@ jobs:
         id: metadata
         uses: dependabot/fetch-metadata@v2
         with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          github-token: "${​{ secrets.GITHUB_TOKEN }​}"
 
       - name: Auto-merge patch updates
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${​{ github.event.pull_request.html_url }​}
+          GH_TOKEN: ${​{ secrets.GITHUB_TOKEN }​}
 ```
 
 ---

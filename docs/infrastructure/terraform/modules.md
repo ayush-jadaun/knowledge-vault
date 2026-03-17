@@ -1168,7 +1168,7 @@ formatter: markdown table
 header-from: docs/header.md
 
 content: |-
-  {{ .Header }}
+  {​{ .Header }​}
 
   ## Usage
 
@@ -1181,17 +1181,17 @@ content: |-
   }
   ```
 
-  {{ .Requirements }}
-  {{ .Providers }}
-  {{ .Inputs }}
-  {{ .Outputs }}
+  {​{ .Requirements }​}
+  {​{ .Providers }​}
+  {​{ .Inputs }​}
+  {​{ .Outputs }​}
 
 output:
   file: README.md
   mode: inject
   template: |-
     <!-- BEGIN_TF_DOCS -->
-    {{ .Content }}
+    {​{ .Content }​}
     <!-- END_TF_DOCS -->
 
 sort:

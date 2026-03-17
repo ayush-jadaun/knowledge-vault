@@ -281,13 +281,13 @@ function Tabs({ defaultValue = 0, value, onChange, children, className }: TabsPr
 
   return (
     <TabsContext.Provider
-      value={{
+      value={​{
         activeIndex,
         setActiveIndex,
         registerTab,
         tabs: tabsRef.current,
         baseId,
-      }}
+      }​}
     >
       <div className={cn('w-full', className)}>{children}</div>
     </TabsContext.Provider>
@@ -625,7 +625,7 @@ function Select({ value, defaultValue, onChange, children, className }: SelectPr
 
   return (
     <SelectContext.Provider
-      value={{
+      value={​{
         isOpen,
         setIsOpen,
         selectedValue,
@@ -638,7 +638,7 @@ function Select({ value, defaultValue, onChange, children, className }: SelectPr
         baseId,
         triggerRef,
         listRef,
-      }}
+      }​}
     >
       <div className={cn('relative inline-block', className)}>{children}</div>
     </SelectContext.Provider>
@@ -687,7 +687,7 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
           (ctx.triggerRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
           if (typeof externalRef === 'function') externalRef(node);
           else if (externalRef) (externalRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-        }}
+        }​}
         type="button"
         role="combobox"
         aria-expanded={ctx.isOpen}
@@ -800,7 +800,7 @@ const SelectContent = forwardRef<HTMLUListElement, SelectContentProps>(
           else if (externalRef) (externalRef as React.MutableRefObject<HTMLUListElement | null>).current = node;
           // Auto-focus the list when it opens
           node?.focus();
-        }}
+        }​}
         id={`${ctx.baseId}-listbox`}
         role="listbox"
         tabIndex={-1}
@@ -1058,7 +1058,7 @@ function Listbox<T>({
   children,
 }: ListboxProps<T>) {
   return (
-    <ListboxContext.Provider value={{ selectedValue: value, onChange, compare }}>
+    <ListboxContext.Provider value={​{ selectedValue: value, onChange, compare }​}>
       <div role="listbox">{children}</div>
     </ListboxContext.Provider>
   );
@@ -1106,7 +1106,7 @@ function UserListbox() {
       onChange={setSelected}
       compare={(a, b) => a.id === b.id}
     >
-      <ListboxOption value={{ id: '1', name: 'Alice', email: 'alice@example.com' }}>
+      <ListboxOption value={​{ id: '1', name: 'Alice', email: 'alice@example.com' }​}>
         {({ selected }) => (
           <div className="flex items-center gap-2">
             <span>{selected ? '\u2713' : ' '}</span>
@@ -1114,7 +1114,7 @@ function UserListbox() {
           </div>
         )}
       </ListboxOption>
-      <ListboxOption value={{ id: '2', name: 'Bob', email: 'bob@example.com' }}>
+      <ListboxOption value={​{ id: '2', name: 'Bob', email: 'bob@example.com' }​}>
         {({ selected }) => (
           <div className="flex items-center gap-2">
             <span>{selected ? '\u2713' : ' '}</span>
@@ -1298,7 +1298,7 @@ function Accordion({
   );
 
   return (
-    <AccordionContext.Provider value={{ expandedItems, toggleItem, type }}>
+    <AccordionContext.Provider value={​{ expandedItems, toggleItem, type }​}>
       <div className={cn('divide-y rounded-md border', className)}>{children}</div>
     </AccordionContext.Provider>
   );
@@ -1322,7 +1322,7 @@ const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(
     const contentId = `${baseId}-content`;
 
     return (
-      <AccordionItemContext.Provider value={{ value, isOpen, triggerId, contentId, disabled }}>
+      <AccordionItemContext.Provider value={​{ value, isOpen, triggerId, contentId, disabled }​}>
         <div
           ref={ref}
           data-state={isOpen ? 'open' : 'closed'}

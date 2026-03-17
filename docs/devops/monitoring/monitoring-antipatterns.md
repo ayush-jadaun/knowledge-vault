@@ -388,7 +388,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "{{ $labels.job }} is down"
+          summary: "{​{ $labels.job }​} is down"
 
       # 2. Error rate is elevated
       - alert: HighErrorRate
@@ -399,7 +399,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Error rate above 5% for {{ $labels.job }}"
+          summary: "Error rate above 5% for {​{ $labels.job }​}"
 
       # 3. Latency is elevated
       - alert: HighLatency
@@ -411,7 +411,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "P95 latency above 1s for {{ $labels.job }}"
+          summary: "P95 latency above 1s for {​{ $labels.job }​}"
 
       # 4. Resource exhaustion approaching
       - alert: DiskSpaceLow
@@ -422,7 +422,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "Disk usage above 85% on {{ $labels.instance }}"
+          summary: "Disk usage above 85% on {​{ $labels.instance }​}"
 ```
 
 **Rule of thumb:** If you have a dashboard panel, ask "what value on this panel would make me take action?" That value is your alert threshold.

@@ -252,7 +252,7 @@ Annotations overlay events on time series panels, providing context for metric c
         "expr": "changes(process_start_time_seconds{job=\"$job\"}[2m]) > 0",
         "step": "60s",
         "titleFormat": "Deploy",
-        "textFormat": "{{ $labels.instance }} restarted"
+        "textFormat": "{​{ $labels.instance }​} restarted"
       },
       {
         "name": "Alerts",
@@ -261,8 +261,8 @@ Annotations overlay events on time series panels, providing context for metric c
         "iconColor": "#F2495C",
         "expr": "ALERTS{alertstate=\"firing\", job=\"$job\"}",
         "step": "60s",
-        "titleFormat": "{{ $labels.alertname }}",
-        "textFormat": "Severity: {{ $labels.severity }}"
+        "titleFormat": "{​{ $labels.alertname }​}",
+        "textFormat": "Severity: {​{ $labels.severity }​}"
       }
     ]
   }
@@ -417,7 +417,7 @@ datasources:
         "targets": [
           {
             "expr": "up{job=\"$job\"}",
-            "legendFormat": "{{ instance }}"
+            "legendFormat": "{​{ instance }​}"
           }
         ],
         "fieldConfig": {
@@ -571,7 +571,7 @@ datasources:
         "targets": [
           {
             "expr": "sum(rate(http_requests_total{job=\"$job\"}[5m])) by (route)",
-            "legendFormat": "{{ route }}"
+            "legendFormat": "{​{ route }​}"
           }
         ],
         "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10, "stacking": { "mode": "none" } } } }
@@ -584,7 +584,7 @@ datasources:
         "targets": [
           {
             "expr": "sum(rate(http_requests_total{job=\"$job\", status_code=~\"5..\"}[5m])) by (route) / sum(rate(http_requests_total{job=\"$job\"}[5m])) by (route) * 100",
-            "legendFormat": "{{ route }}"
+            "legendFormat": "{​{ route }​}"
           }
         ],
         "fieldConfig": { "defaults": { "unit": "percent", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10, "thresholdsStyle": { "mode": "line" } }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 5 }] } } }
@@ -618,7 +618,7 @@ datasources:
         "targets": [
           {
             "expr": "sum(increase(http_request_duration_seconds_bucket{job=\"$job\"}[$__rate_interval])) by (le)",
-            "legendFormat": "{{ le }}",
+            "legendFormat": "{​{ le }​}",
             "format": "heatmap"
           }
         ],
@@ -632,11 +632,11 @@ datasources:
         "targets": [
           {
             "expr": "nodejs_heap_size_used_bytes{job=\"$job\", instance=~\"$instance\"}",
-            "legendFormat": "{{ instance }} used"
+            "legendFormat": "{​{ instance }​} used"
           },
           {
             "expr": "nodejs_heap_size_total_bytes{job=\"$job\", instance=~\"$instance\"}",
-            "legendFormat": "{{ instance }} total"
+            "legendFormat": "{​{ instance }​} total"
           }
         ],
         "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 } } }
@@ -649,7 +649,7 @@ datasources:
         "targets": [
           {
             "expr": "nodejs_eventloop_lag_seconds{job=\"$job\", instance=~\"$instance\"}",
-            "legendFormat": "{{ instance }}"
+            "legendFormat": "{​{ instance }​}"
           }
         ],
         "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 0.1 }] } } }
@@ -662,11 +662,11 @@ datasources:
         "targets": [
           {
             "expr": "nodejs_active_handles_total{job=\"$job\", instance=~\"$instance\"}",
-            "legendFormat": "{{ instance }} handles"
+            "legendFormat": "{​{ instance }​} handles"
           },
           {
             "expr": "nodejs_active_requests_total{job=\"$job\", instance=~\"$instance\"}",
-            "legendFormat": "{{ instance }} requests"
+            "legendFormat": "{​{ instance }​} requests"
           }
         ],
         "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 } } }
@@ -679,7 +679,7 @@ datasources:
         "targets": [
           {
             "expr": "rate(nodejs_gc_duration_seconds_sum{job=\"$job\"}[5m])",
-            "legendFormat": "{{ instance }} {{ kind }}"
+            "legendFormat": "{​{ instance }​} {​{ kind }​}"
           }
         ],
         "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 } } }
@@ -692,7 +692,7 @@ datasources:
         "targets": [
           {
             "expr": "sum(rate(http_requests_total{job=\"$job\"}[5m])) by (status_code)",
-            "legendFormat": "{{ status_code }}"
+            "legendFormat": "{​{ status_code }​}"
           }
         ],
         "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "drawStyle": "bars", "lineWidth": 1, "fillOpacity": 80, "stacking": { "mode": "normal" } } } },
@@ -797,8 +797,8 @@ datasources:
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
         "targets": [
-          { "expr": "rate(pg_stat_database_xact_commit{instance=\"$instance\"}[5m])", "legendFormat": "{{ datname }} commits/s" },
-          { "expr": "rate(pg_stat_database_xact_rollback{instance=\"$instance\"}[5m])", "legendFormat": "{{ datname }} rollbacks/s" }
+          { "expr": "rate(pg_stat_database_xact_commit{instance=\"$instance\"}[5m])", "legendFormat": "{​{ datname }​} commits/s" },
+          { "expr": "rate(pg_stat_database_xact_rollback{instance=\"$instance\"}[5m])", "legendFormat": "{​{ datname }​} rollbacks/s" }
         ],
         "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 } } }
       },
@@ -808,10 +808,10 @@ datasources:
         "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
         "targets": [
-          { "expr": "rate(pg_stat_database_tup_fetched{instance=\"$instance\"}[5m])", "legendFormat": "{{ datname }} fetched" },
-          { "expr": "rate(pg_stat_database_tup_inserted{instance=\"$instance\"}[5m])", "legendFormat": "{{ datname }} inserted" },
-          { "expr": "rate(pg_stat_database_tup_updated{instance=\"$instance\"}[5m])", "legendFormat": "{{ datname }} updated" },
-          { "expr": "rate(pg_stat_database_tup_deleted{instance=\"$instance\"}[5m])", "legendFormat": "{{ datname }} deleted" }
+          { "expr": "rate(pg_stat_database_tup_fetched{instance=\"$instance\"}[5m])", "legendFormat": "{​{ datname }​} fetched" },
+          { "expr": "rate(pg_stat_database_tup_inserted{instance=\"$instance\"}[5m])", "legendFormat": "{​{ datname }​} inserted" },
+          { "expr": "rate(pg_stat_database_tup_updated{instance=\"$instance\"}[5m])", "legendFormat": "{​{ datname }​} updated" },
+          { "expr": "rate(pg_stat_database_tup_deleted{instance=\"$instance\"}[5m])", "legendFormat": "{​{ datname }​} deleted" }
         ],
         "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 } } }
       },
@@ -829,7 +829,7 @@ datasources:
         "gridPos": { "h": 6, "w": 8, "x": 8, "y": 12 },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
         "targets": [
-          { "expr": "pg_stat_activity_count{instance=\"$instance\"}", "legendFormat": "{{ state }}" }
+          { "expr": "pg_stat_activity_count{instance=\"$instance\"}", "legendFormat": "{​{ state }​}" }
         ],
         "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20, "stacking": { "mode": "normal" } } } }
       },
@@ -839,7 +839,7 @@ datasources:
         "gridPos": { "h": 6, "w": 8, "x": 16, "y": 12 },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
         "targets": [
-          { "expr": "pg_locks_count{instance=\"$instance\"}", "legendFormat": "{{ mode }}" }
+          { "expr": "pg_locks_count{instance=\"$instance\"}", "legendFormat": "{​{ mode }​}" }
         ],
         "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 } } }
       },
@@ -849,8 +849,8 @@ datasources:
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
         "targets": [
-          { "expr": "histogram_quantile(0.95, sum(rate(db_query_duration_seconds_bucket{instance=~\"$instance\"}[5m])) by (le, operation))", "legendFormat": "p95 {{ operation }}" },
-          { "expr": "histogram_quantile(0.99, sum(rate(db_query_duration_seconds_bucket{instance=~\"$instance\"}[5m])) by (le, operation))", "legendFormat": "p99 {{ operation }}" }
+          { "expr": "histogram_quantile(0.95, sum(rate(db_query_duration_seconds_bucket{instance=~\"$instance\"}[5m])) by (le, operation))", "legendFormat": "p95 {​{ operation }​}" },
+          { "expr": "histogram_quantile(0.99, sum(rate(db_query_duration_seconds_bucket{instance=~\"$instance\"}[5m])) by (le, operation))", "legendFormat": "p99 {​{ operation }​}" }
         ],
         "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 5 } } }
       },
@@ -860,7 +860,7 @@ datasources:
         "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
         "targets": [
-          { "expr": "pg_database_size_bytes{instance=\"$instance\"}", "legendFormat": "{{ datname }}" }
+          { "expr": "pg_database_size_bytes{instance=\"$instance\"}", "legendFormat": "{​{ datname }​}" }
         ],
         "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 } } }
       }
@@ -967,7 +967,7 @@ datasources:
         "type": "timeseries",
         "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
         "targets": [
-          { "expr": "rate(redis_commands_duration_seconds_total{instance=\"$instance\"}[5m]) / rate(redis_commands_total{instance=\"$instance\"}[5m])", "legendFormat": "{{ cmd }} avg" }
+          { "expr": "rate(redis_commands_duration_seconds_total{instance=\"$instance\"}[5m]) / rate(redis_commands_total{instance=\"$instance\"}[5m])", "legendFormat": "{​{ cmd }​} avg" }
         ],
         "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 5 } } }
       }
@@ -1046,14 +1046,14 @@ datasources:
         "title": "Messages In per Topic",
         "type": "timeseries",
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
-        "targets": [{ "expr": "sum(rate(kafka_server_brokertopicmetrics_messagesin_total{cluster=\"$cluster\", topic=~\"$topic\"}[5m])) by (topic)", "legendFormat": "{{ topic }}" }],
+        "targets": [{ "expr": "sum(rate(kafka_server_brokertopicmetrics_messagesin_total{cluster=\"$cluster\", topic=~\"$topic\"}[5m])) by (topic)", "legendFormat": "{​{ topic }​}" }],
         "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 } } }
       },
       {
         "title": "Consumer Lag by Group",
         "type": "timeseries",
         "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
-        "targets": [{ "expr": "sum(kafka_consumergroup_lag{cluster=\"$cluster\", topic=~\"$topic\"}) by (consumergroup)", "legendFormat": "{{ consumergroup }}" }],
+        "targets": [{ "expr": "sum(kafka_consumergroup_lag{cluster=\"$cluster\", topic=~\"$topic\"}) by (consumergroup)", "legendFormat": "{​{ consumergroup }​}" }],
         "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 } } }
       },
       {
@@ -1061,8 +1061,8 @@ datasources:
         "type": "timeseries",
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
         "targets": [
-          { "expr": "rate(kafka_server_brokertopicmetrics_bytesin_total{cluster=\"$cluster\"}[5m])", "legendFormat": "{{ instance }} in" },
-          { "expr": "rate(kafka_server_brokertopicmetrics_bytesout_total{cluster=\"$cluster\"}[5m])", "legendFormat": "{{ instance }} out" }
+          { "expr": "rate(kafka_server_brokertopicmetrics_bytesin_total{cluster=\"$cluster\"}[5m])", "legendFormat": "{​{ instance }​} in" },
+          { "expr": "rate(kafka_server_brokertopicmetrics_bytesout_total{cluster=\"$cluster\"}[5m])", "legendFormat": "{​{ instance }​} out" }
         ],
         "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 } } }
       },
@@ -1070,7 +1070,7 @@ datasources:
         "title": "Request Handler Idle %",
         "type": "timeseries",
         "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
-        "targets": [{ "expr": "kafka_server_kafkarequesthandlerpool_requesthandleravgidlepercent_count{cluster=\"$cluster\"}", "legendFormat": "{{ instance }}" }],
+        "targets": [{ "expr": "kafka_server_kafkarequesthandlerpool_requesthandleravgidlepercent_count{cluster=\"$cluster\"}", "legendFormat": "{​{ instance }​}" }],
         "fieldConfig": { "defaults": { "unit": "percentunit", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 }, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 0.3 }, { "color": "green", "value": 0.7 }] } } }
       }
     ],
@@ -1148,14 +1148,14 @@ datasources:
         "title": "CPU Usage by Namespace",
         "type": "timeseries",
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
-        "targets": [{ "expr": "sum(rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=~\"$namespace\", container!=\"\"}[5m])) by (namespace)", "legendFormat": "{{ namespace }}" }],
+        "targets": [{ "expr": "sum(rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=~\"$namespace\", container!=\"\"}[5m])) by (namespace)", "legendFormat": "{​{ namespace }​}" }],
         "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20, "stacking": { "mode": "normal" } } } }
       },
       {
         "title": "Memory Usage by Namespace",
         "type": "timeseries",
         "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
-        "targets": [{ "expr": "sum(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=~\"$namespace\", container!=\"\"}) by (namespace)", "legendFormat": "{{ namespace }}" }],
+        "targets": [{ "expr": "sum(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=~\"$namespace\", container!=\"\"}) by (namespace)", "legendFormat": "{​{ namespace }​}" }],
         "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20, "stacking": { "mode": "normal" } } } }
       },
       {
@@ -1174,28 +1174,28 @@ datasources:
         "title": "Top Pods by CPU",
         "type": "timeseries",
         "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
-        "targets": [{ "expr": "topk(10, sum(rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=~\"$namespace\", container!=\"\"}[5m])) by (pod))", "legendFormat": "{{ pod }}" }],
+        "targets": [{ "expr": "topk(10, sum(rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=~\"$namespace\", container!=\"\"}[5m])) by (pod))", "legendFormat": "{​{ pod }​}" }],
         "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 5 } } }
       },
       {
         "title": "Node CPU Usage",
         "type": "timeseries",
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
-        "targets": [{ "expr": "100 - (avg by (node) (irate(node_cpu_seconds_total{cluster=\"$cluster\", mode=\"idle\"}[5m])) * 100)", "legendFormat": "{{ node }}" }],
+        "targets": [{ "expr": "100 - (avg by (node) (irate(node_cpu_seconds_total{cluster=\"$cluster\", mode=\"idle\"}[5m])) * 100)", "legendFormat": "{​{ node }​}" }],
         "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 } } }
       },
       {
         "title": "Node Memory Usage",
         "type": "timeseries",
         "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
-        "targets": [{ "expr": "(1 - node_memory_MemAvailable_bytes{cluster=\"$cluster\"} / node_memory_MemTotal_bytes{cluster=\"$cluster\"}) * 100", "legendFormat": "{{ node }}" }],
+        "targets": [{ "expr": "(1 - node_memory_MemAvailable_bytes{cluster=\"$cluster\"} / node_memory_MemTotal_bytes{cluster=\"$cluster\"}) * 100", "legendFormat": "{​{ node }​}" }],
         "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 } } }
       },
       {
         "title": "OOM Kills",
         "type": "timeseries",
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
-        "targets": [{ "expr": "increase(kube_pod_container_status_last_terminated_reason{cluster=\"$cluster\", namespace=~\"$namespace\", reason=\"OOMKilled\"}[1h])", "legendFormat": "{{ pod }}" }],
+        "targets": [{ "expr": "increase(kube_pod_container_status_last_terminated_reason{cluster=\"$cluster\", namespace=~\"$namespace\", reason=\"OOMKilled\"}[1h])", "legendFormat": "{​{ pod }​}" }],
         "fieldConfig": { "defaults": { "custom": { "drawStyle": "bars", "lineWidth": 1, "fillOpacity": 80 } } }
       },
       {
