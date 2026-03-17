@@ -16,6 +16,7 @@ export default withMermaid(
       ['meta', { property: 'og:description', content: 'The most comprehensive engineering knowledge base — from first principles to research-level depth' }],
     ],
 
+    ignoreDeadLinks: true,
     lastUpdated: true,
     cleanUrls: true,
 
