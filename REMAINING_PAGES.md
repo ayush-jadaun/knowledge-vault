@@ -2,7 +2,7 @@
 
 **Project:** `E:\Web dev\projects\knowledge-vault\`
 **Built with:** VitePress + Mermaid + KaTeX
-**Current state:** 167 docs written (~135,000 lines), ~208 pages remaining
+**Current state:** 187 docs written (~152,000 lines), ~188 pages remaining
 **Deploy:** Vercel (`vercel.json` already configured, `ignoreDeadLinks: true` set in config)
 
 ---
@@ -60,12 +60,12 @@ The sidebar is defined in `docs/.vitepress/sidebar.ts` — if you add new subsec
 ### System Design — Message Queues (1 page)
 - [ ] `system-design/message-queues/queue-selection-guide.md` — Decision framework: Kafka vs RabbitMQ vs Redis Streams vs SQS vs NATS vs Pulsar, comparison table, decision flowchart
 
-### System Design — Networking (9 pages)
-- [ ] `system-design/networking/index.md` — Overview, concept map, why networking matters
-- [ ] `system-design/networking/tcp-ip-deep-dive.md` — TCP lifecycle, three-way handshake, congestion control, TIME_WAIT, window scaling, Nagle's algorithm
-- [ ] `system-design/networking/http2-http3.md` — HTTP/2 multiplexing, HTTP/3 QUIC, migration strategies
-- [ ] `system-design/networking/grpc-internals.md` — Protocol Buffers, gRPC over HTTP/2, four patterns, TypeScript examples
-- [ ] `system-design/networking/websockets.md` — WebSocket protocol, scaling, Socket.IO vs raw WS, reconnection strategies
+### System Design — Networking (4 pages remaining, 5 done)
+- [x] `system-design/networking/index.md` — DONE
+- [x] `system-design/networking/tcp-ip-deep-dive.md` — DONE
+- [x] `system-design/networking/http2-http3.md` — DONE
+- [x] `system-design/networking/grpc-internals.md` — DONE
+- [x] `system-design/networking/websockets.md` — DONE
 - [ ] `system-design/networking/dns-deep-dive.md` — DNS resolution, record types, DNSSEC, DNS-based load balancing
 - [ ] `system-design/networking/tls-handshake.md` — TLS 1.2 vs 1.3, certificate chain, ALPN, mTLS, Let's Encrypt
 - [ ] `system-design/networking/service-discovery.md` — Client-side vs server-side, Consul, etcd, K8s Services
@@ -74,21 +74,21 @@ The sidebar is defined in `docs/.vitepress/sidebar.ts` — if you add new subsec
 ### Architecture Patterns — Event-Driven (1 page)
 - [ ] `architecture-patterns/event-driven/eventual-consistency.md` — Patterns for handling eventual consistency in event-driven systems
 
-### Architecture Patterns — CQRS & Event Sourcing (8 pages)
-- [ ] `architecture-patterns/cqrs-event-sourcing/index.md` — Overview (200 lines)
-- [ ] `architecture-patterns/cqrs-event-sourcing/cqrs-deep-dive.md` — Separate read/write models, TypeScript implementation
-- [ ] `architecture-patterns/cqrs-event-sourcing/event-sourcing-deep-dive.md` — Events as source of truth, event store, TypeScript
-- [ ] `architecture-patterns/cqrs-event-sourcing/aggregate-design.md` — Aggregate boundaries, invariant enforcement, TypeScript aggregate root
-- [ ] `architecture-patterns/cqrs-event-sourcing/projections.md` — Building read models from events, rebuild strategy
+### Architecture Patterns — CQRS & Event Sourcing (3 pages remaining, 5 done)
+- [x] `architecture-patterns/cqrs-event-sourcing/index.md` — DONE
+- [x] `architecture-patterns/cqrs-event-sourcing/cqrs-deep-dive.md` — DONE
+- [x] `architecture-patterns/cqrs-event-sourcing/event-sourcing-deep-dive.md` — DONE
+- [x] `architecture-patterns/cqrs-event-sourcing/aggregate-design.md` — DONE
+- [x] `architecture-patterns/cqrs-event-sourcing/projections.md` — DONE
 - [ ] `architecture-patterns/cqrs-event-sourcing/snapshots.md` — Snapshot strategies, snapshot store design
 - [ ] `architecture-patterns/cqrs-event-sourcing/sagas-process-managers.md` — Long-running processes, state machines, TypeScript saga
 - [ ] `architecture-patterns/cqrs-event-sourcing/event-upcasting.md` — Schema evolution for events, upcaster chain
 
-### Architecture Patterns — Hexagonal (4 pages)
-- [ ] `architecture-patterns/hexagonal/index.md` — Overview (200 lines)
-- [ ] `architecture-patterns/hexagonal/ports-and-adapters.md` — Primary/secondary ports, adapter implementations
-- [ ] `architecture-patterns/hexagonal/dependency-inversion.md` — DIP in practice, testing with mock adapters
-- [ ] `architecture-patterns/hexagonal/typescript-implementation.md` — Complete hexagonal architecture TypeScript project
+### Architecture Patterns — Hexagonal (0 pages remaining, ALL DONE)
+- [x] `architecture-patterns/hexagonal/index.md` — DONE
+- [x] `architecture-patterns/hexagonal/ports-and-adapters.md` — DONE
+- [x] `architecture-patterns/hexagonal/dependency-inversion.md` — DONE
+- [x] `architecture-patterns/hexagonal/typescript-implementation.md` — DONE
 
 ### Architecture Patterns — Clean Architecture (5 pages)
 - [ ] `architecture-patterns/clean-architecture/index.md` — Overview (200 lines)
@@ -97,18 +97,18 @@ The sidebar is defined in `docs/.vitepress/sidebar.ts` — if you add new subsec
 - [ ] `architecture-patterns/clean-architecture/entities-vs-models.md` — Domain entities vs persistence vs API models
 - [ ] `architecture-patterns/clean-architecture/typescript-implementation.md` — Complete clean architecture TypeScript project
 
-### Architecture Patterns — DDD (7 pages)
-- [ ] `architecture-patterns/domain-driven-design/index.md` — Overview (200 lines)
-- [ ] `architecture-patterns/domain-driven-design/strategic-design.md` — Bounded contexts, context mapping
-- [ ] `architecture-patterns/domain-driven-design/tactical-design.md` — Entities, value objects, aggregates, repositories
-- [ ] `architecture-patterns/domain-driven-design/domain-events.md` — Raising and handling domain events
+### Architecture Patterns — DDD (3 pages remaining, 4 done)
+- [x] `architecture-patterns/domain-driven-design/index.md` — DONE
+- [x] `architecture-patterns/domain-driven-design/strategic-design.md` — DONE
+- [x] `architecture-patterns/domain-driven-design/tactical-design.md` — DONE
+- [x] `architecture-patterns/domain-driven-design/domain-events.md` — DONE
 - [ ] `architecture-patterns/domain-driven-design/anti-corruption-layer.md` — ACL implementation
 - [ ] `architecture-patterns/domain-driven-design/specification-pattern.md` — Business rules as specifications
 - [ ] `architecture-patterns/domain-driven-design/typescript-implementation.md` — Complete DDD TypeScript project
 
-### Infrastructure — Kubernetes (7 pages)
-- [ ] `infrastructure/kubernetes/network-policies.md` — Default deny, namespace isolation, Calico vs Cilium
-- [ ] `infrastructure/kubernetes/rbac.md` — Roles, ClusterRoles, ServiceAccounts, OIDC
+### Infrastructure — Kubernetes (5 pages remaining, 2 done)
+- [x] `infrastructure/kubernetes/network-policies.md` — DONE
+- [x] `infrastructure/kubernetes/rbac.md` — DONE
 - [ ] `infrastructure/kubernetes/secrets-management.md` — sealed-secrets, external-secrets-operator, CSI driver
 - [ ] `infrastructure/kubernetes/helm-charts.md` — Chart structure, values, hooks, Helmfile
 - [ ] `infrastructure/kubernetes/operators.md` — Operator pattern, CRDs, controller pattern, Operator SDK
@@ -124,9 +124,9 @@ The sidebar is defined in `docs/.vitepress/sidebar.ts` — if you add new subsec
 - [ ] `infrastructure/docker/compose-patterns.md` — Dev/staging/prod compose patterns
 - [ ] `infrastructure/docker/image-optimization.md` — Layer caching, .dockerignore, dive
 
-### Infrastructure — AWS (10 pages)
-- [ ] `infrastructure/aws/index.md` — Overview
-- [ ] `infrastructure/aws/vpc-networking.md` — CIDR planning, NAT gateway, Transit Gateway, PrivateLink
+### Infrastructure — AWS (8 pages remaining, 2 done)
+- [x] `infrastructure/aws/index.md` — DONE
+- [x] `infrastructure/aws/vpc-networking.md` — DONE
 - [ ] `infrastructure/aws/ecs-vs-eks.md` — ECS Fargate vs EKS, decision framework
 - [ ] `infrastructure/aws/rds-aurora.md` — Multi-AZ, Aurora architecture, Performance Insights
 - [ ] `infrastructure/aws/elasticache.md` — Redis vs Memcached, cluster mode, failover
@@ -397,19 +397,20 @@ The sidebar is defined in `docs/.vitepress/sidebar.ts` — if you add new subsec
 
 ---
 
-## SUMMARY
+## SUMMARY (Updated 2026-03-17)
 
-| Category | Remaining Pages |
-|----------|----------------|
-| System Design (networking, LB, MQ) | 12 |
-| Architecture Patterns | 25 |
-| Infrastructure | 44 |
-| Security | 28 |
-| DevOps | 20 |
-| Performance | 18 |
-| Data Engineering | 17 |
-| Prompt Engineering | 18 |
-| UI & Design Systems | 32 |
-| Production Blueprints | 40 |
-| Companion Code | ~17 files |
-| **TOTAL** | **~254 pages + ~17 code files** |
+| Category | Remaining | Done This Round |
+|----------|-----------|-----------------|
+| System Design (networking, LB, MQ) | 7 | 5 (networking) |
+| Architecture Patterns | 11 | 14 (CQRS 5, Hexagonal 4, DDD 4, event-driven 1) |
+| Infrastructure | 40 | 4 (AWS 2, K8s 2) |
+| Security | 28 | 0 |
+| DevOps | 20 | 0 |
+| Performance | 18 | 0 |
+| Data Engineering | 17 | 0 |
+| Prompt Engineering | 18 | 0 |
+| UI & Design Systems | 32 | 0 |
+| Production Blueprints | 40 | 0 |
+| Clean Architecture | 5 | 0 |
+| Companion Code | ~17 files | 0 |
+| **TOTAL** | **~236 pages + ~17 code files** | **20 pages completed** |
