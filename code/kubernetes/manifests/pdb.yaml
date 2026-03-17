@@ -1,0 +1,33 @@
+# =============================================================================
+# PodDisruptionBudget — Availability During Maintenance
+# =============================================================================
+# Ensures at least a minimum number of pods remain available during
+# voluntary disruptions (node drains, cluster upgrades, etc.).
+#
+# With minAvailable: 2, Kubernetes will not evict pods if it would
+# bring the available count below 2.
+# =============================================================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: myapp
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/component: server
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  # Ensure at least 2 pods are always available during disruptions.
+  # Alternative: use maxUnavailable: 1 to allow at most 1 pod to be unavailable.
+  minAvailable: 2
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: myapp
+      app.kubernetes.io/component: server
+
+  # Kubernetes 1.27+: unhealthyPodEvictionPolicy controls how unhealthy
+  # pods are handled during disruptions.
+  # "AlwaysAllow" — unhealthy pods can be evicted regardless of the budget
+  # This prevents stuck rollouts when pods are crash-looping.
+  # unhealthyPodEvictionPolicy: AlwaysAllow

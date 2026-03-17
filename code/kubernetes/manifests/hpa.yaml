@@ -1,0 +1,84 @@
+# =============================================================================
+# HorizontalPodAutoscaler — Auto-scaling based on metrics
+# =============================================================================
+# Scales pods based on:
+#   - CPU utilization (target: 70%)
+#   - Memory utilization (target: 80%)
+#   - Custom metrics (HTTP requests per second via Prometheus adapter)
+#
+# Requires: metrics-server (for CPU/memory) and prometheus-adapter
+# (for custom metrics) to be installed in the cluster.
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: myapp
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/component: server
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: myapp
+
+  # Replica bounds
+  minReplicas: 3
+  maxReplicas: 20
+
+  # ---------------------------------------------------------------------------
+  # Scaling metrics
+  # ---------------------------------------------------------------------------
+  metrics:
+    # CPU utilization — scale up at 70%
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+    # Memory utilization — scale up at 80%
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+    # Custom metric — HTTP requests per second (via prometheus-adapter)
+    # Uncomment if prometheus-adapter is configured
+    # - type: Pods
+    #   pods:
+    #     metric:
+    #       name: http_requests_per_second
+    #     target:
+    #       type: AverageValue
+    #       averageValue: "100"
+
+  # ---------------------------------------------------------------------------
+  # Scaling behavior — control scale up/down speed
+  # ---------------------------------------------------------------------------
+  behavior:
+    # Scale up quickly when needed
+    scaleUp:
+      stabilizationWindowSeconds: 60   # Wait 60s before scaling up again
+      policies:
+        - type: Pods
+          value: 4                     # Add up to 4 pods at a time
+          periodSeconds: 60
+        - type: Percent
+          value: 100                   # Or double the current count
+          periodSeconds: 60
+      selectPolicy: Max                # Use whichever policy adds more pods
+
+    # Scale down slowly to avoid flapping
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Wait 5 min before scaling down
+      policies:
+        - type: Pods
+          value: 1                     # Remove 1 pod at a time
+          periodSeconds: 120
+      selectPolicy: Min                # Conservative scale-down

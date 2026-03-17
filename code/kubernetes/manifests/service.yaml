@@ -1,0 +1,32 @@
+# =============================================================================
+# Service — Internal Load Balancer (ClusterIP)
+# =============================================================================
+# Exposes the application within the cluster. The Ingress controller
+# routes external traffic to this service.
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/component: server
+    app.kubernetes.io/managed-by: kubectl
+  annotations:
+    # Prometheus service discovery
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3000"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/component: server
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http  # References the named port in the deployment
+  # Session affinity — set to ClientIP if your app needs sticky sessions
+  sessionAffinity: None

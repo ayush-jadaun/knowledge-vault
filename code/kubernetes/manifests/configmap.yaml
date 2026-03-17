@@ -1,0 +1,64 @@
+# =============================================================================
+# ConfigMap — Non-sensitive Application Configuration
+# =============================================================================
+# Stores environment-specific configuration that is NOT secret.
+# Mounted as environment variables in the deployment.
+#
+# For sensitive data (passwords, API keys), use the Secret resource instead.
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myapp-config
+  namespace: myapp
+  labels:
+    app.kubernetes.io/name: myapp
+    app.kubernetes.io/component: config
+    app.kubernetes.io/managed-by: kubectl
+data:
+  # ---------------------------------------------------------------------------
+  # Application settings
+  # ---------------------------------------------------------------------------
+  NODE_ENV: "production"
+  PORT: "3000"
+  LOG_LEVEL: "warn"
+  LOG_FORMAT: "json"
+
+  # ---------------------------------------------------------------------------
+  # Database settings (non-sensitive)
+  # ---------------------------------------------------------------------------
+  DB_HOST: "postgres.myapp.svc.cluster.local"
+  DB_PORT: "5432"
+  DB_NAME: "myappdb"
+  DB_POOL_MIN: "2"
+  DB_POOL_MAX: "20"
+  DB_SSL: "true"
+
+  # ---------------------------------------------------------------------------
+  # Redis settings (non-sensitive)
+  # ---------------------------------------------------------------------------
+  REDIS_HOST: "redis.myapp.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  REDIS_KEY_PREFIX: "myapp:"
+
+  # ---------------------------------------------------------------------------
+  # CORS and security
+  # ---------------------------------------------------------------------------
+  CORS_ORIGIN: "https://myapp.com,https://www.myapp.com"
+  CORS_CREDENTIALS: "true"
+  RATE_LIMIT_MAX: "100"
+  RATE_LIMIT_WINDOW_MS: "60000"
+
+  # ---------------------------------------------------------------------------
+  # Feature flags
+  # ---------------------------------------------------------------------------
+  FEATURE_REGISTRATION: "true"
+  FEATURE_OAUTH: "true"
+  FEATURE_WEBSOCKETS: "false"
+
+  # ---------------------------------------------------------------------------
+  # External service URLs (non-sensitive)
+  # ---------------------------------------------------------------------------
+  CDN_URL: "https://static.myapp.com"
+  FRONTEND_URL: "https://myapp.com"
