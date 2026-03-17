@@ -471,6 +471,91 @@ Like Raft, VR can batch multiple client requests into a single PREPARE message. 
 
 The primary can send multiple PREPARE messages without waiting for PREPAREOK from previous ones. This overlaps network latency across multiple operations and significantly improves throughput under load.
 
+### Fast Reads
+
+VR, like Raft, requires reads to go through the primary to ensure linearizability. The primary must confirm it is still the primary before reading. Two options:
+
+1. **Read through the log**: Treat the read as a regular operation. Assign an op-number, replicate via PREPARE, wait for quorum PREPAREOK, then execute the read and return the result. This guarantees linearizability but adds one round trip of latency.
+
+2. **Lease-based reads**: The primary maintains a lease — a time-bounded guarantee that no view change will occur. During the lease, the primary can read directly from its state machine without replication. This requires bounded clock skew and is vulnerable to clock anomalies.
+
+## Correctness Argument
+
+VR's correctness rests on two claims:
+
+### Safety: No Two Different Values Are Committed at the Same Op-Number
+
+Proof sketch:
+
+1. An operation is committed when the primary receives PREPAREOK from $f$ backups, totaling $f + 1$ replicas (including the primary).
+2. During a view change, the new primary collects DOVIEWCHANGE from $f + 1$ replicas.
+3. The committed quorum ($f + 1$) and the view change quorum ($f + 1$) must overlap in at least one replica (since $2(f + 1) > 2f + 1 = n$).
+4. That overlapping replica has the committed operation in its log.
+5. The new primary selects the log with the highest `lastNormalView` (and highest op-number as tiebreak) from the DOVIEWCHANGE messages. Since the overlapping replica's log contains the committed operation, and its `lastNormalView` is at least as high as the view in which the operation was committed, the new primary's selected log will include the committed operation.
+6. Therefore, committed operations survive view changes and are never overwritten.
+
+### Liveness: Eventually an Operation Is Committed
+
+Under partial synchrony (after some unknown time GST, all messages are delivered within a bounded delay):
+
+1. After GST, all replicas can detect the primary's failure (or lack thereof) within a bounded time.
+2. If the primary has failed, the view change protocol will eventually complete because:
+   - All correct replicas will timeout and send STARTVIEWCHANGE.
+   - The new primary will collect enough DOVIEWCHANGE messages (from the $f + 1$ correct replicas among $2f + 1$ total).
+   - The new primary will send STARTVIEW and begin normal operation.
+3. Once a correct primary is established, operations are committed within two message delays (PREPARE + PREPAREOK).
+
+Note that before GST, liveness is not guaranteed. This is consistent with the FLP impossibility result: no deterministic protocol can guarantee liveness in a fully asynchronous system.
+
+## Detailed View Change Example
+
+Consider a 5-replica system where R2 is the primary in view 2. R2 crashes.
+
+```
+Initial state (view 2, R2 is primary):
+
+  R0: log = [op1, op2, op3, op4],       commit = 3, view = 2
+  R1: log = [op1, op2, op3, op4, op5],   commit = 4, view = 2
+  R2: CRASHED (was primary, had log up to op5, commit = 4)
+  R3: log = [op1, op2, op3, op4],       commit = 3, view = 2
+  R4: log = [op1, op2, op3],            commit = 3, view = 2
+
+Note: op5 was committed (R1, R2, R3 had op4, but only R1 and R2 had op5).
+Wait — was op5 committed? R2 needed f=2 PREPAREOKs. R1 sent PREPAREOK.
+Did anyone else? If only R1, then op5 was NOT committed.
+Let's say R1 sent PREPAREOK for op5 but no one else did. op5 is NOT committed.
+
+View change to view 3 (R3 is new primary, since 3 mod 5 = 3):
+
+Step 1: R0, R1, R3, R4 timeout and send STARTVIEWCHANGE(view=3)
+
+Step 2: R3 (new primary) collects f=2 STARTVIEWCHANGE messages.
+
+Step 3: R3 collects DOVIEWCHANGE from f+1=3 replicas (including itself):
+
+  R0: DOVIEWCHANGE(view=3, log=[op1..op4], lastNormalView=2, op=4, commit=3)
+  R1: DOVIEWCHANGE(view=3, log=[op1..op5], lastNormalView=2, op=5, commit=4)
+  R3: DOVIEWCHANGE(view=3, log=[op1..op4], lastNormalView=2, op=4, commit=3)
+
+Step 4: R3 selects the log with highest lastNormalView = 2 (tie).
+        Tiebreak: highest op-number = 5 (R1's log).
+        R3 adopts R1's log: [op1..op5].
+        R3 sets op-number = 5, commit = 4 (highest commit among DOVIEWCHANGE).
+        R3 executes ops up to commit 4.
+
+Step 5: R3 sends STARTVIEW(view=3, log=[op1..op5], op=5, commit=4) to all.
+
+Step 6: R0 and R4 adopt the new log. R1's log already matches.
+        R0 and R4 send PREPAREOK(view=3, op=5) for the uncommitted op5.
+
+Step 7: R3 now has PREPAREOKs for op5 from R0, R1, R4 (f=2 PREPAREOKs).
+        op5 is now committed. R3 can execute it.
+
+Result: op5 was not committed before the view change, but it was in R1's log.
+        The view change preserved it and eventually committed it.
+        This is safe because op5 was a valid operation from the old primary.
+```
+
 ## References
 
 1. Oki, B. M., & Liskov, B. H. (1988). "Viewstamped Replication: A New Primary Copy Method to Support Highly-Available Distributed Systems." *PODC*.

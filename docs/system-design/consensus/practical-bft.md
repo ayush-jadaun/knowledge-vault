@@ -533,6 +533,89 @@ Several trends are shaping the evolution of BFT protocols:
 
 4. **Post-quantum BFT**: As quantum computers threaten classical cryptographic primitives (ECDSA, RSA), BFT protocols must transition to post-quantum signature schemes. This is an active area of research with significant performance implications.
 
+## PBFT Worked Example
+
+To solidify understanding, here is a complete trace of PBFT with $n = 4$ ($f = 1$). Replicas are R0 (primary), R1, R2, R3. R3 is Byzantine.
+
+```
+Client sends: REQUEST(op="TRANSFER $100 A→B", timestamp=42, client=C1)
+
+=== PRE-PREPARE ===
+R0 (primary) assigns sequence number n=7, view v=0.
+R0 computes digest d = SHA256("TRANSFER $100 A→B").
+R0 → R1: PRE-PREPARE(v=0, n=7, d)
+R0 → R2: PRE-PREPARE(v=0, n=7, d)
+R0 → R3: PRE-PREPARE(v=0, n=7, d)
+
+R1 checks: signature valid? view matches? no conflicting pre-prepare for (0,7)? YES.
+R2 checks: same. YES.
+R3 is Byzantine: accepts but will try to cause trouble later.
+
+=== PREPARE ===
+R1 → R0,R2,R3: PREPARE(v=0, n=7, d, i=1)
+R2 → R0,R1,R3: PREPARE(v=0, n=7, d, i=2)
+R3 → R0,R1,R2: PREPARE(v=0, n=7, d', i=3)  ← Byzantine! Sends wrong digest d'
+
+R0 collects: PRE-PREPARE(0,7,d) + PREPARE from R1(d) + PREPARE from R2(d)
+  → 2f matching prepares. PREPARED.
+R1 collects: PRE-PREPARE(0,7,d) + own PREPARE(d) + PREPARE from R2(d)
+  → 2f matching prepares. PREPARED.
+  (R3's prepare has wrong digest d', so R1 ignores it.)
+R2 collects: similarly. PREPARED.
+
+=== COMMIT ===
+R0 → R1,R2,R3: COMMIT(v=0, n=7, d, i=0)
+R1 → R0,R2,R3: COMMIT(v=0, n=7, d, i=1)
+R2 → R0,R1,R3: COMMIT(v=0, n=7, d, i=2)
+R3 → nobody: (Byzantine, refuses to send COMMIT)
+
+R0 collects: own COMMIT + COMMIT from R1 + COMMIT from R2 = 3 = 2f+1. COMMITTED.
+R1 collects: same. COMMITTED.
+R2 collects: same. COMMITTED.
+
+=== REPLY ===
+R0 executes: TRANSFER $100 A→B. Result: "OK, balance A=$400, B=$600"
+R0 → Client: REPLY(v=0, t=42, client=C1, i=0, result="OK...", sig)
+
+R1 executes: same. Same result (deterministic).
+R1 → Client: REPLY(v=0, t=42, client=C1, i=1, result="OK...", sig)
+
+R2 executes: same.
+R2 → Client: REPLY(v=0, t=42, client=C1, i=2, result="OK...", sig)
+
+R3: Byzantine. Sends nothing (or sends a wrong result).
+
+Client collects: 3 matching replies from R0, R1, R2.
+  f+1 = 2 matching replies required. 3 ≥ 2. CLIENT ACCEPTS "OK..."
+```
+
+Despite R3 being Byzantine (sending a wrong digest in the prepare phase and refusing to commit), the three honest replicas successfully committed the transaction. The Byzantine replica was unable to affect the outcome.
+
+### What If the Primary Were Byzantine?
+
+If R0 (the primary) were Byzantine, it could:
+
+1. **Send different requests to different replicas** (equivocation): R0 sends "TRANSFER $100 A→B" to R1 and "TRANSFER $100 A→C" to R2. The prepare phase would detect this: R1 and R2 would compute different digests and would not collect $2f$ matching prepares. A view change would be triggered.
+
+2. **Refuse to propose requests**: The client would timeout and send the request to all replicas. The backups would notice that the primary is not proposing the request and trigger a view change.
+
+3. **Propose requests out of order**: The protocol ensures that each replica only accepts one pre-prepare per (view, sequence-number) pair. If R0 tries to assign the same sequence number to two different requests, replicas will detect the conflict and trigger a view change.
+
+## BFT vs. CFT: When the Extra Cost Is Worth It
+
+The decision between BFT and CFT is ultimately a risk assessment:
+
+| Factor | Choose CFT | Choose BFT |
+|---|---|---|
+| **Trust model** | All participants are part of the same organization | Multiple organizations, some adversarial |
+| **Threat model** | Software bugs, hardware failures | Insider threats, compromised nodes, active attackers |
+| **Regulatory** | No requirement for Byzantine tolerance | Regulations mandate tolerance of malicious actors |
+| **Cost sensitivity** | Hardware budget is constrained | The cost of a consensus failure exceeds hardware costs |
+| **Scale** | Large clusters (50+ nodes) | Small clusters (4-20 nodes) |
+| **Latency** | Ultra-low latency required | Moderate latency acceptable |
+
+In practice, the vast majority of systems use CFT (Raft, Paxos, ZAB). BFT is reserved for high-value, multi-party, or adversarial environments. The trend is toward BFT in blockchain and financial infrastructure, and CFT everywhere else.
+
 ## References
 
 1. Castro, M., & Liskov, B. (1999). "Practical Byzantine Fault Tolerance." *OSDI*.

@@ -1,0 +1,72 @@
+# =============================================================================
+# Docker Ignore — Node.js Production
+# =============================================================================
+# Prevents unnecessary files from being sent to the Docker build context.
+# Reduces build time and prevents leaking secrets into images.
+# =============================================================================
+
+# Dependencies (installed fresh via npm ci)
+node_modules
+npm-debug.log*
+
+# Build output (rebuilt in Docker)
+dist
+build
+.next
+out
+
+# Version control
+.git
+.gitignore
+
+# Environment files (NEVER include in images)
+.env
+.env.*
+!.env.example
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+__tests__
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+coverage
+.nyc_output
+jest.config.*
+
+# Documentation
+*.md
+LICENSE
+docs
+
+# Docker files (prevent recursive builds)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.circleci
+
+# Terraform / IaC
+*.tf
+*.tfvars
+*.tfstate
+
+# Misc
+.husky
+.eslintcache
+.prettierrc
+tsconfig.tsbuildinfo

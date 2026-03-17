@@ -1,0 +1,127 @@
+# =============================================================================
+# Docker Compose — Development Environment
+# =============================================================================
+# Features:
+#   - Hot reload via volume mounts
+#   - PostgreSQL and Redis services
+#   - Exposed debug ports
+#   - Persistent data volumes
+#   - Mailpit for email testing
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d
+#   docker compose -f docker-compose.dev.yml logs -f app
+#   docker compose -f docker-compose.dev.yml down
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Application
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: ../..
+      dockerfile: docker/node-production/Dockerfile
+      target: deps  # Use deps stage for development (includes devDependencies)
+    container_name: app-dev
+    command: npm run dev
+    ports:
+      - "3000:3000"   # Application
+      - "9229:9229"   # Node.js debugger
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=postgresql://devuser:devpass@postgres:5432/devdb
+      - REDIS_URL=redis://redis:6379
+      - SMTP_HOST=mailpit
+      - SMTP_PORT=1025
+      - LOG_LEVEL=debug
+    volumes:
+      # Mount source code for hot reload
+      - ../../src:/app/src:delegated
+      - ../../package.json:/app/package.json:ro
+      - ../../tsconfig.json:/app/tsconfig.json:ro
+      # Prevent overwriting node_modules from host
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres-dev
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: devdb
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Mount init scripts (executed on first run)
+      # - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devuser -d devdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: redis-dev
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Mailpit — email testing UI (replaces Mailhog)
+  # ---------------------------------------------------------------------------
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit-dev
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    networks:
+      - app-network
+    restart: unless-stopped
+
+# ---------------------------------------------------------------------------
+# Volumes — persist data across restarts
+# ---------------------------------------------------------------------------
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+
+# ---------------------------------------------------------------------------
+# Networks
+# ---------------------------------------------------------------------------
+networks:
+  app-network:
+    driver: bridge

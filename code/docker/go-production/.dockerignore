@@ -1,0 +1,51 @@
+# =============================================================================
+# Docker Ignore — Go Production
+# =============================================================================
+
+# Version control
+.git
+.gitignore
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+*_test.go
+testdata
+coverage.out
+coverage.html
+
+# Documentation
+*.md
+LICENSE
+docs
+
+# Docker files
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Build artifacts (rebuilt in Docker)
+bin
+tmp
+vendor
+
+# Environment files
+.env
+.env.*
+
+# Terraform / IaC
+*.tf
+*.tfvars
+*.tfstate

@@ -1,0 +1,70 @@
+# =============================================================================
+# Docker Ignore — Python Production
+# =============================================================================
+
+# Python
+__pycache__
+*.py[cod]
+*.pyo
+*.egg-info
+*.egg
+dist
+build
+.eggs
+
+# Virtual environments (installed fresh in Docker)
+venv
+.venv
+env
+.env
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Version control
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+tests
+pytest.ini
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.nox
+
+# Documentation
+*.md
+LICENSE
+docs
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Terraform / IaC
+*.tf
+*.tfvars
+
+# Misc
+.mypy_cache
+.ruff_cache
+.pre-commit-config.yaml
