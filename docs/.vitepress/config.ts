@@ -137,6 +137,9 @@ export default withMermaid(
       optimizeDeps: {
         include: ['mermaid'],
       },
+      server: {
+        allowedHosts: true,
+      },
     },
   })
 )
