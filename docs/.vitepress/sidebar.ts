@@ -28,7 +28,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Databases',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/system-design/databases/' },
         { text: 'Storage Engines', link: '/system-design/databases/storage-engines' },
@@ -51,7 +51,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Caching',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/system-design/caching/' },
         { text: 'Caching Strategies', link: '/system-design/caching/caching-strategies' },
@@ -66,7 +66,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Message Queues',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/system-design/message-queues/' },
         { text: 'Kafka Internals', link: '/system-design/message-queues/kafka-internals' },
@@ -84,7 +84,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Consensus',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/system-design/consensus/' },
         { text: 'Raft Full Walkthrough', link: '/system-design/consensus/raft-full-walkthrough' },
@@ -96,7 +96,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Load Balancing',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/system-design/load-balancing/' },
         { text: 'L4 vs L7', link: '/system-design/load-balancing/l4-vs-l7' },
@@ -111,7 +111,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Networking',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/system-design/networking/' },
         { text: 'TCP/IP Deep Dive', link: '/system-design/networking/tcp-ip-deep-dive' },
@@ -150,7 +150,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Event-Driven',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/architecture-patterns/event-driven/' },
         { text: 'Event Types', link: '/architecture-patterns/event-driven/event-types' },
@@ -163,7 +163,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'CQRS & Event Sourcing',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/architecture-patterns/cqrs-event-sourcing/' },
         { text: 'CQRS Deep Dive', link: '/architecture-patterns/cqrs-event-sourcing/cqrs-deep-dive' },
@@ -177,7 +177,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Hexagonal Architecture',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/architecture-patterns/hexagonal/' },
         { text: 'Ports & Adapters', link: '/architecture-patterns/hexagonal/ports-and-adapters' },
@@ -187,7 +187,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Clean Architecture',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/architecture-patterns/clean-architecture/' },
         { text: 'Layers & Boundaries', link: '/architecture-patterns/clean-architecture/layers-and-boundaries' },
@@ -198,7 +198,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Domain-Driven Design',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/architecture-patterns/domain-driven-design/' },
         { text: 'Strategic Design', link: '/architecture-patterns/domain-driven-design/strategic-design' },
@@ -236,7 +236,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Kubernetes',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/infrastructure/kubernetes/' },
         { text: 'Architecture Internals', link: '/infrastructure/kubernetes/architecture-internals' },
@@ -255,7 +255,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Docker',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/infrastructure/docker/' },
         { text: 'Internals', link: '/infrastructure/docker/internals' },
@@ -268,7 +268,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'AWS',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/infrastructure/aws/' },
         { text: 'VPC & Networking', link: '/infrastructure/aws/vpc-networking' },
@@ -284,7 +284,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'GCP',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/infrastructure/gcp/' },
         { text: 'Cloud Run', link: '/infrastructure/gcp/cloud-run' },
@@ -297,7 +297,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'CI/CD',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/infrastructure/ci-cd/' },
         { text: 'GitHub Actions Deep Dive', link: '/infrastructure/ci-cd/github-actions-deep-dive' },
@@ -310,7 +310,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Multi-Region',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/infrastructure/multi-region/' },
         { text: 'Architecture Patterns', link: '/infrastructure/multi-region/architecture-patterns' },
@@ -349,7 +349,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Authentication',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/security/authentication/' },
         { text: 'JWT Deep Dive', link: '/security/authentication/jwt-deep-dive' },
@@ -363,7 +363,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Encryption',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/security/encryption/' },
         { text: 'Symmetric vs Asymmetric', link: '/security/encryption/symmetric-vs-asymmetric' },
@@ -376,7 +376,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Secrets Management',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/security/secrets-management/' },
         { text: 'Vault Deep Dive', link: '/security/secrets-management/vault-deep-dive' },
@@ -387,7 +387,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Zero Trust',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/security/zero-trust/' },
         { text: 'Principles', link: '/security/zero-trust/principles' },
@@ -399,7 +399,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'API Security',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/security/api-security/' },
         { text: 'Rate Limiting', link: '/security/api-security/rate-limiting' },
@@ -433,7 +433,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Logging',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/devops/logging/' },
         { text: 'Structured Logging', link: '/devops/logging/structured-logging' },
@@ -445,7 +445,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Alerting',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/devops/alerting/' },
         { text: 'Alert Design', link: '/devops/alerting/alert-design' },
@@ -457,7 +457,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Deployment Strategies',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/devops/deployment-strategies/' },
         { text: 'Blue-Green', link: '/devops/deployment-strategies/blue-green' },
@@ -470,7 +470,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Incident Response',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/devops/incident-response/' },
         { text: 'Incident Classification', link: '/devops/incident-response/incident-classification' },
@@ -502,7 +502,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Optimization',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/performance/optimization/' },
         { text: 'Node.js Event Loop', link: '/performance/optimization/nodejs-event-loop' },
@@ -515,7 +515,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Caching Strategies',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/performance/caching-strategies/' },
         { text: 'Application Level', link: '/performance/caching-strategies/application-level' },
@@ -526,7 +526,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Database Tuning',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/performance/database-tuning/' },
         { text: 'Query Optimization', link: '/performance/database-tuning/query-optimization' },
@@ -538,7 +538,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Edge Computing',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/performance/edge-computing/' },
         { text: 'Edge Runtime Constraints', link: '/performance/edge-computing/edge-runtime-constraints' },
@@ -570,7 +570,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Stream Processing',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/data-engineering/stream-processing/' },
         { text: 'Windowing', link: '/data-engineering/stream-processing/windowing' },
@@ -582,7 +582,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Data Modeling',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/data-engineering/data-modeling/' },
         { text: 'Dimensional Modeling', link: '/data-engineering/data-modeling/dimensional-modeling' },
@@ -594,7 +594,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Pipeline Patterns',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/data-engineering/pipeline-patterns/' },
         { text: 'CDC Patterns', link: '/data-engineering/pipeline-patterns/cdc-patterns' },
@@ -627,7 +627,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Product Prompts',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/prompt-engineering/product-prompts/' },
         { text: 'PRD Prompts', link: '/prompt-engineering/product-prompts/prd-prompts' },
@@ -638,7 +638,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'UI Prompts',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/prompt-engineering/ui-prompts/' },
         { text: 'Component Generation', link: '/prompt-engineering/ui-prompts/component-generation-prompts' },
@@ -649,7 +649,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Architecture Prompts',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/prompt-engineering/architecture-prompts/' },
         { text: 'System Design', link: '/prompt-engineering/architecture-prompts/system-design-prompts' },
@@ -683,7 +683,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Typography',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/ui-design-systems/typography/' },
         { text: 'Type Scale', link: '/ui-design-systems/typography/type-scale' },
@@ -694,7 +694,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Color Tokens',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/ui-design-systems/color-tokens/' },
         { text: 'Color Theory', link: '/ui-design-systems/color-tokens/color-theory' },
@@ -705,7 +705,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Spacing & Layout',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/ui-design-systems/spacing-layout/' },
         { text: 'Spacing Scale', link: '/ui-design-systems/spacing-layout/spacing-scale' },
@@ -716,7 +716,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Accessibility',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/ui-design-systems/accessibility/' },
         { text: 'ARIA Deep Dive', link: '/ui-design-systems/accessibility/aria-deep-dive' },
@@ -728,7 +728,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Dark Mode',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/ui-design-systems/dark-mode/' },
         { text: 'Token Mapping', link: '/ui-design-systems/dark-mode/token-mapping' },
@@ -739,7 +739,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Animations',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/ui-design-systems/animations/' },
         { text: 'Timing Curves', link: '/ui-design-systems/animations/timing-curves' },
@@ -773,7 +773,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Billing Engine',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/production-blueprints/billing-engine/' },
         { text: 'Architecture', link: '/production-blueprints/billing-engine/architecture' },
@@ -785,7 +785,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Notification Service',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/production-blueprints/notification-service/' },
         { text: 'Architecture', link: '/production-blueprints/notification-service/architecture' },
@@ -797,7 +797,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Realtime Pipeline',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/production-blueprints/realtime-pipeline/' },
         { text: 'Architecture', link: '/production-blueprints/realtime-pipeline/architecture' },
@@ -809,7 +809,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Rate Limiter',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/production-blueprints/rate-limiter/' },
         { text: 'Algorithms', link: '/production-blueprints/rate-limiter/algorithms' },
@@ -820,7 +820,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Job Queue',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/production-blueprints/job-queue/' },
         { text: 'Architecture', link: '/production-blueprints/job-queue/architecture' },
@@ -832,7 +832,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'A/B Testing',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/production-blueprints/ab-testing/' },
         { text: 'Architecture', link: '/production-blueprints/ab-testing/architecture' },
@@ -844,7 +844,7 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
     {
       text: 'Analytics Pipeline',
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: 'Overview', link: '/production-blueprints/analytics-pipeline/' },
         { text: 'Architecture', link: '/production-blueprints/analytics-pipeline/architecture' },
