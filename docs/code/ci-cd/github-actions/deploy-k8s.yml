@@ -1,0 +1,297 @@
+# =============================================================================
+# GitHub Actions: Build, Push & Deploy to Kubernetes
+# =============================================================================
+# Triggers on push to main (deploy) and PRs (build & test only).
+# Workflow:
+#   1. Lint Dockerfile
+#   2. Build & push Docker image to registry (GHCR by default)
+#   3. Deploy to Kubernetes with rolling update
+#   4. Run health checks against the deployed service
+#   5. Automatic rollback on failure
+#
+# Required secrets:
+#   - KUBE_CONFIG          — base64-encoded kubeconfig for target cluster
+#   - REGISTRY_USERNAME    — container registry username (if not using GHCR)
+#   - REGISTRY_PASSWORD    — container registry password (if not using GHCR)
+#   - SLACK_WEBHOOK_URL    — (optional) Slack webhook for deploy notifications
+# =============================================================================
+
+name: Build & Deploy to Kubernetes
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # ---------- Container image settings ----------
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  # ---------- Kubernetes settings ----------
+  K8S_NAMESPACE: production
+  K8S_DEPLOYMENT: app-deployment
+  K8S_SERVICE: app-service
+  HEALTH_CHECK_PATH: /healthz
+  HEALTH_CHECK_RETRIES: 30
+  HEALTH_CHECK_INTERVAL: 10  # seconds between retries
+  # ---------- Rollout settings ----------
+  ROLLOUT_TIMEOUT: 300s
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Lint — validate Dockerfile best practices
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint Dockerfile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Lint Dockerfile with Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          # Treat DL3008 (apt pin versions) as warning, not error
+          ignore: DL3008
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Test — run unit & integration tests
+  # ---------------------------------------------------------------------------
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Build — build & push Docker image
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    permissions:
+      contents: read
+      packages: write  # required to push to GHCR
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build-push.outputs.digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Log in to GitHub Container Registry
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Generate image tags and labels from Git metadata
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # Tag with short SHA for every build
+            type=sha,prefix=,format=short
+            # Tag as "latest" only on main branch
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            # Tag with semver if a tag is pushed
+            type=semver,pattern={{version}}
+
+      - name: Build and push Docker image
+        id: build-push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          # Only push on main branch (not on PRs)
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Build args for cache busting and metadata
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            GIT_SHA=${{ github.sha }}
+
+  # ---------------------------------------------------------------------------
+  # Job 4: Deploy — apply manifests & verify rollout
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: [build]
+    # Only deploy from main branch, never from PRs
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: ${{ steps.get-url.outputs.service-url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Install and configure kubectl
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "v1.29.0"
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      # Record the current revision so we can rollback if needed
+      - name: Record current revision (for rollback)
+        id: pre-deploy
+        run: |
+          CURRENT_REVISION=$(kubectl rollout history deployment/${{ env.K8S_DEPLOYMENT }} \
+            -n ${{ env.K8S_NAMESPACE }} \
+            --output=jsonpath='{.metadata.generation}' 2>/dev/null || echo "0")
+          echo "revision=${CURRENT_REVISION}" >> "$GITHUB_OUTPUT"
+          echo "Pre-deploy revision: ${CURRENT_REVISION}"
+
+      # Update the deployment image tag
+      - name: Deploy to Kubernetes
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${SHORT_SHA}"
+
+          echo "Deploying image: ${IMAGE}"
+
+          # Set the new image on the deployment
+          kubectl set image deployment/${{ env.K8S_DEPLOYMENT }} \
+            app=${IMAGE} \
+            -n ${{ env.K8S_NAMESPACE }}
+
+          # Annotate the deployment with the change cause
+          kubectl annotate deployment/${{ env.K8S_DEPLOYMENT }} \
+            -n ${{ env.K8S_NAMESPACE }} \
+            kubernetes.io/change-cause="Deploy ${SHORT_SHA} via GitHub Actions run #${{ github.run_number }}" \
+            --overwrite
+
+      # Wait for the rolling update to complete
+      - name: Wait for rollout
+        id: rollout
+        run: |
+          echo "Waiting for rollout to complete (timeout: ${{ env.ROLLOUT_TIMEOUT }})..."
+          if kubectl rollout status deployment/${{ env.K8S_DEPLOYMENT }} \
+            -n ${{ env.K8S_NAMESPACE }} \
+            --timeout=${{ env.ROLLOUT_TIMEOUT }}; then
+            echo "status=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=failed" >> "$GITHUB_OUTPUT"
+            echo "::error::Rollout failed or timed out"
+            exit 1
+          fi
+
+      # Get the service URL for the GitHub environment
+      - name: Get service URL
+        id: get-url
+        if: success()
+        run: |
+          SERVICE_IP=$(kubectl get svc ${{ env.K8S_SERVICE }} \
+            -n ${{ env.K8S_NAMESPACE }} \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "pending")
+          echo "service-url=http://${SERVICE_IP}" >> "$GITHUB_OUTPUT"
+
+      # Run health checks against the deployed application
+      - name: Health check
+        id: health-check
+        if: success()
+        run: |
+          SERVICE_IP=$(kubectl get svc ${{ env.K8S_SERVICE }} \
+            -n ${{ env.K8S_NAMESPACE }} \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+          HEALTH_URL="http://${SERVICE_IP}${{ env.HEALTH_CHECK_PATH }}"
+          echo "Health check URL: ${HEALTH_URL}"
+
+          for i in $(seq 1 ${{ env.HEALTH_CHECK_RETRIES }}); do
+            echo "Attempt ${i}/${{ env.HEALTH_CHECK_RETRIES }}..."
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${HEALTH_URL}" --max-time 5 || echo "000")
+
+            if [ "${HTTP_CODE}" = "200" ]; then
+              echo "Health check passed (HTTP ${HTTP_CODE})"
+              echo "status=healthy" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "Health check returned HTTP ${HTTP_CODE}, retrying in ${{ env.HEALTH_CHECK_INTERVAL }}s..."
+            sleep ${{ env.HEALTH_CHECK_INTERVAL }}
+          done
+
+          echo "::error::Health check failed after ${{ env.HEALTH_CHECK_RETRIES }} attempts"
+          echo "status=unhealthy" >> "$GITHUB_OUTPUT"
+          exit 1
+
+      # Rollback if rollout or health check failed
+      - name: Rollback on failure
+        if: failure() && steps.pre-deploy.outputs.revision != '0'
+        run: |
+          echo "::warning::Deployment failed — initiating rollback"
+
+          kubectl rollout undo deployment/${{ env.K8S_DEPLOYMENT }} \
+            -n ${{ env.K8S_NAMESPACE }}
+
+          kubectl rollout status deployment/${{ env.K8S_DEPLOYMENT }} \
+            -n ${{ env.K8S_NAMESPACE }} \
+            --timeout=120s
+
+          echo "Rollback completed successfully"
+
+      # Notify Slack of deploy result
+      - name: Notify Slack — success
+        if: success() && env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          curl -s -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"text\": \":white_check_mark: *Deploy succeeded* — \`${SHORT_SHA}\` to \`${{ env.K8S_NAMESPACE }}\` by ${{ github.actor }} (<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>)\"
+            }"
+
+      - name: Notify Slack — failure
+        if: failure() && env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          curl -s -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"text\": \":x: *Deploy FAILED* — \`${SHORT_SHA}\` to \`${{ env.K8S_NAMESPACE }}\` by ${{ github.actor }}. Rollback initiated. (<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>)\"
+            }"

@@ -1,0 +1,354 @@
+# =============================================================================
+# GitHub Actions: Terraform Plan on PR / Apply on Merge
+# =============================================================================
+# This workflow implements a safe Terraform CI/CD pipeline:
+#   - On PR:    terraform plan + Infracost cost estimation, posted as PR comment
+#   - On merge: terraform apply with auto-approve
+#   - State locking via backend (S3 + DynamoDB by default)
+#   - Manual approval gate for production applies
+#
+# Required secrets:
+#   - AWS_ACCESS_KEY_ID        — AWS credentials for Terraform
+#   - AWS_SECRET_ACCESS_KEY    — AWS credentials for Terraform
+#   - INFRACOST_API_KEY        — Infracost API key for cost estimation
+#   - TF_VAR_*                 — Any Terraform variables passed as env vars
+#
+# Required variables (repo or environment level):
+#   - TF_WORKING_DIR           — Path to Terraform root module (default: "terraform")
+# =============================================================================
+
+name: "Terraform Plan & Apply"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+
+# Only one Terraform run at a time to prevent state conflicts
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: false  # never cancel in-progress applies
+
+env:
+  TF_WORKING_DIR: ${{ vars.TF_WORKING_DIR || 'terraform' }}
+  TF_VERSION: "1.7.0"
+  TF_IN_AUTOMATION: "true"  # reduces noisy output
+  # AWS region for the Terraform state backend
+  AWS_REGION: us-east-1
+
+permissions:
+  contents: read
+  pull-requests: write   # to post plan comments on PRs
+  id-token: write         # for OIDC auth (if using assume-role)
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Validate — fmt check, validate, tflint
+  # ---------------------------------------------------------------------------
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      # Check formatting — fail fast if code is not formatted
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive -diff
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform Init (validation only)
+        run: terraform init -backend=false
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      # Run tflint for additional static analysis
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Run TFLint
+        run: |
+          tflint --init
+          tflint --format=compact
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Security scan — check for misconfigurations
+  # ---------------------------------------------------------------------------
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: ${{ env.TF_WORKING_DIR }}
+          framework: terraform
+          output_format: sarif
+          # Don't fail the pipeline on medium/low findings
+          soft_fail: true
+          quiet: true
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Plan — generate and display the execution plan
+  # ---------------------------------------------------------------------------
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    needs: [validate, security]
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    outputs:
+      plan-exit-code: ${{ steps.plan.outputs.exitcode }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      # Initialize with remote backend (S3 + DynamoDB state locking)
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET || 'my-terraform-state' }}" \
+            -backend-config="key=${{ vars.TF_STATE_KEY || 'infra/terraform.tfstate' }}" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${{ vars.TF_LOCK_TABLE || 'terraform-locks' }}" \
+            -backend-config="encrypt=true"
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      # Generate plan and save it for the apply step
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan \
+            -input=false \
+            -detailed-exitcode \
+            -out=tfplan \
+            2>&1 | tee plan-output.txt
+
+          # Exit codes: 0=no changes, 1=error, 2=changes present
+          echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        continue-on-error: true  # we handle exit code 2 (changes) ourselves
+
+      # Upload plan artifact so the apply job can use it
+      - name: Upload plan artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: ${{ env.TF_WORKING_DIR }}/tfplan
+          retention-days: 1
+
+      # Post the plan as a comment on the PR
+      - name: Post plan to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync(
+              `${process.env.TF_WORKING_DIR}/plan-output.txt`, 'utf8'
+            );
+
+            // Truncate if too long for a GitHub comment (max ~65536 chars)
+            const maxLen = 60000;
+            const truncated = planOutput.length > maxLen
+              ? planOutput.substring(0, maxLen) + '\n\n... (truncated)'
+              : planOutput;
+
+            const exitCode = '${{ steps.plan.outputs.exitcode }}';
+            const icon = exitCode === '0' ? ':white_check_mark:' :
+                         exitCode === '2' ? ':warning:' : ':x:';
+
+            const body = `### ${icon} Terraform Plan
+
+            <details><summary>Show plan output</summary>
+
+            \`\`\`hcl
+            ${truncated}
+            \`\`\`
+
+            </details>
+
+            **Exit code:** \`${exitCode}\` (0=no changes, 2=changes pending)
+            **Workflow run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+
+            // Find and update existing comment or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.body.includes('### ') && c.body.includes('Terraform Plan')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      # Fail the job if the plan itself errored (exit code 1)
+      - name: Check plan status
+        if: steps.plan.outputs.exitcode == '1'
+        run: exit 1
+
+  # ---------------------------------------------------------------------------
+  # Job 4: Cost estimation — estimate monthly cost impact
+  # ---------------------------------------------------------------------------
+  cost:
+    name: Cost Estimation
+    runs-on: ubuntu-latest
+    needs: [validate]
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      # Generate cost breakdown for the current branch
+      - name: Generate Infracost breakdown
+        run: |
+          infracost breakdown \
+            --path=${{ env.TF_WORKING_DIR }} \
+            --format=json \
+            --out-file=/tmp/infracost.json
+
+      # Compare with the base branch to show cost diff
+      - name: Checkout base branch for comparison
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: base-branch
+
+      - name: Generate base branch breakdown
+        run: |
+          infracost breakdown \
+            --path=base-branch/${{ env.TF_WORKING_DIR }} \
+            --format=json \
+            --out-file=/tmp/infracost-base.json
+        continue-on-error: true  # base branch might not have terraform dir
+
+      - name: Generate Infracost diff
+        run: |
+          infracost diff \
+            --path=${{ env.TF_WORKING_DIR }} \
+            --compare-to=/tmp/infracost-base.json \
+            --format=json \
+            --out-file=/tmp/infracost-diff.json
+        continue-on-error: true
+
+      # Post cost estimate as PR comment
+      - name: Post Infracost comment
+        run: |
+          infracost comment github \
+            --path=/tmp/infracost-diff.json \
+            --repo=${{ github.repository }} \
+            --pull-request=${{ github.event.pull_request.number }} \
+            --github-token=${{ secrets.GITHUB_TOKEN }} \
+            --behavior=update
+        continue-on-error: true
+
+  # ---------------------------------------------------------------------------
+  # Job 5: Apply — apply the saved plan (main branch only)
+  # ---------------------------------------------------------------------------
+  apply:
+    name: Apply
+    runs-on: ubuntu-latest
+    needs: [plan]
+    # Only apply on push to main when there are actual changes (exit code 2)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.plan.outputs.plan-exit-code == '2'
+    environment:
+      name: production  # requires manual approval if configured
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET || 'my-terraform-state' }}" \
+            -backend-config="key=${{ vars.TF_STATE_KEY || 'infra/terraform.tfstate' }}" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${{ vars.TF_LOCK_TABLE || 'terraform-locks' }}" \
+            -backend-config="encrypt=true"
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      # Download the plan artifact from the plan job
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: ${{ env.TF_WORKING_DIR }}
+
+      # Apply the exact plan that was reviewed
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -input=false tfplan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      # Output the apply results
+      - name: Terraform Output
+        if: success()
+        run: terraform output -json > /tmp/tf-outputs.json
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        continue-on-error: true
+
+      - name: Post apply summary
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          echo "## Terraform Apply — ${STATUS}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Commit:** \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Actor:** ${{ github.actor }}" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,497 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "Prometheus data source with postgres_exporter metrics",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0" },
+    { "type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0" },
+    { "type": "panel", "id": "timeseries", "name": "Time series", "version": "" },
+    { "type": "panel", "id": "stat", "name": "Stat", "version": "" },
+    { "type": "panel", "id": "gauge", "name": "Gauge", "version": "" },
+    { "type": "panel", "id": "table", "name": "Table", "version": "" }
+  ],
+  "description": "PostgreSQL monitoring dashboard: connections, queries/sec, cache hit ratio, replication lag, table bloat, and lock waits.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Overview",
+      "type": "row"
+    },
+    {
+      "title": "Active Connections",
+      "description": "Number of active connections to PostgreSQL",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "id": 1,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 80 },
+              { "color": "red", "value": 150 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "graphMode": "area", "colorMode": "background" },
+      "targets": [
+        { "expr": "pg_stat_activity_count{state=\"active\", datname=~\"$database\"}", "legendFormat": "active", "refId": "A" }
+      ]
+    },
+    {
+      "title": "Connection Utilization",
+      "description": "Percentage of max_connections currently in use",
+      "type": "gauge",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "id": 2,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.7 },
+              { "color": "red", "value": 0.9 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        { "expr": "sum(pg_stat_activity_count) / pg_settings_max_connections", "legendFormat": "utilization", "refId": "A" }
+      ]
+    },
+    {
+      "title": "Queries / sec",
+      "description": "Total SQL queries executed per second",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "id": 3,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1000 },
+              { "color": "red", "value": 5000 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "graphMode": "area", "colorMode": "background" },
+      "targets": [
+        { "expr": "sum(rate(pg_stat_database_xact_commit{datname=~\"$database\"}[5m])) + sum(rate(pg_stat_database_xact_rollback{datname=~\"$database\"}[5m]))", "legendFormat": "qps", "refId": "A" }
+      ]
+    },
+    {
+      "title": "Cache Hit Ratio",
+      "description": "Buffer cache hit ratio — should be above 99% in production",
+      "type": "gauge",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "id": 4,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.95 },
+              { "color": "green", "value": 0.99 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(pg_stat_database_blks_hit{datname=~\"$database\"}) / (sum(pg_stat_database_blks_hit{datname=~\"$database\"}) + sum(pg_stat_database_blks_read{datname=~\"$database\"}))",
+          "legendFormat": "hit ratio",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Replication Lag",
+      "description": "Time lag of streaming replication in seconds",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "id": 5,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 30 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "graphMode": "area", "colorMode": "background" },
+      "targets": [
+        { "expr": "pg_replication_lag_seconds", "legendFormat": "lag", "refId": "A" }
+      ]
+    },
+    {
+      "title": "Database Size",
+      "description": "Total size of the database on disk",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "id": 6,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 10737418240 },
+              { "color": "red", "value": 53687091200 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "graphMode": "none", "colorMode": "background" },
+      "targets": [
+        { "expr": "pg_database_size_bytes{datname=~\"$database\"}", "legendFormat": "{{ datname }}", "refId": "A" }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 101,
+      "title": "Connections",
+      "type": "row"
+    },
+    {
+      "title": "Connections by State",
+      "description": "Breakdown of connections: active, idle, idle in transaction, waiting",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "id": 10,
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 30, "stacking": { "mode": "normal" }, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "last"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "pg_stat_activity_count{datname=~\"$database\", state=\"active\"}", "legendFormat": "active", "refId": "A" },
+        { "expr": "pg_stat_activity_count{datname=~\"$database\", state=\"idle\"}", "legendFormat": "idle", "refId": "B" },
+        { "expr": "pg_stat_activity_count{datname=~\"$database\", state=\"idle in transaction\"}", "legendFormat": "idle in txn", "refId": "C" },
+        { "expr": "pg_stat_activity_count{datname=~\"$database\", state=\"disabled\"}", "legendFormat": "disabled", "refId": "D" }
+      ]
+    },
+    {
+      "title": "Connections vs Max",
+      "description": "Total connections compared to max_connections setting",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "id": 11,
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 10, "showPoints": "never" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "max_connections" }, "properties": [{ "id": "custom.lineStyle", "value": { "fill": "dash", "dash": [10, 10] } }, { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "sum(pg_stat_activity_count{datname=~\"$database\"})", "legendFormat": "total connections", "refId": "A" },
+        { "expr": "pg_settings_max_connections", "legendFormat": "max_connections", "refId": "B" }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "id": 102,
+      "title": "Query Performance",
+      "type": "row"
+    },
+    {
+      "title": "Transactions / sec",
+      "description": "Committed and rolled back transactions per second",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "id": 20,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 20, "showPoints": "never" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "rollbacks" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "commits" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "rate(pg_stat_database_xact_commit{datname=~\"$database\"}[5m])", "legendFormat": "commits", "refId": "A" },
+        { "expr": "rate(pg_stat_database_xact_rollback{datname=~\"$database\"}[5m])", "legendFormat": "rollbacks", "refId": "B" }
+      ]
+    },
+    {
+      "title": "Rows Operations / sec",
+      "description": "Row operations: inserts, updates, deletes, fetched per second",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "id": 21,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 15, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "sum(rate(pg_stat_database_tup_inserted{datname=~\"$database\"}[5m]))", "legendFormat": "inserts", "refId": "A" },
+        { "expr": "sum(rate(pg_stat_database_tup_updated{datname=~\"$database\"}[5m]))", "legendFormat": "updates", "refId": "B" },
+        { "expr": "sum(rate(pg_stat_database_tup_deleted{datname=~\"$database\"}[5m]))", "legendFormat": "deletes", "refId": "C" },
+        { "expr": "sum(rate(pg_stat_database_tup_fetched{datname=~\"$database\"}[5m]))", "legendFormat": "fetched", "refId": "D" }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "id": 103,
+      "title": "Cache & I/O",
+      "type": "row"
+    },
+    {
+      "title": "Cache Hit Ratio Over Time",
+      "description": "Buffer cache hit ratio trend — percentage of reads served from shared_buffers",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "id": 30,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 15, "showPoints": "never", "thresholdsStyle": { "mode": "line" } },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 0.99 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "expr": "rate(pg_stat_database_blks_hit{datname=~\"$database\"}[5m]) / (rate(pg_stat_database_blks_hit{datname=~\"$database\"}[5m]) + rate(pg_stat_database_blks_read{datname=~\"$database\"}[5m]))",
+          "legendFormat": "{{ datname }}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Disk I/O (blocks)",
+      "description": "Blocks read from disk vs served from cache",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "id": 31,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 15, "showPoints": "never" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "disk reads" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "cache hits" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "rate(pg_stat_database_blks_read{datname=~\"$database\"}[5m])", "legendFormat": "disk reads", "refId": "A" },
+        { "expr": "rate(pg_stat_database_blks_hit{datname=~\"$database\"}[5m])", "legendFormat": "cache hits", "refId": "B" }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
+      "id": 104,
+      "title": "Replication & Locks",
+      "type": "row"
+    },
+    {
+      "title": "Replication Lag Over Time",
+      "description": "Streaming replication lag trend in seconds",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 33 },
+      "id": 40,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 20, "showPoints": "never", "thresholdsStyle": { "mode": "line+area" } },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 30 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "pg_replication_lag_seconds", "legendFormat": "{{ instance }}", "refId": "A" }
+      ]
+    },
+    {
+      "title": "Lock Waits",
+      "description": "Number of locks by mode — high exclusive lock counts may indicate contention",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 33 },
+      "id": 41,
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "bars", "fillOpacity": 80, "stacking": { "mode": "normal" }, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "pg_locks_count{datname=~\"$database\"}", "legendFormat": "{{ mode }}", "refId": "A" }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 41 },
+      "id": 105,
+      "title": "Table Bloat & Maintenance",
+      "type": "row"
+    },
+    {
+      "title": "Table Bloat Ratio (Top 20)",
+      "description": "Estimated bloat ratio for the most bloated tables. Values above 50% suggest VACUUM is needed.",
+      "type": "table",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 42 },
+      "id": 50,
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Value" }, "properties": [{ "id": "unit", "value": "percentunit" }, { "id": "custom.displayMode", "value": "color-background" }, { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.3 }, { "color": "red", "value": 0.5 }] } }] }
+        ]
+      },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "Value", "desc": true }] },
+      "targets": [
+        {
+          "expr": "topk(20, pg_stat_user_tables_n_dead_tup{datname=~\"$database\"} / (pg_stat_user_tables_n_live_tup{datname=~\"$database\"} + pg_stat_user_tables_n_dead_tup{datname=~\"$database\"}))",
+          "legendFormat": "{{ relname }}",
+          "refId": "A",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "transformations": [
+        { "id": "organize", "options": { "excludeByName": { "Time": true } } }
+      ]
+    },
+    {
+      "title": "Dead Tuples Over Time",
+      "description": "Dead tuples across tables — rising counts indicate VACUUM is not keeping up",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 42 },
+      "id": 51,
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 15, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "expr": "topk(10, pg_stat_user_tables_n_dead_tup{datname=~\"$database\"})",
+          "legendFormat": "{{ relname }}",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["postgresql", "database"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "definition": "label_values(pg_stat_database_xact_commit, datname)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Database",
+        "multi": false,
+        "name": "database",
+        "query": { "query": "label_values(pg_stat_database_xact_commit, datname)", "refId": "StandardVariableQuery" },
+        "refresh": 2,
+        "regex": "/^(?!template|postgres$)/",
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "PostgreSQL Overview",
+  "uid": "postgres-overview",
+  "version": 1
+}

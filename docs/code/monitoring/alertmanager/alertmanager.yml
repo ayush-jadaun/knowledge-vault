@@ -1,0 +1,306 @@
+# =============================================================================
+# Alertmanager Configuration
+# =============================================================================
+# Routes, receivers, and inhibition rules for a production alerting setup.
+#
+# Receivers:
+#   - Slack       — for warning and info alerts (channels by team)
+#   - PagerDuty   — for critical alerts that require immediate response
+#   - Email        — as a fallback and for weekly summaries
+#
+# Routing strategy:
+#   - Critical alerts -> PagerDuty + Slack #incidents
+#   - Warning alerts  -> Slack team channels
+#   - Info alerts     -> Slack #alerts-info
+#   - Watchdog        -> deadman switch receiver
+#
+# Environment variables (use with --cluster.* flags or envsubst):
+#   SLACK_API_URL          — Slack incoming webhook URL
+#   PAGERDUTY_SERVICE_KEY  — PagerDuty Events API v2 integration key
+#   SMTP_SMARTHOST         — SMTP relay host:port
+#   SMTP_FROM              — sender email address
+#   SMTP_USERNAME          — SMTP auth username
+#   SMTP_PASSWORD          — SMTP auth password
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Global settings — defaults for all receivers
+# ---------------------------------------------------------------------------
+global:
+  # How long to wait before sending a notification when a group first fires
+  group_wait: 30s
+  # How long to wait before sending updates for an existing group
+  group_interval: 5m
+  # How long to wait before re-sending a notification that has already been sent
+  repeat_interval: 4h
+  # Default resolve timeout — if Prometheus stops sending, resolve after this
+  resolve_timeout: 5m
+
+  # SMTP settings (used by email receiver)
+  smtp_smarthost: "smtp.example.com:587"
+  smtp_from: "alertmanager@example.com"
+  smtp_auth_username: "alertmanager@example.com"
+  smtp_auth_password: "${SMTP_PASSWORD}"
+  smtp_require_tls: true
+
+  # Slack API URL (used by all Slack receivers)
+  slack_api_url: "${SLACK_API_URL}"
+
+  # PagerDuty URL (default, rarely needs changing)
+  pagerduty_url: "https://events.pagerduty.com/v2/enqueue"
+
+# ---------------------------------------------------------------------------
+# Templates — custom notification templates
+# ---------------------------------------------------------------------------
+templates:
+  - "/etc/alertmanager/templates/*.tmpl"
+
+# ---------------------------------------------------------------------------
+# Route tree — determines which receiver handles each alert
+# ---------------------------------------------------------------------------
+route:
+  # Default receiver if no child route matches
+  receiver: "slack-warnings"
+
+  # Group alerts by these labels — alerts with the same values are batched
+  group_by: ["alertname", "cluster", "namespace", "service"]
+
+  # Timing for the top-level route
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  # Child routes — evaluated top-to-bottom, first match wins
+  routes:
+    # -----------------------------------------------------------------------
+    # Critical alerts — page on-call via PagerDuty + Slack #incidents
+    # -----------------------------------------------------------------------
+    - match:
+        severity: critical
+      receiver: "pagerduty-critical"
+      group_wait: 10s        # page quickly for critical issues
+      repeat_interval: 1h    # re-page every hour if not resolved
+      # Also notify Slack #incidents
+      continue: true
+
+    - match:
+        severity: critical
+      receiver: "slack-critical"
+      group_wait: 10s
+      repeat_interval: 1h
+
+    # -----------------------------------------------------------------------
+    # Warning alerts — route to team-specific Slack channels
+    # -----------------------------------------------------------------------
+    - match:
+        severity: warning
+        team: backend
+      receiver: "slack-backend"
+      group_wait: 30s
+      repeat_interval: 4h
+
+    - match:
+        severity: warning
+        team: data
+      receiver: "slack-data"
+      group_wait: 1m
+      repeat_interval: 4h
+
+    - match:
+        severity: warning
+        team: infra
+      receiver: "slack-infra"
+      group_wait: 1m
+      repeat_interval: 4h
+
+    # Catch-all for warnings without a team label
+    - match:
+        severity: warning
+      receiver: "slack-warnings"
+      group_wait: 30s
+      repeat_interval: 4h
+
+    # -----------------------------------------------------------------------
+    # Info alerts — low-priority notification channel
+    # -----------------------------------------------------------------------
+    - match:
+        severity: info
+      receiver: "slack-info"
+      group_wait: 5m
+      repeat_interval: 12h
+
+    # -----------------------------------------------------------------------
+    # Watchdog / deadman switch — should always be firing
+    # If it stops, something is wrong with the alerting pipeline itself
+    # -----------------------------------------------------------------------
+    - match:
+        alertname: Watchdog
+      receiver: "deadman-switch"
+      group_wait: 0s
+      repeat_interval: 1m
+
+# ---------------------------------------------------------------------------
+# Receivers — notification endpoints
+# ---------------------------------------------------------------------------
+receivers:
+  # =========================================================================
+  # PagerDuty — critical incidents
+  # =========================================================================
+  - name: "pagerduty-critical"
+    pagerduty_configs:
+      - service_key: "${PAGERDUTY_SERVICE_KEY}"
+        severity: critical
+        # Include useful details in the PagerDuty incident
+        description: "{{ .CommonAnnotations.summary }}"
+        details:
+          firing: "{{ .Alerts.Firing | len }}"
+          resolved: "{{ .Alerts.Resolved | len }}"
+          cluster: "{{ .CommonLabels.cluster }}"
+          namespace: "{{ .CommonLabels.namespace }}"
+          runbook: "{{ .CommonAnnotations.runbook }}"
+        # Link to Grafana dashboard and runbook
+        links:
+          - href: "{{ .CommonAnnotations.dashboard }}"
+            text: "Grafana Dashboard"
+          - href: "{{ .CommonAnnotations.runbook }}"
+            text: "Runbook"
+
+  # =========================================================================
+  # Slack — critical incidents channel
+  # =========================================================================
+  - name: "slack-critical"
+    slack_configs:
+      - channel: "#incidents"
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: '{{ if eq .Status "firing" }}FIRING{{ else }}RESOLVED{{ end }}: {{ .CommonAnnotations.summary }}'
+        text: >-
+          *Alert:* {{ .CommonAnnotations.summary }}
+          *Description:* {{ .CommonAnnotations.description }}
+          *Severity:* `{{ .CommonLabels.severity }}`
+          *Cluster:* `{{ .CommonLabels.cluster }}`
+          *Namespace:* `{{ .CommonLabels.namespace }}`
+          *Runbook:* {{ .CommonAnnotations.runbook }}
+          *Dashboard:* {{ .CommonAnnotations.dashboard }}
+        actions:
+          - type: button
+            text: "Runbook"
+            url: "{{ .CommonAnnotations.runbook }}"
+          - type: button
+            text: "Dashboard"
+            url: "{{ .CommonAnnotations.dashboard }}"
+          - type: button
+            text: "Silence"
+            url: '{{ template "__alertmanagerURL" . }}/#/silences/new?filter=%7Balertname%3D%22{{ .CommonLabels.alertname }}%22%7D'
+
+  # =========================================================================
+  # Slack — team-specific warning channels
+  # =========================================================================
+  - name: "slack-warnings"
+    slack_configs:
+      - channel: "#alerts-warnings"
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        title: '{{ .CommonAnnotations.summary }}'
+        text: >-
+          *Severity:* `{{ .CommonLabels.severity }}`
+          *Description:* {{ .CommonAnnotations.description }}
+
+  - name: "slack-backend"
+    slack_configs:
+      - channel: "#backend-alerts"
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        title: '{{ .CommonAnnotations.summary }}'
+        text: >-
+          *Severity:* `{{ .CommonLabels.severity }}` | *Service:* `{{ .CommonLabels.service }}`
+          {{ .CommonAnnotations.description }}
+
+  - name: "slack-data"
+    slack_configs:
+      - channel: "#data-alerts"
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        title: '{{ .CommonAnnotations.summary }}'
+        text: >-
+          *Severity:* `{{ .CommonLabels.severity }}` | *Service:* `{{ .CommonLabels.service }}`
+          {{ .CommonAnnotations.description }}
+
+  - name: "slack-infra"
+    slack_configs:
+      - channel: "#infra-alerts"
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        title: '{{ .CommonAnnotations.summary }}'
+        text: >-
+          *Severity:* `{{ .CommonLabels.severity }}` | *Service:* `{{ .CommonLabels.service }}`
+          {{ .CommonAnnotations.description }}
+
+  # =========================================================================
+  # Slack — info channel (low priority)
+  # =========================================================================
+  - name: "slack-info"
+    slack_configs:
+      - channel: "#alerts-info"
+        send_resolved: false
+        color: "#36a64f"
+        title: '{{ .CommonAnnotations.summary }}'
+        text: "{{ .CommonAnnotations.description }}"
+
+  # =========================================================================
+  # Email — fallback receiver
+  # =========================================================================
+  - name: "email-oncall"
+    email_configs:
+      - to: "oncall@example.com"
+        send_resolved: true
+        headers:
+          Subject: '[{{ .Status | toUpper }}] {{ .CommonAnnotations.summary }}'
+        html: |
+          <h2>{{ .CommonAnnotations.summary }}</h2>
+          <p><strong>Status:</strong> {{ .Status }}</p>
+          <p><strong>Severity:</strong> {{ .CommonLabels.severity }}</p>
+          <p><strong>Description:</strong> {{ .CommonAnnotations.description }}</p>
+          <p><a href="{{ .CommonAnnotations.dashboard }}">View Dashboard</a> |
+             <a href="{{ .CommonAnnotations.runbook }}">View Runbook</a></p>
+
+  # =========================================================================
+  # Deadman switch — for watchdog alert
+  # =========================================================================
+  - name: "deadman-switch"
+    webhook_configs:
+      - url: "https://deadman.example.com/ping/alertmanager"
+        send_resolved: false
+
+# ---------------------------------------------------------------------------
+# Inhibition rules — suppress lower-severity alerts when higher ones fire
+# ---------------------------------------------------------------------------
+inhibit_rules:
+  # If a critical alert is firing, suppress the warning version of the same alert
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    # Only inhibit if the same alertname, cluster, and namespace
+    equal: ["alertname", "cluster", "namespace"]
+
+  # If a critical alert is firing, suppress info alerts for the same service
+  - source_match:
+      severity: critical
+    target_match:
+      severity: info
+    equal: ["cluster", "namespace", "service"]
+
+  # If an entire node is down, suppress all pod-level alerts on that node
+  - source_match:
+      alertname: NodeDown
+    target_match_re:
+      alertname: "Pod.*|Container.*"
+    equal: ["instance"]
+
+  # If the cluster is unreachable, suppress all alerts from that cluster
+  - source_match:
+      alertname: ClusterUnreachable
+    target_match_re:
+      alertname: ".+"
+    equal: ["cluster"]

@@ -1,0 +1,303 @@
+# =============================================================================
+# Prometheus Configuration
+# =============================================================================
+# Scrape configuration for a production Node.js application stack:
+#   - Node.js app (prom-client metrics)
+#   - PostgreSQL (postgres_exporter)
+#   - Redis (redis_exporter)
+#   - cAdvisor (container metrics)
+#   - node-exporter (host-level metrics)
+#   - Prometheus itself
+#
+# Relabeling rules are used to:
+#   - Add environment/service labels for multi-tenancy
+#   - Drop high-cardinality metrics to control storage costs
+#   - Normalize label names across exporters
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Global settings — apply to all scrape jobs unless overridden
+# ---------------------------------------------------------------------------
+global:
+  # How often Prometheus scrapes targets
+  scrape_interval: 15s
+  # How often rules are evaluated (alerting + recording)
+  evaluation_interval: 15s
+  # Timeout for each scrape request
+  scrape_timeout: 10s
+  # Labels added to all time series and alerts from this Prometheus instance
+  external_labels:
+    cluster: "production"
+    region: "us-east-1"
+    environment: "production"
+
+# ---------------------------------------------------------------------------
+# Alertmanager configuration — where to send alerts
+# ---------------------------------------------------------------------------
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - "alertmanager:9093"
+      # Timeout for sending alerts
+      timeout: 10s
+
+# ---------------------------------------------------------------------------
+# Rule files — alerting and recording rules
+# ---------------------------------------------------------------------------
+rule_files:
+  - "/etc/prometheus/alert-rules.yml"
+  - "/etc/prometheus/recording-rules.yml"
+
+# ---------------------------------------------------------------------------
+# Scrape configurations — one job per target type
+# ---------------------------------------------------------------------------
+scrape_configs:
+
+  # =========================================================================
+  # Prometheus self-monitoring
+  # =========================================================================
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          service: "prometheus"
+    # Shorter scrape interval for Prometheus's own metrics
+    scrape_interval: 10s
+
+  # =========================================================================
+  # Node.js application — prom-client metrics endpoint
+  # =========================================================================
+  - job_name: "node-app"
+    # Use DNS-based service discovery (works with Docker Compose and K8s)
+    dns_sd_configs:
+      - names:
+          - "app.service.internal"
+        type: A
+        port: 3000
+        refresh_interval: 30s
+
+    # Fallback static targets if DNS SD is not available
+    static_configs:
+      - targets:
+          - "app:3000"
+        labels:
+          service: "node-app"
+          team: "backend"
+
+    # The metrics path (prom-client default)
+    metrics_path: "/metrics"
+    scheme: "http"
+
+    # Scrape more frequently for the primary application
+    scrape_interval: 10s
+
+    # Relabeling rules applied BEFORE scraping
+    relabel_configs:
+      # Add a human-readable instance label from the target address
+      - source_labels: [__address__]
+        regex: "(.+):\\d+"
+        target_label: "instance"
+        replacement: "${1}"
+
+      # Add pod name if running in Kubernetes (from __meta_kubernetes_pod_name)
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: "pod"
+        action: "replace"
+        regex: "(.+)"
+
+    # Relabeling rules applied AFTER scraping (metric filtering)
+    metric_relabel_configs:
+      # Drop high-cardinality Node.js GC metrics we don't need
+      - source_labels: [__name__]
+        regex: "nodejs_gc_duration_seconds_bucket"
+        action: "drop"
+
+      # Drop high-cardinality HTTP metrics with per-path labels
+      # (only keep the aggregated ones)
+      - source_labels: [__name__, route]
+        regex: "http_request_duration_seconds_bucket;/api/v1/users/[0-9]+"
+        action: "drop"
+
+  # =========================================================================
+  # PostgreSQL Exporter — database metrics
+  # =========================================================================
+  - job_name: "postgres"
+    static_configs:
+      - targets:
+          - "postgres-exporter:9187"
+        labels:
+          service: "postgresql"
+          team: "data"
+
+    scrape_interval: 30s  # database metrics don't change as fast
+
+    metric_relabel_configs:
+      # Normalize database name label
+      - source_labels: [datname]
+        target_label: "database"
+        action: "replace"
+
+      # Drop per-table metrics for system catalogs (pg_catalog, information_schema)
+      - source_labels: [schemaname]
+        regex: "(pg_catalog|information_schema|pg_toast)"
+        action: "drop"
+
+      # Drop rarely-used detailed lock metrics
+      - source_labels: [__name__]
+        regex: "pg_locks_count"
+        action: "keep"
+
+  # =========================================================================
+  # Redis Exporter — cache/queue metrics
+  # =========================================================================
+  - job_name: "redis"
+    static_configs:
+      - targets:
+          - "redis-exporter:9121"
+        labels:
+          service: "redis"
+          team: "backend"
+
+    scrape_interval: 15s
+
+    metric_relabel_configs:
+      # Drop per-command latency histograms (very high cardinality)
+      - source_labels: [__name__]
+        regex: "redis_command_call_duration_seconds_bucket"
+        action: "drop"
+
+  # =========================================================================
+  # cAdvisor — container-level resource metrics
+  # =========================================================================
+  - job_name: "cadvisor"
+    static_configs:
+      - targets:
+          - "cadvisor:8080"
+        labels:
+          service: "cadvisor"
+
+    scrape_interval: 15s
+    metrics_path: "/metrics"
+
+    # cAdvisor emits a LOT of metrics — aggressively filter
+    metric_relabel_configs:
+      # Only keep the metrics we actually use in dashboards
+      - source_labels: [__name__]
+        regex: >-
+          container_cpu_usage_seconds_total|
+          container_memory_usage_bytes|
+          container_memory_working_set_bytes|
+          container_network_receive_bytes_total|
+          container_network_transmit_bytes_total|
+          container_fs_usage_bytes|
+          container_fs_limit_bytes|
+          container_last_seen|
+          container_start_time_seconds
+        action: "keep"
+
+      # Drop metrics from the pause/infra containers
+      - source_labels: [container]
+        regex: "POD|^$"
+        action: "drop"
+
+      # Drop metrics from system namespaces
+      - source_labels: [namespace]
+        regex: "kube-system|kube-public|kube-node-lease"
+        action: "drop"
+
+  # =========================================================================
+  # Node Exporter — host-level hardware/OS metrics
+  # =========================================================================
+  - job_name: "node-exporter"
+    static_configs:
+      - targets:
+          - "node-exporter:9100"
+        labels:
+          service: "node-exporter"
+
+    scrape_interval: 15s
+
+    # Relabel to extract hostname from the target
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: "(.+):\\d+"
+        target_label: "hostname"
+        replacement: "${1}"
+
+    metric_relabel_configs:
+      # Keep only the metrics we use in dashboards and alerts
+      - source_labels: [__name__]
+        regex: >-
+          node_cpu_seconds_total|
+          node_memory_MemTotal_bytes|
+          node_memory_MemAvailable_bytes|
+          node_memory_Buffers_bytes|
+          node_memory_Cached_bytes|
+          node_filesystem_avail_bytes|
+          node_filesystem_size_bytes|
+          node_disk_io_time_seconds_total|
+          node_disk_read_bytes_total|
+          node_disk_written_bytes_total|
+          node_network_receive_bytes_total|
+          node_network_transmit_bytes_total|
+          node_load1|node_load5|node_load15|
+          node_uname_info|
+          node_time_seconds|
+          node_boot_time_seconds
+        action: "keep"
+
+      # Drop metrics for virtual/overlay filesystems
+      - source_labels: [fstype]
+        regex: "(tmpfs|overlay|nsfs)"
+        action: "drop"
+
+      # Drop loopback and virtual network interfaces
+      - source_labels: [device]
+        regex: "(lo|veth.*|docker.*|br-.*)"
+        action: "drop"
+
+  # =========================================================================
+  # Kubernetes service discovery (uncomment if running in K8s)
+  # =========================================================================
+  # - job_name: "kubernetes-pods"
+  #   kubernetes_sd_configs:
+  #     - role: pod
+  #   relabel_configs:
+  #     # Only scrape pods with the annotation prometheus.io/scrape: "true"
+  #     - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+  #       action: keep
+  #       regex: "true"
+  #     # Use the annotation prometheus.io/path for the metrics path
+  #     - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+  #       action: replace
+  #       target_label: __metrics_path__
+  #       regex: (.+)
+  #     # Use the annotation prometheus.io/port for the port
+  #     - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+  #       action: replace
+  #       regex: ([^:]+)(?::\d+)?;(\d+)
+  #       replacement: $1:$2
+  #       target_label: __address__
+  #     # Map Kubernetes labels to Prometheus labels
+  #     - action: labelmap
+  #       regex: __meta_kubernetes_pod_label_(.+)
+  #     - source_labels: [__meta_kubernetes_namespace]
+  #       target_label: namespace
+  #     - source_labels: [__meta_kubernetes_pod_name]
+  #       target_label: pod
+
+# ---------------------------------------------------------------------------
+# Remote write (optional) — send metrics to long-term storage
+# ---------------------------------------------------------------------------
+# remote_write:
+#   - url: "https://thanos-receive.example.com/api/v1/receive"
+#     queue_config:
+#       capacity: 10000
+#       max_shards: 30
+#       max_samples_per_send: 5000
+#     write_relabel_configs:
+#       # Only send metrics matching these names to remote storage
+#       - source_labels: [__name__]
+#         regex: "(http_|node_|container_|pg_|redis_).*"
+#         action: keep

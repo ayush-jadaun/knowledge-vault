@@ -287,7 +287,7 @@ Handlebars.registerHelper('cspNonce', function(this: { cspNonce: string }) {
 
 // Usage in template:
 // <script {​{cspNonce}}>
-//   const config = {​{{jsonConfig}}};
+//   const config = {​{​{jsonConfig}}};
 // </script>
 ```
 
