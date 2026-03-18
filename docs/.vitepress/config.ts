@@ -79,6 +79,7 @@ export default withMermaid(
           ],
         },
         { text: 'Tech Radar', link: '/technology-radar' },
+        { text: 'Tags', link: '/tags' },
       ],
 
       sidebar,
