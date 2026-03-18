@@ -68,15 +68,23 @@ export default withMermaid(
             { text: 'Prompts', link: '/prompt-engineering/' },
             { text: 'UI & Design', link: '/ui-design-systems/' },
             { text: 'Blueprints', link: '/production-blueprints/' },
+            { text: 'Cheat Sheets', link: '/cheat-sheets/' },
           ],
         },
-        { text: 'Glossary', link: '/glossary' },
+        {
+          text: 'Interview Prep',
+          items: [
+            { text: 'System Design Interviews', link: '/system-design-interviews/' },
+            { text: 'Learning Paths', link: '/learning-paths/' },
+          ],
+        },
+        { text: 'Tech Radar', link: '/technology-radar' },
       ],
 
       sidebar,
 
       socialLinks: [
-        { icon: 'github', link: 'https://github.com' },
+        { icon: 'github', link: 'https://github.com/ayush-jadaun/knowledge-vault' },
       ],
 
       search: {
@@ -98,7 +106,7 @@ export default withMermaid(
       },
 
       editLink: {
-        pattern: 'https://github.com/:repo/edit/main/docs/:path',
+        pattern: 'https://github.com/ayush-jadaun/knowledge-vault/edit/main/docs/:path',
         text: 'Edit this page on GitHub',
       },
 

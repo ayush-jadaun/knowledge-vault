@@ -855,4 +855,103 @@ export const sidebar: DefaultTheme.Sidebar = {
       ],
     },
   ],
+
+  '/system-design-interviews/': [
+    {
+      text: 'System Design Interviews',
+      items: [
+        { text: 'Overview & Framework', link: '/system-design-interviews/' },
+      ],
+    },
+    {
+      text: 'Social & Communication',
+      collapsed: false,
+      items: [
+        { text: 'Design Instagram', link: '/system-design-interviews/instagram' },
+        { text: 'Design Twitter/X', link: '/system-design-interviews/twitter-feed' },
+        { text: 'Design WhatsApp', link: '/system-design-interviews/chat-system' },
+        { text: 'Design Facebook', link: '/system-design-interviews/social-network' },
+        { text: 'Design Tinder', link: '/system-design-interviews/tinder' },
+        { text: 'Design Notification System', link: '/system-design-interviews/notification-system' },
+        { text: 'Design Email Service', link: '/system-design-interviews/email-service' },
+      ],
+    },
+    {
+      text: 'Media & Streaming',
+      collapsed: false,
+      items: [
+        { text: 'Design YouTube', link: '/system-design-interviews/youtube' },
+        { text: 'Design Netflix', link: '/system-design-interviews/netflix' },
+        { text: 'Design Spotify', link: '/system-design-interviews/spotify' },
+        { text: 'Design News Aggregator', link: '/system-design-interviews/news-aggregator' },
+      ],
+    },
+    {
+      text: 'Marketplace & Commerce',
+      collapsed: false,
+      items: [
+        { text: 'Design Uber', link: '/system-design-interviews/uber' },
+        { text: 'Design Food Delivery', link: '/system-design-interviews/food-delivery' },
+        { text: 'Design E-Commerce', link: '/system-design-interviews/e-commerce' },
+        { text: 'Design Hotel Booking', link: '/system-design-interviews/hotel-booking' },
+        { text: 'Design Ticket Booking', link: '/system-design-interviews/ticket-booking' },
+        { text: 'Design Payment System', link: '/system-design-interviews/payment-system' },
+        { text: 'Design Parking Lot', link: '/system-design-interviews/parking-lot' },
+      ],
+    },
+    {
+      text: 'Infrastructure & Tools',
+      collapsed: false,
+      items: [
+        { text: 'Design URL Shortener', link: '/system-design-interviews/url-shortener' },
+        { text: 'Design Dropbox', link: '/system-design-interviews/dropbox' },
+        { text: 'Design Web Crawler', link: '/system-design-interviews/web-crawler' },
+        { text: 'Design Search Engine', link: '/system-design-interviews/search-engine' },
+        { text: 'Design Autocomplete', link: '/system-design-interviews/search-autocomplete' },
+        { text: 'Design Google Maps', link: '/system-design-interviews/google-maps' },
+      ],
+    },
+    {
+      text: 'Core Systems',
+      collapsed: false,
+      items: [
+        { text: 'Design Rate Limiter', link: '/system-design-interviews/rate-limiter' },
+        { text: 'Design Key-Value Store', link: '/system-design-interviews/key-value-store' },
+        { text: 'Design Distributed Cache', link: '/system-design-interviews/distributed-cache' },
+        { text: 'Design API Gateway', link: '/system-design-interviews/api-gateway' },
+        { text: 'Design Stock Exchange', link: '/system-design-interviews/stock-exchange' },
+      ],
+    },
+  ],
+
+  '/learning-paths/': [
+    {
+      text: 'Learning Paths',
+      items: [
+        { text: 'Choose Your Path', link: '/learning-paths/' },
+        { text: 'Backend Engineer', link: '/learning-paths/backend-engineer' },
+        { text: 'DevOps Engineer', link: '/learning-paths/devops-engineer' },
+        { text: 'Frontend Engineer', link: '/learning-paths/frontend-engineer' },
+        { text: 'System Design Interview', link: '/learning-paths/system-design-interview' },
+        { text: 'Security Engineer', link: '/learning-paths/security-engineer' },
+      ],
+    },
+  ],
+
+  '/cheat-sheets/': [
+    {
+      text: 'Cheat Sheets',
+      items: [
+        { text: 'Overview', link: '/cheat-sheets/' },
+        { text: 'Docker', link: '/cheat-sheets/docker' },
+        { text: 'Kubernetes', link: '/cheat-sheets/kubernetes' },
+        { text: 'Git', link: '/cheat-sheets/git' },
+        { text: 'SQL', link: '/cheat-sheets/sql' },
+        { text: 'TypeScript', link: '/cheat-sheets/typescript' },
+        { text: 'Linux', link: '/cheat-sheets/linux' },
+        { text: 'Redis', link: '/cheat-sheets/redis' },
+        { text: 'Terraform', link: '/cheat-sheets/terraform' },
+      ],
+    },
+  ],
 }
