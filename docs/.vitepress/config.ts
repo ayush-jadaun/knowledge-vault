@@ -88,9 +88,7 @@ export default withMermaid(
         { icon: 'github', link: 'https://github.com/ayush-jadaun/knowledge-vault' },
       ],
 
-      search: {
-        provider: 'local',
-      },
+      // Search: Pagefind runs post-build (no memory impact)
 
       editLink: {
         pattern: 'https://github.com/ayush-jadaun/knowledge-vault/edit/main/docs/:path',
