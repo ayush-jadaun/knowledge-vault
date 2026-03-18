@@ -25,6 +25,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Cache VitePress build
+        uses: actions/cache@v4
+        with:
+          path: docs/.vitepress/cache
+          key: vitepress-${{ hashFiles('docs/**/*.md', 'docs/.vitepress/config.ts', 'docs/.vitepress/sidebar.ts') }}
+          restore-keys: |
+            vitepress-
+
       - name: Build VitePress site
         run: npm run docs:build
 
