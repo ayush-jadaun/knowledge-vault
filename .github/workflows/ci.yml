@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Ensure cache directory exists
+        run: mkdir -p docs/.vitepress/cache
+
       - name: Cache VitePress build
         uses: actions/cache@v4
         with:
