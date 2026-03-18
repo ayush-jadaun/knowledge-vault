@@ -525,8 +525,8 @@ jobs:
   check-version:
     runs-on: ubuntu-latest
     outputs:
-      changed: ${{ steps.check.outputs.changed }}
-      version: ${{ steps.check.outputs.version }}
+      changed: ${​{ steps.check.outputs.changed }}
+      version: ${​{ steps.check.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -591,11 +591,11 @@ jobs:
       - name: Publish
         run: npm publish --workspace=packages/shared-utils
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${​{ secrets.GITHUB_TOKEN }}
 
       - name: Create Git tag
         run: |
-          VERSION=${{ needs.check-version.outputs.version }}
+          VERSION=${​{ needs.check-version.outputs.version }}
           git tag "shared-utils-v${VERSION}"
           git push origin "shared-utils-v${VERSION}"
 
@@ -709,31 +709,31 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ghcr.io/myorg/app:${{ github.sha }}
+          tags: ghcr.io/myorg/app:${​{ github.sha }}
 
       - name: Sign image (keyless)
         run: |
           cosign sign \
             --yes \
-            ghcr.io/myorg/app@${{ steps.build.outputs.digest }}
+            ghcr.io/myorg/app@${​{ steps.build.outputs.digest }}
 
       - name: Attach SBOM
         run: |
           # Generate SBOM
-          syft ghcr.io/myorg/app@${{ steps.build.outputs.digest }} \
+          syft ghcr.io/myorg/app@${​{ steps.build.outputs.digest }} \
             -o spdx-json > sbom.spdx.json
 
           # Attach to image
           cosign attach sbom \
             --sbom sbom.spdx.json \
-            ghcr.io/myorg/app@${{ steps.build.outputs.digest }}
+            ghcr.io/myorg/app@${​{ steps.build.outputs.digest }}
 
       - name: Verify signature
         run: |
           cosign verify \
             --certificate-identity-regexp="https://github.com/myorg/.*" \
             --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
-            ghcr.io/myorg/app@${{ steps.build.outputs.digest }}
+            ghcr.io/myorg/app@${​{ steps.build.outputs.digest }}
 ```
 
 ## Performance Characteristics
@@ -935,23 +935,23 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ghcr.io/myorg/app:${{ github.sha }}
+          tags: ghcr.io/myorg/app:${​{ github.sha }}
           sbom: true     # BuildKit SBOM generation
           provenance: true  # SLSA provenance attestation
 
       # Alternatively, use Syft for more control
       - name: Generate SBOM
         run: |
-          syft ghcr.io/myorg/app@${{ steps.build.outputs.digest }} \
+          syft ghcr.io/myorg/app@${​{ steps.build.outputs.digest }} \
             -o spdx-json=sbom.spdx.json \
             -o cyclonedx-json=sbom.cdx.json
 
       - name: Upload SBOM to Dependency Track
         run: |
           curl -X POST "https://dtrack.example.com/api/v1/bom" \
-            -H "X-Api-Key: ${{ secrets.DTRACK_API_KEY }}" \
+            -H "X-Api-Key: ${​{ secrets.DTRACK_API_KEY }}" \
             -H "Content-Type: multipart/form-data" \
-            -F "project=${{ vars.DTRACK_PROJECT_UUID }}" \
+            -F "project=${​{ vars.DTRACK_PROJECT_UUID }}" \
             -F "bom=@sbom.cdx.json"
 ```
 
@@ -969,14 +969,14 @@ jobs:
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${​{ github.actor }}
+          password: ${​{ secrets.GITHUB_TOKEN }}
 
       - uses: docker/build-push-action@v5
         with:
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/myorg/app:${{ github.sha }}
+          tags: ghcr.io/myorg/app:${​{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 ```

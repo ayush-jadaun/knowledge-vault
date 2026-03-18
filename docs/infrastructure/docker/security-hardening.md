@@ -289,7 +289,7 @@ CVE-2023-67890
 - name: Run Trivy vulnerability scanner
   uses: aquasecurity/trivy-action@master
   with:
-    image-ref: 'ghcr.io/company/myapp:${{ github.sha }}'
+    image-ref: 'ghcr.io/company/myapp:${​{ github.sha }}'
     format: 'sarif'
     output: 'trivy-results.sarif'
     severity: 'CRITICAL,HIGH'
@@ -857,14 +857,14 @@ function checkForBaseImageUpdate(
 ): ImageUpdateCheck {
   // Get current digest
   const currentDigest = execSync(
-    `docker inspect --format='{{.RepoDigests}}' ${currentImage}`,
+    `docker inspect --format='{​{.RepoDigests}}' ${currentImage}`,
     { encoding: 'utf-8' },
   ).trim();
 
   // Pull latest and get digest
   execSync(`docker pull ${latestTag}`, { encoding: 'utf-8' });
   const latestDigest = execSync(
-    `docker inspect --format='{{.RepoDigests}}' ${latestTag}`,
+    `docker inspect --format='{​{.RepoDigests}}' ${latestTag}`,
     { encoding: 'utf-8' },
   ).trim();
 

@@ -1037,7 +1037,7 @@ OWASP TOP 10 TESTS:
      "{ $gt: '' }",
      "; ls -la",
      "<script>alert('xss')</script>",
-     "{{7*7}}", // Template injection
+     "{​{7*7}}", // Template injection
    ];
 
    for (const payload of injectionPayloads) {

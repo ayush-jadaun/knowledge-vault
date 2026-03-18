@@ -533,7 +533,7 @@ jobs:
       - name: Gitleaks scan
         uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${​{ secrets.GITHUB_TOKEN }}
 
       # TruffleHog — deep scan
       - name: TruffleHog scan
@@ -612,7 +612,7 @@ jobs:
           fetch-depth: 0
       - uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${​{ secrets.GITHUB_TOKEN }}
 
   # SAST — Source code analysis
   sast:
@@ -772,12 +772,12 @@ jobs:
           echo "## Security Scan Results" >> "$GITHUB_STEP_SUMMARY"
           echo "| Scanner | Status |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---------|--------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Secrets | ${{ needs.secrets.result }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| SAST | ${{ needs.sast.result }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Dependencies | ${{ needs.dependencies.result }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| IaC | ${{ needs.iac.result }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Container | ${{ needs.container.result }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Licenses | ${{ needs.licenses.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Secrets | ${​{ needs.secrets.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| SAST | ${​{ needs.sast.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Dependencies | ${​{ needs.dependencies.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| IaC | ${​{ needs.iac.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Container | ${​{ needs.container.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Licenses | ${​{ needs.licenses.result }} |" >> "$GITHUB_STEP_SUMMARY"
 ```
 
 ## Edge Cases & Failure Modes
@@ -859,7 +859,7 @@ Running scanners in parallel reduces total time to the slowest scanner. For a pi
 - uses: actions/cache@v4
   with:
     path: /tmp/trivy-cache
-    key: trivy-db-${{ github.run_id }}
+    key: trivy-db-${​{ github.run_id }}
     restore-keys: trivy-db-
 
 - name: Scan with cached DB

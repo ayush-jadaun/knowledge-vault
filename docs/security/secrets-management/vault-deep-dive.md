@@ -667,10 +667,10 @@ spec:
         vault.hashicorp.com/role: "my-app"
         vault.hashicorp.com/agent-inject-secret-db: "database/creds/my-app-readonly"
         vault.hashicorp.com/agent-inject-template-db: |
-          {{ "{{" }}- with secret "database/creds/my-app-readonly" -{{ "}}" }}
-          export DB_USER="{{ "{{" }} .Data.username {{ "}}" }}"
-          export DB_PASS="{{ "{{" }} .Data.password {{ "}}" }}"
-          {{ "{{" }}- end {{ "}}" }}
+          {​{ "{​{" }}- with secret "database/creds/my-app-readonly" -{​{ "}}" }}
+          export DB_USER="{​{ "{​{" }} .Data.username {​{ "}}" }}"
+          export DB_PASS="{​{ "{​{" }} .Data.password {​{ "}}" }}"
+          {​{ "{​{" }}- end {​{ "}}" }}
     spec:
       serviceAccountName: my-app
       containers:

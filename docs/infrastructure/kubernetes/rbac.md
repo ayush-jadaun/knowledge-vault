@@ -1017,7 +1017,7 @@ spec:
         message: "Binding to cluster-admin is not allowed. Use a scoped role instead."
         deny:
           conditions:
-            - key: "{{ request.object.roleRef.name }}"
+            - key: "{​{ request.object.roleRef.name }}"
               operator: Equals
               value: cluster-admin
 ```

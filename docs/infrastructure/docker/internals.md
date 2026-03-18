@@ -93,7 +93,7 @@ If PID 1 does not reap zombies, the PID table fills up and the container cannot 
 ```bash
 # View the PID mapping
 # From the host:
-docker inspect --format '{{.State.Pid}}' container_name
+docker inspect --format '{​{.State.Pid}}' container_name
 # Returns: 42593
 
 # From inside the container:
@@ -182,7 +182,7 @@ User namespaces map UIDs inside the container to different UIDs on the host. A p
 # ...
 
 # View the mapping
-cat /proc/$(docker inspect --format '{{.State.Pid}}' myapp)/uid_map
+cat /proc/$(docker inspect --format '{​{.State.Pid}}' myapp)/uid_map
 # 0     100000     65536
 # (container UID 0 starts at host UID 100000, 65536 UIDs mapped)
 ```
@@ -401,13 +401,13 @@ flowchart TB
 
 ```bash
 # View overlay mount details
-docker inspect myapp --format '{{.GraphDriver.Data.MergedDir}}'
+docker inspect myapp --format '{​{.GraphDriver.Data.MergedDir}}'
 # /var/lib/docker/overlay2/abc123/merged
 
-docker inspect myapp --format '{{.GraphDriver.Data.UpperDir}}'
+docker inspect myapp --format '{​{.GraphDriver.Data.UpperDir}}'
 # /var/lib/docker/overlay2/abc123/diff
 
-docker inspect myapp --format '{{.GraphDriver.Data.LowerDir}}'
+docker inspect myapp --format '{​{.GraphDriver.Data.LowerDir}}'
 # /var/lib/docker/overlay2/def456/diff:/var/lib/docker/overlay2/ghi789/diff:...
 
 # View from kernel

@@ -357,23 +357,23 @@ jobs:
       contents: read
       packages: write
     outputs:
-      image-digest: ${{ steps.build.outputs.digest }}
-      image-tag: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+      image-digest: ${​{ steps.build.outputs.digest }}
+      image-tag: ${​{ env.REGISTRY }}/${​{ env.IMAGE_NAME }}@${​{ steps.build.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${​{ env.REGISTRY }}
+          username: ${​{ github.actor }}
+          password: ${​{ secrets.GITHUB_TOKEN }}
       - id: build
         uses: docker/build-push-action@v5
         with:
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${​{ env.REGISTRY }}/${​{ env.IMAGE_NAME }}:${​{ github.sha }}
+            ${​{ env.REGISTRY }}/${​{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -384,18 +384,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: myorg/config-repo
-          token: ${{ secrets.CONFIG_REPO_TOKEN }}
+          token: ${​{ secrets.CONFIG_REPO_TOKEN }}
       - name: Update dev image
         run: |
           cd environments/dev
           kustomize edit set image \
-            ghcr.io/myorg/myapp=ghcr.io/myorg/myapp@${{ needs.build.outputs.image-digest }}
+            ghcr.io/myorg/myapp=ghcr.io/myorg/myapp@${​{ needs.build.outputs.image-digest }}
       - name: Commit and push
         run: |
           git config user.name "CI Bot"
           git config user.email "ci@myorg.com"
           git add .
-          git commit -m "chore(dev): update myapp to ${{ github.sha }}"
+          git commit -m "chore(dev): update myapp to ${​{ github.sha }}"
           git push
 
   test-dev:
@@ -428,18 +428,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: myorg/config-repo
-          token: ${{ secrets.CONFIG_REPO_TOKEN }}
+          token: ${​{ secrets.CONFIG_REPO_TOKEN }}
       - name: Update staging image
         run: |
           cd environments/staging
           kustomize edit set image \
-            ghcr.io/myorg/myapp=ghcr.io/myorg/myapp@${{ needs.build.outputs.image-digest }}
+            ghcr.io/myorg/myapp=ghcr.io/myorg/myapp@${​{ needs.build.outputs.image-digest }}
       - name: Commit and push
         run: |
           git config user.name "CI Bot"
           git config user.email "ci@myorg.com"
           git add .
-          git commit -m "chore(staging): promote myapp ${{ github.sha }}"
+          git commit -m "chore(staging): promote myapp ${​{ github.sha }}"
           git push
 
   test-staging:
@@ -482,32 +482,32 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: myorg/config-repo
-          token: ${{ secrets.CONFIG_REPO_TOKEN }}
+          token: ${​{ secrets.CONFIG_REPO_TOKEN }}
 
       - name: Create promotion branch
         run: |
-          BRANCH="promote/myapp-${{ github.sha }}"
+          BRANCH="promote/myapp-${​{ github.sha }}"
           git checkout -b "$BRANCH"
           cd environments/production
           kustomize edit set image \
-            ghcr.io/myorg/myapp=ghcr.io/myorg/myapp@${{ needs.build.outputs.image-digest }}
+            ghcr.io/myorg/myapp=ghcr.io/myorg/myapp@${​{ needs.build.outputs.image-digest }}
           git add .
-          git commit -m "chore(production): promote myapp ${{ github.sha }}"
+          git commit -m "chore(production): promote myapp ${​{ github.sha }}"
           git push origin "$BRANCH"
 
       - name: Create PR
         env:
-          GH_TOKEN: ${{ secrets.CONFIG_REPO_TOKEN }}
+          GH_TOKEN: ${​{ secrets.CONFIG_REPO_TOKEN }}
         run: |
           gh pr create \
             --repo myorg/config-repo \
-            --title "Promote myapp to production (${{ github.sha }})" \
+            --title "Promote myapp to production (${​{ github.sha }})" \
             --body "$(cat <<'BODY'
           ## Production Promotion
 
           **Application**: myapp
-          **Commit**: ${{ github.sha }}
-          **Image**: ghcr.io/myorg/myapp@${{ needs.build.outputs.image-digest }}
+          **Commit**: ${​{ github.sha }}
+          **Image**: ghcr.io/myorg/myapp@${​{ needs.build.outputs.image-digest }}
 
           ### Validation Results
           - Dev smoke tests: PASSED
@@ -614,9 +614,9 @@ spec:
         prometheus:
           address: http://prometheus:9090
           query: |
-            sum(rate(http_requests_total{service="{{args.service}}",status=~"2.."}[2m]))
+            sum(rate(http_requests_total{service="{​{args.service}}",status=~"2.."}[2m]))
             /
-            sum(rate(http_requests_total{service="{{args.service}}"}[2m]))
+            sum(rate(http_requests_total{service="{​{args.service}}"}[2m]))
 ```
 
 ## Edge Cases & Failure Modes

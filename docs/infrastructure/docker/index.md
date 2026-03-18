@@ -326,7 +326,7 @@ docker build --build-arg NODE_ENV=production -t myapp:1.0 .
 
 # List images
 docker images
-docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
+docker images --format "table {​{.Repository}}\t{​{.Tag}}\t{​{.Size}}"
 
 # Tag for registry
 docker tag myapp:1.0 ghcr.io/company/myapp:1.0
@@ -377,8 +377,8 @@ docker cp ./config.json myapp:/app/config.json
 docker stats myapp --no-stream
 
 # Inspect container
-docker inspect myapp --format '{{.State.Status}}'
-docker inspect myapp --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+docker inspect myapp --format '{​{.State.Status}}'
+docker inspect myapp --format '{​{range .NetworkSettings.Networks}}{​{.IPAddress}}{​{end}}'
 ```
 
 ### System Cleanup

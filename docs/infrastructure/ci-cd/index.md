@@ -340,12 +340,12 @@ Caching is the single most impactful optimization in CI/CD. Without it, every bu
 
 ```
 // Exact match — fastest, least flexible
-cache-key: deps-{{ hashFiles('package-lock.json') }}
+cache-key: deps-{​{ hashFiles('package-lock.json') }}
 
 // Prefix match — falls back to partial restore
 restore-keys:
-  - deps-{{ hashFiles('package-lock.json') }}
-  - deps-{{ branch }}
+  - deps-{​{ hashFiles('package-lock.json') }}
+  - deps-{​{ branch }}
   - deps-main
   - deps-
 ```
@@ -377,13 +377,13 @@ on:
     branches: [main]
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${​{ github.ref }}
   cancel-in-progress: true
 
 env:
   NODE_VERSION: '20'
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${​{ github.repository }}
 
 jobs:
   lint-and-typecheck:
@@ -392,7 +392,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${​{ env.NODE_VERSION }}
           cache: 'npm'
       - run: npm ci
       - run: npm run lint
@@ -407,13 +407,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${​{ env.NODE_VERSION }}
           cache: 'npm'
       - run: npm ci
-      - run: npm run test -- --shard=${{ matrix.shard }}/4
+      - run: npm run test -- --shard=${​{ matrix.shard }}/4
       - uses: actions/upload-artifact@v4
         with:
-          name: coverage-${{ matrix.shard }}
+          name: coverage-${​{ matrix.shard }}
           path: coverage/
 
   integration-tests:
@@ -440,7 +440,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${​{ env.NODE_VERSION }}
           cache: 'npm'
       - run: npm ci
       - run: npm run test:integration
@@ -467,20 +467,20 @@ jobs:
       contents: read
       packages: write
     outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
-      image-digest: ${{ steps.build.outputs.digest }}
+      image-tag: ${​{ steps.meta.outputs.tags }}
+      image-digest: ${​{ steps.build.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${​{ env.REGISTRY }}
+          username: ${​{ github.actor }}
+          password: ${​{ secrets.GITHUB_TOKEN }}
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${​{ env.REGISTRY }}/${​{ env.IMAGE_NAME }}
           tags: |
             type=sha,prefix=
             type=ref,event=branch
@@ -489,7 +489,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${​{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -502,8 +502,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Deploy to staging
         run: |
-          echo "Deploying ${{ needs.build.outputs.image-tag }} to staging"
-          # kubectl set image deployment/app app=${{ needs.build.outputs.image-tag }}
+          echo "Deploying ${​{ needs.build.outputs.image-tag }} to staging"
+          # kubectl set image deployment/app app=${​{ needs.build.outputs.image-tag }}
 
   deploy-production:
     runs-on: ubuntu-latest

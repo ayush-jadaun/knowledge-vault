@@ -775,7 +775,7 @@ spec:
             severity: critical
           annotations:
             summary: "ExternalSecret sync failed for longer than 15 minutes"
-            description: "ExternalSecret in namespace {{ $labels.namespace }} named {{ $labels.name }} has been failing to sync."
+            description: "ExternalSecret in namespace {​{ $labels.namespace }} named {​{ $labels.name }} has been failing to sync."
 ```
 
 ### 3. Secret Race Conditions During Rotation
@@ -1055,7 +1055,7 @@ kind: ClusterSPIFFEID
 metadata:
   name: app-identity
 spec:
-  spiffeIDTemplate: "spiffe://example.org/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccountName }}"
+  spiffeIDTemplate: "spiffe://example.org/ns/{​{ .PodMeta.Namespace }}/sa/{​{ .PodSpec.ServiceAccountName }}"
   podSelector:
     matchLabels:
       spiffe.io/spire-managed-identity: "true"

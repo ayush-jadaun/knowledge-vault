@@ -131,7 +131,7 @@ Layer Details:
 
 ```bash
 # View layer sizes
-docker history myapp:latest --format "table {{.Size}}\t{{.CreatedBy}}" --no-trunc
+docker history myapp:latest --format "table {​{.Size}}\t{​{.CreatedBy}}" --no-trunc
 
 # Example output:
 # SIZE      CREATED BY
@@ -466,7 +466,7 @@ interface OptimizationReport {
 function auditImage(imageName: string): OptimizationReport {
   // Get layer information
   const historyOutput = execSync(
-    `docker history ${imageName} --format "{{.ID}}|||{{.CreatedBy}}|||{{.Size}}" --no-trunc`,
+    `docker history ${imageName} --format "{​{.ID}}|||{​{.CreatedBy}}|||{​{.Size}}" --no-trunc`,
     { encoding: 'utf-8' },
   );
 
@@ -526,7 +526,7 @@ function auditImage(imageName: string): OptimizationReport {
 
   // Check for multi-stage usage
   const inspectOutput = execSync(
-    `docker inspect ${imageName} --format "{{len .RootFS.Layers}}"`,
+    `docker inspect ${imageName} --format "{​{len .RootFS.Layers}}"`,
     { encoding: 'utf-8' },
   );
   const layerCount = parseInt(inspectOutput.trim(), 10);
@@ -606,12 +606,12 @@ jobs:
       - name: Check image size
         run: |
           MAX_SIZE_MB=150
-          SIZE_BYTES=$(docker inspect myapp:test --format='{{.Size}}')
+          SIZE_BYTES=$(docker inspect myapp:test --format='{​{.Size}}')
           SIZE_MB=$((SIZE_BYTES / 1024 / 1024))
           echo "Image size: ${SIZE_MB}MB (limit: ${MAX_SIZE_MB}MB)"
           if [ "$SIZE_MB" -gt "$MAX_SIZE_MB" ]; then
             echo "Image exceeds size limit!"
-            docker history myapp:test --format "table {{.Size}}\t{{.CreatedBy}}" --no-trunc
+            docker history myapp:test --format "table {​{.Size}}\t{​{.CreatedBy}}" --no-trunc
             exit 1
           fi
 

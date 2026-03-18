@@ -185,50 +185,50 @@ Helm uses Go's `text/template` package with Sprig functions. Understanding the t
 **Template helpers (_helpers.tpl):**
 
 ```yaml
-{{- /*
+{​{- /*
 Common labels for all resources
 */ -}}
-{{- define "myapp.labels" -}}
-helm.sh/chart: {{ include "myapp.chart" . }}
-app.kubernetes.io/name: {{ include "myapp.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
+{​{- define "myapp.labels" -}}
+helm.sh/chart: {​{ include "myapp.chart" . }}
+app.kubernetes.io/name: {​{ include "myapp.name" . }}
+app.kubernetes.io/instance: {​{ .Release.Name }}
+app.kubernetes.io/version: {​{ .Chart.AppVersion | quote }}
+app.kubernetes.io/managed-by: {​{ .Release.Service }}
+{​{- end }}
 
-{{- define "myapp.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "myapp.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
+{​{- define "myapp.selectorLabels" -}}
+app.kubernetes.io/name: {​{ include "myapp.name" . }}
+app.kubernetes.io/instance: {​{ .Release.Name }}
+{​{- end }}
 
-{{- define "myapp.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
-{{- end }}
+{​{- define "myapp.name" -}}
+{​{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{​{- end }}
 
-{{- define "myapp.fullname" -}}
-{{- if .Values.fullnameOverride }}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- $name := default .Chart.Name .Values.nameOverride }}
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
-{{- end }}
-{{- end }}
+{​{- define "myapp.fullname" -}}
+{​{- if .Values.fullnameOverride }}
+{​{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{​{- else }}
+{​{- $name := default .Chart.Name .Values.nameOverride }}
+{​{- if contains $name .Release.Name }}
+{​{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{​{- else }}
+{​{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{​{- end }}
+{​{- end }}
+{​{- end }}
 
-{{- define "myapp.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
-{{- end }}
+{​{- define "myapp.chart" -}}
+{​{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+{​{- end }}
 
-{{- define "myapp.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "myapp.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}
+{​{- define "myapp.serviceAccountName" -}}
+{​{- if .Values.serviceAccount.create }}
+{​{- default (include "myapp.fullname" .) .Values.serviceAccount.name }}
+{​{- else }}
+{​{- default "default" .Values.serviceAccount.name }}
+{​{- end }}
+{​{- end }}
 ```
 
 ### Production Deployment Template
@@ -238,111 +238,111 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "myapp.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  name: {​{ include "myapp.fullname" . }}
+  namespace: {​{ .Release.Namespace }}
   labels:
-    {{- include "myapp.labels" . | nindent 4 }}
-  {{- with .Values.deploymentAnnotations }}
+    {​{- include "myapp.labels" . | nindent 4 }}
+  {​{- with .Values.deploymentAnnotations }}
   annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {​{- toYaml . | nindent 4 }}
+  {​{- end }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
-  revisionHistoryLimit: {{ .Values.revisionHistoryLimit | default 5 }}
+  {​{- if not .Values.autoscaling.enabled }}
+  replicas: {​{ .Values.replicaCount }}
+  {​{- end }}
+  revisionHistoryLimit: {​{ .Values.revisionHistoryLimit | default 5 }}
   strategy:
-    {{- toYaml .Values.strategy | nindent 4 }}
+    {​{- toYaml .Values.strategy | nindent 4 }}
   selector:
     matchLabels:
-      {{- include "myapp.selectorLabels" . | nindent 6 }}
+      {​{- include "myapp.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
-        {{- with .Values.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        checksum/config: {​{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {​{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {​{- with .Values.podAnnotations }}
+        {​{- toYaml . | nindent 8 }}
+        {​{- end }}
       labels:
-        {{- include "myapp.labels" . | nindent 8 }}
-        {{- with .Values.podLabels }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        {​{- include "myapp.labels" . | nindent 8 }}
+        {​{- with .Values.podLabels }}
+        {​{- toYaml . | nindent 8 }}
+        {​{- end }}
     spec:
-      {{- with .Values.imagePullSecrets }}
+      {​{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      serviceAccountName: {{ include "myapp.serviceAccountName" . }}
+        {​{- toYaml . | nindent 8 }}
+      {​{- end }}
+      serviceAccountName: {​{ include "myapp.serviceAccountName" . }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      {{- if .Values.terminationGracePeriodSeconds }}
-      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
-      {{- end }}
-      {{- with .Values.initContainers }}
+        {​{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {​{- if .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {​{ .Values.terminationGracePeriodSeconds }}
+      {​{- end }}
+      {​{- with .Values.initContainers }}
       initContainers:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {​{- toYaml . | nindent 8 }}
+      {​{- end }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {​{ .Chart.Name }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+            {​{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{​{ .Values.image.repository }}:{​{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {​{ .Values.image.pullPolicy }}
           ports:
-            {{- range .Values.ports }}
-            - name: {{ .name }}
-              containerPort: {{ .containerPort }}
-              protocol: {{ .protocol | default "TCP" }}
-            {{- end }}
-          {{- with .Values.env }}
+            {​{- range .Values.ports }}
+            - name: {​{ .name }}
+              containerPort: {​{ .containerPort }}
+              protocol: {​{ .protocol | default "TCP" }}
+            {​{- end }}
+          {​{- with .Values.env }}
           env:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.envFrom }}
+            {​{- toYaml . | nindent 12 }}
+          {​{- end }}
+          {​{- with .Values.envFrom }}
           envFrom:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- if .Values.healthCheck.enabled }}
+            {​{- toYaml . | nindent 12 }}
+          {​{- end }}
+          {​{- if .Values.healthCheck.enabled }}
           livenessProbe:
-            {{- toYaml .Values.healthCheck.liveness | nindent 12 }}
+            {​{- toYaml .Values.healthCheck.liveness | nindent 12 }}
           readinessProbe:
-            {{- toYaml .Values.healthCheck.readiness | nindent 12 }}
-          {{- if .Values.healthCheck.startup }}
+            {​{- toYaml .Values.healthCheck.readiness | nindent 12 }}
+          {​{- if .Values.healthCheck.startup }}
           startupProbe:
-            {{- toYaml .Values.healthCheck.startup | nindent 12 }}
-          {{- end }}
-          {{- end }}
+            {​{- toYaml .Values.healthCheck.startup | nindent 12 }}
+          {​{- end }}
+          {​{- end }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.volumeMounts }}
+            {​{- toYaml .Values.resources | nindent 12 }}
+          {​{- with .Values.volumeMounts }}
           volumeMounts:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-        {{- with .Values.sidecars }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-      {{- with .Values.volumes }}
+            {​{- toYaml . | nindent 12 }}
+          {​{- end }}
+        {​{- with .Values.sidecars }}
+        {​{- toYaml . | nindent 8 }}
+        {​{- end }}
+      {​{- with .Values.volumes }}
       volumes:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.nodeSelector }}
+        {​{- toYaml . | nindent 8 }}
+      {​{- end }}
+      {​{- with .Values.nodeSelector }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
+        {​{- toYaml . | nindent 8 }}
+      {​{- end }}
+      {​{- with .Values.affinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
+        {​{- toYaml . | nindent 8 }}
+      {​{- end }}
+      {​{- with .Values.tolerations }}
       tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.topologySpreadConstraints }}
+        {​{- toYaml . | nindent 8 }}
+      {​{- end }}
+      {​{- with .Values.topologySpreadConstraints }}
       topologySpreadConstraints:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {​{- toYaml . | nindent 8 }}
+      {​{- end }}
 ```
 
 ### Production values.yaml
@@ -553,9 +553,9 @@ sequenceDiagram
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "myapp.fullname" . }}-db-migrate
+  name: {​{ include "myapp.fullname" . }}-db-migrate
   labels:
-    {{- include "myapp.labels" . | nindent 4 }}
+    {​{- include "myapp.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-upgrade,pre-install
     "helm.sh/hook-weight": "-5"
@@ -566,19 +566,19 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "myapp.selectorLabels" . | nindent 8 }}
+        {​{- include "myapp.selectorLabels" . | nindent 8 }}
     spec:
       restartPolicy: Never
-      serviceAccountName: {{ include "myapp.serviceAccountName" . }}
+      serviceAccountName: {​{ include "myapp.serviceAccountName" . }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {​{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: migrate
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{​{ .Values.image.repository }}:{​{ .Values.image.tag | default .Chart.AppVersion }}"
           command: ["node", "dist/migrations/run.js"]
           envFrom:
             - secretRef:
-                name: {{ include "myapp.fullname" . }}-db-credentials
+                name: {​{ include "myapp.fullname" . }}-db-credentials
           resources:
             requests:
               cpu: 100m
@@ -700,7 +700,7 @@ releases:
     version: 4.10.0
     values:
       - charts/ingress-nginx/values.yaml
-      - charts/ingress-nginx/values.{{ .Environment.Name }}.yaml
+      - charts/ingress-nginx/values.{​{ .Environment.Name }}.yaml
 
   - name: cert-manager
     namespace: cert-manager
@@ -718,7 +718,7 @@ releases:
       - ingress-nginx/ingress-nginx
     values:
       - charts/prometheus-stack/values.yaml
-      - charts/prometheus-stack/values.{{ .Environment.Name }}.yaml
+      - charts/prometheus-stack/values.{​{ .Environment.Name }}.yaml
 
   # Application tier
   - name: api-gateway
@@ -729,10 +729,10 @@ releases:
       - monitoring/prometheus-stack
     values:
       - charts/api-gateway/values.yaml
-      - charts/api-gateway/values.{{ .Environment.Name }}.yaml
+      - charts/api-gateway/values.{​{ .Environment.Name }}.yaml
     set:
       - name: image.tag
-        value: {{ requiredEnv "API_GATEWAY_TAG" }}
+        value: {​{ requiredEnv "API_GATEWAY_TAG" }}
 
   - name: user-service
     namespace: production
@@ -741,10 +741,10 @@ releases:
       - production/api-gateway
     values:
       - charts/user-service/values.yaml
-      - charts/user-service/values.{{ .Environment.Name }}.yaml
+      - charts/user-service/values.{​{ .Environment.Name }}.yaml
     set:
       - name: image.tag
-        value: {{ requiredEnv "USER_SERVICE_TAG" }}
+        value: {​{ requiredEnv "USER_SERVICE_TAG" }}
 
   - name: order-service
     namespace: production
@@ -753,10 +753,10 @@ releases:
       - production/api-gateway
     values:
       - charts/order-service/values.yaml
-      - charts/order-service/values.{{ .Environment.Name }}.yaml
+      - charts/order-service/values.{​{ .Environment.Name }}.yaml
     set:
       - name: image.tag
-        value: {{ requiredEnv "ORDER_SERVICE_TAG" }}
+        value: {​{ requiredEnv "ORDER_SERVICE_TAG" }}
 ```
 
 **Helmfile commands:**
@@ -793,24 +793,24 @@ description: Common templates for all microservices
 
 ```yaml
 # templates/_pod.tpl in the library chart
-{{- define "common-lib.pod" -}}
+{​{- define "common-lib.pod" -}}
 metadata:
   annotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
-    {{- with .Values.podAnnotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
+    {​{- with .Values.podAnnotations }}
+    {​{- toYaml . | nindent 4 }}
+    {​{- end }}
 spec:
-  serviceAccountName: {{ include "common-lib.serviceAccountName" . }}
-  automountServiceAccountToken: {{ .Values.automountServiceAccountToken | default false }}
+  serviceAccountName: {​{ include "common-lib.serviceAccountName" . }}
+  automountServiceAccountToken: {​{ .Values.automountServiceAccountToken | default false }}
   securityContext:
     runAsNonRoot: true
-    runAsUser: {{ .Values.securityContext.runAsUser | default 65534 }}
-    fsGroup: {{ .Values.securityContext.fsGroup | default 65534 }}
+    runAsUser: {​{ .Values.securityContext.runAsUser | default 65534 }}
+    fsGroup: {​{ .Values.securityContext.fsGroup | default 65534 }}
     seccompProfile:
       type: RuntimeDefault
-  terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds | default 30 }}
-{{- end }}
+  terminationGracePeriodSeconds: {​{ .Values.terminationGracePeriodSeconds | default 30 }}
+{​{- end }}
 ```
 
 Consumer charts reference the library:
@@ -828,10 +828,10 @@ dependencies:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common-lib.fullname" . }}
+  name: {​{ include "common-lib.fullname" . }}
 spec:
   template:
-    {{- include "common-lib.pod" . | nindent 4 }}
+    {​{- include "common-lib.pod" . | nindent 4 }}
 ```
 
 ## Edge Cases and Failure Modes
@@ -853,11 +853,11 @@ helm lint ./charts/myapp -f values.yaml --strict
 ```yaml
 # ERROR: nil pointer evaluating interface {}.enabled
 # BAD:
-{{- if .Values.monitoring.enabled }}
+{​{- if .Values.monitoring.enabled }}
 # GOOD (nil-safe):
-{{- if ((.Values.monitoring).enabled) }}
+{​{- if ((.Values.monitoring).enabled) }}
 # Or with default:
-{{- if .Values.monitoring | default dict | dig "enabled" false }}
+{​{- if .Values.monitoring | default dict | dig "enabled" false }}
 ```
 
 ### 2. Release Stuck in PENDING-UPGRADE
@@ -1008,7 +1008,7 @@ The fix was the checksum annotation pattern:
 
 ```yaml
 annotations:
-  checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+  checksum/config: {​{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
 ```
 
 This forces a rolling restart whenever the ConfigMap content changes, because the annotation on the pod template changes, triggering a Deployment rollout. This pattern is now standard in all their charts.

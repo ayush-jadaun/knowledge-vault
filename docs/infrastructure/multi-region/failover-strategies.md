@@ -1025,8 +1025,8 @@ jobs:
 
       - name: Announce drill
         run: |
-          curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
-            -d '{"text": "DRILL: Starting monthly failover drill. Target: ${{ inputs.target_region || 'us-east-1' }}"}'
+          curl -X POST "${​{ secrets.SLACK_WEBHOOK }}" \
+            -d '{"text": "DRILL: Starting monthly failover drill. Target: ${​{ inputs.target_region || 'us-east-1' }}"}'
 
       - name: Record baseline metrics
         id: baseline
@@ -1038,7 +1038,7 @@ jobs:
         id: failover
         run: |
           START=$(date +%s)
-          npm run failover -- --from=${{ inputs.target_region || 'us-east-1' }}
+          npm run failover -- --from=${​{ inputs.target_region || 'us-east-1' }}
           END=$(date +%s)
           echo "rto=$((END-START))" >> "$GITHUB_OUTPUT"
 
@@ -1046,12 +1046,12 @@ jobs:
         run: npm run test:smoke -- --env production
 
       - name: Restore primary
-        run: npm run failback -- --to=${{ inputs.target_region || 'us-east-1' }}
+        run: npm run failback -- --to=${​{ inputs.target_region || 'us-east-1' }}
 
       - name: Report results
         run: |
-          curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
-            -d "{\"text\": \"DRILL COMPLETE: RTO = ${{ steps.failover.outputs.rto }}s\"}"
+          curl -X POST "${​{ secrets.SLACK_WEBHOOK }}" \
+            -d "{\"text\": \"DRILL COMPLETE: RTO = ${​{ steps.failover.outputs.rto }}s\"}"
 ```
 
 For the cost implications of maintaining failover infrastructure, see [Cost Analysis](./cost-analysis). For understanding how data replication lag affects RPO, see [Data Replication](./data-replication).

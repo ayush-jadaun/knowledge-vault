@@ -122,7 +122,7 @@ models:
 SELECT
     order_date,
     SUM(order_amount) as daily_revenue
-FROM {{ ref('fact_orders') }}
+FROM {​{ ref('fact_orders') }}
 GROUP BY order_date
 HAVING SUM(order_amount) <= 0
 ```
@@ -132,7 +132,7 @@ HAVING SUM(order_amount) <= 0
 -- No orders should have a date in the future
 
 SELECT *
-FROM {{ ref('fact_orders') }}
+FROM {​{ ref('fact_orders') }}
 WHERE order_date > CURRENT_DATE
 ```
 
@@ -142,7 +142,7 @@ WHERE order_date > CURRENT_DATE
 
 WITH counts AS (
     SELECT COUNT(*) as row_count
-    FROM {{ ref('fact_orders') }}
+    FROM {​{ ref('fact_orders') }}
     WHERE order_date = CURRENT_DATE - INTERVAL '1 day'
 )
 SELECT *

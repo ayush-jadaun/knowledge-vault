@@ -298,7 +298,7 @@ spec:
     template:
       type: Opaque
       data:
-        DB_URL: "postgresql://{{ .username }}:{{ .password }}@{{ .host }}:{{ .port }}/{{ .dbname }}"
+        DB_URL: "postgresql://{​{ .username }}:{​{ .password }}@{​{ .host }}:{​{ .port }}/{​{ .dbname }}"
 
   data:
     - secretKey: username
@@ -357,7 +357,7 @@ jobs:
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${​{ secrets.GITHUB_TOKEN }}
 ```
 
 ```toml
@@ -417,7 +417,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}  # DANGER: PR code
+          ref: ${​{ github.event.pull_request.head.sha }}  # DANGER: PR code
       - run: npm test  # PR code runs with secrets access
 ```
 
@@ -427,11 +427,11 @@ GitHub masks secret values in logs, but there are bypass techniques:
 
 ```bash
 # This will be masked:
-echo "${{ secrets.MY_SECRET }}"  # Output: ***
+echo "${​{ secrets.MY_SECRET }}"  # Output: ***
 
 # These might NOT be masked:
-echo "${{ secrets.MY_SECRET }}" | base64  # Different string, not masked
-echo "${{ secrets.MY_SECRET }}" | rev      # Reversed, not masked
+echo "${​{ secrets.MY_SECRET }}" | base64  # Different string, not masked
+echo "${​{ secrets.MY_SECRET }}" | rev      # Reversed, not masked
 ```
 
 **Mitigation**: Never echo secrets. Use `add-mask` for derived values:
@@ -439,7 +439,7 @@ echo "${{ secrets.MY_SECRET }}" | rev      # Reversed, not masked
 ```yaml
 - name: Derive and mask
   run: |
-    DERIVED=$(echo "${{ secrets.MY_SECRET }}" | sha256sum | cut -d' ' -f1)
+    DERIVED=$(echo "${​{ secrets.MY_SECRET }}" | sha256sum | cut -d' ' -f1)
     echo "::add-mask::$DERIVED"
     echo "Using derived value: $DERIVED"
 ```
@@ -517,7 +517,7 @@ flowchart TD
     cosign sign \
       --yes \
       --oidc-issuer=https://token.actions.githubusercontent.com \
-      ghcr.io/${{ github.repository }}:${{ github.sha }}
+      ghcr.io/${​{ github.repository }}:${​{ github.sha }}
   env:
     COSIGN_EXPERIMENTAL: 1
 ```
@@ -532,7 +532,7 @@ jobs:
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}  # Staging role
+          role-to-assume: ${​{ vars.AWS_ROLE_ARN }}  # Staging role
           aws-region: us-east-1
 
   deploy-production:
@@ -541,7 +541,7 @@ jobs:
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}  # Production role
+          role-to-assume: ${​{ vars.AWS_ROLE_ARN }}  # Production role
           aws-region: us-east-1
 ```
 

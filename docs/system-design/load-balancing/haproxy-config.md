@@ -916,9 +916,9 @@ backend bk_api
     balance leastconn
     option httpchk GET /health
 
-{{range service "api" "passing"}}
-    server {{.ID}} {{.Address}}:{{.Port}} check inter 5s fall 3 rise 2
-{{end}}
+{​{range service "api" "passing"}}
+    server {​{.ID}} {​{.Address}}:{​{.Port}} check inter 5s fall 3 rise 2
+{​{end}}
 ```
 
 ### Multi-Process vs Multi-Thread

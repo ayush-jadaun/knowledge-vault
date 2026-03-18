@@ -98,7 +98,7 @@ on:
     branches: [main]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${​{ github.workflow }}-${​{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -136,7 +136,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npm run test:all -- --shard=${{ matrix.shard }}/4
+      - run: npm run test:all -- --shard=${​{ matrix.shard }}/4
 
   # Gate 3: Build & push (< 5 min)
   build:
@@ -144,20 +144,20 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     outputs:
-      image: ${{ steps.build.outputs.image }}
+      image: ${​{ steps.build.outputs.image }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${​{ github.actor }}
+          password: ${​{ secrets.GITHUB_TOKEN }}
       - id: build
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: ghcr.io/${​{ github.repository }}:${​{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -171,7 +171,7 @@ jobs:
       - name: Deploy canary (5% traffic)
         run: |
           kubectl set image deployment/app-canary \
-            app=${{ needs.build.outputs.image }} -n production
+            app=${​{ needs.build.outputs.image }} -n production
 
   verify-canary:
     needs: deploy-canary
@@ -198,7 +198,7 @@ jobs:
       - name: Full production deployment
         run: |
           kubectl set image deployment/app \
-            app=${{ needs.build.outputs.image }} -n production
+            app=${​{ needs.build.outputs.image }} -n production
           kubectl rollout status deployment/app -n production --timeout=600s
 ```
 
@@ -354,15 +354,15 @@ on:
     branches: [main]
 
 env:
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  TURBO_TOKEN: ${​{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${​{ vars.TURBO_TEAM }}
 
 jobs:
   detect:
     runs-on: ubuntu-latest
     outputs:
-      affected: ${{ steps.affected.outputs.packages }}
-      matrix: ${{ steps.affected.outputs.matrix }}
+      affected: ${​{ steps.affected.outputs.packages }}
+      matrix: ${​{ steps.affected.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -398,7 +398,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJson(needs.detect.outputs.matrix) }}
+        include: ${​{ fromJson(needs.detect.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -406,7 +406,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npx turbo run test --filter=${{ matrix.package }}
+      - run: npx turbo run test --filter=${​{ matrix.package }}
 
   build:
     needs: [lint, test]
@@ -544,13 +544,13 @@ jobs:
   prepare-shards:
     runs-on: ubuntu-latest
     outputs:
-      shards: ${{ steps.shard.outputs.shards }}
+      shards: ${​{ steps.shard.outputs.shards }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache/restore@v4
         with:
           path: .test-timings.json
-          key: test-timings-${{ github.ref }}
+          key: test-timings-${​{ github.ref }}
           restore-keys: test-timings-
       - id: shard
         run: |
@@ -563,7 +563,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJson(needs.prepare-shards.outputs.shards) }}
+        shard: ${​{ fromJson(needs.prepare-shards.outputs.shards) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -572,11 +572,11 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: |
-          echo '${{ matrix.shard.files }}' > /tmp/test-files.txt
+          echo '${​{ matrix.shard.files }}' > /tmp/test-files.txt
           npx vitest run --reporter=json --outputFile=test-results.json $(cat /tmp/test-files.txt | tr ',' ' ')
       - uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.shard.index }}
+          name: test-results-${​{ matrix.shard.index }}
           path: test-results.json
 
   collect-timings:
@@ -594,7 +594,7 @@ jobs:
       - uses: actions/cache/save@v4
         with:
           path: .test-timings.json
-          key: test-timings-${{ github.ref }}
+          key: test-timings-${​{ github.ref }}
 ```
 
 ### Pattern 4: Feature Flag Pipeline
@@ -749,14 +749,14 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.DEPLOY_ROLE_ARN }}
+          role-to-assume: ${​{ vars.DEPLOY_ROLE_ARN }}
           aws-region: us-east-1
 
       - name: Determine active environment
         id: active
         run: |
           ACTIVE=$(aws elbv2 describe-rules \
-            --listener-arn ${{ vars.LISTENER_ARN }} \
+            --listener-arn ${​{ vars.LISTENER_ARN }} \
             --query 'Rules[?IsDefault].Actions[0].ForwardConfig.TargetGroups[?Weight>`0`].TargetGroupArn' \
             --output text)
           if echo "$ACTIVE" | grep -q "blue"; then
@@ -769,11 +769,11 @@ jobs:
 
       - name: Deploy to inactive environment
         run: |
-          ENV=${{ steps.active.outputs.inactive }}
+          ENV=${​{ steps.active.outputs.inactive }}
           aws ecs update-service \
             --cluster production \
             --service app-${ENV} \
-            --task-definition app:${{ github.sha }} \
+            --task-definition app:${​{ github.sha }} \
             --force-new-deployment
           aws ecs wait services-stable \
             --cluster production \
@@ -781,7 +781,7 @@ jobs:
 
       - name: Health check inactive environment
         run: |
-          ENV=${{ steps.active.outputs.inactive }}
+          ENV=${​{ steps.active.outputs.inactive }}
           ENDPOINT=$(aws elbv2 describe-target-groups \
             --names app-${ENV} \
             --query 'TargetGroups[0].HealthCheckPath' \
@@ -792,14 +792,14 @@ jobs:
       - name: Switch traffic
         run: |
           ACTIVE_TG=$(aws elbv2 describe-target-groups \
-            --names app-${{ steps.active.outputs.active }} \
+            --names app-${​{ steps.active.outputs.active }} \
             --query 'TargetGroups[0].TargetGroupArn' --output text)
           INACTIVE_TG=$(aws elbv2 describe-target-groups \
-            --names app-${{ steps.active.outputs.inactive }} \
+            --names app-${​{ steps.active.outputs.inactive }} \
             --query 'TargetGroups[0].TargetGroupArn' --output text)
 
           aws elbv2 modify-rule \
-            --rule-arn ${{ vars.DEFAULT_RULE_ARN }} \
+            --rule-arn ${​{ vars.DEFAULT_RULE_ARN }} \
             --actions "[{
               \"Type\": \"forward\",
               \"ForwardConfig\": {
@@ -825,7 +825,7 @@ jobs:
               echo "Too many errors, rolling back"
               # Rollback: switch traffic back
               aws elbv2 modify-rule \
-                --rule-arn ${{ vars.DEFAULT_RULE_ARN }} \
+                --rule-arn ${​{ vars.DEFAULT_RULE_ARN }} \
                 --actions "[{
                   \"Type\": \"forward\",
                   \"ForwardConfig\": {
@@ -856,35 +856,35 @@ jobs:
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     environment:
-      name: preview-${{ github.event.pull_request.number }}
-      url: https://pr-${{ github.event.pull_request.number }}.preview.example.com
+      name: preview-${​{ github.event.pull_request.number }}
+      url: https://pr-${​{ github.event.pull_request.number }}.preview.example.com
     steps:
       - uses: actions/checkout@v4
 
       - name: Build preview image
         run: |
-          docker build -t preview:pr-${{ github.event.pull_request.number }} .
+          docker build -t preview:pr-${​{ github.event.pull_request.number }} .
 
       - name: Deploy preview
         run: |
           # Create namespace for this PR
-          kubectl create namespace preview-${{ github.event.pull_request.number }} \
+          kubectl create namespace preview-${​{ github.event.pull_request.number }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
           # Deploy application
           helm upgrade --install \
-            pr-${{ github.event.pull_request.number }} \
+            pr-${​{ github.event.pull_request.number }} \
             ./chart \
-            --namespace preview-${{ github.event.pull_request.number }} \
-            --set image.tag=pr-${{ github.event.pull_request.number }} \
-            --set ingress.host=pr-${{ github.event.pull_request.number }}.preview.example.com \
+            --namespace preview-${​{ github.event.pull_request.number }} \
+            --set image.tag=pr-${​{ github.event.pull_request.number }} \
+            --set ingress.host=pr-${​{ github.event.pull_request.number }}.preview.example.com \
             --wait --timeout 300s
 
       - name: Comment PR with preview URL
         uses: actions/github-script@v7
         with:
           script: |
-            const url = `https://pr-${{ github.event.pull_request.number }}.preview.example.com`;
+            const url = `https://pr-${​{ github.event.pull_request.number }}.preview.example.com`;
             const body = `## Preview Environment\n\nDeployed to: ${url}\n\nThis environment will be destroyed when the PR is closed.`;
 
             // Find existing comment
@@ -914,9 +914,9 @@ jobs:
     steps:
       - name: Destroy preview environment
         run: |
-          helm uninstall pr-${{ github.event.pull_request.number }} \
-            --namespace preview-${{ github.event.pull_request.number }} || true
-          kubectl delete namespace preview-${{ github.event.pull_request.number }} || true
+          helm uninstall pr-${​{ github.event.pull_request.number }} \
+            --namespace preview-${​{ github.event.pull_request.number }} || true
+          kubectl delete namespace preview-${​{ github.event.pull_request.number }} || true
 ```
 
 ## Edge Cases & Failure Modes
