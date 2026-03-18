@@ -121,21 +121,17 @@ export default withMermaid(
 
     mermaid: {
       theme: 'dark',
-      themeVariables: {
-        primaryColor: '#5f67ee',
-        primaryTextColor: '#fff',
-        primaryBorderColor: '#747bff',
-        lineColor: '#929aff',
-        secondaryColor: '#2d2d3f',
-        tertiaryColor: '#1e1e2e',
-        nodeTextColor: '#e0e0e0',
-        mainBkg: '#2d2d3f',
-        nodeBorder: '#747bff',
-        clusterBkg: '#1e1e2e',
-        clusterBorder: '#444',
-        titleColor: '#e0e0e0',
-        edgeLabelBackground: '#1e1e2e',
-      },
+      themeCSS: `
+        * { color: #cdd6f4 !important; }
+        rect, polygon, circle, ellipse, path.node { fill: #313244 !important; stroke: #585b70 !important; }
+        .cluster rect { fill: #1e1e2e !important; stroke: #585b70 !important; }
+        text, tspan, .nodeLabel, .label, .edgeLabel { fill: #cdd6f4 !important; color: #cdd6f4 !important; }
+        .edgePath path { stroke: #a6adc8 !important; }
+        marker path { fill: #a6adc8 !important; }
+        .actor { fill: #313244 !important; stroke: #585b70 !important; }
+        line { stroke: #585b70 !important; }
+      `,
+      maxTextSize: 500000,
     },
 
     mermaidPlugin: {

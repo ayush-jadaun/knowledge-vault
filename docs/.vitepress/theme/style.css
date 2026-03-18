@@ -138,6 +138,39 @@
   height: auto;
 }
 
+/* Force all mermaid nodes to dark bg + light text in dark mode */
+.dark .mermaid rect,
+.dark .mermaid polygon,
+.dark .mermaid circle,
+.dark .mermaid ellipse,
+.dark .mermaid .node rect,
+.dark .mermaid .node polygon,
+.dark .mermaid .node circle,
+.dark .mermaid .cluster rect {
+  fill: #313244 !important;
+  stroke: #585b70 !important;
+}
+
+.dark .mermaid text,
+.dark .mermaid .nodeLabel,
+.dark .mermaid .edgeLabel,
+.dark .mermaid .label,
+.dark .mermaid .cluster-label,
+.dark .mermaid tspan {
+  fill: #cdd6f4 !important;
+  color: #cdd6f4 !important;
+}
+
+.dark .mermaid .edgePath path,
+.dark .mermaid .flowchart-link {
+  stroke: #a6adc8 !important;
+}
+
+.dark .mermaid marker path {
+  fill: #a6adc8 !important;
+  stroke: #a6adc8 !important;
+}
+
 /* ============================================
    Sidebar Customization
    ============================================ */
