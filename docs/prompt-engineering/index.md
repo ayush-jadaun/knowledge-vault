@@ -103,15 +103,10 @@ Error diagnosis, log analysis, memory leak investigation, performance bottleneck
 
 ## Subsections
 
-- **[Engineering Prompts](/prompt-engineering/engineering/)** — Code generation, refactoring, testing, and debugging
-- **[Architecture Prompts](/prompt-engineering/architecture/)** — System design, trade-off analysis, and technical decisions
-- **[Code Review Prompts](/prompt-engineering/code-review/)** — Security, performance, and quality review templates
-- **[Product Prompts](/prompt-engineering/product/)** — PRDs, user stories, and strategy analysis
-- **[UI & Frontend Prompts](/prompt-engineering/ui/)** — Component design, accessibility, and design systems
-- **[DevOps Prompts](/prompt-engineering/devops/)** — Infrastructure, CI/CD, and incident response
-- **[Data Prompts](/prompt-engineering/data/)** — SQL, dashboards, and pipeline design
-- **[Documentation Prompts](/prompt-engineering/documentation/)** — Technical writing and knowledge management
-- **[Prompt Design Guide](/prompt-engineering/guide/)** — How to craft your own effective prompts from scratch
+- **[Engineering Prompts](/prompt-engineering/engineering-prompts/)** — Code generation, refactoring, testing, and debugging
+- **[Architecture Prompts](/prompt-engineering/architecture-prompts/)** — System design, scaling, migration, and cost optimization
+- **[Product Prompts](/prompt-engineering/product-prompts/)** — PRDs, user stories, competitive analysis, and go-to-market
+- **[UI & Frontend Prompts](/prompt-engineering/ui-prompts/)** — Component design, accessibility, responsive design, and design systems
 
 ---
 
