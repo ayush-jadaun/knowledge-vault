@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "docs:dev": "vitepress dev docs",
-    "docs:build": "node scripts/generate-tags.mjs && cross-env NODE_OPTIONS=--max-old-space-size=7168 vitepress build docs && npx pagefind --site docs/.vitepress/dist",
-    "docs:preview": "vitepress preview docs"
+    "docs:build": "cross-env NODE_OPTIONS=--max-old-space-size=16384 vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "deploy": "npm run docs:build && vercel deploy docs/.vitepress/dist --prod"
   },
   "keywords": [
     "engineering",
