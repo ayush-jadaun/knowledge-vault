@@ -120,7 +120,22 @@ export default withMermaid(
     },
 
     mermaid: {
-      theme: 'neutral',
+      theme: 'dark',
+      themeVariables: {
+        primaryColor: '#5f67ee',
+        primaryTextColor: '#fff',
+        primaryBorderColor: '#747bff',
+        lineColor: '#929aff',
+        secondaryColor: '#2d2d3f',
+        tertiaryColor: '#1e1e2e',
+        nodeTextColor: '#e0e0e0',
+        mainBkg: '#2d2d3f',
+        nodeBorder: '#747bff',
+        clusterBkg: '#1e1e2e',
+        clusterBorder: '#444',
+        titleColor: '#e0e0e0',
+        edgeLabelBackground: '#1e1e2e',
+      },
     },
 
     mermaidPlugin: {
