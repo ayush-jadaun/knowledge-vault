@@ -88,23 +88,7 @@ export default withMermaid(
         { icon: 'github', link: 'https://github.com/ayush-jadaun/knowledge-vault' },
       ],
 
-      search: {
-        provider: 'local',
-        options: {
-          detailedView: true,
-          miniSearch: {
-            searchOptions: {
-              fuzzy: 0.2,
-              prefix: true,
-              boost: {
-                title: 4,
-                text: 2,
-                titles: 3,
-              },
-            },
-          },
-        },
-      },
+      // Search handled by Pagefind (runs post-build, much faster)
 
       editLink: {
         pattern: 'https://github.com/ayush-jadaun/knowledge-vault/edit/main/docs/:path',
@@ -158,7 +142,6 @@ export default withMermaid(
             manualChunks(id) {
               if (id.includes('mermaid')) return 'mermaid'
               if (id.includes('mathjax') || id.includes('tex-svg') || id.includes('tex-chtml')) return 'mathjax'
-              if (id.includes('minisearch')) return 'search'
             },
           },
         },
