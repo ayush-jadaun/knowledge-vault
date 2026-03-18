@@ -44,8 +44,16 @@ const difficultyColor = (d: string) => {
   }
 }
 
+const resultsRef = ref<HTMLElement | null>(null)
+
 function selectTag(tag: string) {
   selectedTag.value = selectedTag.value === tag ? null : tag
+  if (selectedTag.value) {
+    // Scroll results into view
+    setTimeout(() => {
+      resultsRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 50)
+  }
 }
 </script>
 
@@ -66,21 +74,11 @@ function selectTag(tag: string) {
       />
     </div>
 
-    <div class="tag-cloud">
-      <button
-        v-for="tag in filteredTags"
-        :key="tag.name"
-        :class="['tag-pill', tagSize(tag.count), { active: selectedTag === tag.name }]"
-        @click="selectTag(tag.name)"
-      >
-        {{ tag.name }}
-        <span class="tag-count">{{ tag.count }}</span>
-      </button>
-    </div>
-
-    <div v-if="selectedTag" class="tag-results">
+    <!-- Results shown ABOVE tag cloud when a tag is selected -->
+    <div v-if="selectedTag" ref="resultsRef" class="tag-results">
       <div class="tag-results-header">
         <h2>Pages tagged "{{ selectedTag }}"</h2>
+        <button class="clear-tag" @click="selectedTag = null">Clear</button>
         <div class="difficulty-filter">
           <button
             v-for="d in ['all', 'beginner', 'intermediate', 'advanced', 'expert']"
@@ -113,6 +111,19 @@ function selectTag(tag: string) {
           No pages match this filter.
         </p>
       </div>
+    </div>
+
+    <!-- Tag cloud (collapsed to max-height when results are showing) -->
+    <div :class="['tag-cloud', { collapsed: !!selectedTag }]">
+      <button
+        v-for="tag in filteredTags"
+        :key="tag.name"
+        :class="['tag-pill', tagSize(tag.count), { active: selectedTag === tag.name }]"
+        @click="selectTag(tag.name)"
+      >
+        {{ tag.name }}
+        <span class="tag-count">{{ tag.count }}</span>
+      </button>
     </div>
   </div>
 </template>
@@ -163,6 +174,31 @@ function selectTag(tag: string) {
   padding: 16px;
   background: var(--vp-c-bg-soft);
   border-radius: 12px;
+  max-height: 600px;
+  overflow-y: auto;
+  transition: max-height 0.3s;
+}
+
+.tag-cloud.collapsed {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.clear-tag {
+  padding: 4px 12px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.clear-tag:hover {
+  border-color: #f56c6c;
+  color: #f56c6c;
 }
 
 .tag-pill {
