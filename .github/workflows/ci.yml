@@ -44,4 +44,7 @@ jobs:
           npm i -g vercel
           mkdir -p .vercel
           echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
-          vercel deploy docs/.vitepress/dist --prod --token=$VERCEL_TOKEN --yes
+          mkdir -p .vercel/output/static
+          cp -r docs/.vitepress/dist/* .vercel/output/static/
+          echo '{"version":3,"routes":[{"handle":"filesystem"},{"src":"/(.*)", "status":404, "dest":"/404.html"}]}' > .vercel/output/config.json
+          vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
