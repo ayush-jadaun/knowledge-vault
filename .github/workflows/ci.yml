@@ -10,12 +10,19 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
-      NODE_OPTIONS: --max-old-space-size=7168
+      NODE_OPTIONS: --max-old-space-size=12288
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Add swap space
+        run: |
+          sudo fallocate -l 8G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
 
       - uses: actions/setup-node@v4
         with:

@@ -12,3 +12,4 @@ Thumbs.db
 .vercel
 docs/.vitepress/.temp/
 docs/.vitepress/dist/
+.astro
