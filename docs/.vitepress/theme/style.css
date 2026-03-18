@@ -128,10 +128,13 @@
   padding: 16px;
   background-color: var(--vp-c-bg-soft);
   border-radius: 8px;
+  overflow-x: auto;
+  min-height: 200px;
 }
 
 .mermaid svg {
-  max-width: 100%;
+  max-width: none;
+  min-width: 600px;
   height: auto;
 }
 
