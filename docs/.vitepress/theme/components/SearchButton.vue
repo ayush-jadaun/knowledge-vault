@@ -27,9 +27,21 @@ onMounted(async () => {
 async function initPagefind() {
   if (pagefindUI) return
   try {
-    // @ts-ignore - Pagefind UI is loaded from static files
-    const PagefindUI = (await import(/* @vite-ignore */ '/pagefind/pagefind-ui.js')).PagefindUI
-    pagefindUI = new PagefindUI({
+    // Load Pagefind UI via script tag (avoids Vite import analysis)
+    await new Promise<void>((resolve, reject) => {
+      if (document.querySelector('script[src="/pagefind/pagefind-ui.js"]')) {
+        resolve()
+        return
+      }
+      const script = document.createElement('script')
+      script.src = '/pagefind/pagefind-ui.js'
+      script.onload = () => resolve()
+      script.onerror = () => reject(new Error('Pagefind not available'))
+      document.head.appendChild(script)
+    })
+
+    // @ts-ignore - PagefindUI is now on window
+    pagefindUI = new (window as any).PagefindUI({
       element: '#pagefind-container',
       showSubResults: true,
       showImages: false,
@@ -41,7 +53,11 @@ async function initPagefind() {
       input?.focus()
     }, 100)
   } catch (e) {
-    console.warn('Pagefind not available (run pagefind after build)', e)
+    // Show friendly message in dev mode
+    const container = document.querySelector('#pagefind-container')
+    if (container) {
+      container.innerHTML = '<p style="color: var(--vp-c-text-3); text-align: center; padding: 20px;">Search is available in production builds only.<br><code>npm run docs:build && npm run docs:preview</code></p>'
+    }
   }
 }
 
