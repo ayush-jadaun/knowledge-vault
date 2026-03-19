@@ -58,6 +58,19 @@ async function initPagefind() {
       resetStyles: true,
     })
 
+    // Close modal when a result link is clicked
+    setTimeout(() => {
+      const container = document.getElementById('pagefind-container')
+      if (container) {
+        container.addEventListener('click', (e) => {
+          const target = e.target as HTMLElement
+          if (target.tagName === 'A' || target.closest('a')) {
+            isOpen.value = false
+          }
+        })
+      }
+    }, 200)
+
     setTimeout(() => {
       const input = document.querySelector('#pagefind-container input') as HTMLInputElement
       input?.focus()
