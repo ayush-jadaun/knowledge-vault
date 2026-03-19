@@ -24,6 +24,31 @@ export default withMermaid(
       ['link', { rel: 'manifest', href: '/manifest.json' }],
       ['link', { rel: 'alternate', type: 'application/rss+xml', title: 'Archon RSS', href: '/feed.xml' }],
       ['script', {}, `if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js')`],
+      ['script', { type: 'application/ld+json' }, JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Archon",
+        "description": "The holy grail of engineering knowledge — 470+ deep dives from first principles to production mastery",
+        "url": "https://knowledge-vault-five.vercel.app",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://knowledge-vault-five.vercel.app/?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Ayush Jadaun",
+          "url": "https://github.com/ayush-jadaun"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Archon",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://knowledge-vault-five.vercel.app/logo.svg"
+          }
+        }
+      })],
     ],
 
     sitemap: {
@@ -35,14 +60,37 @@ export default withMermaid(
       const title = pageData.frontmatter.title || pageData.title
       const description = pageData.frontmatter.description || 'Engineering knowledge from first principles to research-level depth'
 
+      const url = `https://knowledge-vault-five.vercel.app/${pageData.relativePath.replace(/index\.md$/, '').replace(/\.md$/, '')}`
+      const tags = pageData.frontmatter.tags || []
+      const difficulty = pageData.frontmatter.difficulty || ''
+
       pageData.frontmatter.head ??= []
       pageData.frontmatter.head.push(
         ['meta', { property: 'og:title', content: `${title} | Archon` }],
         ['meta', { property: 'og:description', content: description }],
+        ['meta', { property: 'og:url', content: url }],
         ['meta', { name: 'description', content: description }],
         ['meta', { name: 'twitter:title', content: `${title} | Archon` }],
         ['meta', { name: 'twitter:description', content: description }],
+        ['link', { rel: 'canonical', href: url }],
       )
+
+      // Per-page JSON-LD structured data
+      if (title && pageData.relativePath !== 'index.md') {
+        pageData.frontmatter.head.push(
+          ['script', { type: 'application/ld+json' }, JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "TechArticle",
+            "headline": title,
+            "description": description,
+            "url": url,
+            "author": { "@type": "Person", "name": "Ayush Jadaun" },
+            "publisher": { "@type": "Organization", "name": "Archon" },
+            "keywords": tags.join(', '),
+            "proficiencyLevel": difficulty === 'beginner' ? 'Beginner' : difficulty === 'expert' ? 'Expert' : 'Intermediate',
+          })]
+        )
+      }
     },
 
     ignoreDeadLinks: true,
