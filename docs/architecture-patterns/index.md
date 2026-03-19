@@ -39,7 +39,7 @@ Before diving into any pattern, ask these five questions about your system:
 | [CQRS & Event Sourcing](/architecture-patterns/cqrs-event-sourcing) | Complex domains with audit needs, different read/write scaling, temporal queries | Simple domains, small data sets, teams unfamiliar with eventual consistency | 5+ engineers | High |
 | [Hexagonal Architecture](/architecture-patterns/hexagonal) | Long-lived applications, multiple integrations, high testability requirements | Prototypes, throwaway scripts, very small scope | 2+ engineers | Low |
 | [Clean Architecture](/architecture-patterns/clean-architecture) | Complex business logic, framework independence, large codebases | Simple CRUD apps, tight framework coupling is acceptable | 3+ engineers | Low-Medium |
-| [Domain-Driven Design](/architecture-patterns/ddd) | Complex business domains, domain expert collaboration, large systems | Well-understood simple domains, purely technical infrastructure | 5+ engineers | Medium |
+| [Domain-Driven Design](/architecture-patterns/domain-driven-design/) | Complex business domains, domain expert collaboration, large systems | Well-understood simple domains, purely technical infrastructure | 5+ engineers | Medium |
 
 ## Concept Map
 
