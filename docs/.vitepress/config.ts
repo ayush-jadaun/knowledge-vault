@@ -132,7 +132,7 @@ export default withMermaid(
 
       footer: {
         message: 'Engineering knowledge from first principles to research-level depth.',
-        copyright: 'Built with VitePress',
+        copyright: 'Archon — Engineering Mastery',
       },
 
       outline: {
