@@ -13,6 +13,7 @@ import Feedback from './components/Feedback.vue'
 import AskAI from './components/AskAI.vue'
 import KnowledgeGraph from './components/KnowledgeGraph.vue'
 import CompareMode from './components/CompareMode.vue'
+import KeyboardShortcuts from './components/KeyboardShortcuts.vue'
 
 export default {
   extends: DefaultTheme,
@@ -22,7 +23,7 @@ export default {
       'doc-after': () => [h(Feedback), h(RelatedPages)],
       'doc-top': () => [h(CodePlayground), h(SidebarScroll)],
       'nav-bar-content-after': () => h(SearchButton),
-      'layout-bottom': () => h(AskAI),
+      'layout-bottom': () => [h(AskAI), h(KeyboardShortcuts)],
     })
   },
   enhanceApp({ app }) {
