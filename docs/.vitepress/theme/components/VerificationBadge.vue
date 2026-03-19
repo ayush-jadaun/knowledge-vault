@@ -1,18 +1,34 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useData } from 'vitepress'
+import { useData, useRoute } from 'vitepress'
 
 const { frontmatter } = useData()
+const route = useRoute()
 
 const isVerified = computed(() => frontmatter.value.verified === true)
 const verifiedBy = computed(() => frontmatter.value.verifiedBy || '')
 const verifiedDate = computed(() => frontmatter.value.verifiedDate || '')
 const verifierGithub = computed(() => frontmatter.value.verifierGithub || '')
 const verifierLinkedin = computed(() => frontmatter.value.verifierLinkedin || '')
+
+// Skip badge on utility/non-content pages
+const showBadge = computed(() => {
+  const path = route.path.replace(/\.html$/, '')
+  const skipPages = [
+    '/', '/tags', '/graph', '/compare', '/bookmarks', '/changelog',
+    '/technology-radar', '/start-here', '/verify', '/sample-verified',
+    '/glossary', '/404',
+  ]
+  // Skip homepage, utility pages, and index pages
+  if (skipPages.includes(path)) return false
+  if (path.endsWith('/')) return false // section index pages
+  // Only show on pages that have tags (actual content pages)
+  return Array.isArray(frontmatter.value.tags) && frontmatter.value.tags.length > 0
+})
 </script>
 
 <template>
-  <div class="verification-badge" :class="{ verified: isVerified, unverified: !isVerified }">
+  <div v-if="showBadge" class="verification-badge" :class="{ verified: isVerified, unverified: !isVerified }">
     <div class="badge-content">
       <svg v-if="isVerified" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
