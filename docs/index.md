@@ -5,8 +5,8 @@ titleTemplate: Engineering Knowledge from First Principles to Research-Level Dep
 
 hero:
   name: Archon
-  text: Engineering Mastery
-  tagline: 470+ deep-dive pages. 30 system design interviews. 8 cheat sheets. From first principles to research-level depth.
+  text: "// TODO: stop googling, start understanding"
+  tagline: '"Give me six hours to chop down a tree and I''ll spend four sharpening the axe." This is the axe.'
   actions:
     - theme: brand
       text: Start Here

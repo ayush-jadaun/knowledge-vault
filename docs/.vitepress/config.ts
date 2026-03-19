@@ -131,8 +131,8 @@ export default withMermaid(
       },
 
       footer: {
-        message: 'Engineering knowledge from first principles to research-level depth.',
-        copyright: 'Archon — Engineering Mastery',
+        message: '"What I cannot create, I do not understand." — Richard Feynman',
+        copyright: '© 2026 Archon',
       },
 
       outline: {
