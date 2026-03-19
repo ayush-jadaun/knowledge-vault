@@ -269,16 +269,21 @@ Memorize these numbers for quick estimation:
 
 Use this checklist to practice. For each, apply the 4-step framework:
 
-- [ ] Design a URL shortener (TinyURL)
-- [ ] Design a rate limiter (see [Rate Limiter Blueprint](/production-blueprints/rate-limiter/))
-- [ ] Design a notification system (see [Notification Service Blueprint](/production-blueprints/notification-service/))
-- [ ] Design a chat system (WebSockets + message queues)
-- [ ] Design a news feed / timeline
-- [ ] Design a search autocomplete
-- [ ] Design a distributed cache
-- [ ] Design a video streaming platform
-- [ ] Design a ride-sharing service
-- [ ] Design an e-commerce order system
+- [ ] [Design a URL Shortener](/system-design-interviews/url-shortener)
+- [ ] [Design a Rate Limiter](/system-design-interviews/rate-limiter)
+- [ ] [Design a Notification System](/system-design-interviews/notification-system)
+- [ ] [Design WhatsApp / Chat System](/system-design-interviews/chat-system)
+- [ ] [Design Twitter / News Feed](/system-design-interviews/twitter-feed)
+- [ ] [Design Search Autocomplete](/system-design-interviews/search-autocomplete)
+- [ ] [Design a Distributed Cache](/system-design-interviews/distributed-cache)
+- [ ] [Design YouTube / Video Streaming](/system-design-interviews/youtube)
+- [ ] [Design Uber / Ride-Sharing](/system-design-interviews/uber)
+- [ ] [Design E-Commerce](/system-design-interviews/e-commerce)
+- [ ] [Design Instagram](/system-design-interviews/instagram)
+- [ ] [Design Netflix](/system-design-interviews/netflix)
+- [ ] [Design Spotify](/system-design-interviews/spotify)
+- [ ] [Design a Payment System](/system-design-interviews/payment-system)
+- [ ] [Design an API Gateway](/system-design-interviews/api-gateway)
 
 ### Red Flags to Avoid
 

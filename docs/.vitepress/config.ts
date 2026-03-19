@@ -68,6 +68,7 @@ export default withMermaid(
       logo: '/logo.svg',
 
       nav: [
+        { text: 'Start Here', link: '/start-here' },
         {
           text: 'Foundations',
           items: [

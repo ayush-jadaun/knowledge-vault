@@ -9,8 +9,8 @@ hero:
   tagline: 470+ deep-dive pages. 30 system design interviews. 8 cheat sheets. From first principles to research-level depth.
   actions:
     - theme: brand
-      text: Start Learning
-      link: /system-design/
+      text: Start Here
+      link: /start-here
     - theme: alt
       text: System Design Interviews
       link: /system-design-interviews/
