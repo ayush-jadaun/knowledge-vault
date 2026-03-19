@@ -11,9 +11,23 @@ jobs:
       NODE_OPTIONS: --max-old-space-size=12288
 
     steps:
+      - name: Free disk space for swap
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift
+          sudo apt-get clean
+
+      - name: Create 12GB swap
+        run: |
+          sudo swapoff -a || true
+          sudo rm -f /swapfile /mnt/swapfile
+          sudo fallocate -l 12G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Need full history for git diff
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -23,105 +37,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Restore the FULL dist/ from previous build
-      - name: Restore dist cache
-        uses: actions/cache@v4
-        id: dist-cache
-        with:
-          path: |
-            docs/.vitepress/dist
-            docs/.vitepress/cache
-            .last-deploy-sha
-          key: dist-${{ github.sha }}
-          restore-keys: |
-            dist-
-
-      # Check what changed and decide: skip, incremental, or full
-      - name: Check for changes
-        id: changes
-        run: |
-          LAST_SHA=""
-          if [ -f .last-deploy-sha ]; then
-            LAST_SHA=$(cat .last-deploy-sha)
-          fi
-
-          if [ -z "$LAST_SHA" ]; then
-            echo "needs_build=full" >> $GITHUB_OUTPUT
-            echo "No previous deploy found — full build needed"
-            exit 0
-          fi
-
-          # Get changed files
-          CHANGED=$(git diff --name-only "$LAST_SHA"..HEAD 2>/dev/null || echo "")
-
-          if [ -z "$CHANGED" ]; then
-            echo "needs_build=skip" >> $GITHUB_OUTPUT
-            echo "No changes detected — skipping"
-            exit 0
-          fi
-
-          echo "Changed files:"
-          echo "$CHANGED"
-
-          # Check if config/theme/sidebar changed
-          CONFIG_CHANGED=$(echo "$CHANGED" | grep -E "^docs/\.vitepress/(config|sidebar|theme)" || true)
-          PKG_CHANGED=$(echo "$CHANGED" | grep -E "^package\.json$" || true)
-
-          if [ -n "$CONFIG_CHANGED" ] || [ -n "$PKG_CHANGED" ]; then
-            echo "needs_build=full" >> $GITHUB_OUTPUT
-            echo "Config/theme changed — full rebuild"
-            exit 0
-          fi
-
-          # Check if API functions changed (need deploy but not full rebuild)
-          API_CHANGED=$(echo "$CHANGED" | grep -E "^api/" || true)
-          if [ -n "$API_CHANGED" ]; then
-            echo "needs_build=deploy_only" >> $GITHUB_OUTPUT
-            echo "API functions changed — deploy without rebuild"
-            exit 0
-          fi
-
-          # Check if only non-rendered files changed (README, ROADMAP, scripts, etc.)
-          CONTENT_CHANGED=$(echo "$CHANGED" | grep -E "^docs/.*\.md$" | grep -v -E "(README|ROADMAP|REMAINING_PAGES|CONTRIBUTING)\.md$" || true)
-
-          if [ -z "$CONTENT_CHANGED" ]; then
-            echo "needs_build=skip" >> $GITHUB_OUTPUT
-            echo "Only non-content files changed — skipping build"
-            exit 0
-          fi
-
-          CHANGE_COUNT=$(echo "$CONTENT_CHANGED" | wc -l)
-          echo "needs_build=full" >> $GITHUB_OUTPUT
-          echo "$CHANGE_COUNT content page(s) changed — rebuilding"
-
-      # Free disk + add swap ONLY if building
-      - name: Prepare runner for build
-        if: steps.changes.outputs.needs_build == 'full'
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift
-          sudo apt-get clean
-          sudo swapoff -a || true
-          sudo rm -f /swapfile /mnt/swapfile
-          sudo fallocate -l 12G /mnt/swapfile
-          sudo chmod 600 /mnt/swapfile
-          sudo mkswap /mnt/swapfile
-          sudo swapon /mnt/swapfile
-          echo "RAM + Swap:"
-          free -h
-
-      # Full build
       - name: Build VitePress site
-        if: steps.changes.outputs.needs_build == 'full'
         run: npm run docs:build
 
-      # Save the deploy SHA
-      - name: Save deploy marker
-        if: steps.changes.outputs.needs_build == 'full'
-        run: git rev-parse HEAD > .last-deploy-sha
-
-      # Deploy (only if we built OR have cached dist)
       - name: Deploy to Vercel
-        if: steps.changes.outputs.needs_build != 'skip' || steps.changes.outputs.needs_build == 'deploy_only'
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
@@ -131,12 +50,10 @@ jobs:
           mkdir -p .vercel/output/static
           cp -r docs/.vitepress/dist/* .vercel/output/static/
 
-          # Add serverless function for AI chat
           mkdir -p .vercel/output/functions/api/chat.func
           cp api/chat.js .vercel/output/functions/api/chat.func/index.js
           echo '{"runtime":"edge","entrypoint":"index.js"}' > .vercel/output/functions/api/chat.func/.vc-config.json
 
-          # Config with API route + static fallback
           cat > .vercel/output/config.json << 'CONF'
           {
             "version": 3,
@@ -149,7 +66,3 @@ jobs:
           CONF
 
           vercel deploy --prebuilt --prod --archive=tgz --token=$VERCEL_TOKEN
-
-      - name: Skip notification
-        if: steps.changes.outputs.needs_build == 'skip'
-        run: echo "✅ No content changes — deploy skipped. Site is already up to date."
