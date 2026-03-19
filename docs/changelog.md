@@ -7,14 +7,37 @@ description: "What's new in Archon — recent additions and updates"
 
 ## March 2026
 
-### March 19, 2026
+### March 19, 2026 — The Archon Update
+- **Rebranded** from Knowledge Vault to **Archon**
+- Added **AI Chatbot** (Oracle of Archon) — Pagefind retrieval + Gemini 2.5 Flash with page citations
+- Added **Interactive Knowledge Graph** — visual map of all 470+ topics with radial cluster layout
+- Added **Compare Mode** — side-by-side tech comparison with 24 technologies
+- Added **Keyboard Shortcuts** — press `?` to see all shortcuts
+- Added **Bookmarks** system — save pages, view at `/bookmarks`
+- Added **Verification System** — verified/unverified badges with GitHub avatar + LinkedIn chip
+- Added **Start Here** roadmap — guided paths for interviews, backend, devops, security
 - Added **Reading Time** indicator on every page
+- Added **Reading Progress** tracker per learning path
+- Added **Reading Streak** — tracks daily visits
 - Added **"Was this helpful?"** feedback widget
-- Added **Reading Progress** tracker for learning paths
+- Added **Focus Mode** — distraction-free reading (full width, Esc to exit)
+- Added **Font Size Controls** — A-/A+ buttons
+- Added **Quick Notes** — per-page notepad saved in localStorage
+- Added **Scroll Progress Bar** — gradient bar at top of page
+- Added **Back to Top** ring — circular progress indicator
+- Added **Copy Heading Links** — click any heading to copy URL
+- Added **Code Copy Toast** — "Copied!" feedback on code blocks
+- Added **Difficulty Badges** — colored dots in sidebar with legend
 - Added **SEO + Open Graph** meta tags for social sharing
 - Added **PWA support** — install as an app for offline reading
-- Improved **Homepage** with stats banner and quick start guide
+- Added **RSS feed** at `/feed.xml`
 - Added **Changelog** page (you're reading it)
+- Added **Verification Guide** at `/verify`
+- Fixed **cross-references** in all 16 prompt engineering pages
+- Fixed **mobile responsiveness** — mermaid diagrams, tables, code blocks
+- Fixed **outline tracking** — "On this page" highlights current heading
+- Cinematic homepage with Lincoln quote and Feynman footer
+- New **Archon logo** — hexagonal vault with anime-style keystone
 
 ### March 18, 2026
 - Added **30 System Design Interview** walkthroughs (Instagram, Uber, YouTube, WhatsApp, Netflix, Spotify, and 24 more)
