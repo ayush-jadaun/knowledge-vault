@@ -132,7 +132,7 @@ export default withMermaid(
 
       footer: {
         message: '"What I cannot create, I do not understand." — Richard Feynman',
-        copyright: 'Archon — The Engineer''s Sacred Texts',
+        copyright: "Archon — The Engineer's Sacred Texts",
       },
 
       outline: {
