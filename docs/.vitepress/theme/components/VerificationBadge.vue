@@ -40,7 +40,7 @@ const verifierLinkedin = computed(() => frontmatter.value.verifierLinkedin || ''
       <template v-else>
         <span class="badge-text">
           Unverified — AI-generated content.
-          <a href="https://github.com/ayush-jadaun/knowledge-vault/issues" target="_blank">Help verify this page</a>
+          <a href="/verify">Help verify this page</a>
         </span>
       </template>
     </div>
