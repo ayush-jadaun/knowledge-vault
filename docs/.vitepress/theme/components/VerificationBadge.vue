@@ -33,8 +33,9 @@ const verifierLinkedin = computed(() => frontmatter.value.verifierLinkedin || ''
           <strong v-else>{{ verifiedBy }}</strong>
         </span>
         <span v-if="verifiedDate" class="badge-date">· {{ verifiedDate }}</span>
-        <a v-if="verifierLinkedin" :href="`https://linkedin.com/in/${verifierLinkedin}`" target="_blank" title="LinkedIn" class="profile-link">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        <a v-if="verifierLinkedin" :href="`https://linkedin.com/in/${verifierLinkedin}`" target="_blank" class="linkedin-chip">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          <span>{{ verifiedBy }}</span>
         </a>
       </template>
 
@@ -104,18 +105,23 @@ const verifierLinkedin = computed(() => frontmatter.value.verifierLinkedin || ''
   opacity: 0.7;
 }
 
-.profile-link {
+.linkedin-chip {
   display: inline-flex;
   align-items: center;
-  color: var(--vp-c-text-2);
-  opacity: 0.6;
-  transition: opacity 0.15s;
-  margin-left: 2px;
+  gap: 5px;
+  padding: 2px 8px 2px 6px;
+  background: #0a66c2;
+  color: white;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+  margin-left: 4px;
 }
 
-.profile-link:hover {
-  opacity: 1;
-  color: var(--vp-c-brand-1);
+.linkedin-chip:hover {
+  background: #004182;
 }
 
 .badge-text a {

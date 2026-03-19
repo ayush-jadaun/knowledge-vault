@@ -103,6 +103,10 @@ Fix them in your PR. Common issues to look for:
 - Missing edge cases or failure modes
 - Misleading "when to use" recommendations
 
+## See It In Action
+
+Check the [Sample Verified Page](/sample-verified) to see exactly what a verified page looks like — with the green badge, GitHub avatar, name, and LinkedIn profile link.
+
 ## Recognition
 
 Top reviewers will be featured on the [changelog](/changelog) and the homepage. The more pages you verify, the more visible your contribution becomes.
