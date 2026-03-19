@@ -95,7 +95,18 @@ function buildGraph() {
     }
   })
 
-  // Build links based on shared tags (at least 3 shared tags to reduce noise)
+  // === Build links from multiple relationship types ===
+  const linkSet = new Map<string, number>()
+  links = []
+
+  function addLink(a: number, b: number, weight: number) {
+    const lo = Math.min(a, b)
+    const hi = Math.max(a, b)
+    const key = `${lo}-${hi}`
+    linkSet.set(key, (linkSet.get(key) || 0) + weight)
+  }
+
+  // 1. Shared tags (2+ shared = connected)
   const tagToNodes = new Map<string, number[]>()
   nodes.forEach((node, i) => {
     for (const tag of node.tags) {
@@ -104,25 +115,42 @@ function buildGraph() {
     }
   })
 
-  const linkSet = new Map<string, number>()
-  links = []
-
-  for (const [tag, nodeIndices] of tagToNodes) {
-    if (nodeIndices.length > 20) continue // Skip very common tags
+  for (const [, nodeIndices] of tagToNodes) {
+    if (nodeIndices.length > 25) continue // Skip very common tags
     for (let i = 0; i < nodeIndices.length; i++) {
       for (let j = i + 1; j < nodeIndices.length; j++) {
-        const a = Math.min(nodeIndices[i], nodeIndices[j])
-        const b = Math.max(nodeIndices[i], nodeIndices[j])
-        const key = `${a}-${b}`
-        linkSet.set(key, (linkSet.get(key) || 0) + 1)
+        addLink(nodeIndices[i], nodeIndices[j], 1)
       }
     }
   }
 
+  // 2. Same subsection (pages in same folder are strongly related)
+  const pathToIndex = new Map<string, number>()
+  nodes.forEach((n, i) => pathToIndex.set(n.path, i))
+
+  const subsectionGroups = new Map<string, number[]>()
+  nodes.forEach((node, i) => {
+    const parts = node.path.split('/').filter(Boolean)
+    if (parts.length >= 2) {
+      const subsection = parts.slice(0, 2).join('/')
+      if (!subsectionGroups.has(subsection)) subsectionGroups.set(subsection, [])
+      subsectionGroups.get(subsection)!.push(i)
+    }
+  })
+
+  for (const [, indices] of subsectionGroups) {
+    for (let i = 0; i < indices.length; i++) {
+      for (let j = i + 1; j < indices.length; j++) {
+        addLink(indices[i], indices[j], 2) // Stronger weight for same subsection
+      }
+    }
+  }
+
+  // Finalize links — only keep connections with weight >= 2
   for (const [key, strength] of linkSet) {
-    if (strength >= 3) {
+    if (strength >= 2) {
       const [a, b] = key.split('-').map(Number)
-      links.push({ source: a, target: b, strength })
+      links.push({ source: a, target: b, strength: Math.min(strength, 8) })
       nodes[a].connections++
       nodes[b].connections++
     }
@@ -130,7 +158,7 @@ function buildGraph() {
 
   // Set radius based on connections
   for (const node of nodes) {
-    node.radius = Math.max(3, Math.min(10, 3 + node.connections * 0.3))
+    node.radius = Math.max(3, Math.min(10, 3 + node.connections * 0.2))
   }
 
   layoutNodes()

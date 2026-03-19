@@ -157,6 +157,7 @@ function onOverlayClick(e: MouseEvent) {
   padding: 0;
   cursor: pointer;
   font-family: inherit;
+  margin-right: 12px;
 }
 
 .vp-search-btn {

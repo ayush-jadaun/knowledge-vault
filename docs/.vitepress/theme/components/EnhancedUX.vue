@@ -366,8 +366,9 @@ body.focus-mode .content-container { max-width: 100% !important; }
 .toast-pop-leave-to { opacity: 0; transform: translateX(-50%) translateY(-8px); }
 
 @media (max-width: 768px) {
-  .ux-toolbar { top: auto; bottom: 90px; right: 8px; flex-direction: row; }
-  .notes-panel { width: calc(100vw - 32px); left: 16px; }
-  .back-to-top { bottom: 140px; right: 16px; }
+  .ux-toolbar { display: none !important; }
+  .notes-panel { display: none !important; }
+  .focus-exit-hint { display: none !important; }
+  .back-to-top { bottom: 80px; right: 16px; }
 }
 </style>
