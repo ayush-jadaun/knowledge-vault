@@ -1843,3 +1843,10 @@ Modern teams treat PRDs as living documents that evolve during development. Key 
 - [Go-to-Market Prompts](./go-to-market-prompts.md) — Launch planning from PRD
 - [System Design Prompts](../architecture-prompts/system-design-prompts.md) — Technical design
 - [Architecture Review Prompts](../engineering-prompts/architecture-review-prompts.md) — Technical review
+
+## Related Deep Dives
+
+- [Architecture Patterns](/architecture-patterns/) — Understand the architectural patterns that inform technical feasibility and trade-offs in PRDs
+- [System Design](/system-design/) — Deep dives into distributed systems, databases, and infrastructure choices that shape non-functional requirements
+- [Deployment Strategies](/devops/deployment-strategies/) — Rollout patterns including blue-green, canary, and feature flags that support PRD launch plans
+- [Production Blueprints](/production-blueprints/) — Complete production-ready system blueprints for auth, billing, notifications, and more to ground PRD technical sections

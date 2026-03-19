@@ -669,3 +669,11 @@ After generating components, validate with:
 ::: tip
 The most effective design system prompts are specific about constraints. "Generate a Button component" produces generic output. "Generate a Button component for a B2B SaaS product with strict WCAG AA compliance, Tailwind CSS, and a 4KB size limit" produces production-usable output.
 :::
+
+## Related Deep Dives
+
+- [Color Tokens](/ui-design-systems/color-tokens/) — Color theory, palette generation, semantic tokens, and contrast accessibility for building design system color foundations
+- [Typography](/ui-design-systems/typography/) — Type scales, font loading strategies, responsive typography, and variable fonts for design system typographic systems
+- [Spacing and Layout](/ui-design-systems/spacing-layout/) — Spacing scales, responsive breakpoints, container queries, and layout patterns that form the structural backbone of design systems
+- [Dark Mode](/ui-design-systems/dark-mode/) — Token mapping, system preference detection, and implementation patterns for multi-theme design systems
+- [Animations](/ui-design-systems/animations/) — Timing curves, CSS animations, Framer Motion patterns, and performance considerations for design system motion

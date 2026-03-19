@@ -780,3 +780,10 @@ Should I use fixed breakpoints or content-based breakpoints?
 ::: tip
 The most effective responsive prompts describe both the **content structure** and the **user context** (what device, what task, what environment). A dashboard viewed on a factory floor on a tablet has very different requirements than a news article read on a phone on the subway, even if both need to be "responsive."
 :::
+
+## Related Deep Dives
+
+- [Spacing and Layout](/ui-design-systems/spacing-layout/) — Spacing scales, responsive breakpoints, container queries, and layout patterns that form the foundation of responsive design systems
+- [Animations](/ui-design-systems/animations/) — Timing curves, CSS animations, performance considerations, and motion principles for responsive transitions and interactions
+- [Typography](/ui-design-systems/typography/) — Type scales, responsive typography with fluid sizing, and font loading strategies for multi-device experiences
+- [Accessibility](/ui-design-systems/accessibility/) — Keyboard navigation, focus management, and touch target considerations that responsive designs must satisfy across devices

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "docs:dev": "vitepress dev docs",
-    "docs:build": "cross-env NODE_OPTIONS=--max-old-space-size=16384 vitepress build docs && npx pagefind --site docs/.vitepress/dist",
+    "docs:build": "node scripts/generate-rss.mjs && node scripts/build-context.mjs && cross-env NODE_OPTIONS=--max-old-space-size=16384 vitepress build docs && npx pagefind --site docs/.vitepress/dist",
     "docs:preview": "vitepress preview docs",
     "deploy": "npm run docs:build && vercel deploy docs/.vitepress/dist --prod"
   },

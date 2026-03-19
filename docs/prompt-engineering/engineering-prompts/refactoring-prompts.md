@@ -1634,3 +1634,10 @@ interface RefactoringMetrics {
 - [Architecture Review Prompts](./architecture-review-prompts.md) — Identify what needs refactoring
 - [Design System Prompts](../ui-prompts/design-system-prompts.md) — Refactoring UI code
 - [Migration Prompts](../architecture-prompts/migration-prompts.md) — Large-scale refactoring
+
+## Related Deep Dives
+
+- [Clean Architecture](/architecture-patterns/clean-architecture/) — Layers, boundaries, and use case patterns that serve as target structures when refactoring toward clean architecture
+- [Domain-Driven Design](/architecture-patterns/domain-driven-design/) — Strategic and tactical design patterns for refactoring business logic into well-defined domain models
+- [Hexagonal Architecture](/architecture-patterns/hexagonal/) — Ports-and-adapters pattern and dependency inversion techniques for decoupling infrastructure from domain logic
+- [Performance Optimization](/performance/optimization/) — Profiling techniques and optimization patterns for performance-focused refactoring

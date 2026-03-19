@@ -755,3 +755,9 @@ Do not speculate — if you're uncertain, say so.
 ::: warning
 AI-generated accessibility guidance should always be validated by a human expert and tested with actual assistive technologies. Automated tools catch only ~30-40% of accessibility issues. Manual testing by screen reader users is irreplaceable.
 :::
+
+## Related Deep Dives
+
+- [Accessibility](/ui-design-systems/accessibility/) — ARIA deep dive, keyboard navigation patterns, focus management strategies, screen reader patterns, and testing accessibility in practice
+- [Color Tokens and Contrast](/ui-design-systems/color-tokens/contrast-accessibility) — Contrast ratio calculations, WCAG-compliant palette design, and tools for verifying color accessibility
+- [Component Patterns](/ui-design-systems/component-patterns/) — Headless and compound component patterns that separate accessibility logic from visual presentation

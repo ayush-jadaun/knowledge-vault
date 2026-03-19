@@ -1327,3 +1327,9 @@ function evaluateStory(story: UserStory): StoryQualityScore {
 - [Testing Prompts](../engineering-prompts/testing-prompts.md) — Acceptance criteria to tests
 - [Accessibility Prompts](../ui-prompts/accessibility-prompts.md) — Accessibility story details
 - [Code Generation Prompts](../engineering-prompts/code-generation-prompts.md) — Implementing stories
+
+## Related Deep Dives
+
+- [Domain-Driven Design](/architecture-patterns/domain-driven-design/) — Bounded contexts, aggregates, and ubiquitous language that inform how user stories align to domain models
+- [Clean Architecture](/architecture-patterns/clean-architecture/) — Use case patterns and layer boundaries that help structure stories around business rules
+- [Accessibility Deep Dive](/ui-design-systems/accessibility/) — ARIA patterns, keyboard navigation, and focus management requirements for accessibility-focused user stories

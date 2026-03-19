@@ -3164,3 +3164,10 @@ function evaluatePromptEffectiveness(
 - [Refactoring Prompts](./refactoring-prompts.md) — Improve generated code
 - [System Design Prompts](../architecture-prompts/system-design-prompts.md) — Design before generating
 - [Component Generation Prompts](../ui-prompts/component-generation-prompts.md) — UI code generation
+
+## Related Deep Dives
+
+- [Performance Optimization](/performance/optimization/) — V8 optimization, memory management, event loop internals, and concurrency patterns for writing high-performance code
+- [Clean Architecture](/architecture-patterns/clean-architecture/) — Layers, boundaries, and dependency rules that generated code should follow for maintainable systems
+- [Database Tuning](/performance/database-tuning/) — Query optimization, index strategy, and N+1 prevention to generate efficient data access code
+- [Architecture Patterns](/architecture-patterns/) — Hexagonal, event-driven, CQRS, and DDD patterns that inform how to structure generated code

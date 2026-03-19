@@ -1098,3 +1098,10 @@ For each: one-liner command or console action, estimated savings, risk level.
 ::: tip
 The most powerful cost optimization insight is: measure cost per unit of business value, not just absolute cost. If your infrastructure cost doubles but your revenue triples, your unit economics are improving — that's good cost scaling. If costs grow faster than business value, you have an efficiency problem to solve.
 :::
+
+## Related Deep Dives
+
+- [AWS Cost Optimization](/infrastructure/aws/cost-optimization) — Reserved instances, Savings Plans, right-sizing, and AWS-specific cost reduction strategies with Terraform configurations
+- [GCP Cost Optimization](/infrastructure/gcp/cost-optimization) — Committed use discounts, sustained use discounts, and GCP-specific cost management approaches
+- [Terraform Cost Optimization](/infrastructure/terraform/cost-optimization) — Infrastructure-as-code patterns for cost-aware resource provisioning and automated cost governance
+- [Multi-Region Cost Analysis](/infrastructure/multi-region/cost-analysis) — Cost trade-offs of multi-region architectures including data transfer, replication, and failover infrastructure expenses

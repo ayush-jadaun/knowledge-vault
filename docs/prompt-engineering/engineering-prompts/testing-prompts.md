@@ -2405,3 +2405,10 @@ it('should double the tax when income doubles', () => {
 - [Architecture Review Prompts](./architecture-review-prompts.md) — Review test architecture
 - [Accessibility Prompts](../ui-prompts/accessibility-prompts.md) — Accessibility testing
 - [System Design Prompts](../architecture-prompts/system-design-prompts.md) — Testability in design
+
+## Related Deep Dives
+
+- [Microservices Testing Strategies](/architecture-patterns/microservices/testing-strategies) — Contract testing, integration testing, and end-to-end testing patterns specific to distributed microservice systems
+- [Deployment Strategies](/devops/deployment-strategies/) — Blue-green, canary, rolling updates, and feature flag deployment patterns that rely on comprehensive test suites
+- [Database Migrations](/devops/deployment-strategies/database-migrations) — Safe migration testing workflows including rollback validation and data integrity verification
+- [Chaos Engineering](/devops/incident-response/chaos-engineering) — Failure injection and resilience testing techniques to validate system behavior under stress

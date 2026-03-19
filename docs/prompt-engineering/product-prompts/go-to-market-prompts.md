@@ -904,3 +904,9 @@ Where $i$ is the number of invitations per user and $c$ is the conversion rate o
 - [User Story Prompts](./user-story-prompts.md) — PLG features as user stories
 - [System Design Prompts](../architecture-prompts/system-design-prompts.md) — Technical GTM requirements
 - [Design System Prompts](../ui-prompts/design-system-prompts.md) — Landing page and marketing design
+
+## Related Deep Dives
+
+- [Production Blueprints](/production-blueprints/) — Complete production-ready blueprints for auth, billing, notifications, and analytics pipelines that power GTM infrastructure
+- [A/B Testing Blueprint](/production-blueprints/ab-testing/) — Statistical significance, assignment algorithms, and feature flag integration for GTM experimentation
+- [Deployment Strategies](/devops/deployment-strategies/) — Blue-green, canary, and feature flag deployment patterns for safe product launches

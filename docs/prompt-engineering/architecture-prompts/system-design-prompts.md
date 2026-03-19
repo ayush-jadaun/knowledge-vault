@@ -860,3 +860,11 @@ What are the:
 ::: tip
 The most valuable use of AI for system design is not generating the "right answer" — it's rapidly exploring the design space, generating alternatives, and stress-testing assumptions. Use these prompts as the start of a conversation, not the end of one.
 :::
+
+## Related Deep Dives
+
+- [System Design](/system-design/) — Comprehensive deep dives into distributed systems, databases, caching, load balancing, consensus, and networking fundamentals
+- [System Design Interviews](/system-design-interviews/) — 30 complete system design walkthroughs for URL shorteners, payment systems, chat systems, and more
+- [Architecture Patterns](/architecture-patterns/) — Detailed guides to microservices, event-driven, CQRS, hexagonal, clean architecture, and domain-driven design
+- [Load Balancing](/system-design/load-balancing/) — L4 vs L7 balancing, algorithms, health checks, and production configuration guides for Nginx, HAProxy, and Envoy
+- [Databases](/system-design/databases/) — Storage engines, replication, sharding, indexing, and internals for PostgreSQL, MongoDB, and Redis

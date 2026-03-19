@@ -2495,3 +2495,11 @@ This bridges the gap between informal architecture review and formal verificatio
 - [Testing Prompts](./testing-prompts.md) — For test architecture review
 - [Code Generation Prompts](./code-generation-prompts.md) — For implementing review findings
 - [Migration Prompts](../architecture-prompts/migration-prompts.md) — For migration planning
+
+## Related Deep Dives
+
+- [Architecture Patterns](/architecture-patterns/) — Comprehensive catalog of architectural patterns including hexagonal, event-driven, and CQRS with implementation examples
+- [System Design](/system-design/) — Deep dives into distributed systems, databases, caching, load balancing, and networking fundamentals
+- [Microservices Architecture](/architecture-patterns/microservices/) — Decomposition strategies, communication patterns, data management, and anti-patterns for microservice systems
+- [Clean Architecture](/architecture-patterns/clean-architecture/) — Layers, boundaries, use cases, and TypeScript implementation of clean architecture principles
+- [Domain-Driven Design](/architecture-patterns/domain-driven-design/) — Strategic and tactical design patterns including bounded contexts, aggregates, and domain events

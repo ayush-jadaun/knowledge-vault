@@ -12,9 +12,38 @@ export default withMermaid(
       ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
       ['meta', { name: 'theme-color', content: '#5f67ee' }],
       ['meta', { property: 'og:type', content: 'website' }],
-      ['meta', { property: 'og:title', content: 'Knowledge Vault' }],
-      ['meta', { property: 'og:description', content: 'The most comprehensive engineering knowledge base — from first principles to research-level depth' }],
+      ['meta', { property: 'og:site_name', content: 'Knowledge Vault' }],
+      ['meta', { property: 'og:image', content: 'https://knowledge-vault-five.vercel.app/og-image.svg' }],
+      ['meta', { property: 'og:image:width', content: '1200' }],
+      ['meta', { property: 'og:image:height', content: '630' }],
+      ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+      ['meta', { name: 'twitter:image', content: 'https://knowledge-vault-five.vercel.app/og-image.svg' }],
+      ['meta', { name: 'author', content: 'Ayush Jadaun' }],
+      ['meta', { name: 'keywords', content: 'system design, engineering, architecture, kubernetes, docker, aws, security, devops, performance, data engineering' }],
+      ['link', { rel: 'canonical', href: 'https://knowledge-vault-five.vercel.app' }],
+      ['link', { rel: 'manifest', href: '/manifest.json' }],
+      ['link', { rel: 'alternate', type: 'application/rss+xml', title: 'Knowledge Vault RSS', href: '/feed.xml' }],
+      ['script', {}, `if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js')`],
     ],
+
+    sitemap: {
+      hostname: 'https://knowledge-vault-five.vercel.app',
+    },
+
+    transformPageData(pageData) {
+      // Dynamic OG tags per page
+      const title = pageData.frontmatter.title || pageData.title
+      const description = pageData.frontmatter.description || 'Engineering knowledge from first principles to research-level depth'
+
+      pageData.frontmatter.head ??= []
+      pageData.frontmatter.head.push(
+        ['meta', { property: 'og:title', content: `${title} | Knowledge Vault` }],
+        ['meta', { property: 'og:description', content: description }],
+        ['meta', { name: 'description', content: description }],
+        ['meta', { name: 'twitter:title', content: `${title} | Knowledge Vault` }],
+        ['meta', { name: 'twitter:description', content: description }],
+      )
+    },
 
     ignoreDeadLinks: true,
     lastUpdated: false,
@@ -80,6 +109,7 @@ export default withMermaid(
         },
         { text: 'Tech Radar', link: '/technology-radar' },
         { text: 'Tags', link: '/tags' },
+        { text: "What's New", link: '/changelog' },
       ],
 
       sidebar,

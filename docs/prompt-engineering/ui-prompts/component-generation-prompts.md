@@ -1744,3 +1744,10 @@ interface PromptVersion {
 ```
 
 This enables A/B testing of prompts and tracking which versions produce the best output for each model version.
+
+## Related Deep Dives
+
+- [Component Patterns](/ui-design-systems/component-patterns/) — Polymorphic, headless, compound, and atomic design patterns for building robust, reusable component APIs
+- [Accessibility](/ui-design-systems/accessibility/) — ARIA deep dive, keyboard navigation, focus management, and screen reader patterns essential for production components
+- [Color Tokens](/ui-design-systems/color-tokens/) — Color theory, contrast accessibility, palette generation, and semantic tokens for component theming
+- [Spacing and Layout](/ui-design-systems/spacing-layout/) — Spacing scales, responsive breakpoints, container queries, and layout patterns for component positioning

@@ -1033,3 +1033,11 @@ For each phase: what changes, expected improvement, risk, rollback plan.
 ::: tip
 The most effective scaling prompt is one that describes your current metrics. "How do I scale?" is vague. "My PostgreSQL is at 80% CPU with 5,000 connections and P99 latency of 800ms at 10,000 QPS — what do I scale first?" has a specific, actionable answer.
 :::
+
+## Related Deep Dives
+
+- [Load Balancing](/system-design/load-balancing/) — L4 vs L7 load balancing, algorithms, health checks, session affinity, and production configurations for scaling traffic distribution
+- [Caching](/system-design/caching/) — Caching strategies, cache invalidation, thundering herd prevention, multi-layer caching, and Redis caching patterns for reducing database load
+- [Database Sharding](/system-design/databases/sharding) — Partition strategies, shard key selection, consistent hashing, and cross-shard query patterns for horizontal database scaling
+- [Database Connection Pooling](/system-design/databases/connection-pooling) — Pool sizing, PgBouncer configuration, and connection management for database connection scaling
+- [Kubernetes Auto-Scaling](/infrastructure/kubernetes/hpa-vpa-keda) — HPA, VPA, and KEDA configuration for auto-scaling containerized workloads based on metrics

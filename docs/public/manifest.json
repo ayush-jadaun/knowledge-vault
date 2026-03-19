@@ -1,0 +1,17 @@
+{
+  "name": "Knowledge Vault",
+  "short_name": "KnowledgeVault",
+  "description": "Engineering knowledge from first principles to research-level depth",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#5f67ee",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

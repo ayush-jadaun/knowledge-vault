@@ -1210,3 +1210,9 @@ A developer tools startup spent 3 months building a feature that their main comp
 - [Go-to-Market Prompts](./go-to-market-prompts.md) — Competitive positioning for launch
 - [User Story Prompts](./user-story-prompts.md) — Feature parity stories from gap analysis
 - [System Design Prompts](../architecture-prompts/system-design-prompts.md) — Technical differentiation
+
+## Related Deep Dives
+
+- [System Design](/system-design/) — Distributed systems, databases, caching, and networking fundamentals that underpin technical competitive differentiation
+- [Architecture Patterns](/architecture-patterns/) — Understand architectural approaches competitors may use, from microservices to event-driven systems
+- [Production Blueprints](/production-blueprints/) — Production-ready system designs that reveal what best-in-class implementations look like across domains

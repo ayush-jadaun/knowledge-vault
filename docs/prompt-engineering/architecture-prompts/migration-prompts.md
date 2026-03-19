@@ -1024,3 +1024,10 @@ Don't be optimistic — assume things will go wrong and design for it.
 ::: warning
 Never start a large-scale migration in production without having run the complete migration (including rollback) successfully in a staging environment with production-like data volumes. The most expensive surprises are the ones that only appear at scale.
 :::
+
+## Related Deep Dives
+
+- [Migration from Monolith](/architecture-patterns/microservices/migration-from-monolith) — Strangler fig pattern, domain extraction strategies, and incremental decomposition approaches for monolith-to-microservices migrations
+- [Database Migrations](/devops/deployment-strategies/database-migrations) — Zero-downtime schema migration techniques, expand-and-contract pattern, and safe rollback procedures
+- [Microservices Data Management](/architecture-patterns/microservices/data-management) — Service-owned databases, event-driven data synchronization, and saga patterns for distributed data consistency during migrations
+- [Feature Flags for Deployment](/devops/deployment-strategies/feature-flags-deployment) — Feature flag strategies for safely routing traffic during migration phases with instant rollback capability
