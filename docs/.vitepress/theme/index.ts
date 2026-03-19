@@ -17,6 +17,7 @@ import KeyboardShortcuts from './components/KeyboardShortcuts.vue'
 import Bookmarks from './components/Bookmarks.vue'
 import BookmarksList from './components/BookmarksList.vue'
 import EnhancedUX from './components/EnhancedUX.vue'
+import DifficultyBadges from './components/DifficultyBadges.vue'
 
 export default {
   extends: DefaultTheme,
@@ -24,7 +25,7 @@ export default {
     return h(DefaultTheme.Layout, null, {
       'doc-before': () => [h(ReadingTime), h(ReadingProgress), h(Bookmarks)],
       'doc-after': () => [h(Feedback), h(RelatedPages)],
-      'doc-top': () => [h(CodePlayground), h(SidebarScroll)],
+      'doc-top': () => [h(CodePlayground), h(SidebarScroll), h(DifficultyBadges)],
       'nav-bar-content-after': () => h(SearchButton),
       'layout-bottom': () => [h(AskAI), h(KeyboardShortcuts), h(EnhancedUX)],
     })
