@@ -122,7 +122,24 @@ jobs:
           echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
           mkdir -p .vercel/output/static
           cp -r docs/.vitepress/dist/* .vercel/output/static/
-          echo '{"version":3,"routes":[{"handle":"filesystem"},{"src":"/(.*)", "status":404, "dest":"/404.html"}]}' > .vercel/output/config.json
+
+          # Add serverless function for AI chat
+          mkdir -p .vercel/output/functions/api/chat.func
+          cp api/chat.js .vercel/output/functions/api/chat.func/index.js
+          echo '{"runtime":"edge","entrypoint":"index.js"}' > .vercel/output/functions/api/chat.func/.vc-config.json
+
+          # Config with API route + static fallback
+          cat > .vercel/output/config.json << 'CONF'
+          {
+            "version": 3,
+            "routes": [
+              { "src": "/api/chat", "dest": "/api/chat" },
+              { "handle": "filesystem" },
+              { "src": "/(.*)", "status": 404, "dest": "/404.html" }
+            ]
+          }
+          CONF
+
           vercel deploy --prebuilt --prod --archive=tgz --token=$VERCEL_TOKEN
 
       - name: Skip notification
