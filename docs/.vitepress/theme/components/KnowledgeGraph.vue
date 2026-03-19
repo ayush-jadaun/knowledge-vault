@@ -54,6 +54,8 @@ let offsetY = 0
 let scale = 1
 let panX = 0
 let panY = 0
+let simulationTicks = 0
+let isSettled = false
 
 function getSection(path: string): string {
   const parts = path.split('/').filter(Boolean)
@@ -134,10 +136,10 @@ function buildGraph() {
 
 function simulate() {
   // Simple force simulation
-  const REPULSION = 500
-  const ATTRACTION = 0.005
-  const DAMPING = 0.9
-  const CENTER_PULL = 0.001
+  const REPULSION = 300
+  const ATTRACTION = 0.008
+  const DAMPING = 0.85
+  const CENTER_PULL = 0.002
 
   // Repulsion between nodes
   for (let i = 0; i < nodes.length; i++) {
@@ -259,9 +261,19 @@ function render() {
 
   ctx.restore()
 
-  // Continue simulation
-  simulate()
-  animationId = requestAnimationFrame(render)
+  // Simulate for 300 ticks then stop (settle)
+  if (!isSettled) {
+    simulate()
+    simulationTicks++
+    if (simulationTicks > 300) {
+      isSettled = true
+    }
+  }
+
+  // Only keep animating if not settled or dragging
+  if (!isSettled || isDragging) {
+    animationId = requestAnimationFrame(render)
+  }
 }
 
 function handleSearch() {
@@ -287,6 +299,8 @@ function handleMouseMove(e: MouseEvent) {
     dragNode.y = my
     dragNode.vx = 0
     dragNode.vy = 0
+    // Re-render while dragging
+    if (isSettled) render()
     return
   }
 
@@ -327,6 +341,7 @@ function handleMouseDown(e: MouseEvent) {
     if (dx * dx + dy * dy < (node.radius + 4) * (node.radius + 4)) {
       isDragging = true
       dragNode = node
+      if (isSettled) { isSettled = false; simulationTicks = 250; render() }
       return
     }
   }
