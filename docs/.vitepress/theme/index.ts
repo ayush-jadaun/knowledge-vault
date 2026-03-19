@@ -18,12 +18,13 @@ import Bookmarks from './components/Bookmarks.vue'
 import BookmarksList from './components/BookmarksList.vue'
 import EnhancedUX from './components/EnhancedUX.vue'
 import DifficultyBadges from './components/DifficultyBadges.vue'
+import VerificationBadge from './components/VerificationBadge.vue'
 
 export default {
   extends: DefaultTheme,
   Layout() {
     return h(DefaultTheme.Layout, null, {
-      'doc-before': () => [h(ReadingTime), h(ReadingProgress), h(Bookmarks)],
+      'doc-before': () => [h(VerificationBadge), h(ReadingTime), h(ReadingProgress), h(Bookmarks)],
       'doc-after': () => [h(Feedback), h(RelatedPages)],
       'doc-top': () => [h(CodePlayground), h(SidebarScroll), h(DifficultyBadges)],
       'nav-bar-content-after': () => h(SearchButton),

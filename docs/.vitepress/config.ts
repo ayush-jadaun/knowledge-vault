@@ -5,7 +5,7 @@ import { sidebar } from './sidebar'
 export default withMermaid(
   defineConfig({
     title: 'Archon',
-    description: 'The most comprehensive engineering knowledge base — from first principles to research-level depth',
+    description: 'The holy grail of engineering knowledge — 470+ sacred texts from first principles to production mastery',
     lang: 'en-US',
 
     head: [
@@ -132,7 +132,7 @@ export default withMermaid(
 
       footer: {
         message: '"What I cannot create, I do not understand." — Richard Feynman',
-        copyright: '© 2026 Archon',
+        copyright: 'Archon — The Engineer''s Sacred Texts',
       },
 
       outline: {

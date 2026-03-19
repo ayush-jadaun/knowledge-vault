@@ -1,7 +1,7 @@
 ---
 layout: home
 title: Archon
-titleTemplate: Engineering Knowledge from First Principles to Research-Level Depth
+titleTemplate: The Holy Grail of Engineering Knowledge
 
 hero:
   name: Archon
@@ -9,7 +9,7 @@ hero:
   tagline: '"Give me six hours to chop down a tree and I''ll spend four sharpening the axe." This is the axe.'
   actions:
     - theme: brand
-      text: Start Here
+      text: Begin Your Journey
       link: /start-here
     - theme: alt
       text: System Design Interviews
@@ -19,124 +19,124 @@ hero:
       link: /cheat-sheets/
 
 features:
-  - icon: 🏗️
+  - icon: 🏛️
     title: System Design
-    details: Distributed systems, databases, caching, message queues, consensus, load balancing, networking — CAP theorem to Raft walkthroughs.
+    details: The complete canon of distributed systems. Databases, caching, consensus, message queues, load balancing — from CAP theorem proofs to Raft implementation. Every page a chapter in the engineering bible.
     link: /system-design/
-    linkText: 65+ pages
+    linkText: Enter the vault
 
-  - icon: 💼
+  - icon: ⚔️
     title: System Design Interviews
-    details: 30 exhaustive walkthroughs — Instagram, Uber, YouTube, WhatsApp, Netflix, Spotify, and more. Full estimation math and production code.
+    details: 30 battle-tested walkthroughs. Instagram. Uber. YouTube. WhatsApp. Netflix. Full estimation math, architecture diagrams, production code. Your unfair advantage.
     link: /system-design-interviews/
-    linkText: 30 interviews
+    linkText: Prepare for war
 
-  - icon: 🧱
+  - icon: 🏗️
     title: Architecture Patterns
-    details: Microservices, event-driven, CQRS, hexagonal, clean architecture, and DDD — TypeScript implementations and migration strategies.
+    details: The blueprints of the masters. Microservices, event-driven, CQRS, hexagonal, clean architecture, DDD — each dissected, implemented in TypeScript, and battle-hardened.
     link: /architecture-patterns/
-    linkText: 35+ pages
+    linkText: Study the blueprints
 
   - icon: ☁️
     title: Infrastructure
-    details: Terraform, Kubernetes, Docker, AWS, GCP, CI/CD, multi-region — production-ready configs, not pseudocode.
+    details: The foundation everything runs on. Terraform, Kubernetes, Docker, AWS, GCP, CI/CD, multi-region — production configs that actually deploy, not pseudocode that "should work."
     link: /infrastructure/
-    linkText: 55+ pages
+    linkText: Build the foundation
 
-  - icon: 🔒
+  - icon: 🛡️
     title: Security
-    details: OWASP Top 10 with vulnerable AND fixed code, JWT, OAuth2/OIDC, encryption, secrets management, zero-trust, API security.
+    details: The sacred duty. OWASP Top 10 with vulnerable AND fixed code. JWT internals. OAuth2/OIDC. Encryption. Secrets management. Zero trust. Every vulnerability explained, every defense implemented.
     link: /security/
-    linkText: 40+ pages
+    linkText: Fortify your code
 
-  - icon: 🔧
+  - icon: 🔥
     title: DevOps
-    details: Prometheus + Grafana dashboards, structured logging, incident response runbooks, deployment strategies, chaos engineering.
+    details: The art of keeping things alive. Prometheus dashboards, structured logging, incident response runbooks, deployment strategies, chaos engineering. For the engineers who get paged at 3 AM.
     link: /devops/
-    linkText: 30+ pages
+    linkText: Master the craft
 
   - icon: ⚡
     title: Performance
-    details: V8 internals, event loop deep dive, memory leak detection, query optimization with EXPLAIN ANALYZE, caching, edge computing.
+    details: The difference between "it works" and "it flies." V8 internals, event loop deep dive, memory leak detection, query optimization with EXPLAIN ANALYZE. Real numbers, real benchmarks.
     link: /performance/
-    linkText: 25+ pages
+    linkText: Unlock the speed
 
-  - icon: 🔄
+  - icon: 🌊
     title: Data Engineering
-    details: Stream processing, windowing, watermarks, CDC, data modeling (star schema, data vault), pipeline orchestration.
+    details: Taming the data deluge. Stream processing, windowing, watermarks, CDC, dimensional modeling, data vault, pipeline orchestration — the plumbing that powers every data-driven decision.
     link: /data-engineering/
-    linkText: 20+ pages
+    linkText: Harness the flow
 
-  - icon: 📋
+  - icon: 📜
     title: Production Blueprints
-    details: Complete systems — billing engine, notification service, realtime pipeline, rate limiter, job queue, A/B testing, analytics.
+    details: Complete system designs, stolen from production. Billing engine. Notification service. Realtime pipeline. Rate limiter. Job queue. A/B testing. Analytics. Copy, adapt, ship.
     link: /production-blueprints/
-    linkText: 40+ pages
+    linkText: Steal the blueprints
 
-  - icon: 🤖
+  - icon: 🧠
     title: Prompt Engineering
-    details: 500+ battle-tested prompts for engineering, product, UI, and architecture — with usage context and example outputs.
+    details: 500+ prompts forged in the fires of real engineering work. Code generation, architecture review, product strategy, UI design — each one a weapon in your arsenal.
     link: /prompt-engineering/
-    linkText: 500+ prompts
+    linkText: Arm yourself
 
   - icon: 🎨
     title: UI & Design Systems
-    details: Typography, color tokens, spacing, accessibility, dark mode, animations — with production React/CSS code.
+    details: Where engineering meets craft. Typography, color tokens, spacing, accessibility, dark mode, animations — the invisible details that separate good from extraordinary.
     link: /ui-design-systems/
-    linkText: 35+ pages
+    linkText: Refine the craft
 
   - icon: 🗺️
     title: Learning Paths & Cheat Sheets
-    details: 5 guided paths (Backend, DevOps, Frontend, Security, Interview Prep) + 8 cheat sheets (Docker, K8s, Git, SQL, TS, Linux, Redis, Terraform).
+    details: Your quest map. 5 guided paths through the vault — Backend, DevOps, Frontend, Security, Interview Prep. Plus 8 cheat sheets for when you need answers, not explanations.
     link: /learning-paths/
-    linkText: Start a path
+    linkText: Choose your path
 ---
 
 <div class="home-stats">
   <div class="stat-item">
     <div class="stat-number">470+</div>
-    <div class="stat-label">Deep-dive pages</div>
+    <div class="stat-label">Sacred texts</div>
   </div>
   <div class="stat-item">
     <div class="stat-number">350K+</div>
-    <div class="stat-label">Lines of content</div>
+    <div class="stat-label">Lines of wisdom</div>
   </div>
   <div class="stat-item">
     <div class="stat-number">30</div>
-    <div class="stat-label">Interview walkthroughs</div>
+    <div class="stat-label">Battle simulations</div>
   </div>
   <div class="stat-item">
     <div class="stat-number">500+</div>
-    <div class="stat-label">Ready-to-use prompts</div>
+    <div class="stat-label">Weapons in the arsenal</div>
   </div>
 </div>
 
 <div class="home-sections">
 
-### Quick Start
+### Choose Your Quest
 
-| Path | Best for | Time |
-|------|----------|------|
-| [Backend Engineer](/learning-paths/backend-engineer) | Backend devs wanting depth | ~40 hours |
-| [System Design Interview](/learning-paths/system-design-interview) | Interview prep | ~30 hours |
-| [DevOps Engineer](/learning-paths/devops-engineer) | DevOps / SRE | ~35 hours |
-| [Frontend Engineer](/learning-paths/frontend-engineer) | Frontend wanting systems knowledge | ~25 hours |
-| [Security Engineer](/learning-paths/security-engineer) | Security-focused devs | ~20 hours |
+| Path | For those who seek | Estimated journey |
+|------|-------------------|-------------------|
+| [Backend Engineer](/learning-paths/backend-engineer) | Mastery of the server realm | ~40 hours |
+| [System Design Interview](/learning-paths/system-design-interview) | Victory in the arena | ~30 hours |
+| [DevOps Engineer](/learning-paths/devops-engineer) | Command of the infrastructure | ~35 hours |
+| [Frontend Engineer](/learning-paths/frontend-engineer) | The art of the interface | ~25 hours |
+| [Security Engineer](/learning-paths/security-engineer) | Guardian of the gates | ~20 hours |
 
-### Quick References
+### Quick Draw References
 
-[Docker Cheat Sheet](/cheat-sheets/docker) ·
-[Kubernetes Cheat Sheet](/cheat-sheets/kubernetes) ·
-[Git Cheat Sheet](/cheat-sheets/git) ·
-[SQL Cheat Sheet](/cheat-sheets/sql) ·
-[TypeScript Cheat Sheet](/cheat-sheets/typescript) ·
-[Linux Cheat Sheet](/cheat-sheets/linux) ·
-[Redis Cheat Sheet](/cheat-sheets/redis) ·
-[Terraform Cheat Sheet](/cheat-sheets/terraform)
+[Docker](/cheat-sheets/docker) ·
+[Kubernetes](/cheat-sheets/kubernetes) ·
+[Git](/cheat-sheets/git) ·
+[SQL](/cheat-sheets/sql) ·
+[TypeScript](/cheat-sheets/typescript) ·
+[Linux](/cheat-sheets/linux) ·
+[Redis](/cheat-sheets/redis) ·
+[Terraform](/cheat-sheets/terraform)
 
-### More Resources
+### Explore the Realm
 
-[Technology Radar](/technology-radar) · [Browse by Tag](/tags) · [Glossary](/glossary)
+[Knowledge Graph](/graph) · [Compare Technologies](/compare) · [Technology Radar](/technology-radar) · [Browse by Tag](/tags) · [Glossary](/glossary)
 
 </div>
 
@@ -175,6 +175,7 @@ features:
   color: var(--vp-c-text-2);
   margin-top: 4px;
   font-weight: 500;
+  font-style: italic;
 }
 
 .home-sections {

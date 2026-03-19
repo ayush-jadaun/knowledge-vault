@@ -1,15 +1,17 @@
 ---
 title: "Start Here"
-description: "Your roadmap through Archon — where to begin, how to progress, and what to read based on your goals"
+description: "Your quest through Archon begins here — choose your path, forge your knowledge, master the craft"
 ---
 
-# Start Here
+# Begin Your Journey
 
-470+ pages is overwhelming. This page tells you exactly where to start and how to progress based on what you're trying to do.
+You stand before 470+ pages of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
 
-## Pick Your Goal
+Choose your quest.
 
-### "I have a system design interview coming up"
+## Choose Your Destiny
+
+### "I have a system design interview — and I refuse to lose"
 
 **Time needed:** 2-4 weeks (2 hours/day)
 
