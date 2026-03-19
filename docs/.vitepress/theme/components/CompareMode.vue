@@ -439,10 +439,12 @@ const allSpecs = computed(() => {
 }
 
 @media (max-width: 768px) {
-  .compare-row { grid-template-columns: 1fr; }
-  .compare-row.header-row { grid-template-columns: 1fr 1fr; }
-  .compare-label { border-bottom: 1px solid var(--vp-c-divider); }
+  .compare-row { grid-template-columns: 1fr !important; }
+  .compare-label { border-bottom: 1px solid var(--vp-c-divider); font-size: 11px; }
+  .compare-cell { border-left: none !important; border-bottom: 1px solid var(--vp-c-divider); font-size: 12px; padding: 10px 12px; }
+  .compare-cell h3 { font-size: 16px; }
   .compare-selectors { flex-direction: column; }
   .vs { text-align: center; padding: 0; }
+  .use-tag { font-size: 10px; }
 }
 </style>

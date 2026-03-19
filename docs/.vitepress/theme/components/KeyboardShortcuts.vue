@@ -282,4 +282,9 @@ function close() {
 .kbd-fade-enter-active { transition: opacity 0.15s ease; }
 .kbd-fade-leave-active { transition: opacity 0.1s ease; }
 .kbd-fade-enter-from, .kbd-fade-leave-to { opacity: 0; }
+
+@media (max-width: 640px) {
+  .kbd-modal { padding: 16px 20px; width: 95%; }
+  .kbd-sections { grid-template-columns: 1fr; gap: 16px; }
+}
 </style>
