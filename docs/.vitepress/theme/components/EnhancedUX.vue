@@ -92,6 +92,17 @@ function applyFontSize() {
 function toggleFocus() {
   focusMode.value = !focusMode.value
   document.body.classList.toggle('focus-mode', focusMode.value)
+  // Listen for Escape to exit
+  if (focusMode.value) {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        focusMode.value = false
+        document.body.classList.remove('focus-mode')
+        document.removeEventListener('keydown', handler)
+      }
+    }
+    document.addEventListener('keydown', handler)
+  }
 }
 
 // ============ Quick Notes ============
@@ -229,6 +240,11 @@ watch(() => route.path, () => {
     </div>
   </Transition>
 
+  <!-- Focus mode exit hint -->
+  <button v-if="focusMode" class="focus-exit-hint" @click="toggleFocus">
+    Exit focus mode <kbd>Esc</kbd>
+  </button>
+
   <!-- Toast -->
   <Transition name="toast-pop">
     <div v-if="showToast" class="toast">{{ toastMsg }}</div>
@@ -305,9 +321,27 @@ watch(() => route.path, () => {
 body.focus-mode .VPSidebar,
 body.focus-mode .VPNavBar,
 body.focus-mode .VPLocalNav,
-body.focus-mode .VPDocAsideOutline,
-body.focus-mode .ux-toolbar { display: none !important; }
-body.focus-mode .VPContent { max-width: 800px !important; margin: 0 auto !important; padding-top: 40px !important; }
+body.focus-mode .VPDocAsideOutline { display: none !important; }
+body.focus-mode .VPContent { max-width: 100% !important; margin: 0 !important; padding: 40px 80px !important; }
+body.focus-mode .VPDoc { max-width: 100% !important; }
+body.focus-mode .vp-doc { max-width: 100% !important; }
+body.focus-mode .VPDoc > div { max-width: 100% !important; padding: 0 !important; }
+body.focus-mode .content-container { max-width: 100% !important; }
+
+/* Focus mode exit hint */
+.focus-exit-hint {
+  position: fixed; top: 12px; right: 12px; z-index: 100;
+  padding: 6px 14px; border-radius: 8px;
+  background: var(--vp-c-bg-soft); border: 1px solid var(--vp-c-divider);
+  color: var(--vp-c-text-3); font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: all 0.15s; font-family: inherit;
+}
+.focus-exit-hint:hover { border-color: var(--vp-c-brand-1); color: var(--vp-c-text-1); }
+.focus-exit-hint kbd {
+  font-size: 10px; padding: 1px 4px; border: 1px solid var(--vp-c-divider);
+  border-radius: 3px; background: var(--vp-c-bg); font-family: inherit;
+}
 
 /* Outline progress bar */
 .outline-progress {
