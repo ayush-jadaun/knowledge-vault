@@ -11,6 +11,8 @@ import ReadingTime from './components/ReadingTime.vue'
 import ReadingProgress from './components/ReadingProgress.vue'
 import Feedback from './components/Feedback.vue'
 import AskAI from './components/AskAI.vue'
+import KnowledgeGraph from './components/KnowledgeGraph.vue'
+import CompareMode from './components/CompareMode.vue'
 
 export default {
   extends: DefaultTheme,
@@ -25,5 +27,7 @@ export default {
   },
   enhanceApp({ app }) {
     app.component('TagBrowse', TagBrowse)
+    app.component('KnowledgeGraph', KnowledgeGraph)
+    app.component('CompareMode', CompareMode)
   },
 } satisfies Theme

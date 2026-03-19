@@ -108,8 +108,12 @@ export default withMermaid(
           ],
         },
         { text: 'Tech Radar', link: '/technology-radar' },
-        { text: 'Tags', link: '/tags' },
-        { text: "What's New", link: '/changelog' },
+        { text: 'Explore', items: [
+          { text: 'Knowledge Graph', link: '/graph' },
+          { text: 'Compare Technologies', link: '/compare' },
+          { text: 'Browse by Tag', link: '/tags' },
+          { text: "What's New", link: '/changelog' },
+        ]},
       ],
 
       sidebar,
