@@ -23,73 +23,73 @@ features:
     title: System Design
     details: Distributed systems, databases, caching, message queues, consensus, load balancing, networking — CAP theorem to Raft walkthroughs.
     link: /system-design/
-    linkText: 65+ pages →
+    linkText: 65+ pages
 
   - icon: 💼
     title: System Design Interviews
     details: 30 exhaustive walkthroughs — Instagram, Uber, YouTube, WhatsApp, Netflix, Spotify, and more. Full estimation math and production code.
     link: /system-design-interviews/
-    linkText: 30 interviews →
+    linkText: 30 interviews
 
   - icon: 🧱
     title: Architecture Patterns
     details: Microservices, event-driven, CQRS, hexagonal, clean architecture, and DDD — TypeScript implementations and migration strategies.
     link: /architecture-patterns/
-    linkText: 35+ pages →
+    linkText: 35+ pages
 
   - icon: ☁️
     title: Infrastructure
     details: Terraform, Kubernetes, Docker, AWS, GCP, CI/CD, multi-region — production-ready configs, not pseudocode.
     link: /infrastructure/
-    linkText: 55+ pages →
+    linkText: 55+ pages
 
   - icon: 🔒
     title: Security
     details: OWASP Top 10 with vulnerable AND fixed code, JWT, OAuth2/OIDC, encryption, secrets management, zero-trust, API security.
     link: /security/
-    linkText: 40+ pages →
+    linkText: 40+ pages
 
   - icon: 🔧
     title: DevOps
     details: Prometheus + Grafana dashboards, structured logging, incident response runbooks, deployment strategies, chaos engineering.
     link: /devops/
-    linkText: 30+ pages →
+    linkText: 30+ pages
 
   - icon: ⚡
     title: Performance
     details: V8 internals, event loop deep dive, memory leak detection, query optimization with EXPLAIN ANALYZE, caching, edge computing.
     link: /performance/
-    linkText: 25+ pages →
+    linkText: 25+ pages
 
   - icon: 🔄
     title: Data Engineering
     details: Stream processing, windowing, watermarks, CDC, data modeling (star schema, data vault), pipeline orchestration.
     link: /data-engineering/
-    linkText: 20+ pages →
+    linkText: 20+ pages
 
   - icon: 📋
     title: Production Blueprints
     details: Complete systems — billing engine, notification service, realtime pipeline, rate limiter, job queue, A/B testing, analytics.
     link: /production-blueprints/
-    linkText: 40+ pages →
+    linkText: 40+ pages
 
   - icon: 🤖
     title: Prompt Engineering
     details: 500+ battle-tested prompts for engineering, product, UI, and architecture — with usage context and example outputs.
     link: /prompt-engineering/
-    linkText: 500+ prompts →
+    linkText: 500+ prompts
 
   - icon: 🎨
     title: UI & Design Systems
     details: Typography, color tokens, spacing, accessibility, dark mode, animations — with production React/CSS code.
     link: /ui-design-systems/
-    linkText: 35+ pages →
+    linkText: 35+ pages
 
   - icon: 🗺️
     title: Learning Paths & Cheat Sheets
     details: 5 guided paths (Backend, DevOps, Frontend, Security, Interview Prep) + 8 cheat sheets (Docker, K8s, Git, SQL, TS, Linux, Redis, Terraform).
     link: /learning-paths/
-    linkText: Start a path →
+    linkText: Start a path
 ---
 
 <div class="home-stats">
