@@ -4,7 +4,7 @@ import { sidebar } from './sidebar'
 
 export default withMermaid(
   defineConfig({
-    title: 'Knowledge Vault',
+    title: 'Archon',
     description: 'The most comprehensive engineering knowledge base — from first principles to research-level depth',
     lang: 'en-US',
 
@@ -12,7 +12,7 @@ export default withMermaid(
       ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
       ['meta', { name: 'theme-color', content: '#5f67ee' }],
       ['meta', { property: 'og:type', content: 'website' }],
-      ['meta', { property: 'og:site_name', content: 'Knowledge Vault' }],
+      ['meta', { property: 'og:site_name', content: 'Archon' }],
       ['meta', { property: 'og:image', content: 'https://knowledge-vault-five.vercel.app/og-image.svg' }],
       ['meta', { property: 'og:image:width', content: '1200' }],
       ['meta', { property: 'og:image:height', content: '630' }],
@@ -22,7 +22,7 @@ export default withMermaid(
       ['meta', { name: 'keywords', content: 'system design, engineering, architecture, kubernetes, docker, aws, security, devops, performance, data engineering' }],
       ['link', { rel: 'canonical', href: 'https://knowledge-vault-five.vercel.app' }],
       ['link', { rel: 'manifest', href: '/manifest.json' }],
-      ['link', { rel: 'alternate', type: 'application/rss+xml', title: 'Knowledge Vault RSS', href: '/feed.xml' }],
+      ['link', { rel: 'alternate', type: 'application/rss+xml', title: 'Archon RSS', href: '/feed.xml' }],
       ['script', {}, `if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js')`],
     ],
 
@@ -37,10 +37,10 @@ export default withMermaid(
 
       pageData.frontmatter.head ??= []
       pageData.frontmatter.head.push(
-        ['meta', { property: 'og:title', content: `${title} | Knowledge Vault` }],
+        ['meta', { property: 'og:title', content: `${title} | Archon` }],
         ['meta', { property: 'og:description', content: description }],
         ['meta', { name: 'description', content: description }],
-        ['meta', { name: 'twitter:title', content: `${title} | Knowledge Vault` }],
+        ['meta', { name: 'twitter:title', content: `${title} | Archon` }],
         ['meta', { name: 'twitter:description', content: description }],
       )
     },

@@ -1,4 +1,4 @@
-# Knowledge Vault
+# Archon
 
 The most comprehensive engineering knowledge base ever assembled — from first principles to research-level depth.
 

@@ -1,10 +1,10 @@
 ---
 layout: home
-title: Knowledge Vault
+title: Archon
 titleTemplate: Engineering Knowledge from First Principles to Research-Level Depth
 
 hero:
-  name: Knowledge Vault
+  name: Archon
   text: Engineering Mastery
   tagline: 470+ deep-dive pages. 30 system design interviews. 8 cheat sheets. From first principles to research-level depth.
   actions:

@@ -1,6 +1,6 @@
 ---
 title: "Changelog"
-description: "What's new in Knowledge Vault — recent additions and updates"
+description: "What's new in Archon — recent additions and updates"
 ---
 
 # Changelog

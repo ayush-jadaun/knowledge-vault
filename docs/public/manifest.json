@@ -1,6 +1,6 @@
 {
-  "name": "Knowledge Vault",
-  "short_name": "KnowledgeVault",
+  "name": "Archon",
+  "short_name": "Archon",
   "description": "Engineering knowledge from first principles to research-level depth",
   "start_url": "/",
   "display": "standalone",

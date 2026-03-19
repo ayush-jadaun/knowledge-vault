@@ -35,7 +35,7 @@ const items = [
   {
     title: '470+ Pages of Engineering Knowledge',
     link: '/',
-    description: 'The Knowledge Vault now contains 470+ deep-dive pages covering system design, architecture, infrastructure, security, DevOps, performance, data engineering, and more.',
+    description: 'The Archon now contains 470+ deep-dive pages covering system design, architecture, infrastructure, security, DevOps, performance, data engineering, and more.',
     date: 'Tue, 17 Mar 2026 00:00:00 GMT',
   },
 ]
@@ -43,7 +43,7 @@ const items = [
 const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Knowledge Vault</title>
+    <title>Archon</title>
     <link>${SITE_URL}</link>
     <description>Engineering knowledge from first principles to research-level depth</description>
     <language>en-us</language>

@@ -1,4 +1,4 @@
-# Knowledge Vault — Roadmap
+# Archon — Roadmap
 
 ## Phase 1: Quick Wins (do now)
 - [ ] Reading time on every page (estimate from word count)
@@ -36,7 +36,7 @@
 - [ ] Embeddable widgets (embed a cheat sheet in your blog)
 - [ ] API endpoint for programmatic access to content
 - [ ] VS Code extension (search vault from your editor)
-- [ ] CLI tool (`npx knowledge-vault search "consistent hashing"`)
+- [ ] CLI tool (`npx archon search "consistent hashing"`)
 
 ## Phase 5: Monetization (optional)
 - [ ] Premium learning paths with quizzes

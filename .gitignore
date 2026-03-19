@@ -13,3 +13,7 @@ Thumbs.db
 docs/.vitepress/.temp/
 docs/.vitepress/dist/
 .astro
+doc_build/
+.rspress/
+rspress.config.ts
+styles/

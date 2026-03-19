@@ -11,7 +11,7 @@
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
   <rect x="0" y="0" width="1200" height="4" fill="url(#brand)"/>
-  <text x="100" y="220" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="800" fill="url(#brand)">Knowledge Vault</text>
+  <text x="100" y="220" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="800" fill="url(#brand)">Archon</text>
   <text x="100" y="300" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="400" fill="#94a3b8">Engineering knowledge from first principles</text>
   <text x="100" y="350" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="400" fill="#94a3b8">to research-level depth</text>
   <text x="100" y="460" font-family="system-ui, monospace" font-size="22" fill="#64748b">470+ pages</text>
