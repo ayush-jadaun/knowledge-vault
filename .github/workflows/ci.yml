@@ -3,6 +3,13 @@ name: Build & Deploy
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'ROADMAP.md'
+      - 'REMAINING_PAGES.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - '.gitignore'
 
 jobs:
   build-and-deploy:

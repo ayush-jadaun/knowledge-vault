@@ -1,15 +1,25 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { ref, watch, onMounted, nextTick } from 'vue'
+import { useRoute } from 'vitepress'
 
+const route = useRoute()
 const minutes = ref(0)
 
-onMounted(() => {
-  const content = document.querySelector('.vp-doc')
-  if (!content) return
-  const text = content.textContent || ''
-  const words = text.split(/\s+/).filter(Boolean).length
-  minutes.value = Math.max(1, Math.ceil(words / 200))
-})
+function calculateReadingTime() {
+  // Wait for content to render
+  nextTick(() => {
+    setTimeout(() => {
+      const content = document.querySelector('.vp-doc div[class*="content"]') || document.querySelector('.vp-doc')
+      if (!content) return
+      const text = content.textContent || ''
+      const words = text.split(/\s+/).filter(Boolean).length
+      minutes.value = Math.max(1, Math.ceil(words / 200))
+    }, 100)
+  })
+}
+
+onMounted(calculateReadingTime)
+watch(() => route.path, calculateReadingTime)
 </script>
 
 <template>
