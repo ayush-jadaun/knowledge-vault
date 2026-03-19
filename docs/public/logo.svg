@@ -1,5 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
-  <rect width="128" height="128" rx="24" fill="#5f67ee"/>
-  <path d="M34 92V36h12v44h28V36h12v56H34z" fill="white" opacity="0.9"/>
-  <path d="M64 28l30 17.32v34.64L64 97.28 34 79.96V45.32L64 28z" stroke="white" stroke-width="3" fill="none" opacity="0.3"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5f67ee"/>
+      <stop offset="100%" stop-color="#42d392"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#42d392"/>
+      <stop offset="100%" stop-color="#5f67ee"/>
+    </linearGradient>
+    <linearGradient id="g3" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#747bff"/>
+      <stop offset="100%" stop-color="#5f67ee"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer vault arch / hexagonal gate -->
+  <path d="M256 48 L420 140 L420 372 L256 464 L92 372 L92 140 Z"
+    stroke="url(#g1)" stroke-width="16" stroke-linejoin="round" fill="none"/>
+
+  <!-- Inner hexagon glow -->
+  <path d="M256 88 L388 164 L388 348 L256 424 L124 348 L124 164 Z"
+    fill="url(#g1)" opacity="0.08"/>
+
+  <!-- The "A" keystone — bold, angular -->
+  <!-- Left leg -->
+  <path d="M176 360 L238 152 L256 152 L206 360 Z" fill="url(#g1)"/>
+
+  <!-- Right leg -->
+  <path d="M336 360 L274 152 L256 152 L306 360 Z" fill="url(#g2)"/>
+
+  <!-- Crossbar -->
+  <path d="M196 296 L220 248 L292 248 L316 296 Z" fill="url(#g1)" opacity="0.9"/>
+
+  <!-- Top keystone crown -->
+  <path d="M256 108 L232 152 L280 152 Z" fill="url(#g3)"/>
+
+  <!-- Diamond accent at apex -->
+  <path d="M256 80 L266 108 L256 136 L246 108 Z" fill="#42d392" opacity="0.9"/>
+
+  <!-- Anime energy lines -->
+  <line x1="108" y1="200" x2="140" y2="180" stroke="#5f67ee" stroke-width="3" opacity="0.5" stroke-linecap="round"/>
+  <line x1="100" y1="240" x2="136" y2="228" stroke="#5f67ee" stroke-width="2" opacity="0.35" stroke-linecap="round"/>
+  <line x1="404" y1="200" x2="372" y2="180" stroke="#42d392" stroke-width="3" opacity="0.5" stroke-linecap="round"/>
+  <line x1="412" y1="240" x2="376" y2="228" stroke="#42d392" stroke-width="2" opacity="0.35" stroke-linecap="round"/>
+
+  <!-- Star particles -->
+  <circle cx="172" cy="388" r="3" fill="#5f67ee" opacity="0.4"/>
+  <circle cx="340" cy="388" r="3" fill="#42d392" opacity="0.4"/>
+  <circle cx="256" cy="440" r="2.5" fill="#747bff" opacity="0.3"/>
 </svg>
