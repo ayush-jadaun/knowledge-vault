@@ -73,6 +73,14 @@ jobs:
             exit 0
           fi
 
+          # Check if API functions changed (need deploy but not full rebuild)
+          API_CHANGED=$(echo "$CHANGED" | grep -E "^api/" || true)
+          if [ -n "$API_CHANGED" ]; then
+            echo "needs_build=deploy_only" >> $GITHUB_OUTPUT
+            echo "API functions changed — deploy without rebuild"
+            exit 0
+          fi
+
           # Check if only non-rendered files changed (README, ROADMAP, scripts, etc.)
           CONTENT_CHANGED=$(echo "$CHANGED" | grep -E "^docs/.*\.md$" | grep -v -E "(README|ROADMAP|REMAINING_PAGES|CONTRIBUTING)\.md$" || true)
 
@@ -113,7 +121,7 @@ jobs:
 
       # Deploy (only if we built OR have cached dist)
       - name: Deploy to Vercel
-        if: steps.changes.outputs.needs_build != 'skip'
+        if: steps.changes.outputs.needs_build != 'skip' || steps.changes.outputs.needs_build == 'deploy_only'
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
