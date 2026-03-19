@@ -30,6 +30,7 @@ function submitVote(v: 'up' | 'down') {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
     vote.value = v
     voted.value = true
+
   } catch {}
 }
 

@@ -60,13 +60,7 @@ async function ask() {
   // Search for relevant pages
   const relevant = searchContext(q, pages)
 
-  if (relevant.length === 0) {
-    answer.value = 'I couldn\'t find any relevant pages for your question. Try rephrasing or browse the [Learning Paths](/learning-paths/) to explore topics.'
-    isLoading.value = false
-    chatHistory.value.push({ q, a: answer.value, sources: [] })
-    return
-  }
-
+  // Even if no pages match, still ask Gemini (it'll use its own knowledge)
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
