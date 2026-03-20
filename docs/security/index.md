@@ -58,6 +58,7 @@ graph LR
 | [Secrets Management](/security/secrets-management) | Vault, AWS Secrets Manager, environment variable anti-patterns, rotation strategies, CI/CD secrets | Information Disclosure |
 | [Zero Trust](/security/zero-trust) | Network segmentation, identity-based access, mTLS, BeyondCorp model, policy engines | All categories |
 | [API Security](/security/api-security) | Rate limiting, input validation, authz vs authn, CORS, CSRF, API key management, GraphQL-specific risks | Tampering, DoS, Information Disclosure |
+| [Exploits & Vulnerabilities](/security/exploits/) | Famous exploits (Log4Shell, Heartbleed, XZ Backdoor), attack techniques for defensive understanding, real-world case studies | All categories |
 
 ## Security Principles
 

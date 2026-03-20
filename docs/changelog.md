@@ -7,7 +7,49 @@ description: "What's new in Archon — recent additions and updates"
 
 ## March 2026
 
-### March 20, 2026 — The Mega Expansion
+### March 20, 2026 — The Mega Expansion (Part 2)
+
+**+200 more pages. Archon reaches 850+ pages.**
+
+#### Wave 2 New Sections
+- **War Room** (12 pages) — Real production incidents: GitHub, Cloudflare, Knight Capital, AWS S3, Facebook, GitLab, Stripe, Discord, Twitter, Netflix, CrowdStrike
+- **Security Exploits** (12 pages) — XZ Backdoor, Log4Shell, SolarWinds, Heartbleed, Spectre/Meltdown, Dirty Pipe, container escapes, advanced injection/XSS, cloud misconfigs, crypto attacks
+- **Cybersecurity Path** (22 pages) — Complete security engineer training: networking, pentesting, Linux security, network attacks, reverse engineering, crypto hacking, cloud pentesting, OSINT, forensics, secure coding, tools, Active Directory, red/blue team, Web3 security, mobile security, bug bounty, malware analysis, certifications
+- **Deep Auth System** (12 pages) — Enterprise auth architecture, token strategies (DPoP, macaroons), OAuth 2.1 flows, session management, account sharing prevention, enterprise SSO (SAML/SCIM), passkeys/WebAuthn, MFA deep dive, auth providers comparison, advanced rate limiting, device trust/risk engine, auth attacks & defenses
+- **LLD Interview Problems** (12 pages) — Parking lot, elevator, chess, library, snake & ladders, vending machine, ATM, movie booking, hotel, file system, tic-tac-toe
+- **Debugging Playbooks** (7 pages) — "API is slow", "memory leak", "database CPU 100%", "pods restarting", "intermittent 502s", "error rate spiked"
+- **Production Checklists** (5 pages) — Pre-launch (90 items), security review, performance review, observability readiness
+- **Runbook Collection** (5 pages) — Database failover, service degradation, certificate rotation, DDoS response
+- **Mobile Engineering** (6 pages) — React Native, Flutter, mobile performance, push notifications, offline-first
+- **Build From Scratch** (5 pages) — Build Redis, rate limiter, key-value store, load balancer from scratch
+- **Company Architecture** (5 pages) — How Uber, Figma, Shopify, Discord actually built their systems
+- **Migrations** (4 pages) — Zero-downtime database migrations, monolith→microservices, cloud migration
+- **Background Jobs** (4 pages) — Temporal, BullMQ vs Celery vs Sidekiq comparison, job patterns
+- **Geospatial** (2 pages) — Spatial indexing (geohash, S2, H3, PostGIS), geofencing
+- **Real-Time Analytics** (2 pages) — ClickHouse vs Druid vs Pinot, stream-to-OLAP
+- **AI Infrastructure** (3 pages) — GPU K8s, model serving (vLLM, Triton), AI infra overview
+
+#### Wave 2 New Pages in Existing Sections
+- **AI/ML** (18 new) — LangChain (2000+ line mega guide), LangGraph (2200+ line mega guide), LangSmith, LlamaIndex, Vercel AI SDK, fine-tuning (LoRA/QLoRA), AI guardrails, AI in production, multimodal AI, prompt caching, advanced prompt engineering, data annotation, Claude API, OpenAI API, Hugging Face, CrewAI/AutoGen, AI testing
+- **System Design Interviews** (8 new, 48 total) — ChatGPT, Copilot, Recommendation Engine, Fraud Detection, Search Ranking, Content Moderation, Twitter Search, Typeahead, Live Streaming
+- **Algorithms** (8 new) — JS interview (50+ questions), React interview, Node.js interview, probability, statistics/A/B testing, greedy, bit manipulation, string algorithms, advanced DS, system design math
+- **Schema Design** (4 new) — E-commerce, social media, SaaS multi-tenant, chat schemas
+- **Infrastructure** — Deno/Bun, TypeScript patterns, Python data tools, Python async, API gateway, storage systems
+- **Security** — Supply chain security, cryptography for engineers
+- **DevOps** — Feature flags, open source, tech debt, postmortem template, technical leadership, hiring, RFC template, design doc template, observability tools, release engineering, debugging in production
+- **Performance** — Benchmarks reference, continuous profiling, compilers/interpreters, load testing
+- **Frontend** — Data visualization, i18n, WCAG compliance
+- **Cheat Sheets** (6 new, 22 total) — SQL advanced, Docker Compose, LLM APIs, terminal productivity, HTTP clients
+- **Learning Paths** (2 new) — Engineering resources, behavioral interviews
+- **Production Blueprints** — Email service, scheduler service, webhook infrastructure, file processing
+- **API Design** — gRPC deep dive, event-driven APIs, API gateway patterns, GraphQL advanced
+
+#### Infrastructure
+- CI Node heap bumped to **24GB** with **1GB semi-space** for 850+ pages
+
+---
+
+### March 20, 2026 — The Mega Expansion (Part 1)
 
 **+179 new pages in a single session. Archon goes from 470 to 650+ pages.**
 

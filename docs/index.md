@@ -61,15 +61,51 @@ features:
     link: /performance/
     linkText: Unlock the speed
 
+  - icon: 🤖
+    title: AI/ML Engineering
+    details: "25+ pages of pure AI engineering. LangChain (2000 lines), LangGraph (2200 lines), RAG, vector databases, Claude/OpenAI APIs, fine-tuning, guardrails, AI agents. The complete AI engineer's arsenal."
+    link: /ai-ml-engineering/
+    linkText: Build with AI
+
+  - icon: 🔓
+    title: Cybersecurity
+    details: "22 pages from OSINT to reverse engineering. Pentesting, network attacks, cloud hacking, Active Directory, red/blue team ops, bug bounty hunting, malware analysis, OSCP prep. The hacker's handbook."
+    link: /cybersecurity/
+    linkText: Enter the dark side
+
+  - icon: 🚨
+    title: War Room
+    details: "Real production incidents from GitHub, Cloudflare, Facebook, Netflix, CrowdStrike. Timelines, root causes, fixes. Learn from the failures of the giants so you don't repeat them."
+    link: /war-room/
+    linkText: Study the failures
+
+  - icon: 🔨
+    title: Build From Scratch
+    details: "Build Redis, a rate limiter, a key-value store, and a load balancer from scratch. Full working code. The best way to truly understand how things work."
+    link: /build-from-scratch/
+    linkText: Build it yourself
+
+  - icon: 📱
+    title: Mobile Engineering
+    details: React Native (JSI, Fabric, TurboModules), Flutter (Dart, Impeller, Riverpod), mobile performance, push notifications, offline-first patterns with CRDTs.
+    link: /mobile-engineering/
+    linkText: Go mobile
+
+  - icon: 🩺
+    title: Debugging Playbooks
+    details: "Step-by-step flowcharts for real production problems. API slow? Memory leak? Database CPU 100%? Pods restarting? Intermittent 502s? Follow the decision tree."
+    link: /debugging-playbooks/
+    linkText: Diagnose the issue
+
   - icon: 🌊
     title: Data Engineering
-    details: Taming the data deluge. Stream processing, windowing, watermarks, CDC, dimensional modeling, data vault, pipeline orchestration — the plumbing that powers every data-driven decision.
+    details: Taming the data deluge. Stream processing, windowing, watermarks, CDC, dimensional modeling, data vault, pipeline orchestration, real-time analytics with ClickHouse.
     link: /data-engineering/
     linkText: Harness the flow
 
   - icon: 📜
     title: Production Blueprints
-    details: Complete system designs, stolen from production. Billing engine. Notification service. Realtime pipeline. Rate limiter. Job queue. A/B testing. Analytics. Copy, adapt, ship.
+    details: "55+ complete system designs. Auth, billing, notifications, search, chat, payments, email, scheduler, feature flags. Copy, adapt, ship."
     link: /production-blueprints/
     linkText: Steal the blueprints
 
@@ -94,15 +130,15 @@ features:
 
 <div class="home-stats">
   <div class="stat-item">
-    <div class="stat-number">650+</div>
+    <div class="stat-number">850+</div>
     <div class="stat-label">Sacred texts</div>
   </div>
   <div class="stat-item">
-    <div class="stat-number">500K+</div>
+    <div class="stat-number">700K+</div>
     <div class="stat-label">Lines of wisdom</div>
   </div>
   <div class="stat-item">
-    <div class="stat-number">40</div>
+    <div class="stat-number">48</div>
     <div class="stat-label">Battle simulations</div>
   </div>
   <div class="stat-item">

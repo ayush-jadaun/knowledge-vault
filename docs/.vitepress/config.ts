@@ -5,7 +5,7 @@ import { sidebar } from './sidebar'
 export default withMermaid(
   defineConfig({
     title: 'Archon',
-    description: 'The holy grail of engineering knowledge — 650+ sacred texts from first principles to production mastery',
+    description: 'The holy grail of engineering knowledge — 850+ sacred texts from first principles to production mastery',
     lang: 'en-US',
 
     head: [
@@ -28,7 +28,7 @@ export default withMermaid(
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "Archon",
-        "description": "The holy grail of engineering knowledge — 650+ deep dives from first principles to production mastery",
+        "description": "The holy grail of engineering knowledge — 850+ deep dives from first principles to production mastery",
         "url": "https://knowledge-vault-five.vercel.app",
         "potentialAction": {
           "@type": "SearchAction",
@@ -130,13 +130,16 @@ export default withMermaid(
           items: [
             { text: 'Infrastructure', link: '/infrastructure/' },
             { text: 'Security', link: '/security/' },
+            { text: 'Cybersecurity', link: '/cybersecurity/' },
             { text: 'DevOps', link: '/devops/' },
+            { text: 'Debugging Playbooks', link: '/debugging-playbooks/' },
           ],
         },
         {
           text: 'Engineering',
           items: [
             { text: 'Frontend Engineering', link: '/frontend-engineering/' },
+            { text: 'Mobile Engineering', link: '/mobile-engineering/' },
             { text: 'Performance', link: '/performance/' },
             { text: 'Data Engineering', link: '/data-engineering/' },
             { text: 'Testing', link: '/testing/' },
@@ -149,6 +152,9 @@ export default withMermaid(
             { text: 'Prompts', link: '/prompt-engineering/' },
             { text: 'UI & Design', link: '/ui-design-systems/' },
             { text: 'Blueprints', link: '/production-blueprints/' },
+            { text: 'War Room', link: '/war-room/' },
+            { text: 'Build From Scratch', link: '/build-from-scratch/' },
+            { text: 'Company Architecture', link: '/company-architecture/' },
             { text: 'Cheat Sheets', link: '/cheat-sheets/' },
           ],
         },
@@ -157,6 +163,7 @@ export default withMermaid(
           items: [
             { text: 'Algorithms & Data Structures', link: '/algorithms/' },
             { text: 'System Design Interviews', link: '/system-design-interviews/' },
+            { text: 'Low-Level Design Interviews', link: '/lld-interviews/' },
             { text: 'Learning Paths', link: '/learning-paths/' },
           ],
         },

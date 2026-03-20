@@ -15,7 +15,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
-      NODE_OPTIONS: --max-old-space-size=20480 --max-semi-space-size=512
+      NODE_OPTIONS: --max-old-space-size=24576 --max-semi-space-size=1024
 
     steps:
       - name: Free disk space for swap

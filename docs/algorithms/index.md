@@ -182,6 +182,11 @@ Start with [Arrays & Strings](/algorithms/arrays-strings) — they are the most 
 | [Heaps & Priority Queues](/algorithms/heaps-priority-queues) | Min/max heaps, Top-K, median finding | Intermediate |
 | [Hash Tables](/algorithms/hash-tables) | Hash functions, collision resolution, consistent hashing | Intermediate |
 | [Backtracking & Recursion](/algorithms/backtracking-recursion) | N-Queens, permutations, pruning strategies | Advanced |
+| [Greedy Algorithms](/algorithms/greedy) | Activity selection, Huffman coding, MST (Prim's, Kruskal's) | Intermediate |
+| [Bit Manipulation](/algorithms/bit-manipulation) | Bitwise tricks, XOR patterns, bitmask DP, bloom filters | Intermediate |
+| [String Algorithms](/algorithms/string-algorithms) | KMP, Rabin-Karp, tries, Manacher's, edit distance | Advanced |
+| [Advanced Data Structures](/algorithms/advanced-data-structures) | Segment trees, Fenwick trees, Union-Find, skip lists, LRU cache | Advanced |
+| [Math Patterns in System Design](/algorithms/system-design-math) | Back-of-envelope estimation, QPS, storage, consistent hashing | Intermediate |
 
 ## Interview Preparation Strategy
 

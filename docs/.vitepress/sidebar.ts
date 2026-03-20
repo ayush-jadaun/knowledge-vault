@@ -56,6 +56,11 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Cassandra Internals', link: '/system-design/databases/cassandra-internals' },
         { text: 'Elasticsearch Internals', link: '/system-design/databases/elasticsearch-internals' },
         { text: 'ClickHouse Internals', link: '/system-design/databases/clickhouse-internals' },
+        { text: 'SQLite Internals', link: '/system-design/databases/sqlite-internals' },
+        { text: 'Schema: E-Commerce', link: '/system-design/databases/schema-design-ecommerce' },
+        { text: 'Schema: Social Media', link: '/system-design/databases/schema-design-social' },
+        { text: 'Schema: SaaS Multi-Tenant', link: '/system-design/databases/schema-design-saas' },
+        { text: 'Schema: Chat Application', link: '/system-design/databases/schema-design-chat' },
       ],
     },
     {
@@ -162,6 +167,36 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Webhooks', link: '/system-design/api-design/webhooks' },
         { text: 'API Security Patterns', link: '/system-design/api-design/api-security-patterns' },
         { text: 'GraphQL Advanced', link: '/system-design/api-design/graphql-advanced' },
+        { text: 'gRPC Deep Dive', link: '/system-design/api-design/grpc-deep-dive' },
+        { text: 'Event-Driven APIs', link: '/system-design/api-design/event-driven-apis' },
+        { text: 'Webhook Infrastructure', link: '/system-design/api-design/webhook-infrastructure' },
+        { text: 'API Gateway Patterns', link: '/system-design/api-design/api-gateway-patterns' },
+      ],
+    },
+    {
+      text: 'Background Jobs',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/system-design/background-jobs/' },
+        { text: 'Temporal Deep Dive', link: '/system-design/background-jobs/temporal' },
+        { text: 'Job Queue Comparison', link: '/system-design/background-jobs/comparison' },
+        { text: 'Job Processing Patterns', link: '/system-design/background-jobs/patterns' },
+      ],
+    },
+    {
+      text: 'Geospatial',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/system-design/geospatial/' },
+        { text: 'Spatial Indexing', link: '/system-design/geospatial/spatial-indexing' },
+      ],
+    },
+    {
+      text: 'Search & File Processing',
+      collapsed: false,
+      items: [
+        { text: 'Search Engineering', link: '/system-design/search-engineering' },
+        { text: 'File Processing', link: '/system-design/file-processing' },
       ],
     },
   ],
@@ -186,6 +221,8 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Testing Strategies', link: '/architecture-patterns/microservices/testing-strategies' },
         { text: 'Migration from Monolith', link: '/architecture-patterns/microservices/migration-from-monolith' },
         { text: 'Anti-Patterns', link: '/architecture-patterns/microservices/anti-patterns' },
+        { text: 'API Composition', link: '/architecture-patterns/microservices/api-composition' },
+        { text: 'Distributed Tracing', link: '/architecture-patterns/microservices/distributed-tracing' },
       ],
     },
     {
@@ -201,6 +238,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Eventual Consistency', link: '/architecture-patterns/event-driven/eventual-consistency' },
         { text: 'Transactional Outbox', link: '/architecture-patterns/event-driven/transactional-outbox' },
         { text: 'Idempotent Consumers', link: '/architecture-patterns/event-driven/idempotent-consumers' },
+        { text: 'Event Versioning', link: '/architecture-patterns/event-driven/event-versioning' },
       ],
     },
     {
@@ -447,6 +485,10 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Go Concurrency', link: '/infrastructure/languages/go-concurrency' },
         { text: 'Rust for Backend', link: '/infrastructure/languages/rust-for-backend' },
         { text: 'TypeScript Advanced', link: '/infrastructure/languages/typescript-advanced' },
+        { text: 'TypeScript Patterns', link: '/infrastructure/languages/typescript-patterns' },
+        { text: 'Deno & Bun', link: '/infrastructure/languages/deno-bun' },
+        { text: 'Python Async', link: '/infrastructure/languages/python-async' },
+        { text: 'Python Data Tools', link: '/infrastructure/languages/python-data-tools' },
       ],
     },
     {
@@ -484,6 +526,22 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Overview', link: '/infrastructure/finops/' },
         { text: 'Cost Optimization Playbook', link: '/infrastructure/finops/cost-optimization' },
         { text: 'Cost Allocation & Tagging', link: '/infrastructure/finops/cost-allocation' },
+      ],
+    },
+    {
+      text: 'Cloud Comparison',
+      collapsed: false,
+      items: [
+        { text: 'AWS vs GCP vs Azure', link: '/infrastructure/cloud-comparison' },
+      ],
+    },
+    {
+      text: 'AI Infrastructure',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/infrastructure/ai-infrastructure/' },
+        { text: 'Model Serving', link: '/infrastructure/ai-infrastructure/model-serving' },
+        { text: 'GPU & Kubernetes', link: '/infrastructure/ai-infrastructure/gpu-kubernetes' },
       ],
     },
   ],
@@ -575,6 +633,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'CORS Deep Dive', link: '/security/api-security/cors-deep-dive' },
         { text: 'CSP Headers', link: '/security/api-security/csp-headers' },
         { text: 'API Abuse Prevention', link: '/security/api-security/api-abuse-prevention' },
+        { text: 'Advanced Rate Limiting', link: '/security/api-security/advanced-rate-limiting' },
       ],
     },
     {
@@ -596,6 +655,31 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'RBAC vs ABAC vs ReBAC', link: '/security/authorization/rbac-abac-rebac' },
         { text: 'Google Zanzibar', link: '/security/authorization/zanzibar' },
         { text: 'Policy Engines (OPA & Cedar)', link: '/security/authorization/policy-engines' },
+      ],
+    },
+    {
+      text: 'Exploits & Vulnerabilities',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/security/exploits/' },
+        { text: 'XZ Utils Backdoor (2024)', link: '/security/exploits/xz-backdoor-2024' },
+        { text: 'Log4Shell', link: '/security/exploits/log4shell' },
+        { text: 'SolarWinds Attack', link: '/security/exploits/solarwinds' },
+        { text: 'Heartbleed', link: '/security/exploits/heartbleed' },
+        { text: 'Spectre & Meltdown', link: '/security/exploits/spectre-meltdown' },
+        { text: 'Dirty Pipe & Kernel Exploits', link: '/security/exploits/dirty-pipe' },
+        { text: 'Container Escapes', link: '/security/exploits/container-escapes' },
+        { text: 'Advanced Injection', link: '/security/exploits/injection-advanced' },
+        { text: 'Advanced XSS', link: '/security/exploits/xss-advanced' },
+        { text: 'Cloud Misconfigurations', link: '/security/exploits/cloud-misconfigs' },
+        { text: 'Cryptographic Attacks', link: '/security/exploits/crypto-attacks' },
+      ],
+    },
+    {
+      text: 'Supply Chain Security',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/security/supply-chain/' },
       ],
     },
   ],
@@ -686,6 +770,13 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Code Review', link: '/devops/engineering-practices/code-review' },
         { text: 'ADRs', link: '/devops/engineering-practices/architecture-decision-records' },
         { text: 'On-Call Handbook', link: '/devops/engineering-practices/on-call-handbook' },
+        { text: 'Open Source', link: '/devops/engineering-practices/open-source' },
+        { text: 'Tech Debt', link: '/devops/engineering-practices/tech-debt' },
+        { text: 'Postmortem Template', link: '/devops/engineering-practices/postmortem-template' },
+        { text: 'Technical Leadership', link: '/devops/engineering-practices/technical-leadership' },
+        { text: 'Hiring & Interviewing', link: '/devops/engineering-practices/hiring-interviewing' },
+        { text: 'RFC Template', link: '/devops/engineering-practices/rfc-template' },
+        { text: 'Design Doc Template', link: '/devops/engineering-practices/design-doc-template' },
       ],
     },
     {
@@ -697,6 +788,38 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Toil Reduction', link: '/devops/sre/toil-reduction' },
         { text: 'Capacity Planning', link: '/devops/sre/capacity-planning' },
         { text: 'SLI / SLO / SLA', link: '/devops/sre/sli-slo-sla' },
+      ],
+    },
+    {
+      text: 'Migrations',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/devops/migrations/' },
+        { text: 'Database Schema Migrations', link: '/devops/migrations/database-schema' },
+        { text: 'Monolith to Microservices', link: '/devops/migrations/monolith-to-microservices' },
+        { text: 'Cloud Migration Playbook', link: '/devops/migrations/cloud-migration' },
+      ],
+    },
+    {
+      text: 'Production Checklists',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/devops/checklists/' },
+        { text: 'Pre-Launch Checklist', link: '/devops/checklists/pre-launch' },
+        { text: 'Security Review', link: '/devops/checklists/security-review' },
+        { text: 'Performance Review', link: '/devops/checklists/performance-review' },
+        { text: 'Observability Readiness', link: '/devops/checklists/observability-readiness' },
+      ],
+    },
+    {
+      text: 'Runbooks',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/devops/runbooks/' },
+        { text: 'Database Failover', link: '/devops/runbooks/database-failover' },
+        { text: 'Service Degradation', link: '/devops/runbooks/service-degradation' },
+        { text: 'Certificate Rotation', link: '/devops/runbooks/certificate-rotation' },
+        { text: 'DDoS Response', link: '/devops/runbooks/ddos-response' },
       ],
     },
     {
@@ -712,6 +835,7 @@ export const sidebar: DefaultTheme.Sidebar = {
       items: [
         { text: 'Release Engineering', link: '/devops/release-engineering' },
         { text: 'Debugging in Production', link: '/devops/debugging-production' },
+        { text: 'Feature Flags', link: '/devops/feature-flags' },
       ],
     },
   ],
@@ -732,6 +856,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Go Profiling', link: '/performance/profiling/go-profiling' },
         { text: 'Browser Profiling', link: '/performance/profiling/browser-profiling' },
         { text: 'Database Profiling', link: '/performance/profiling/database-profiling' },
+        { text: 'Continuous Profiling', link: '/performance/profiling/continuous-profiling' },
       ],
     },
     {
@@ -793,6 +918,13 @@ export const sidebar: DefaultTheme.Sidebar = {
       collapsed: false,
       items: [
         { text: 'Compilers & Interpreters', link: '/performance/compiler-interpreters' },
+      ],
+    },
+    {
+      text: 'Benchmarks',
+      collapsed: false,
+      items: [
+        { text: 'Benchmarks', link: '/performance/benchmarks' },
       ],
     },
   ],
@@ -860,6 +992,14 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Open Table Formats', link: '/data-engineering/lakehouse/table-formats' },
         { text: 'Medallion Architecture', link: '/data-engineering/lakehouse/medallion-architecture' },
         { text: 'Query Engines', link: '/data-engineering/lakehouse/query-engines' },
+      ],
+    },
+    {
+      text: 'Real-Time Analytics',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/data-engineering/real-time-analytics/' },
+        { text: 'ClickHouse vs Druid vs Pinot', link: '/data-engineering/real-time-analytics/clickhouse-vs-druid-vs-pinot' },
       ],
     },
   ],
@@ -982,6 +1122,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Screen Reader Patterns', link: '/ui-design-systems/accessibility/screen-reader-patterns' },
         { text: 'Focus Management', link: '/ui-design-systems/accessibility/focus-management' },
         { text: 'Testing Accessibility', link: '/ui-design-systems/accessibility/testing-accessibility' },
+        { text: 'WCAG Compliance', link: '/ui-design-systems/accessibility/wcag-compliance' },
       ],
     },
     {
@@ -1163,6 +1304,70 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Reconciliation', link: '/production-blueprints/payment-engineering/reconciliation' },
       ],
     },
+    {
+      text: 'Email Service',
+      collapsed: false,
+      items: [
+        { text: 'Email Service', link: '/production-blueprints/email-service/' },
+      ],
+    },
+    {
+      text: 'Scheduler Service',
+      collapsed: false,
+      items: [
+        { text: 'Scheduler Service', link: '/production-blueprints/scheduler-service/' },
+      ],
+    },
+  ],
+
+  '/war-room/': [
+    {
+      text: 'War Room',
+      items: [
+        { text: 'Overview', link: '/war-room/' },
+      ],
+    },
+    {
+      text: 'Database & Data Incidents',
+      collapsed: false,
+      items: [
+        { text: 'GitHub 24-Hour Outage (2018)', link: '/war-room/github-october-2018' },
+        { text: 'GitLab Database Deletion (2017)', link: '/war-room/gitlab-database-2017' },
+      ],
+    },
+    {
+      text: 'Networking & Infrastructure',
+      collapsed: false,
+      items: [
+        { text: 'Facebook 6-Hour Outage (2021)', link: '/war-room/facebook-october-2021' },
+        { text: 'AWS S3 Outage (2017)', link: '/war-room/amazon-s3-2017' },
+      ],
+    },
+    {
+      text: 'Deployment & Release',
+      collapsed: false,
+      items: [
+        { text: 'Knight Capital $440M Bug (2012)', link: '/war-room/knight-capital-2012' },
+        { text: 'CrowdStrike Global BSOD (2024)', link: '/war-room/crowdstrike-july-2024' },
+        { text: 'Cloudflare Regex Outage (2019)', link: '/war-room/cloudflare-regex-2019' },
+      ],
+    },
+    {
+      text: 'Scaling & Migration',
+      collapsed: false,
+      items: [
+        { text: 'Twitter Fail Whale & JVM Migration', link: '/war-room/twitter-fail-whale' },
+        { text: 'Discord Trillion Message Migration', link: '/war-room/discord-message-storage' },
+        { text: 'Stripe 3-Year Ruby Migration', link: '/war-room/stripe-ruby-upgrade' },
+      ],
+    },
+    {
+      text: 'Resilience & Culture',
+      collapsed: false,
+      items: [
+        { text: 'Netflix Chaos Engineering Origins', link: '/war-room/netflix-chaos-engineering' },
+      ],
+    },
   ],
 
   '/system-design-interviews/': [
@@ -1193,6 +1398,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Design Netflix', link: '/system-design-interviews/netflix' },
         { text: 'Design Spotify', link: '/system-design-interviews/spotify' },
         { text: 'Design News Aggregator', link: '/system-design-interviews/news-aggregator' },
+        { text: 'Design Live Streaming', link: '/system-design-interviews/live-streaming' },
       ],
     },
     {
@@ -1217,6 +1423,8 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Design Web Crawler', link: '/system-design-interviews/web-crawler' },
         { text: 'Design Search Engine', link: '/system-design-interviews/search-engine' },
         { text: 'Design Autocomplete', link: '/system-design-interviews/search-autocomplete' },
+        { text: 'Design Twitter Search', link: '/system-design-interviews/twitter-search' },
+        { text: 'Design Typeahead', link: '/system-design-interviews/typeahead' },
         { text: 'Design Google Maps', link: '/system-design-interviews/google-maps' },
       ],
     },
@@ -1253,6 +1461,24 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Design Ad Platform', link: '/system-design-interviews/ad-platform' },
       ],
     },
+    {
+      text: 'AI & ML Systems',
+      collapsed: false,
+      items: [
+        { text: 'Design ChatGPT', link: '/system-design-interviews/chatgpt' },
+        { text: 'Design Copilot', link: '/system-design-interviews/copilot' },
+        { text: 'Design Recommendation Engine', link: '/system-design-interviews/recommendation-engine' },
+      ],
+    },
+    {
+      text: 'Trust & Safety',
+      collapsed: false,
+      items: [
+        { text: 'Design Fraud Detection', link: '/system-design-interviews/fraud-detection' },
+        { text: 'Design Search Ranking', link: '/system-design-interviews/search-ranking' },
+        { text: 'Design Content Moderation', link: '/system-design-interviews/content-moderation' },
+      ],
+    },
   ],
 
   '/learning-paths/': [
@@ -1270,6 +1496,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Platform Engineer', link: '/learning-paths/platform-engineer' },
         { text: 'Full-Stack Engineer', link: '/learning-paths/fullstack-engineer' },
         { text: 'Behavioral Interviews', link: '/learning-paths/behavioral-interviews' },
+        { text: 'Engineering Resources', link: '/learning-paths/engineering-resources' },
       ],
     },
   ],
@@ -1314,6 +1541,39 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'i18n & l10n', link: '/frontend-engineering/i18n-l10n' },
       ],
     },
+    {
+      text: 'Visualization',
+      collapsed: false,
+      items: [
+        { text: 'Data Visualization', link: '/frontend-engineering/data-visualization' },
+      ],
+    },
+  ],
+
+  '/mobile-engineering/': [
+    {
+      text: 'Mobile Engineering',
+      items: [
+        { text: 'Overview', link: '/mobile-engineering/' },
+      ],
+    },
+    {
+      text: 'Frameworks',
+      collapsed: false,
+      items: [
+        { text: 'React Native Deep Dive', link: '/mobile-engineering/react-native' },
+        { text: 'Flutter Architecture', link: '/mobile-engineering/flutter' },
+      ],
+    },
+    {
+      text: 'Advanced Topics',
+      collapsed: false,
+      items: [
+        { text: 'Mobile Performance', link: '/mobile-engineering/mobile-performance' },
+        { text: 'Push Notification Architecture', link: '/mobile-engineering/push-notifications' },
+        { text: 'Offline-First & Local-First', link: '/mobile-engineering/offline-first' },
+      ],
+    },
   ],
 
   '/cheat-sheets/': [
@@ -1325,6 +1585,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Kubernetes', link: '/cheat-sheets/kubernetes' },
         { text: 'Git', link: '/cheat-sheets/git' },
         { text: 'SQL', link: '/cheat-sheets/sql' },
+        { text: 'SQL Advanced', link: '/cheat-sheets/sql-advanced' },
         { text: 'TypeScript', link: '/cheat-sheets/typescript' },
         { text: 'Linux', link: '/cheat-sheets/linux' },
         { text: 'Redis', link: '/cheat-sheets/redis' },
@@ -1335,6 +1596,15 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Bash', link: '/cheat-sheets/bash' },
         { text: 'Nginx', link: '/cheat-sheets/nginx' },
         { text: 'PromQL', link: '/cheat-sheets/promql' },
+        { text: 'Docker Compose', link: '/cheat-sheets/docker-compose' },
+        { text: 'LLM APIs', link: '/cheat-sheets/llm-apis' },
+        { text: 'Terminal Productivity', link: '/cheat-sheets/terminal-productivity' },
+        { text: 'HTTP Clients', link: '/cheat-sheets/http-clients' },
+        { text: 'AWS CLI', link: '/cheat-sheets/aws-cli' },
+        { text: 'GraphQL', link: '/cheat-sheets/graphql' },
+        { text: 'Helm', link: '/cheat-sheets/helm' },
+        { text: 'kubectl Advanced', link: '/cheat-sheets/kubectl-advanced' },
+        { text: 'Regex', link: '/cheat-sheets/regex' },
       ],
     },
   ],
@@ -1392,6 +1662,41 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'ML Pipelines & MLOps', link: '/ai-ml-engineering/ml-pipelines' },
       ],
     },
+    {
+      text: 'Frameworks & SDKs',
+      collapsed: false,
+      items: [
+        { text: 'LangChain', link: '/ai-ml-engineering/langchain' },
+        { text: 'LangGraph', link: '/ai-ml-engineering/langgraph' },
+        { text: 'LangSmith', link: '/ai-ml-engineering/langsmith' },
+        { text: 'LlamaIndex', link: '/ai-ml-engineering/llamaindex' },
+        { text: 'Vercel AI SDK', link: '/ai-ml-engineering/vercel-ai-sdk' },
+        { text: 'HuggingFace', link: '/ai-ml-engineering/huggingface' },
+        { text: 'CrewAI & AutoGen', link: '/ai-ml-engineering/crewai-autogen' },
+      ],
+    },
+    {
+      text: 'APIs & Providers',
+      collapsed: false,
+      items: [
+        { text: 'Anthropic Claude API', link: '/ai-ml-engineering/anthropic-claude-api' },
+        { text: 'OpenAI API', link: '/ai-ml-engineering/openai-api' },
+      ],
+    },
+    {
+      text: 'Advanced Topics',
+      collapsed: false,
+      items: [
+        { text: 'Fine-Tuning', link: '/ai-ml-engineering/fine-tuning' },
+        { text: 'AI Guardrails', link: '/ai-ml-engineering/ai-guardrails' },
+        { text: 'AI in Production', link: '/ai-ml-engineering/ai-in-production' },
+        { text: 'Multimodal AI', link: '/ai-ml-engineering/multimodal-ai' },
+        { text: 'Prompt Caching', link: '/ai-ml-engineering/prompt-caching' },
+        { text: 'Prompt Engineering Advanced', link: '/ai-ml-engineering/prompt-engineering-advanced' },
+        { text: 'Data Annotation', link: '/ai-ml-engineering/data-annotation' },
+        { text: 'AI Testing', link: '/ai-ml-engineering/ai-testing' },
+      ],
+    },
   ],
   '/algorithms/': [
     {
@@ -1419,6 +1724,144 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Sorting & Searching', link: '/algorithms/sorting-searching' },
         { text: 'Backtracking & Recursion', link: '/algorithms/backtracking-recursion' },
         { text: 'Dynamic Programming', link: '/algorithms/dynamic-programming' },
+        { text: 'Greedy Algorithms', link: '/algorithms/greedy' },
+        { text: 'Bit Manipulation', link: '/algorithms/bit-manipulation' },
+        { text: 'String Algorithms', link: '/algorithms/string-algorithms' },
+      ],
+    },
+    {
+      text: 'Advanced Topics',
+      collapsed: false,
+      items: [
+        { text: 'Advanced Data Structures', link: '/algorithms/advanced-data-structures' },
+        { text: 'Math Patterns in System Design', link: '/algorithms/system-design-math' },
+      ],
+    },
+  ],
+
+  '/lld-interviews/': [
+    {
+      text: 'Low-Level Design Interviews',
+      items: [
+        { text: 'Overview', link: '/lld-interviews/' },
+      ],
+    },
+    {
+      text: 'LLD Problems',
+      collapsed: false,
+      items: [
+        { text: 'Design Parking Lot', link: '/lld-interviews/parking-lot' },
+        { text: 'Design Elevator System', link: '/lld-interviews/elevator-system' },
+        { text: 'Design Chess', link: '/lld-interviews/chess' },
+        { text: 'Design Library Management', link: '/lld-interviews/library-management' },
+        { text: 'Design Snake & Ladders', link: '/lld-interviews/snake-ladders' },
+        { text: 'Design Vending Machine', link: '/lld-interviews/vending-machine' },
+        { text: 'Design ATM Machine', link: '/lld-interviews/atm-machine' },
+        { text: 'Design Movie Ticket Booking', link: '/lld-interviews/movie-booking' },
+        { text: 'Design Hotel Management', link: '/lld-interviews/hotel-management' },
+        { text: 'Design File System', link: '/lld-interviews/file-system' },
+        { text: 'Design Tic-Tac-Toe', link: '/lld-interviews/tic-tac-toe' },
+      ],
+    },
+  ],
+
+  '/build-from-scratch/': [
+    {
+      text: 'Build From Scratch',
+      items: [
+        { text: 'Overview', link: '/build-from-scratch/' },
+      ],
+    },
+    {
+      text: 'Projects',
+      collapsed: false,
+      items: [
+        { text: 'Build Redis', link: '/build-from-scratch/redis' },
+        { text: 'Build a Rate Limiter', link: '/build-from-scratch/rate-limiter' },
+        { text: 'Build a Key-Value Store', link: '/build-from-scratch/key-value-store' },
+        { text: 'Build a Load Balancer', link: '/build-from-scratch/load-balancer' },
+      ],
+    },
+  ],
+
+  '/company-architecture/': [
+    {
+      text: 'Company Architecture',
+      items: [
+        { text: 'Overview', link: '/company-architecture/' },
+      ],
+    },
+    {
+      text: 'Case Studies',
+      collapsed: false,
+      items: [
+        { text: 'Uber Dispatch System', link: '/company-architecture/uber-dispatch' },
+        { text: 'Figma Multiplayer', link: '/company-architecture/figma-multiplayer' },
+        { text: 'Shopify Black Friday', link: '/company-architecture/shopify-black-friday' },
+        { text: 'Discord Scaling', link: '/company-architecture/discord-scaling' },
+      ],
+    },
+  ],
+
+  '/cybersecurity/': [
+    {
+      text: 'Cybersecurity',
+      items: [
+        { text: 'Overview', link: '/cybersecurity/' },
+      ],
+    },
+    {
+      text: 'Part 1 — Fundamentals',
+      collapsed: false,
+      items: [
+        { text: 'Networking Fundamentals', link: '/cybersecurity/networking-fundamentals' },
+        { text: 'Web App Pentesting', link: '/cybersecurity/web-app-pentesting' },
+        { text: 'Linux Security & Hardening', link: '/cybersecurity/linux-security' },
+        { text: 'Network Attacks & Defense', link: '/cybersecurity/network-attacks' },
+        { text: 'Reverse Engineering', link: '/cybersecurity/reverse-engineering' },
+        { text: 'Practical Cryptography', link: '/cybersecurity/cryptography-practical' },
+      ],
+    },
+    {
+      text: 'Part 2 — Advanced Topics',
+      collapsed: false,
+      items: [
+        { text: 'Active Directory', link: '/cybersecurity/active-directory' },
+        { text: 'Red Team Operations', link: '/cybersecurity/red-team-ops' },
+        { text: 'Blue Team & SOC', link: '/cybersecurity/blue-team-soc' },
+        { text: 'Web3 & Smart Contracts', link: '/cybersecurity/web3-security' },
+        { text: 'Mobile Security', link: '/cybersecurity/mobile-security' },
+        { text: 'API Security Testing', link: '/cybersecurity/api-security-testing' },
+        { text: 'Container & Kubernetes', link: '/cybersecurity/container-security' },
+        { text: 'Bug Bounty Hunting', link: '/cybersecurity/bug-bounty' },
+        { text: 'Malware Analysis', link: '/cybersecurity/malware-analysis' },
+        { text: 'Security Certifications', link: '/cybersecurity/security-certifications' },
+        { text: 'Cloud Pentesting', link: '/cybersecurity/cloud-pentesting' },
+        { text: 'Incident Response & Forensics', link: '/cybersecurity/incident-response-forensics' },
+        { text: 'OSINT', link: '/cybersecurity/osint' },
+        { text: 'Secure Coding', link: '/cybersecurity/secure-coding' },
+        { text: 'Security Tools', link: '/cybersecurity/security-tools' },
+      ],
+    },
+  ],
+
+  '/debugging-playbooks/': [
+    {
+      text: 'Debugging Playbooks',
+      items: [
+        { text: 'Overview', link: '/debugging-playbooks/' },
+      ],
+    },
+    {
+      text: 'Playbooks',
+      collapsed: false,
+      items: [
+        { text: 'API Slow Response', link: '/debugging-playbooks/api-slow' },
+        { text: 'Database CPU Issues', link: '/debugging-playbooks/database-cpu' },
+        { text: 'High Error Rate', link: '/debugging-playbooks/high-error-rate' },
+        { text: 'Intermittent 502 Errors', link: '/debugging-playbooks/intermittent-502' },
+        { text: 'Memory Leak', link: '/debugging-playbooks/memory-leak' },
+        { text: 'Pods Restarting', link: '/debugging-playbooks/pods-restarting' },
       ],
     },
   ],

@@ -5,7 +5,7 @@ description: "Your quest through Archon begins here — choose your path, forge 
 
 # Begin Your Journey
 
-You stand before **650+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
+You stand before **850+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
 
 Choose your quest.
 
@@ -112,13 +112,46 @@ Choose your quest.
 
 ---
 
+### "I want to become a cybersecurity engineer"
+
+**Time needed:** 4-6 weeks (1 hour/day)
+
+1. **Foundations** — [Cybersecurity Overview](/cybersecurity/) → [Networking for Security](/cybersecurity/networking-fundamentals) → [Secure Coding](/cybersecurity/secure-coding)
+2. **Web Security** — [OWASP Top 10](/security/owasp/) → [Web App Pentesting](/cybersecurity/web-app-pentesting) → [API Security Testing](/cybersecurity/api-security-testing)
+3. **System Security** — [Linux Security](/cybersecurity/linux-security) → [Container Security](/cybersecurity/container-security) → [Cloud Pentesting](/cybersecurity/cloud-pentesting)
+4. **Offensive** — [Network Attacks](/cybersecurity/network-attacks) → [Reverse Engineering](/cybersecurity/reverse-engineering) → [Red Team Ops](/cybersecurity/red-team-ops)
+5. **Defensive** — [Blue Team & SOC](/cybersecurity/blue-team-soc) → [Incident Response](/cybersecurity/incident-response-forensics) → [Security Tools](/cybersecurity/security-tools)
+6. **Certifications** — [Security Certification Roadmap](/cybersecurity/security-certifications)
+
+---
+
+### "I want to learn from real production incidents"
+
+- [War Room](/war-room/) — 12 real incidents from GitHub, Cloudflare, Netflix, Facebook, CrowdStrike, Knight Capital
+- [Security Exploits](/security/exploits/) — XZ Backdoor, Log4Shell, Heartbleed, Spectre, SolarWinds
+- [Company Architecture](/company-architecture/) — How Uber, Figma, Shopify, Discord actually built their systems
+- [Debugging Playbooks](/debugging-playbooks/) — Step-by-step flowcharts for "API is slow", "memory leak", "pods restarting"
+
+---
+
+### "I want to build something from scratch"
+
+- [Build Redis](/build-from-scratch/redis) — RESP protocol, TCP server, GET/SET/TTL, persistence (885 lines)
+- [Build a Rate Limiter](/build-from-scratch/rate-limiter) — Token bucket, sliding window, Redis-backed (859 lines)
+- [Build a Key-Value Store](/build-from-scratch/key-value-store) — LSM tree, memtable, SSTable, WAL (1,109 lines!)
+- [Build a Load Balancer](/build-from-scratch/load-balancer) — Round-robin, health checks, TCP proxy (861 lines)
+
+---
+
 ### "I just want to browse and explore"
 
-- [Knowledge Graph](/graph) — visual map of all 650+ topics and how they connect
-- [Browse by Tag](/tags) — 2,000+ tags, filter by difficulty
+- [Knowledge Graph](/graph) — visual map of all 850+ topics and how they connect
+- [Browse by Tag](/tags) — 3,000+ tags, filter by difficulty
 - [Compare Technologies](/compare) — side-by-side comparison (Kafka vs RabbitMQ, Postgres vs MongoDB, etc.)
-- [Cheat Sheets](/cheat-sheets/) — 19 quick reference cards for Docker, K8s, Git, SQL, TypeScript, Linux, Redis, Terraform, Python, Go, Rust, Bash, Nginx, PromQL, AWS CLI, kubectl, Helm, GraphQL, Regex
+- [Cheat Sheets](/cheat-sheets/) — 22 quick reference cards
 - [Technology Radar](/technology-radar) — what to adopt, trial, assess, or hold
+- [War Room](/war-room/) — real production incidents from top tech companies
+- [Debugging Playbooks](/debugging-playbooks/) — step-by-step flowcharts for common production issues
 - Hit `g` then `r` for a **random page**
 - Press `?` to see all **keyboard shortcuts**
 
@@ -128,14 +161,29 @@ Choose your quest.
 
 | Section | Pages | What awaits |
 |---------|-------|-------------|
-| **System Design** | 80+ | Distributed systems, databases, caching, queues, consensus, networking, API design, concurrency |
-| **System Design Interviews** | 40 | Instagram, Uber, YouTube, WhatsApp, Netflix, Slack, Zoom, Google Docs, and 32 more |
-| **Algorithms & Data Structures** | 10 | Arrays, trees, graphs, DP, sorting, heaps, hash tables, backtracking |
-| **Architecture Patterns** | 50+ | Microservices, event-driven, CQRS, DDD, SOLID, FP, design patterns, cloud-native, multi-tenancy |
-| **Infrastructure** | 70+ | Terraform, K8s, Docker, AWS, GCP, CI/CD, Nginx, service mesh, observability, Linux internals, FinOps |
-| **Security** | 55+ | OWASP, auth, encryption, secrets, zero trust, API security, compliance, authorization |
-| **DevOps** | 45+ | Monitoring, logging, alerting, deployment, incident response, SRE, Git, engineering practices |
-| **AI/ML Engineering** | 7 | LLMs, RAG, vector databases, embeddings, AI agents, ML pipelines |
+| **System Design** | 90+ | Distributed systems, databases, caching, queues, consensus, networking, API design, concurrency, geospatial, search, background jobs |
+| **System Design Interviews** | 48 | Instagram, Uber, YouTube, Slack, Zoom, Google Docs, ChatGPT, Copilot, Recommendation Engine, Fraud Detection, and 38 more |
+| **LLD Interviews** | 12 | Parking lot, elevator, chess, library, snake & ladders, vending machine, ATM, movie booking, hotel, file system, tic-tac-toe |
+| **Algorithms & Data Structures** | 20 | Arrays, trees, graphs, DP, sorting, heaps, hash tables, backtracking, greedy, bit manipulation, strings, JS/React/Node interview questions |
+| **Architecture Patterns** | 55+ | Microservices, event-driven, CQRS, DDD, SOLID, FP, design patterns, cloud-native, multi-tenancy |
+| **Infrastructure** | 80+ | Terraform, K8s, Docker, AWS, GCP, CI/CD, Nginx, service mesh, observability, Linux internals, storage, FinOps, platform engineering, AI infrastructure |
+| **Security** | 100+ | OWASP, deep auth (12 pages), encryption, secrets, zero trust, API security, compliance, authorization, exploits (12 pages) |
+| **Cybersecurity** | 22 | Complete security engineer path: pentesting, OSINT, reverse engineering, red/blue team, Active Directory, Web3, mobile, bug bounty, forensics |
+| **DevOps** | 60+ | Monitoring, logging, alerting, deployment, incident response, SRE, Git, engineering practices, checklists, runbooks, migrations, feature flags |
+| **AI/ML Engineering** | 25+ | LangChain (2000 lines), LangGraph (2200 lines), RAG, vector DBs, embeddings, AI agents, fine-tuning, guardrails, production AI, Claude/OpenAI/HuggingFace APIs |
+| **Frontend Engineering** | 12 | Web performance, browser rendering, SSR/SSG, state management, React internals, WebAssembly, i18n, data visualization |
+| **Mobile Engineering** | 6 | React Native, Flutter, mobile performance, push notifications, offline-first |
+| **Testing** | 8 | Unit, integration, E2E, contract, property-based, TDD/BDD, test architecture |
+| **Performance** | 35+ | Profiling, optimization, caching, database tuning, edge computing, load testing, benchmarks, compilers |
+| **Data Engineering** | 30+ | Stream processing, data modeling, pipelines, CDC, lakehouse, real-time analytics |
+| **Production Blueprints** | 55+ | Auth, billing, notifications, rate limiter, search, chat, payments, email, scheduler, and more |
+| **War Room** | 12 | GitHub, Cloudflare, Knight Capital, AWS S3, Facebook, GitLab, Stripe, Discord, Twitter, Netflix, CrowdStrike |
+| **Build From Scratch** | 5 | Build Redis, rate limiter, key-value store, load balancer — full working code |
+| **Company Architecture** | 5 | How Uber, Figma, Shopify, Discord actually built their systems |
+| **Debugging Playbooks** | 7 | "API slow", "memory leak", "DB CPU 100%", "pods restarting", "502s", "error spike" |
+| **Checklists & Runbooks** | 10 | Pre-launch (90 items), security review, performance review, DB failover, DDoS response |
+| **Learning Paths** | 11 | Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack, Cybersecurity, Resources |
+| **Cheat Sheets** | 22 | Docker, K8s, Git, SQL, TS, Linux, Redis, Terraform, Python, Go, Rust, Bash, Nginx, PromQL, AWS CLI, kubectl, Helm, GraphQL, Regex, SQL Advanced, Docker Compose, LLM APIs |
 | **Frontend Engineering** | 10 | Web performance, rendering, state management, React internals, WebAssembly |
 | **Testing** | 8 | Unit, integration, E2E, contract, property-based, TDD/BDD, test architecture |
 | **Performance** | 30+ | Profiling, optimization, caching, DB tuning, edge computing, load testing |

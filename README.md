@@ -2,9 +2,9 @@
 
 > *"Give me six hours to chop down a tree and I'll spend four sharpening the axe."* — This is the axe.
 
-The holy grail of engineering knowledge. 650+ sacred texts, from first principles to production mastery.
+The holy grail of engineering knowledge. 850+ sacred texts, from first principles to production mastery.
 
-**650+ pages | 500K+ lines | 40 system design interviews | 19 cheat sheets | 9 learning paths | AI chatbot**
+**850+ pages | 700K+ lines | 48 system design interviews | 22 cheat sheets | 11 learning paths | AI chatbot**
 
 [Live Site](https://knowledge-vault-five.vercel.app) · [Start Here](https://knowledge-vault-five.vercel.app/start-here) · [System Design Interviews](https://knowledge-vault-five.vercel.app/system-design-interviews/) · [Cheat Sheets](https://knowledge-vault-five.vercel.app/cheat-sheets/)
 
@@ -35,7 +35,7 @@ The holy grail of engineering knowledge. 650+ sacred texts, from first principle
 ## Features
 
 - **AI Chatbot** — Ask anything, get answers with page citations (Gemini 2.5 Flash)
-- **Knowledge Graph** — Interactive visual map of all 650+ topics
+- **Knowledge Graph** — Interactive visual map of all 850+ topics
 - **Compare Mode** — Side-by-side technology comparison (24 technologies)
 - **Pagefind Search** — Full-text search across all pages
 - **Keyboard Shortcuts** — Press `?` to see all
