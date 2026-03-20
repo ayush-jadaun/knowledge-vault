@@ -24,6 +24,11 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Distributed Snapshots', link: '/system-design/distributed-systems/distributed-snapshots' },
         { text: 'Failure Detectors', link: '/system-design/distributed-systems/failure-detectors' },
         { text: 'Clock Synchronization', link: '/system-design/distributed-systems/clock-synchronization' },
+        { text: 'Rate Limiting', link: '/system-design/distributed-systems/rate-limiting' },
+        { text: 'Circuit Breaker', link: '/system-design/distributed-systems/circuit-breaker' },
+        { text: 'Bloom Filters', link: '/system-design/distributed-systems/bloom-filters' },
+        { text: 'Distributed Locking', link: '/system-design/distributed-systems/distributed-locking' },
+        { text: 'Queueing Theory', link: '/system-design/distributed-systems/queueing-theory' },
       ],
     },
     {
@@ -47,6 +52,10 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Time-Series Databases', link: '/system-design/databases/time-series-databases' },
         { text: 'Graph Databases', link: '/system-design/databases/graph-databases' },
         { text: 'NewSQL', link: '/system-design/databases/newsql' },
+        { text: 'DynamoDB Internals', link: '/system-design/databases/dynamodb-internals' },
+        { text: 'Cassandra Internals', link: '/system-design/databases/cassandra-internals' },
+        { text: 'Elasticsearch Internals', link: '/system-design/databases/elasticsearch-internals' },
+        { text: 'ClickHouse Internals', link: '/system-design/databases/clickhouse-internals' },
       ],
     },
     {
@@ -80,6 +89,8 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Ordering Guarantees', link: '/system-design/message-queues/ordering-guarantees' },
         { text: 'Exactly-Once Semantics', link: '/system-design/message-queues/exactly-once-semantics' },
         { text: 'Queue Selection Guide', link: '/system-design/message-queues/queue-selection-guide' },
+        { text: 'Kafka Streams', link: '/system-design/message-queues/kafka-streams' },
+        { text: 'Kafka Connect', link: '/system-design/message-queues/kafka-connect' },
       ],
     },
     {
@@ -92,6 +103,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'ZAB Protocol', link: '/system-design/consensus/zab-protocol' },
         { text: 'Viewstamped Replication', link: '/system-design/consensus/viewstamped-replication' },
         { text: 'Practical BFT', link: '/system-design/consensus/practical-bft' },
+        { text: 'Leader Election', link: '/system-design/consensus/leader-election' },
       ],
     },
     {
@@ -122,6 +134,34 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'TLS Handshake', link: '/system-design/networking/tls-handshake' },
         { text: 'Service Discovery', link: '/system-design/networking/service-discovery' },
         { text: 'Network Debugging', link: '/system-design/networking/network-debugging' },
+        { text: 'GraphQL vs REST', link: '/system-design/networking/graphql-vs-rest' },
+        { text: 'QUIC Protocol', link: '/system-design/networking/quic-protocol' },
+        { text: 'WebRTC', link: '/system-design/networking/webrtc' },
+        { text: 'MQTT for IoT', link: '/system-design/networking/mqtt' },
+      ],
+    },
+    {
+      text: 'Concurrency & Parallelism',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/system-design/concurrency/' },
+        { text: 'Lock-Free Data Structures', link: '/system-design/concurrency/lock-free' },
+        { text: 'Actor Model', link: '/system-design/concurrency/actor-model' },
+        { text: 'Real-Time Systems', link: '/system-design/concurrency/real-time-systems' },
+      ],
+    },
+    {
+      text: 'API Design',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/system-design/api-design/' },
+        { text: 'REST Best Practices', link: '/system-design/api-design/rest-best-practices' },
+        { text: 'API Versioning', link: '/system-design/api-design/api-versioning' },
+        { text: 'OpenAPI & Swagger', link: '/system-design/api-design/openapi-swagger' },
+        { text: 'Pagination Patterns', link: '/system-design/api-design/pagination-patterns' },
+        { text: 'Webhooks', link: '/system-design/api-design/webhooks' },
+        { text: 'API Security Patterns', link: '/system-design/api-design/api-security-patterns' },
+        { text: 'GraphQL Advanced', link: '/system-design/api-design/graphql-advanced' },
       ],
     },
   ],
@@ -159,6 +199,8 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Event Orchestration', link: '/architecture-patterns/event-driven/event-orchestration' },
         { text: 'Event Schema Evolution', link: '/architecture-patterns/event-driven/event-schema-evolution' },
         { text: 'Eventual Consistency', link: '/architecture-patterns/event-driven/eventual-consistency' },
+        { text: 'Transactional Outbox', link: '/architecture-patterns/event-driven/transactional-outbox' },
+        { text: 'Idempotent Consumers', link: '/architecture-patterns/event-driven/idempotent-consumers' },
       ],
     },
     {
@@ -209,6 +251,58 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'TypeScript Implementation', link: '/architecture-patterns/domain-driven-design/typescript-implementation' },
       ],
     },
+    {
+      text: 'Design Patterns',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/architecture-patterns/design-patterns/' },
+        { text: 'Creational Patterns', link: '/architecture-patterns/design-patterns/creational-patterns' },
+        { text: 'Structural Patterns', link: '/architecture-patterns/design-patterns/structural-patterns' },
+        { text: 'Behavioral Patterns', link: '/architecture-patterns/design-patterns/behavioral-patterns' },
+        { text: 'Dependency Injection', link: '/architecture-patterns/design-patterns/dependency-injection' },
+        { text: 'Repository Pattern', link: '/architecture-patterns/design-patterns/repository-pattern' },
+      ],
+    },
+    {
+      text: 'Cloud-Native',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/architecture-patterns/cloud-native/' },
+        { text: 'Serverless Patterns', link: '/architecture-patterns/cloud-native/serverless-patterns' },
+        { text: 'Cloud Design Patterns', link: '/architecture-patterns/cloud-native/cloud-design-patterns' },
+      ],
+    },
+    {
+      text: 'SOLID Principles',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/architecture-patterns/solid-principles/' },
+        { text: 'Single Responsibility', link: '/architecture-patterns/solid-principles/single-responsibility' },
+        { text: 'Open/Closed', link: '/architecture-patterns/solid-principles/open-closed' },
+        { text: 'Liskov Substitution', link: '/architecture-patterns/solid-principles/liskov-substitution' },
+        { text: 'Interface Segregation', link: '/architecture-patterns/solid-principles/interface-segregation' },
+        { text: 'Dependency Inversion', link: '/architecture-patterns/solid-principles/dependency-inversion' },
+      ],
+    },
+    {
+      text: 'Functional Programming',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/architecture-patterns/functional-programming/' },
+        { text: 'Core Concepts', link: '/architecture-patterns/functional-programming/core-concepts' },
+        { text: 'Monads & Functors', link: '/architecture-patterns/functional-programming/monads-functors' },
+        { text: 'FP in TypeScript', link: '/architecture-patterns/functional-programming/fp-typescript' },
+      ],
+    },
+    {
+      text: 'Multi-Tenancy',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/architecture-patterns/multi-tenancy/' },
+        { text: 'Database Strategies', link: '/architecture-patterns/multi-tenancy/database-strategies' },
+        { text: 'Noisy Neighbor', link: '/architecture-patterns/multi-tenancy/noisy-neighbor' },
+      ],
+    },
   ],
 
   '/infrastructure/': [
@@ -251,6 +345,10 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Operators', link: '/infrastructure/kubernetes/operators' },
         { text: 'Troubleshooting', link: '/infrastructure/kubernetes/troubleshooting' },
         { text: 'Production Checklist', link: '/infrastructure/kubernetes/production-checklist' },
+        { text: 'CRDs & Operators', link: '/infrastructure/kubernetes/crds-operators' },
+        { text: 'Admission Webhooks', link: '/infrastructure/kubernetes/admission-webhooks' },
+        { text: 'CNI Plugins', link: '/infrastructure/kubernetes/cni-networking' },
+        { text: 'GitOps (ArgoCD & Flux)', link: '/infrastructure/kubernetes/gitops' },
       ],
     },
     {
@@ -320,6 +418,74 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Cost Analysis', link: '/infrastructure/multi-region/cost-analysis' },
       ],
     },
+    {
+      text: 'Nginx',
+      collapsed: false,
+      items: [
+        { text: 'Nginx Deep Dive', link: '/infrastructure/nginx/' },
+      ],
+    },
+    {
+      text: 'Service Mesh',
+      collapsed: false,
+      items: [
+        { text: 'Service Mesh Deep Dive', link: '/infrastructure/service-mesh/' },
+      ],
+    },
+    {
+      text: 'Observability',
+      collapsed: false,
+      items: [
+        { text: 'Observability Deep Dive', link: '/infrastructure/observability/' },
+      ],
+    },
+    {
+      text: 'Languages & Runtimes',
+      collapsed: false,
+      items: [
+        { text: 'Node.js Internals', link: '/infrastructure/languages/nodejs-internals' },
+        { text: 'Go Concurrency', link: '/infrastructure/languages/go-concurrency' },
+        { text: 'Rust for Backend', link: '/infrastructure/languages/rust-for-backend' },
+        { text: 'TypeScript Advanced', link: '/infrastructure/languages/typescript-advanced' },
+      ],
+    },
+    {
+      text: 'Linux Internals',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/infrastructure/linux-internals/' },
+        { text: 'Process Model', link: '/infrastructure/linux-internals/process-model' },
+        { text: 'Memory Management', link: '/infrastructure/linux-internals/memory-management' },
+        { text: 'Containers from Scratch', link: '/infrastructure/linux-internals/containers-from-scratch' },
+        { text: 'eBPF', link: '/infrastructure/linux-internals/ebpf' },
+      ],
+    },
+    {
+      text: 'Storage Systems',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/infrastructure/storage/' },
+        { text: 'Distributed Filesystems', link: '/infrastructure/storage/distributed-filesystems' },
+      ],
+    },
+    {
+      text: 'Platform Engineering',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/infrastructure/platform-engineering/' },
+        { text: 'Backstage & Dev Portals', link: '/infrastructure/platform-engineering/backstage' },
+        { text: 'Developer Experience', link: '/infrastructure/platform-engineering/developer-experience' },
+      ],
+    },
+    {
+      text: 'FinOps',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/infrastructure/finops/' },
+        { text: 'Cost Optimization Playbook', link: '/infrastructure/finops/cost-optimization' },
+        { text: 'Cost Allocation & Tagging', link: '/infrastructure/finops/cost-allocation' },
+      ],
+    },
   ],
 
   '/security/': [
@@ -372,6 +538,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Encryption in Transit', link: '/security/encryption/encryption-in-transit' },
         { text: 'Key Management', link: '/security/encryption/key-management' },
         { text: 'Envelope Encryption', link: '/security/encryption/envelope-encryption' },
+        { text: 'Cryptography for Engineers', link: '/security/encryption/cryptography-for-engineers' },
       ],
     },
     {
@@ -408,6 +575,27 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'CORS Deep Dive', link: '/security/api-security/cors-deep-dive' },
         { text: 'CSP Headers', link: '/security/api-security/csp-headers' },
         { text: 'API Abuse Prevention', link: '/security/api-security/api-abuse-prevention' },
+      ],
+    },
+    {
+      text: 'Compliance',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/security/compliance/' },
+        { text: 'GDPR Engineering', link: '/security/compliance/gdpr-engineering' },
+        { text: 'SOC 2', link: '/security/compliance/soc2' },
+        { text: 'PCI DSS', link: '/security/compliance/pci-dss' },
+        { text: 'Audit Logging', link: '/security/compliance/audit-logging' },
+      ],
+    },
+    {
+      text: 'Authorization',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/security/authorization/' },
+        { text: 'RBAC vs ABAC vs ReBAC', link: '/security/authorization/rbac-abac-rebac' },
+        { text: 'Google Zanzibar', link: '/security/authorization/zanzibar' },
+        { text: 'Policy Engines (OPA & Cedar)', link: '/security/authorization/policy-engines' },
       ],
     },
   ],
@@ -480,6 +668,52 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Chaos Engineering', link: '/devops/incident-response/chaos-engineering' },
       ],
     },
+    {
+      text: 'Git',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/devops/git/' },
+        { text: 'Git Internals', link: '/devops/git/internals' },
+        { text: 'Branching Strategies', link: '/devops/git/branching-strategies' },
+        { text: 'Monorepo Management', link: '/devops/git/monorepo' },
+      ],
+    },
+    {
+      text: 'Engineering Practices',
+      collapsed: false,
+      items: [
+        { text: 'Technical Writing', link: '/devops/engineering-practices/technical-writing' },
+        { text: 'Code Review', link: '/devops/engineering-practices/code-review' },
+        { text: 'ADRs', link: '/devops/engineering-practices/architecture-decision-records' },
+        { text: 'On-Call Handbook', link: '/devops/engineering-practices/on-call-handbook' },
+      ],
+    },
+    {
+      text: 'SRE',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/devops/sre/' },
+        { text: 'Error Budgets', link: '/devops/sre/error-budgets' },
+        { text: 'Toil Reduction', link: '/devops/sre/toil-reduction' },
+        { text: 'Capacity Planning', link: '/devops/sre/capacity-planning' },
+        { text: 'SLI / SLO / SLA', link: '/devops/sre/sli-slo-sla' },
+      ],
+    },
+    {
+      text: 'Disaster Recovery',
+      collapsed: false,
+      items: [
+        { text: 'Disaster Recovery', link: '/devops/disaster-recovery/' },
+      ],
+    },
+    {
+      text: 'Release & Debugging',
+      collapsed: false,
+      items: [
+        { text: 'Release Engineering', link: '/devops/release-engineering' },
+        { text: 'Debugging in Production', link: '/devops/debugging-production' },
+      ],
+    },
   ],
 
   '/performance/': [
@@ -547,6 +781,20 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Vercel Edge', link: '/performance/edge-computing/vercel-edge' },
       ],
     },
+    {
+      text: 'Load Testing',
+      collapsed: false,
+      items: [
+        { text: 'Load Testing Deep Dive', link: '/performance/load-testing/' },
+      ],
+    },
+    {
+      text: 'Internals',
+      collapsed: false,
+      items: [
+        { text: 'Compilers & Interpreters', link: '/performance/compiler-interpreters' },
+      ],
+    },
   ],
 
   '/data-engineering/': [
@@ -602,6 +850,16 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Data Lineage', link: '/data-engineering/pipeline-patterns/data-lineage' },
         { text: 'Orchestration', link: '/data-engineering/pipeline-patterns/orchestration' },
         { text: 'Testing Data Pipelines', link: '/data-engineering/pipeline-patterns/testing-data-pipelines' },
+      ],
+    },
+    {
+      text: 'Lakehouse',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/data-engineering/lakehouse/' },
+        { text: 'Open Table Formats', link: '/data-engineering/lakehouse/table-formats' },
+        { text: 'Medallion Architecture', link: '/data-engineering/lakehouse/medallion-architecture' },
+        { text: 'Query Engines', link: '/data-engineering/lakehouse/query-engines' },
       ],
     },
   ],
@@ -854,6 +1112,57 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Query Engine', link: '/production-blueprints/analytics-pipeline/query-engine' },
       ],
     },
+    {
+      text: 'Search Service',
+      collapsed: false,
+      items: [
+        { text: 'Search Service', link: '/production-blueprints/search-service/' },
+      ],
+    },
+    {
+      text: 'Feature Flag Service',
+      collapsed: false,
+      items: [
+        { text: 'Feature Flag Service', link: '/production-blueprints/feature-flag-service/' },
+      ],
+    },
+    {
+      text: 'Chat Service',
+      collapsed: false,
+      items: [
+        { text: 'Chat Service', link: '/production-blueprints/chat-service/' },
+      ],
+    },
+    {
+      text: 'File Storage',
+      collapsed: false,
+      items: [
+        { text: 'File Storage Service', link: '/production-blueprints/file-storage/' },
+      ],
+    },
+    {
+      text: 'Audit Log',
+      collapsed: false,
+      items: [
+        { text: 'Audit Log Service', link: '/production-blueprints/audit-log/' },
+      ],
+    },
+    {
+      text: 'Config Service',
+      collapsed: false,
+      items: [
+        { text: 'Config Service', link: '/production-blueprints/config-service/' },
+      ],
+    },
+    {
+      text: 'Payment Engineering',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/production-blueprints/payment-engineering/' },
+        { text: 'Ledger Design', link: '/production-blueprints/payment-engineering/ledger-design' },
+        { text: 'Reconciliation', link: '/production-blueprints/payment-engineering/reconciliation' },
+      ],
+    },
   ],
 
   '/system-design-interviews/': [
@@ -922,6 +1231,28 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Design Stock Exchange', link: '/system-design-interviews/stock-exchange' },
       ],
     },
+    {
+      text: 'Collaboration & Social',
+      collapsed: false,
+      items: [
+        { text: 'Design GitHub', link: '/system-design-interviews/github' },
+        { text: 'Design Slack', link: '/system-design-interviews/slack' },
+        { text: 'Design Reddit', link: '/system-design-interviews/reddit' },
+        { text: 'Design LinkedIn Feed', link: '/system-design-interviews/linkedin' },
+        { text: 'Design Google Docs', link: '/system-design-interviews/google-docs' },
+        { text: 'Design Airbnb', link: '/system-design-interviews/airbnb' },
+      ],
+    },
+    {
+      text: 'Advanced Systems',
+      collapsed: false,
+      items: [
+        { text: 'Design Zoom', link: '/system-design-interviews/zoom' },
+        { text: 'Design a CDN', link: '/system-design-interviews/cdn' },
+        { text: 'Design Leaderboard', link: '/system-design-interviews/leaderboard' },
+        { text: 'Design Ad Platform', link: '/system-design-interviews/ad-platform' },
+      ],
+    },
   ],
 
   '/learning-paths/': [
@@ -934,6 +1265,53 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Frontend Engineer', link: '/learning-paths/frontend-engineer' },
         { text: 'System Design Interview', link: '/learning-paths/system-design-interview' },
         { text: 'Security Engineer', link: '/learning-paths/security-engineer' },
+        { text: 'Data Engineer', link: '/learning-paths/data-engineer' },
+        { text: 'AI/ML Engineer', link: '/learning-paths/ai-ml-engineer' },
+        { text: 'Platform Engineer', link: '/learning-paths/platform-engineer' },
+        { text: 'Full-Stack Engineer', link: '/learning-paths/fullstack-engineer' },
+        { text: 'Behavioral Interviews', link: '/learning-paths/behavioral-interviews' },
+      ],
+    },
+  ],
+
+  '/frontend-engineering/': [
+    {
+      text: 'Frontend Engineering',
+      items: [
+        { text: 'Overview', link: '/frontend-engineering/' },
+      ],
+    },
+    {
+      text: 'Core Concepts',
+      collapsed: false,
+      items: [
+        { text: 'Web Performance & Core Web Vitals', link: '/frontend-engineering/web-performance' },
+        { text: 'Browser Rendering Pipeline', link: '/frontend-engineering/browser-rendering' },
+        { text: 'Rendering Strategies', link: '/frontend-engineering/rendering-strategies' },
+      ],
+    },
+    {
+      text: 'Architecture',
+      collapsed: false,
+      items: [
+        { text: 'State Management Patterns', link: '/frontend-engineering/state-management' },
+        { text: 'Micro-Frontends', link: '/frontend-engineering/micro-frontends' },
+        { text: 'React Internals', link: '/frontend-engineering/react-internals' },
+      ],
+    },
+    {
+      text: 'Optimization',
+      collapsed: false,
+      items: [
+        { text: 'Bundle Optimization', link: '/frontend-engineering/bundle-optimization' },
+        { text: 'WebAssembly', link: '/frontend-engineering/webassembly' },
+      ],
+    },
+    {
+      text: 'Global',
+      collapsed: false,
+      items: [
+        { text: 'i18n & l10n', link: '/frontend-engineering/i18n-l10n' },
       ],
     },
   ],
@@ -951,6 +1329,96 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Linux', link: '/cheat-sheets/linux' },
         { text: 'Redis', link: '/cheat-sheets/redis' },
         { text: 'Terraform', link: '/cheat-sheets/terraform' },
+        { text: 'Python', link: '/cheat-sheets/python' },
+        { text: 'Go', link: '/cheat-sheets/golang' },
+        { text: 'Rust', link: '/cheat-sheets/rust' },
+        { text: 'Bash', link: '/cheat-sheets/bash' },
+        { text: 'Nginx', link: '/cheat-sheets/nginx' },
+        { text: 'PromQL', link: '/cheat-sheets/promql' },
+      ],
+    },
+  ],
+
+  '/testing/': [
+    {
+      text: 'Testing',
+      items: [
+        { text: 'Overview', link: '/testing/' },
+      ],
+    },
+    {
+      text: 'Testing Types',
+      collapsed: false,
+      items: [
+        { text: 'Unit Testing', link: '/testing/unit-testing' },
+        { text: 'Integration Testing', link: '/testing/integration-testing' },
+        { text: 'E2E Testing', link: '/testing/e2e-testing' },
+        { text: 'Contract Testing', link: '/testing/contract-testing' },
+        { text: 'Property-Based Testing', link: '/testing/property-based-testing' },
+      ],
+    },
+    {
+      text: 'Methodology & Architecture',
+      collapsed: false,
+      items: [
+        { text: 'TDD & BDD', link: '/testing/tdd-bdd' },
+        { text: 'Test Architecture', link: '/testing/test-architecture' },
+      ],
+    },
+  ],
+
+  '/ai-ml-engineering/': [
+    {
+      text: 'AI/ML Engineering',
+      items: [
+        { text: 'Overview', link: '/ai-ml-engineering/' },
+      ],
+    },
+    {
+      text: 'LLM & Generative AI',
+      collapsed: false,
+      items: [
+        { text: 'LLM Integration', link: '/ai-ml-engineering/llm-integration' },
+        { text: 'RAG Architecture', link: '/ai-ml-engineering/rag-architecture' },
+        { text: 'AI Agents', link: '/ai-ml-engineering/ai-agents' },
+      ],
+    },
+    {
+      text: 'Data & Infrastructure',
+      collapsed: false,
+      items: [
+        { text: 'Embeddings & Semantic Search', link: '/ai-ml-engineering/embeddings' },
+        { text: 'Vector Databases', link: '/ai-ml-engineering/vector-databases' },
+        { text: 'ML Pipelines & MLOps', link: '/ai-ml-engineering/ml-pipelines' },
+      ],
+    },
+  ],
+  '/algorithms/': [
+    {
+      text: 'Algorithms & Data Structures',
+      items: [
+        { text: 'Overview', link: '/algorithms/' },
+      ],
+    },
+    {
+      text: 'Core Data Structures',
+      collapsed: false,
+      items: [
+        { text: 'Arrays & Strings', link: '/algorithms/arrays-strings' },
+        { text: 'Linked Lists', link: '/algorithms/linked-lists' },
+        { text: 'Hash Tables', link: '/algorithms/hash-tables' },
+        { text: 'Trees', link: '/algorithms/trees' },
+        { text: 'Heaps & Priority Queues', link: '/algorithms/heaps-priority-queues' },
+        { text: 'Graphs', link: '/algorithms/graphs' },
+      ],
+    },
+    {
+      text: 'Algorithm Techniques',
+      collapsed: false,
+      items: [
+        { text: 'Sorting & Searching', link: '/algorithms/sorting-searching' },
+        { text: 'Backtracking & Recursion', link: '/algorithms/backtracking-recursion' },
+        { text: 'Dynamic Programming', link: '/algorithms/dynamic-programming' },
       ],
     },
   ],

@@ -27,13 +27,13 @@ features:
 
   - icon: ⚔️
     title: System Design Interviews
-    details: 30 battle-tested walkthroughs. Instagram. Uber. YouTube. WhatsApp. Netflix. Full estimation math, architecture diagrams, production code. Your unfair advantage.
+    details: 40 battle-tested walkthroughs. Instagram. Uber. YouTube. Slack. Zoom. Google Docs. Full estimation math, architecture diagrams, production code. Your unfair advantage.
     link: /system-design-interviews/
     linkText: Prepare for war
 
   - icon: 🏗️
     title: Architecture Patterns
-    details: The blueprints of the masters. Microservices, event-driven, CQRS, hexagonal, clean architecture, DDD — each dissected, implemented in TypeScript, and battle-hardened.
+    details: The blueprints of the masters. Microservices, event-driven, CQRS, hexagonal, clean architecture, DDD, SOLID, design patterns, functional programming — each dissected and battle-hardened.
     link: /architecture-patterns/
     linkText: Study the blueprints
 
@@ -87,22 +87,22 @@ features:
 
   - icon: 🗺️
     title: Learning Paths & Cheat Sheets
-    details: Your quest map. 5 guided paths through the vault — Backend, DevOps, Frontend, Security, Interview Prep. Plus 8 cheat sheets for when you need answers, not explanations.
+    details: Your quest map. 9 guided paths through the vault — Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack. Plus 19 cheat sheets for when you need answers, not explanations.
     link: /learning-paths/
     linkText: Choose your path
 ---
 
 <div class="home-stats">
   <div class="stat-item">
-    <div class="stat-number">470+</div>
+    <div class="stat-number">650+</div>
     <div class="stat-label">Sacred texts</div>
   </div>
   <div class="stat-item">
-    <div class="stat-number">350K+</div>
+    <div class="stat-number">500K+</div>
     <div class="stat-label">Lines of wisdom</div>
   </div>
   <div class="stat-item">
-    <div class="stat-number">30</div>
+    <div class="stat-number">40</div>
     <div class="stat-label">Battle simulations</div>
   </div>
   <div class="stat-item">
@@ -122,6 +122,10 @@ features:
 | [DevOps Engineer](/learning-paths/devops-engineer) | Command of the infrastructure | ~35 hours |
 | [Frontend Engineer](/learning-paths/frontend-engineer) | The art of the interface | ~25 hours |
 | [Security Engineer](/learning-paths/security-engineer) | Guardian of the gates | ~20 hours |
+| [Data Engineer](/learning-paths/data-engineer) | Tamer of the data deluge | ~30 hours |
+| [AI/ML Engineer](/learning-paths/ai-ml-engineer) | Architect of intelligence | ~25 hours |
+| [Platform Engineer](/learning-paths/platform-engineer) | Builder of the platform | ~35 hours |
+| [Full-Stack Engineer](/learning-paths/fullstack-engineer) | Master of all realms | ~50 hours |
 
 ### Quick Draw References
 
@@ -132,7 +136,18 @@ features:
 [TypeScript](/cheat-sheets/typescript) ·
 [Linux](/cheat-sheets/linux) ·
 [Redis](/cheat-sheets/redis) ·
-[Terraform](/cheat-sheets/terraform)
+[Terraform](/cheat-sheets/terraform) ·
+[Python](/cheat-sheets/python) ·
+[Go](/cheat-sheets/golang) ·
+[Rust](/cheat-sheets/rust) ·
+[Bash](/cheat-sheets/bash) ·
+[Nginx](/cheat-sheets/nginx) ·
+[PromQL](/cheat-sheets/promql) ·
+[AWS CLI](/cheat-sheets/aws-cli) ·
+[kubectl](/cheat-sheets/kubectl-advanced) ·
+[Helm](/cheat-sheets/helm) ·
+[GraphQL](/cheat-sheets/graphql) ·
+[Regex](/cheat-sheets/regex)
 
 ### Explore the Realm
 

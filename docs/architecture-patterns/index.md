@@ -40,6 +40,8 @@ Before diving into any pattern, ask these five questions about your system:
 | [Hexagonal Architecture](/architecture-patterns/hexagonal) | Long-lived applications, multiple integrations, high testability requirements | Prototypes, throwaway scripts, very small scope | 2+ engineers | Low |
 | [Clean Architecture](/architecture-patterns/clean-architecture) | Complex business logic, framework independence, large codebases | Simple CRUD apps, tight framework coupling is acceptable | 3+ engineers | Low-Medium |
 | [Domain-Driven Design](/architecture-patterns/domain-driven-design/) | Complex business domains, domain expert collaboration, large systems | Well-understood simple domains, purely technical infrastructure | 5+ engineers | Medium |
+| [Design Patterns](/architecture-patterns/design-patterns/) | Code-level structure, testability, extensibility, team communication | Over-engineering simple code, pattern hunting | 1+ engineers | Low |
+| [Cloud-Native](/architecture-patterns/cloud-native/) | Elastic scaling, resilience, independent deployability, managed services | On-premises only, simple apps, no operational maturity | 5+ engineers | Medium-High |
 
 ## Concept Map
 
@@ -60,6 +62,11 @@ graph LR
         CQRS[CQRS / Event Sourcing]
     end
 
+    subgraph CodeLevel["Code-Level Patterns"]
+        DP[Design Patterns]
+        CN[Cloud-Native]
+    end
+
     DDD -->|bounded contexts become| MICRO
     DDD -->|domain model fits inside| HEX
     DDD -->|domain model fits inside| CLEAN
@@ -67,13 +74,17 @@ graph LR
     CLEAN -->|deployed as| MICRO
     MICRO -->|communicate via| EVENT
     EVENT -->|enables| CQRS
+    DP -->|implements internals of| HEX
+    DP -->|implements internals of| CLEAN
+    CN -->|deploys and operates| MICRO
+    CN -->|resilience for| EVENT
 ```
 
 ## How the Patterns Relate
 
 These patterns are not mutually exclusive — they operate at different levels of abstraction. **Domain-Driven Design** is a strategic approach to understanding your problem space. **Hexagonal** and **Clean Architecture** are structural patterns for organizing code within a single deployable unit. **Microservices** is a deployment and team-scaling strategy. **Event-Driven** is a communication pattern. **CQRS and Event Sourcing** are data patterns.
 
-The most effective architectures layer these together. A mature system might use DDD to discover bounded contexts, clean architecture inside each service, microservices for deployment, event-driven communication between them, and CQRS for the few services that genuinely need separate read and write models.
+The most effective architectures layer these together. A mature system might use DDD to discover bounded contexts, clean architecture inside each service, microservices for deployment, event-driven communication between them, and CQRS for the few services that genuinely need separate read and write models. **[Design Patterns](/architecture-patterns/design-patterns/)** operate at the code level — they are the building blocks (Factory, Strategy, Repository, Decorator) that implement the internals of every higher-level pattern. **[Cloud-Native](/architecture-patterns/cloud-native/)** patterns operate at the infrastructure level — they provide the resilience (Circuit Breaker, Retry, Saga), deployment (serverless, containers), and operational strategies that make distributed architectures production-ready.
 
 ## How to Use This Section
 

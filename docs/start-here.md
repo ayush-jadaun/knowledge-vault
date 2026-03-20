@@ -5,7 +5,7 @@ description: "Your quest through Archon begins here — choose your path, forge 
 
 # Begin Your Journey
 
-You stand before 470+ pages of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
+You stand before **650+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
 
 Choose your quest.
 
@@ -18,11 +18,26 @@ Choose your quest.
 | Week | What to do | Pages |
 |------|-----------|-------|
 | 1 | Learn the fundamentals | [Distributed Systems](/system-design/distributed-systems/) → [CAP Theorem](/system-design/distributed-systems/cap-theorem) → [Databases](/system-design/databases/) → [Caching](/system-design/caching/) |
-| 2 | Learn infrastructure patterns | [Load Balancing](/system-design/load-balancing/) → [Message Queues](/system-design/message-queues/) → [Networking](/system-design/networking/) |
+| 2 | Learn infrastructure patterns | [Load Balancing](/system-design/load-balancing/) → [Message Queues](/system-design/message-queues/) → [Rate Limiting](/system-design/distributed-systems/rate-limiting) → [Circuit Breaker](/system-design/distributed-systems/circuit-breaker) |
 | 3 | Practice with walkthroughs | [URL Shortener](/system-design-interviews/url-shortener) → [Instagram](/system-design-interviews/instagram) → [WhatsApp](/system-design-interviews/chat-system) → [Uber](/system-design-interviews/uber) |
-| 4 | Advanced + mock practice | [YouTube](/system-design-interviews/youtube) → [Netflix](/system-design-interviews/netflix) → [Payment System](/system-design-interviews/payment-system) → [Stock Exchange](/system-design-interviews/stock-exchange) |
+| 4 | Advanced systems | [Google Docs](/system-design-interviews/google-docs) → [Zoom](/system-design-interviews/zoom) → [Ad Platform](/system-design-interviews/ad-platform) → [Stock Exchange](/system-design-interviews/stock-exchange) |
+
+**40 system design interviews** available — [browse all](/system-design-interviews/)
 
 **Full guide:** [System Design Interview Learning Path](/learning-paths/system-design-interview)
+
+---
+
+### "I have a coding interview — algorithms and data structures"
+
+**Time needed:** 3-4 weeks (2 hours/day)
+
+| Week | What to do | Pages |
+|------|-----------|-------|
+| 1 | Foundations | [Big-O & Overview](/algorithms/) → [Arrays & Strings](/algorithms/arrays-strings) → [Hash Tables](/algorithms/hash-tables) → [Linked Lists](/algorithms/linked-lists) |
+| 2 | Trees & Graphs | [Trees](/algorithms/trees) → [Graphs](/algorithms/graphs) → [Heaps](/algorithms/heaps-priority-queues) → [Sorting & Searching](/algorithms/sorting-searching) |
+| 3 | Advanced patterns | [Dynamic Programming](/algorithms/dynamic-programming) → [Backtracking](/algorithms/backtracking-recursion) |
+| 4 | Behavioral prep | [Behavioral Interviews](/learning-paths/behavioral-interviews) — STAR method, negotiation, leveling |
 
 ---
 
@@ -30,29 +45,42 @@ Choose your quest.
 
 **Time needed:** 4-6 weeks (1 hour/day)
 
-Start here and go in order:
-
 1. **Databases** — [Storage Engines](/system-design/databases/storage-engines) → [Indexing](/system-design/databases/indexing-deep-dive) → [Replication](/system-design/databases/replication) → [Sharding](/system-design/databases/sharding)
 2. **Caching** — [Strategies](/system-design/caching/caching-strategies) → [Invalidation](/system-design/caching/cache-invalidation) → [Redis Patterns](/system-design/caching/redis-caching-patterns)
-3. **Message Queues** — [Kafka](/system-design/message-queues/kafka-internals) → [RabbitMQ](/system-design/message-queues/rabbitmq-internals) → [Queue Selection Guide](/system-design/message-queues/queue-selection-guide)
-4. **Architecture** — [Microservices](/architecture-patterns/microservices/) → [DDD](/architecture-patterns/domain-driven-design/) → [CQRS](/architecture-patterns/cqrs-event-sourcing/)
-5. **Production** — [Deployment Strategies](/devops/deployment-strategies/) → [Monitoring](/devops/monitoring/) → [Incident Response](/devops/incident-response/)
+3. **Message Queues** — [Kafka](/system-design/message-queues/kafka-internals) → [Kafka Streams](/system-design/message-queues/kafka-streams) → [Queue Selection Guide](/system-design/message-queues/queue-selection-guide)
+4. **Architecture** — [SOLID](/architecture-patterns/solid-principles/) → [Design Patterns](/architecture-patterns/design-patterns/) → [Microservices](/architecture-patterns/microservices/) → [DDD](/architecture-patterns/domain-driven-design/)
+5. **Testing** — [Unit Testing](/testing/unit-testing) → [Integration Testing](/testing/integration-testing) → [Test Architecture](/testing/test-architecture)
+6. **Production** — [Deployment Strategies](/devops/deployment-strategies/) → [Monitoring](/devops/monitoring/) → [Incident Response](/devops/incident-response/)
 
 **Full guide:** [Backend Engineer Learning Path](/learning-paths/backend-engineer)
 
 ---
 
-### "I want to learn DevOps / SRE"
+### "I want to learn DevOps / SRE / Platform Engineering"
 
 **Time needed:** 3-4 weeks (1 hour/day)
 
 1. **Containers** — [Docker](/infrastructure/docker/) → [Internals](/infrastructure/docker/internals) → [Multi-stage Builds](/infrastructure/docker/multi-stage-builds) → [Security](/infrastructure/docker/security-hardening)
-2. **Orchestration** — [Kubernetes](/infrastructure/kubernetes/) → [Helm](/infrastructure/kubernetes/helm-charts) → [Troubleshooting](/infrastructure/kubernetes/troubleshooting) → [Production Checklist](/infrastructure/kubernetes/production-checklist)
+2. **Orchestration** — [Kubernetes](/infrastructure/kubernetes/) → [Helm](/infrastructure/kubernetes/helm-charts) → [GitOps (ArgoCD & Flux)](/infrastructure/kubernetes/gitops) → [Production Checklist](/infrastructure/kubernetes/production-checklist)
 3. **IaC** — [Terraform](/infrastructure/terraform/) → [Modules](/infrastructure/terraform/modules) → [AWS Stack](/infrastructure/terraform/aws-startup-stack)
 4. **CI/CD** — [GitHub Actions](/infrastructure/ci-cd/github-actions-deep-dive) → [Pipeline Patterns](/infrastructure/ci-cd/pipeline-patterns) → [Security Scanning](/infrastructure/ci-cd/security-scanning)
-5. **Operations** — [Prometheus](/devops/monitoring/prometheus-deep-dive) → [Alerting](/devops/alerting/) → [Incident Response](/devops/incident-response/) → [Chaos Engineering](/devops/incident-response/chaos-engineering)
+5. **SRE** — [SRE Overview](/devops/sre/) → [SLI/SLO/SLA](/devops/sre/sli-slo-sla) → [Error Budgets](/devops/sre/error-budgets) → [Capacity Planning](/devops/sre/capacity-planning)
+6. **Observability** — [Observability](/infrastructure/observability/) → [Prometheus](/devops/monitoring/prometheus-deep-dive) → [Alerting](/devops/alerting/) → [Disaster Recovery](/devops/disaster-recovery/)
 
-**Full guide:** [DevOps Engineer Learning Path](/learning-paths/devops-engineer)
+**Full guides:** [DevOps Learning Path](/learning-paths/devops-engineer) · [Platform Engineer Learning Path](/learning-paths/platform-engineer)
+
+---
+
+### "I want to learn AI/ML engineering"
+
+**Time needed:** 2-3 weeks (1 hour/day)
+
+1. **Foundations** — [AI/ML Overview](/ai-ml-engineering/) → [Embeddings](/ai-ml-engineering/embeddings) → [Vector Databases](/ai-ml-engineering/vector-databases)
+2. **LLM Integration** — [LLM Integration Patterns](/ai-ml-engineering/llm-integration) → [RAG Architecture](/ai-ml-engineering/rag-architecture)
+3. **Agents** — [AI Agents Architecture](/ai-ml-engineering/ai-agents)
+4. **Production** — [ML Pipelines & MLOps](/ai-ml-engineering/ml-pipelines)
+
+**Full guide:** [AI/ML Engineer Learning Path](/learning-paths/ai-ml-engineer)
 
 ---
 
@@ -62,40 +90,78 @@ Start here and go in order:
 
 1. **Foundations** — [OWASP Top 10](/security/owasp/) (read all 10)
 2. **Auth** — [JWT](/security/authentication/jwt-deep-dive) → [OAuth2](/security/authentication/oauth2-oidc) → [Session Management](/security/authentication/session-management)
-3. **Crypto** — [Symmetric vs Asymmetric](/security/encryption/symmetric-vs-asymmetric) → [Hashing](/security/encryption/hashing-algorithms) → [Key Management](/security/encryption/key-management)
-4. **API** — [Rate Limiting](/security/api-security/rate-limiting) → [Input Validation](/security/api-security/input-validation) → [CORS](/security/api-security/cors-deep-dive)
-5. **Zero Trust** — [Principles](/security/zero-trust/principles) → [Network Segmentation](/security/zero-trust/network-segmentation) → [Least Privilege](/security/zero-trust/least-privilege)
+3. **Authorization** — [RBAC vs ABAC vs ReBAC](/security/authorization/rbac-abac-rebac) → [Google Zanzibar](/security/authorization/zanzibar) → [Policy Engines](/security/authorization/policy-engines)
+4. **Crypto** — [Symmetric vs Asymmetric](/security/encryption/symmetric-vs-asymmetric) → [Hashing](/security/encryption/hashing-algorithms) → [Key Management](/security/encryption/key-management)
+5. **Compliance** — [GDPR Engineering](/security/compliance/gdpr-engineering) → [SOC 2](/security/compliance/soc2) → [PCI DSS](/security/compliance/pci-dss)
+6. **Zero Trust** — [Principles](/security/zero-trust/principles) → [Network Segmentation](/security/zero-trust/network-segmentation) → [Least Privilege](/security/zero-trust/least-privilege)
 
 **Full guide:** [Security Engineer Learning Path](/learning-paths/security-engineer)
 
 ---
 
+### "I want to learn frontend engineering"
+
+**Time needed:** 2-3 weeks (1 hour/day)
+
+1. **Rendering** — [Browser Rendering Pipeline](/frontend-engineering/browser-rendering) → [SSR vs SSG vs ISR](/frontend-engineering/rendering-strategies)
+2. **Performance** — [Core Web Vitals](/frontend-engineering/web-performance) → [Bundle Optimization](/frontend-engineering/bundle-optimization)
+3. **Architecture** — [State Management](/frontend-engineering/state-management) → [Micro-Frontends](/frontend-engineering/micro-frontends)
+4. **Deep Dives** — [React Internals](/frontend-engineering/react-internals) → [WebAssembly](/frontend-engineering/webassembly)
+
+**Full guide:** [Full-Stack Engineer Learning Path](/learning-paths/fullstack-engineer)
+
+---
+
 ### "I just want to browse and explore"
 
-- [Knowledge Graph](/graph) — visual map of all 470+ topics and how they connect
-- [Browse by Tag](/tags) — 1,240 tags, filter by difficulty
+- [Knowledge Graph](/graph) — visual map of all 650+ topics and how they connect
+- [Browse by Tag](/tags) — 2,000+ tags, filter by difficulty
 - [Compare Technologies](/compare) — side-by-side comparison (Kafka vs RabbitMQ, Postgres vs MongoDB, etc.)
-- [Cheat Sheets](/cheat-sheets/) — quick reference cards for Docker, K8s, Git, SQL, TypeScript, Linux, Redis, Terraform
+- [Cheat Sheets](/cheat-sheets/) — 19 quick reference cards for Docker, K8s, Git, SQL, TypeScript, Linux, Redis, Terraform, Python, Go, Rust, Bash, Nginx, PromQL, AWS CLI, kubectl, Helm, GraphQL, Regex
 - [Technology Radar](/technology-radar) — what to adopt, trial, assess, or hold
 - Hit `g` then `r` for a **random page**
 - Press `?` to see all **keyboard shortcuts**
 
 ---
 
+## What's Inside
+
+| Section | Pages | What awaits |
+|---------|-------|-------------|
+| **System Design** | 80+ | Distributed systems, databases, caching, queues, consensus, networking, API design, concurrency |
+| **System Design Interviews** | 40 | Instagram, Uber, YouTube, WhatsApp, Netflix, Slack, Zoom, Google Docs, and 32 more |
+| **Algorithms & Data Structures** | 10 | Arrays, trees, graphs, DP, sorting, heaps, hash tables, backtracking |
+| **Architecture Patterns** | 50+ | Microservices, event-driven, CQRS, DDD, SOLID, FP, design patterns, cloud-native, multi-tenancy |
+| **Infrastructure** | 70+ | Terraform, K8s, Docker, AWS, GCP, CI/CD, Nginx, service mesh, observability, Linux internals, FinOps |
+| **Security** | 55+ | OWASP, auth, encryption, secrets, zero trust, API security, compliance, authorization |
+| **DevOps** | 45+ | Monitoring, logging, alerting, deployment, incident response, SRE, Git, engineering practices |
+| **AI/ML Engineering** | 7 | LLMs, RAG, vector databases, embeddings, AI agents, ML pipelines |
+| **Frontend Engineering** | 10 | Web performance, rendering, state management, React internals, WebAssembly |
+| **Testing** | 8 | Unit, integration, E2E, contract, property-based, TDD/BDD, test architecture |
+| **Performance** | 30+ | Profiling, optimization, caching, DB tuning, edge computing, load testing |
+| **Data Engineering** | 25+ | ETL, stream processing, data modeling, pipelines, lakehouse |
+| **Production Blueprints** | 50+ | Auth, billing, notifications, rate limiter, job queue, search, chat, payments, and more |
+| **Prompt Engineering** | 20+ | 500+ prompts for engineering, product, UI, and architecture |
+| **UI & Design Systems** | 35+ | Typography, color, spacing, accessibility, dark mode, animations |
+| **Learning Paths** | 9 | Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack |
+| **Cheat Sheets** | 19 | Docker, K8s, Git, SQL, TS, Linux, Redis, Terraform, Python, Go, Rust, Bash, Nginx, PromQL, AWS CLI, kubectl, Helm, GraphQL, Regex |
+
+---
+
 ## How Each Page Is Structured
 
-Every page follows the same 10-section format:
+Every page follows a consistent, deep-dive format:
 
 1. **Why it exists** — the problem it solves
 2. **First principles** — concepts from scratch
-3. **Core mechanics** — how it works, with diagrams
-4. **Implementation** — production TypeScript code
+3. **Core mechanics** — how it works, with Mermaid diagrams
+4. **Implementation** — production code in TypeScript, Go, Python
 5. **Edge cases** — what goes wrong
-6. **Performance** — Big-O, benchmarks
-7. **Math foundations** — proofs where applicable
-8. **War stories** — real production incidents
-9. **Decision frameworks** — when to use, when not to
-10. **Advanced topics** — research-level depth
+6. **Performance** — Big-O, benchmarks, KaTeX math
+7. **Comparison tables** — trade-offs and alternatives
+8. **Production tips** — warnings, danger zones, pro tips
+9. **Cross-references** — links to related Archon pages
+10. **Further reading** — papers, docs, next topics
 
 ---
 
@@ -103,9 +169,13 @@ Every page follows the same 10-section format:
 
 | I want to... | Go to... |
 |--------------|----------|
-| Prepare for interviews | [System Design Interviews](/system-design-interviews/) |
+| Prepare for system design interviews | [40 System Design Interviews](/system-design-interviews/) |
+| Prepare for coding interviews | [Algorithms & Data Structures](/algorithms/) |
+| Prepare for behavioral interviews | [Behavioral Interviews](/learning-paths/behavioral-interviews) |
 | Learn a specific topic | [Browse by Tag](/tags) |
-| Get a quick reference | [Cheat Sheets](/cheat-sheets/) |
+| Get a quick reference | [19 Cheat Sheets](/cheat-sheets/) |
 | See how topics connect | [Knowledge Graph](/graph) |
 | Compare two technologies | [Compare Mode](/compare) |
 | Find AI-powered answers | Click the chat bubble (bottom-right) |
+| Follow a structured path | [9 Learning Paths](/learning-paths/) |
+| Build a production service | [14 Production Blueprints](/production-blueprints/) |

@@ -7,6 +7,59 @@ description: "What's new in Archon — recent additions and updates"
 
 ## March 2026
 
+### March 20, 2026 — The Mega Expansion
+
+**+179 new pages in a single session. Archon goes from 470 to 650+ pages.**
+
+#### New Sections
+- **Algorithms & Data Structures** (10 pages) — arrays, linked lists, trees, graphs, dynamic programming, sorting, heaps, hash tables, backtracking
+- **AI/ML Engineering** (7 pages) — LLM integration, RAG architecture, vector databases, embeddings, AI agents, ML pipelines
+- **Testing** (8 pages) — unit, integration, E2E, contract, property-based, TDD/BDD, test architecture
+- **Frontend Engineering** (7 pages) — web performance, browser rendering, SSR/SSG/ISR, state management, micro-frontends, bundle optimization, React internals, WebAssembly
+- **SOLID Principles** (6 pages) — SRP, OCP, LSP, ISP, DIP with TypeScript/Go/Python examples
+- **Functional Programming** (4 pages) — core concepts, monads/functors, FP in TypeScript
+- **Concurrency & Parallelism** (4 pages) — lock-free data structures, actor model, real-time systems
+- **SRE** (5 pages) — error budgets, toil reduction, capacity planning, SLI/SLO/SLA
+- **Compliance** (5 pages) — GDPR engineering, SOC 2, PCI DSS, audit logging
+- **Authorization** (4 pages) — RBAC/ABAC/ReBAC, Google Zanzibar, OPA & Cedar
+- **Multi-Tenancy** (3 pages) — database strategies, noisy neighbor
+- **Platform Engineering** (3 pages) — Backstage, developer experience, DORA metrics
+- **FinOps** (3 pages) — cost optimization playbook, cost allocation & tagging
+- **Data Lakehouse** (4 pages) — Delta Lake/Iceberg/Hudi, medallion architecture, query engines
+
+#### New Pages in Existing Sections
+- **System Design** — rate limiting, circuit breaker, bloom filters, distributed locking, leader election, queueing theory, search engineering, GraphQL vs REST, concurrency
+- **Databases** — DynamoDB, Cassandra, Elasticsearch, ClickHouse internals
+- **API Design** (7 pages) — REST best practices, versioning, OpenAPI/Swagger, pagination, webhooks, API security patterns, GraphQL advanced
+- **Infrastructure** — Nginx deep dive, service mesh, observability, Node.js internals, Go concurrency, Rust for backend, TypeScript advanced, Linux internals (4 pages), eBPF
+- **Networking** — QUIC protocol, WebRTC, MQTT
+- **Kubernetes** — CRDs & operators, admission webhooks, CNI plugins, GitOps (ArgoCD & Flux)
+- **Message Queues** — Kafka Streams, Kafka Connect
+- **Event-Driven** — transactional outbox, idempotent consumers
+- **DevOps** — Git internals, branching strategies, monorepo management, technical writing, code review, ADRs, on-call handbook, release engineering, debugging in production, disaster recovery
+- **Performance** — load testing deep dive, compiler/interpreter basics
+- **Frontend** — i18n & l10n
+- **Storage Systems** — block/file/object storage, distributed file systems (HDFS, Ceph, MinIO)
+
+#### 10 New System Design Interviews (40 total)
+- Design GitHub, Slack, Zoom, Reddit, Airbnb, LinkedIn Feed, Google Docs, Leaderboard, Ad Platform, CDN
+
+#### 6 New Production Blueprints (14 total)
+- Search service, feature flag service, chat service, file storage, audit log, config service, payment engineering (ledger + reconciliation)
+
+#### 4 New Learning Paths (9 total)
+- Data Engineer, AI/ML Engineer, Platform Engineer, Full-Stack Engineer
+
+#### 11 New Cheat Sheets (19 total)
+- Python, Go, Rust, Bash, Nginx, PromQL, AWS CLI, kubectl advanced, Helm, GraphQL, Regex
+
+#### Infrastructure
+- Bumped CI Node heap to **20GB** with **512MB semi-space** for GC optimization
+- Bumped CI swap to **16GB** with expanded disk cleanup
+- Updated nav with new Engineering sections (Testing, AI/ML, Frontend)
+
+---
+
 ### March 19, 2026 — The Archon Update
 - **Rebranded** from Knowledge Vault to **Archon**
 - Added **AI Chatbot** (Oracle of Archon) — Pagefind retrieval + Gemini 2.5 Flash with page citations

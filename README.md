@@ -2,9 +2,9 @@
 
 > *"Give me six hours to chop down a tree and I'll spend four sharpening the axe."* — This is the axe.
 
-The holy grail of engineering knowledge. 470+ sacred texts, from first principles to production mastery.
+The holy grail of engineering knowledge. 650+ sacred texts, from first principles to production mastery.
 
-**470+ pages | 350K+ lines | 30 system design interviews | 8 cheat sheets | 5 learning paths | AI chatbot**
+**650+ pages | 500K+ lines | 40 system design interviews | 19 cheat sheets | 9 learning paths | AI chatbot**
 
 [Live Site](https://knowledge-vault-five.vercel.app) · [Start Here](https://knowledge-vault-five.vercel.app/start-here) · [System Design Interviews](https://knowledge-vault-five.vercel.app/system-design-interviews/) · [Cheat Sheets](https://knowledge-vault-five.vercel.app/cheat-sheets/)
 
@@ -14,24 +14,28 @@ The holy grail of engineering knowledge. 470+ sacred texts, from first principle
 
 | Section | Pages | What awaits |
 |---------|-------|------------|
-| **System Design** | 65+ | Distributed systems, databases, caching, message queues, consensus, load balancing, networking |
-| **System Design Interviews** | 30 | Instagram, Uber, YouTube, WhatsApp, Netflix, Spotify — full walkthroughs |
-| **Architecture Patterns** | 35+ | Microservices, event-driven, CQRS, hexagonal, clean architecture, DDD |
-| **Infrastructure** | 55+ | Terraform, Kubernetes, Docker, AWS, GCP, CI/CD, multi-region |
-| **Security** | 40+ | OWASP Top 10, authentication, encryption, secrets management, zero trust |
-| **DevOps** | 30+ | Monitoring, logging, alerting, deployment strategies, incident response |
-| **Performance** | 25+ | Profiling, optimization, caching strategies, database tuning, edge computing |
-| **Data Engineering** | 20+ | Stream processing, data modeling, pipeline patterns, CDC, orchestration |
-| **Production Blueprints** | 40+ | Billing engine, notification service, rate limiter, job queue, A/B testing |
+| **System Design** | 80+ | Distributed systems, databases, caching, message queues, consensus, networking, API design, concurrency, search |
+| **System Design Interviews** | 40 | Instagram, Uber, YouTube, Slack, Zoom, Google Docs, GitHub, Reddit, Airbnb, and 31 more |
+| **Algorithms & Data Structures** | 10 | Arrays, trees, graphs, DP, sorting, heaps, hash tables, backtracking |
+| **Architecture Patterns** | 50+ | Microservices, event-driven, CQRS, DDD, SOLID, FP, design patterns, cloud-native, multi-tenancy |
+| **Infrastructure** | 70+ | Terraform, K8s, Docker, AWS, GCP, CI/CD, Nginx, service mesh, observability, Linux internals, storage, FinOps |
+| **Security** | 55+ | OWASP, auth, encryption, secrets, zero trust, API security, compliance (GDPR, SOC 2, PCI), authorization (Zanzibar, OPA) |
+| **DevOps** | 45+ | Monitoring, logging, alerting, deployment, incident response, SRE, Git, engineering practices, disaster recovery |
+| **AI/ML Engineering** | 7 | LLM integration, RAG, vector databases, embeddings, AI agents, ML pipelines |
+| **Frontend Engineering** | 10 | Web performance, browser rendering, SSR/SSG, state management, React internals, WebAssembly |
+| **Testing** | 8 | Unit, integration, E2E, contract, property-based, TDD/BDD, test architecture |
+| **Performance** | 30+ | Profiling, optimization, caching, database tuning, edge computing, load testing, compilers |
+| **Data Engineering** | 25+ | Stream processing, data modeling, pipelines, CDC, lakehouse, medallion architecture |
+| **Production Blueprints** | 50+ | Auth, billing, notifications, rate limiter, job queue, search, chat, payments, feature flags, and more |
 | **Prompt Engineering** | 20+ | 500+ prompts for engineering, product, UI, and architecture |
 | **UI & Design Systems** | 35+ | Typography, color tokens, spacing, accessibility, dark mode, animations |
-| **Learning Paths** | 5 | Backend, DevOps, Frontend, Security, System Design Interview |
-| **Cheat Sheets** | 8 | Docker, Kubernetes, Git, SQL, TypeScript, Linux, Redis, Terraform |
+| **Learning Paths** | 9 | Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack |
+| **Cheat Sheets** | 19 | Docker, K8s, Git, SQL, TS, Linux, Redis, Terraform, Python, Go, Rust, Bash, Nginx, PromQL, AWS CLI, kubectl, Helm, GraphQL, Regex |
 
 ## Features
 
 - **AI Chatbot** — Ask anything, get answers with page citations (Gemini 2.5 Flash)
-- **Knowledge Graph** — Interactive visual map of all 470+ topics
+- **Knowledge Graph** — Interactive visual map of all 650+ topics
 - **Compare Mode** — Side-by-side technology comparison (24 technologies)
 - **Pagefind Search** — Full-text search across all pages
 - **Keyboard Shortcuts** — Press `?` to see all
