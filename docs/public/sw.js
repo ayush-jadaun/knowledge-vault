@@ -1,9 +1,9 @@
 const CACHE_NAME = 'kv-cache-v1';
-const OFFLINE_URL = '/';
+const OFFLINE_URL = '/offline.html';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.add(OFFLINE_URL))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll([OFFLINE_URL, '/']))
   );
   self.skipWaiting();
 });
@@ -20,7 +20,16 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(OFFLINE_URL))
+      fetch(event.request)
+        .then((response) => {
+          // Cache navigated pages for offline access
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match(OFFLINE_URL)))
     );
     return;
   }

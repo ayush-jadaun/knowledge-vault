@@ -260,10 +260,8 @@
     border-radius: 0;
   }
 
-  /* Headings: smaller on mobile */
-  .vp-doc h1 { font-size: 1.75rem; }
-  .vp-doc h2 { font-size: 1.3rem; margin-top: 32px; padding-top: 16px; }
-  .vp-doc h3 { font-size: 1.1rem; }
+  /* Headings: handled by clamp() in responsive typography */
+  .vp-doc h2 { margin-top: 32px; padding-top: 16px; }
 
   /* KaTeX: scroll on mobile */
   .katex-display {
@@ -289,20 +287,1441 @@
 }
 
 /* ============================================
+   Smooth Scrolling & Anchor Offset
+   ============================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============================================
+   Page Transition — subtle fade-in
+   ============================================ */
+
+.VPContent {
+  animation: page-fade-in 150ms ease-out;
+}
+
+@keyframes page-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ============================================
+   Custom Scrollbar
+   ============================================ */
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(95, 103, 238, 0.5) transparent;
+}
+
+/* Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(95, 103, 238, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(95, 103, 238, 0.7);
+}
+
+/* ============================================
+   Text Selection Color
+   ============================================ */
+
+::selection {
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+}
+
+::-moz-selection {
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+}
+
+/* ============================================
+   External Link Indicator
+   ============================================ */
+
+.vp-doc a[href^="http"]:not([href*="knowledge-vault-five.vercel.app"])::after {
+  content: ' \2197';
+  font-size: 0.75em;
+  vertical-align: super;
+  opacity: 0.5;
+  margin-left: 1px;
+}
+
+/* ============================================
+   Anchor Highlight Pulse
+   ============================================ */
+
+.vp-doc :target {
+  animation: anchor-pulse 1.5s ease-out;
+}
+
+@keyframes anchor-pulse {
+  0% { box-shadow: 0 0 0 4px var(--vp-c-brand-soft); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* ============================================
+   Mobile Bottom Navigation
+   ============================================ */
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    height: 56px;
+    background: var(--vp-c-bg);
+    border-top: 1px solid var(--vp-c-divider);
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 8px;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .mobile-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    color: var(--vp-c-text-3);
+    font-size: 10px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-nav-btn:active,
+  .mobile-nav-btn.active {
+    color: var(--vp-c-brand-1);
+  }
+
+  .mobile-nav-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Push content above bottom nav */
+  .VPDoc {
+    padding-bottom: 64px !important;
+  }
+
+  /* Adjust back-to-top and notes for bottom nav */
+  .back-to-top {
+    bottom: 72px !important;
+  }
+}
+
+/* ============================================
+   Image Zoom Overlay
+   ============================================ */
+
+.image-zoom-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+  padding: 24px;
+}
+
+.image-zoom-overlay img,
+.image-zoom-overlay svg {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.image-zoom-enter-active {
+  transition: opacity 0.2s ease;
+}
+.image-zoom-enter-active img,
+.image-zoom-enter-active svg {
+  transition: transform 0.2s ease-out;
+}
+
+.image-zoom-leave-active {
+  transition: opacity 0.15s ease;
+}
+.image-zoom-leave-active img,
+.image-zoom-leave-active svg {
+  transition: transform 0.15s ease-in;
+}
+
+.image-zoom-enter-from {
+  opacity: 0;
+}
+.image-zoom-enter-from img,
+.image-zoom-enter-from svg {
+  transform: scale(0.9);
+}
+
+.image-zoom-leave-to {
+  opacity: 0;
+}
+.image-zoom-leave-to img,
+.image-zoom-leave-to svg {
+  transform: scale(0.9);
+}
+
+/* Make images and mermaid diagrams zoomable */
+.vp-doc img,
+.mermaid svg {
+  cursor: zoom-in;
+}
+
+/* ============================================
+   Share Button — position top-right of doc area
+   ============================================ */
+
+.share-btn-wrapper {
+  float: right;
+  margin-top: 2px;
+}
+
+/* ============================================
+   Zebra-Striped Tables
+   ============================================ */
+
+.vp-doc table tbody tr:nth-child(even) td {
+  background-color: var(--vp-c-bg-soft);
+}
+
+.vp-doc table tbody tr:nth-child(even):hover td {
+  background-color: var(--vp-c-bg-mute);
+}
+
+/* ============================================
+   Responsive Table Scroll Shadows
+   ============================================ */
+
+@media (max-width: 768px) {
+  .vp-doc table {
+    background:
+      linear-gradient(to right, var(--vp-c-bg), var(--vp-c-bg)) local,
+      linear-gradient(to left, var(--vp-c-bg), var(--vp-c-bg)) local,
+      linear-gradient(to right, rgba(0, 0, 0, 0.08), transparent) scroll,
+      linear-gradient(to left, rgba(0, 0, 0, 0.08), transparent) scroll;
+    background-position: left center, right center, left center, right center;
+    background-size: 20px 100%, 20px 100%, 12px 100%, 12px 100%;
+    background-repeat: no-repeat;
+  }
+
+  .dark .vp-doc table {
+    background:
+      linear-gradient(to right, var(--vp-c-bg), var(--vp-c-bg)) local,
+      linear-gradient(to left, var(--vp-c-bg), var(--vp-c-bg)) local,
+      linear-gradient(to right, rgba(255, 255, 255, 0.06), transparent) scroll,
+      linear-gradient(to left, rgba(255, 255, 255, 0.06), transparent) scroll;
+    background-position: left center, right center, left center, right center;
+    background-size: 20px 100%, 20px 100%, 12px 100%, 12px 100%;
+    background-repeat: no-repeat;
+  }
+}
+
+/* ============================================
+   Sticky Table Headers
+   ============================================ */
+
+.vp-doc thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--vp-c-bg-soft);
+  box-shadow: 0 1px 0 var(--vp-c-divider);
+}
+
+/* ============================================
+   Code Block Header Bar (Language Label)
+   ============================================ */
+
+.vp-doc div[class*='language-']::before {
+  content: attr(class);
+  position: absolute;
+  top: 6px;
+  right: 48px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background-color: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-2);
+  z-index: 2;
+  pointer-events: none;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Clean language name labels */
+.vp-doc div[class*='language-js']::before { content: 'JS'; }
+.vp-doc div[class*='language-javascript']::before { content: 'JS'; }
+.vp-doc div[class*='language-ts']::before { content: 'TS'; }
+.vp-doc div[class*='language-typescript']::before { content: 'TS'; }
+.vp-doc div[class*='language-vue']::before { content: 'VUE'; }
+.vp-doc div[class*='language-html']::before { content: 'HTML'; }
+.vp-doc div[class*='language-css']::before { content: 'CSS'; }
+.vp-doc div[class*='language-scss']::before { content: 'SCSS'; }
+.vp-doc div[class*='language-json']::before { content: 'JSON'; }
+.vp-doc div[class*='language-yaml']::before { content: 'YAML'; }
+.vp-doc div[class*='language-yml']::before { content: 'YAML'; }
+.vp-doc div[class*='language-python']::before { content: 'PY'; }
+.vp-doc div[class*='language-py']::before { content: 'PY'; }
+.vp-doc div[class*='language-java']::before { content: 'JAVA'; }
+.vp-doc div[class*='language-go']::before { content: 'GO'; }
+.vp-doc div[class*='language-rust']::before { content: 'RUST'; }
+.vp-doc div[class*='language-sql']::before { content: 'SQL'; }
+.vp-doc div[class*='language-graphql']::before { content: 'GQL'; }
+.vp-doc div[class*='language-dockerfile']::before { content: 'DOCKER'; }
+.vp-doc div[class*='language-markdown']::before { content: 'MD'; }
+.vp-doc div[class*='language-md']::before { content: 'MD'; }
+.vp-doc div[class*='language-xml']::before { content: 'XML'; }
+.vp-doc div[class*='language-c']::before { content: 'C'; }
+.vp-doc div[class*='language-cpp']::before { content: 'C++'; }
+.vp-doc div[class*='language-csharp']::before { content: 'C#'; }
+.vp-doc div[class*='language-ruby']::before { content: 'RUBY'; }
+.vp-doc div[class*='language-php']::before { content: 'PHP'; }
+.vp-doc div[class*='language-swift']::before { content: 'SWIFT'; }
+.vp-doc div[class*='language-kotlin']::before { content: 'KOTLIN'; }
+.vp-doc div[class*='language-text']::before { content: 'TEXT'; }
+.vp-doc div[class*='language-txt']::before { content: 'TEXT'; }
+.vp-doc div[class*='language-toml']::before { content: 'TOML'; }
+.vp-doc div[class*='language-ini']::before { content: 'INI'; }
+.vp-doc div[class*='language-nginx']::before { content: 'NGINX'; }
+.vp-doc div[class*='language-bash']::before { content: 'BASH'; }
+.vp-doc div[class*='language-shell']::before { content: 'SHELL'; }
+.vp-doc div[class*='language-sh']::before { content: 'SH'; }
+.vp-doc div[class*='language-zsh']::before { content: 'ZSH'; }
+.vp-doc div[class*='language-powershell']::before { content: 'PS'; }
+
+/* ============================================
+   Terminal-Style Code Blocks (bash/shell)
+   ============================================ */
+
+.vp-doc div[class*='language-bash'],
+.vp-doc div[class*='language-shell'],
+.vp-doc div[class*='language-sh'],
+.vp-doc div[class*='language-zsh'] {
+  background-color: #1a1b26;
+}
+
+.vp-doc div[class*='language-bash']::before,
+.vp-doc div[class*='language-shell']::before,
+.vp-doc div[class*='language-sh']::before,
+.vp-doc div[class*='language-zsh']::before {
+  background-color: rgba(66, 211, 146, 0.15);
+  color: #42d392;
+}
+
+.dark .vp-doc div[class*='language-bash'],
+.dark .vp-doc div[class*='language-shell'],
+.dark .vp-doc div[class*='language-sh'],
+.dark .vp-doc div[class*='language-zsh'] {
+  background-color: #0d1117;
+}
+
+/* ============================================
+   Responsive Code Scroll Indicator
+   ============================================ */
+
+@media (max-width: 768px) {
+  .vp-doc div[class*='language-']::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 24px;
+    background: linear-gradient(to right, transparent, var(--vp-code-block-bg));
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 0;
+  }
+}
+
+/* ============================================
+   Smart Blockquote Styling
+   ============================================ */
+
+.vp-doc blockquote {
+  position: relative;
+  border-left: 3px solid var(--vp-c-brand-1);
+  background-color: var(--vp-c-bg-soft);
+  padding: 20px 24px 20px 40px;
+  margin: 24px 0;
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: var(--vp-c-text-2);
+}
+
+.vp-doc blockquote::before {
+  content: '\201C';
+  position: absolute;
+  top: 4px;
+  left: 10px;
+  font-size: 2.5rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: var(--vp-c-brand-soft);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.vp-doc blockquote p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.vp-doc blockquote p + p {
+  margin-top: 8px;
+}
+
+/* Attribution — last em-only child in blockquote */
+.vp-doc blockquote p:last-child em:only-child {
+  display: block;
+  text-align: right;
+  font-size: 0.9em;
+  color: var(--vp-c-text-3);
+  margin-top: 8px;
+}
+
+/* ============================================
+   Hover Micro-Interactions
+   ============================================ */
+
+/* Sidebar links: slight indent on hover */
+.VPSidebarItem .link:hover {
+  padding-left: 4px;
+}
+
+/* Cards / feature items: subtle lift */
+.VPFeature {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.VPFeature:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.dark .VPFeature:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Buttons: slight scale */
+.VPButton {
+  transition: transform 0.12s ease;
+}
+
+.VPButton:hover {
+  transform: scale(1.02);
+}
+
+/* Nav links: subtle color transition */
+.VPNavBarMenuLink .VPLink {
+  transition: color 0.15s ease;
+}
+
+/* ============================================
+   Dark Mode Code Theme Improvements
+   ============================================ */
+
+.dark .vp-doc div[class*='language-'] {
+  background-color: #1e1e2e;
+}
+
+.dark .vp-doc div[class*='language-'] code {
+  color: #cdd6f4;
+}
+
+/* Better contrast for syntax tokens in dark mode */
+.dark .vp-doc div[class*='language-'] .token.comment,
+.dark .vp-doc div[class*='language-'] .token.prolog,
+.dark .vp-doc div[class*='language-'] .token.doctype {
+  color: #6c7086;
+}
+
+.dark .vp-doc div[class*='language-'] .token.keyword,
+.dark .vp-doc div[class*='language-'] .token.tag {
+  color: #cba6f7;
+}
+
+.dark .vp-doc div[class*='language-'] .token.string,
+.dark .vp-doc div[class*='language-'] .token.attr-value {
+  color: #a6e3a1;
+}
+
+.dark .vp-doc div[class*='language-'] .token.function {
+  color: #89b4fa;
+}
+
+.dark .vp-doc div[class*='language-'] .token.number,
+.dark .vp-doc div[class*='language-'] .token.boolean {
+  color: #fab387;
+}
+
+.dark .vp-doc div[class*='language-'] .token.operator,
+.dark .vp-doc div[class*='language-'] .token.punctuation {
+  color: #94e2d5;
+}
+
+.dark .vp-doc div[class*='language-'] .token.class-name,
+.dark .vp-doc div[class*='language-'] .token.builtin {
+  color: #f9e2af;
+}
+
+.dark .vp-doc div[class*='language-'] .token.property {
+  color: #89dceb;
+}
+
+/* Dark mode language label adjustment */
+.dark .vp-doc div[class*='language-']::before {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #a6adc8;
+}
+
+/* ============================================
+   Collapsible Code Blocks
+   ============================================ */
+
+.collapsible-code {
+  position: relative;
+}
+
+.collapsible-code.is-collapsed div[class*='language-'] {
+  max-height: 420px;
+  overflow: hidden;
+}
+
+.collapsible-code.is-collapsed .code-fade-overlay {
+  display: block;
+}
+
+.code-fade-overlay {
+  display: none;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, var(--vp-code-block-bg));
+  pointer-events: none;
+  z-index: 3;
+  border-radius: 0 0 8px 8px;
+}
+
+.dark .code-fade-overlay {
+  background: linear-gradient(to bottom, transparent, #1e1e2e);
+}
+
+.collapsible-code-toggle {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  margin-top: -4px;
+  border: none;
+  border-top: 1px solid var(--vp-c-divider);
+  background-color: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 0 0 8px 8px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  text-align: center;
+}
+
+.collapsible-code-toggle:hover {
+  color: var(--vp-c-brand-1);
+  background-color: var(--vp-c-bg-mute);
+}
+
+/* ============================================
+   Section Dividers (Enhanced h2)
+   ============================================ */
+
+.vp-doc h2 {
+  position: relative;
+}
+
+.vp-doc h2::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background-color: var(--vp-c-brand-1);
+  border-radius: 1px;
+}
+
+/* ============================================
    Print Styles
    ============================================ */
 
 @media print {
+  /* Hide navigation and UI chrome */
   .VPNav,
   .VPSidebar,
   .VPLocalNav,
   .VPDocFooter,
-  .edit-link {
+  .VPDocAside,
+  .VPFooter,
+  .edit-link,
+  .VPButton,
+  .collapsible-code-toggle,
+  .code-fade-overlay,
+  aside,
+  .aside,
+  nav,
+  button,
+  .feedback-widget,
+  .reading-progress,
+  .reading-time,
+  .ask-ai,
+  .bookmarks,
+  .search-button,
+  .share-btn-wrapper,
+  .mobile-bottom-nav,
+  .back-to-top,
+  .image-zoom-overlay,
+  .skip-to-content,
+  .swipe-indicator {
     display: none !important;
   }
 
-  .VPContent {
+  /* Full-width content */
+  .VPContent,
+  .VPDoc,
+  .vp-doc,
+  .VPContent .container,
+  .VPDoc .container {
     max-width: 100% !important;
+    width: 100% !important;
     padding: 0 !important;
+    margin: 0 !important;
   }
+
+  /* Clean black/white styling */
+  body {
+    color: #000 !important;
+    background: #fff !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  .vp-doc {
+    color: #000 !important;
+  }
+
+  /* Show URLs after links */
+  .vp-doc a[href]::after {
+    content: ' (' attr(href) ')' !important;
+    font-size: 0.85em;
+    color: #555;
+    font-style: italic;
+    word-break: break-all;
+  }
+
+  /* Don't show URL for anchors or javascript */
+  .vp-doc a[href^='#']::after,
+  .vp-doc a[href^='javascript:']::after {
+    content: '' !important;
+  }
+
+  /* Prevent breaks inside code blocks and tables */
+  .vp-doc div[class*='language-'],
+  .vp-doc pre,
+  .vp-doc table,
+  .vp-doc blockquote,
+  .vp-doc img {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Page breaks between major sections */
+  .vp-doc h1 {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .vp-doc h1:first-of-type {
+    page-break-before: avoid;
+    break-before: avoid;
+  }
+
+  .vp-doc h2 {
+    page-break-after: avoid;
+    break-after: avoid;
+    border-top: 1px solid #ccc !important;
+  }
+
+  .vp-doc h2::before {
+    display: none;
+  }
+
+  .vp-doc h3,
+  .vp-doc h4 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Clean table styling for print */
+  .vp-doc table {
+    border: 1px solid #ccc;
+  }
+
+  .vp-doc th {
+    background-color: #f5f5f5 !important;
+    border: 1px solid #ccc;
+  }
+
+  .vp-doc td {
+    border: 1px solid #ccc;
+  }
+
+  .vp-doc tbody tr:nth-child(even) td {
+    background-color: #fafafa !important;
+  }
+
+  /* Code blocks: clean for print */
+  .vp-doc div[class*='language-'] {
+    border: 1px solid #ddd;
+    background-color: #f8f8f8 !important;
+    border-radius: 4px;
+  }
+
+  .vp-doc div[class*='language-']::before,
+  .vp-doc div[class*='language-']::after {
+    display: none !important;
+  }
+
+  .vp-doc div[class*='language-'] code {
+    color: #000 !important;
+    font-size: 10pt;
+  }
+
+  /* Collapsible code: show full content in print */
+  .collapsible-code.is-collapsed div[class*='language-'] {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Blockquote: clean for print */
+  .vp-doc blockquote {
+    border-left: 3px solid #999;
+    background-color: transparent !important;
+    color: #333 !important;
+  }
+
+  .vp-doc blockquote::before {
+    color: #ccc;
+  }
+
+  /* Remove hover effects and transitions */
+  * {
+    transition: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ============================================
+   Skip to Content (Accessibility)
+   ============================================ */
+
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  z-index: 999;
+  padding: 8px 16px;
+  background: var(--vp-c-brand-1);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 0 0 8px 8px;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+
+.skip-to-content:focus {
+  top: 0;
+  outline: none;
+}
+
+/* ============================================
+   Reduce Motion (Accessibility)
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================
+   Focus Ring Improvements (Accessibility)
+   ============================================ */
+
+:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Keyboard-Accessible Code Copy Buttons
+   ============================================ */
+
+.vp-doc div[class*='language-'] button,
+.vp-code-group button {
+  outline: none;
+}
+
+.vp-doc div[class*='language-'] button:focus-visible,
+.vp-code-group button:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ============================================
+   Visited Link Styling (Sidebar)
+   ============================================ */
+
+.VPSidebar a:visited {
+  opacity: 0.75;
+}
+
+.VPSidebar a.active:visited {
+  opacity: 1;
+}
+
+/* ============================================
+   Responsive Typography (clamp)
+   ============================================ */
+
+.vp-doc h1 {
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+}
+
+.vp-doc h2 {
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+}
+
+.vp-doc h3 {
+  font-size: clamp(1.15rem, 2.5vw, 1.4rem);
+}
+
+.vp-doc p,
+.vp-doc li,
+.vp-doc td,
+.vp-doc blockquote {
+  font-size: clamp(0.95rem, 2vw, 1.05rem);
+}
+
+/* ============================================
+   Page Fade-In (Content Area Only)
+   ============================================ */
+
+.vp-doc {
+  animation: content-fade-in 200ms ease-out;
+}
+
+@keyframes content-fade-in {
+  from { opacity: 0.3; }
+  to { opacity: 1; }
+}
+
+/* ============================================
+   1. Figure Numbering — CSS counters for images
+   ============================================ */
+
+.vp-doc {
+  counter-reset: figure table-counter;
+}
+
+.vp-doc img {
+  counter-increment: figure;
+}
+
+.vp-doc p > img:only-child {
+  display: block;
+}
+
+.vp-doc p > img:only-child::after {
+  display: block;
+}
+
+/* Wrap images in a figure-like container via CSS */
+.vp-doc p:has(> img:only-child) {
+  position: relative;
+  text-align: center;
+}
+
+.vp-doc p:has(> img:only-child)::after {
+  content: "Figure " counter(figure);
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+  margin-top: 6px;
+  font-style: italic;
+}
+
+.mermaid {
+  counter-increment: figure;
+}
+
+/* ============================================
+   2. Table Captions — auto-numbered
+   ============================================ */
+
+.vp-doc table {
+  counter-increment: table-counter;
+}
+
+.vp-doc table caption {
+  caption-side: top;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vp-c-text-2);
+  padding: 0 0 8px 0;
+}
+
+.vp-doc table caption::before {
+  content: "Table " counter(table-counter) ": ";
+  color: var(--vp-c-brand-1);
+  font-weight: 700;
+}
+
+/* ============================================
+   3. Code Output Styling — "output" / "result" blocks
+   ============================================ */
+
+.vp-doc div[class~='language-output'],
+.vp-doc div[class~='language-result'] {
+  background-color: var(--vp-c-bg-soft) !important;
+  border: 1px dashed var(--vp-c-divider);
+  position: relative;
+}
+
+.vp-doc div[class~='language-output'] pre,
+.vp-doc div[class~='language-result'] pre {
+  background-color: transparent !important;
+}
+
+.vp-doc div[class~='language-output'] code,
+.vp-doc div[class~='language-result'] code {
+  color: var(--vp-c-text-2) !important;
+}
+
+.vp-doc div[class~='language-output'] span,
+.vp-doc div[class~='language-result'] span {
+  color: var(--vp-c-text-2) !important;
+}
+
+.vp-doc div[class~='language-output']::before,
+.vp-doc div[class~='language-result']::before {
+  content: "Output";
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--vp-c-text-3);
+  background: var(--vp-c-bg);
+  padding: 1px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--vp-c-divider);
+  z-index: 2;
+}
+
+/* ============================================
+   4. Multi-Column Cheat Sheets
+   ============================================ */
+
+@media (min-width: 1200px) {
+  [data-cheat-sheet="true"] .vp-doc {
+    column-count: 2;
+    column-gap: 32px;
+  }
+
+  [data-cheat-sheet="true"] .vp-doc h1 {
+    column-span: all;
+  }
+
+  [data-cheat-sheet="true"] .vp-doc div[class*='language-'],
+  [data-cheat-sheet="true"] .vp-doc table,
+  [data-cheat-sheet="true"] .vp-doc .custom-block,
+  [data-cheat-sheet="true"] .vp-doc h2,
+  [data-cheat-sheet="true"] .vp-doc h3 {
+    break-inside: avoid;
+  }
+}
+
+/* ============================================
+   5. Improved Callouts — info & success containers
+   ============================================ */
+
+.vp-doc .custom-block.info {
+  border-left: 4px solid #3b82f6;
+  background-color: rgba(59, 130, 246, 0.06);
+  padding: 16px 20px;
+  border-radius: 0 8px 8px 0;
+}
+
+.vp-doc .custom-block.info .custom-block-title::before {
+  content: "\2139\FE0F  ";
+}
+
+.dark .vp-doc .custom-block.info {
+  background-color: rgba(59, 130, 246, 0.08);
+}
+
+.vp-doc .custom-block.success {
+  border-left: 4px solid #22c55e;
+  background-color: rgba(34, 197, 94, 0.06);
+  padding: 16px 20px;
+  border-radius: 0 8px 8px 0;
+}
+
+.vp-doc .custom-block.success .custom-block-title::before {
+  content: "\2705  ";
+}
+
+.dark .vp-doc .custom-block.success {
+  background-color: rgba(34, 197, 94, 0.08);
+}
+
+/* ============================================
+   6. SVG Animated Logo — subtle glow on hover
+   ============================================ */
+
+.VPNavBarTitle .logo,
+.VPNavBarTitle img,
+.VPNavBarTitle svg {
+  transition: filter 300ms ease, transform 300ms ease;
+}
+
+.VPNavBarTitle:hover .logo,
+.VPNavBarTitle:hover img,
+.VPNavBarTitle:hover svg {
+  filter: drop-shadow(0 0 6px rgba(95, 103, 238, 0.5));
+  transform: scale(1.03);
+}
+
+.VPNavBarTitle .title {
+  transition: text-shadow 300ms ease;
+}
+
+.VPNavBarTitle:hover .title {
+  text-shadow: 0 0 8px rgba(95, 103, 238, 0.3);
+}
+
+/* ============================================
+   7. Active Sidebar Indicator
+   ============================================ */
+
+.VPSidebarItem .link.active,
+.VPSidebar a.active {
+  border-left: 3px solid var(--vp-c-brand-1) !important;
+  background-color: var(--vp-c-brand-soft) !important;
+  padding-left: 9px;
+  border-radius: 0 6px 6px 0;
+  font-weight: 600 !important;
+  transition: all 0.2s ease;
+}
+
+.VPSidebarItem .link {
+  transition: border-left 0.2s ease, background-color 0.2s ease, padding-left 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+/* ============================================
+   8. Page Depth Dots — near breadcrumbs
+   ============================================ */
+
+.page-depth-dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.page-depth-dots .depth-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--vp-c-brand-1);
+  opacity: 0.5;
+}
+
+.page-depth-dots .depth-dot:first-child {
+  opacity: 0.9;
+}
+
+/* ============================================
+   9. Changelog Timeline
+   ============================================ */
+
+.changelog .vp-doc h3 {
+  position: relative;
+  padding-left: 24px;
+  margin-left: 8px;
+}
+
+.changelog .vp-doc h3::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--vp-c-brand-1);
+  box-shadow: 0 0 0 3px var(--vp-c-brand-soft);
+  z-index: 1;
+}
+
+.changelog .vp-doc h3::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 100%;
+  width: 2px;
+  height: calc(100% + 20px);
+  background: var(--vp-c-divider);
+}
+
+.changelog .vp-doc h2 ~ h3 + *,
+.changelog .vp-doc h3 ~ :not(h3):not(h2) {
+  margin-left: 32px;
+}
+
+/* ============================================
+   11. Lazy Image Loading — blur-up transition
+   ============================================ */
+
+.vp-doc img {
+  transition: filter 0.3s ease;
+}
+
+.vp-doc img[data-loading="true"] {
+  filter: blur(10px);
+}
+
+.vp-doc img.loaded {
+  filter: blur(0);
+}
+
+/* ============================================
+   12. Smooth Sidebar Scroll
+   ============================================ */
+
+.VPSidebar,
+.VPSidebar .group,
+.VPSidebar nav {
+  scroll-behavior: smooth;
+}
+
+/* ============================================
+   13. Loading Skeleton — page transition
+   ============================================ */
+
+@keyframes skeleton-pulse {
+  0% { opacity: 0.06; }
+  50% { opacity: 0.1; }
+  100% { opacity: 0.06; }
+}
+
+.vp-doc.is-loading::before {
+  content: "";
+  display: block;
+  height: 28px;
+  width: 60%;
+  background: var(--vp-c-text-1);
+  border-radius: 6px;
+  margin-bottom: 16px;
+  animation: skeleton-pulse 0.8s ease-in-out infinite;
+}
+
+.vp-doc.is-loading::after {
+  content: "";
+  display: block;
+  height: 14px;
+  width: 90%;
+  background: var(--vp-c-text-1);
+  border-radius: 4px;
+  animation: skeleton-pulse 0.8s ease-in-out infinite;
+  animation-delay: 0.1s;
+}
+
+/* ============================================
+   14. "Updated" Badge — green pill
+   ============================================ */
+
+.updated-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+.dark .updated-badge {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+/* ============================================
+   10. SwipeNav — mobile swipe visual feedback
+   ============================================ */
+
+.swipe-indicator {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  z-index: 200;
+  background: var(--vp-c-brand-1);
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.swipe-indicator.left {
+  left: 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.swipe-indicator.right {
+  right: 0;
+  border-radius: 4px 0 0 4px;
+}
+
+.swipe-indicator.visible {
+  opacity: 0.6;
+}
+
+body.swiping {
+  transition: transform 0.1s ease-out;
+}
+
+@media (min-width: 769px) {
+  .swipe-indicator { display: none !important; }
+}
+
+/* ============================================
+   Color-Coded Sidebar — thin left border per section
+   ============================================ */
+
+/* System Design */
+.VPSidebar .group:has(a[href^="/system-design/"]),
+.VPSidebar .group:has(a[href^="/system-design-interviews/"]) {
+  border-left: 3px solid #3b82f6;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* Architecture */
+.VPSidebar .group:has(a[href^="/architecture-patterns/"]),
+.VPSidebar .group:has(a[href^="/company-architecture/"]) {
+  border-left: 3px solid #8b5cf6;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* Security & Cybersecurity */
+.VPSidebar .group:has(a[href^="/security/"]),
+.VPSidebar .group:has(a[href^="/cybersecurity/"]) {
+  border-left: 3px solid #ef4444;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* AI/ML & Prompt Engineering */
+.VPSidebar .group:has(a[href^="/ai-ml-engineering/"]),
+.VPSidebar .group:has(a[href^="/prompt-engineering/"]) {
+  border-left: 3px solid #a855f7;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* DevOps */
+.VPSidebar .group:has(a[href^="/devops/"]),
+.VPSidebar .group:has(a[href^="/debugging-playbooks/"]) {
+  border-left: 3px solid #f97316;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* Infrastructure */
+.VPSidebar .group:has(a[href^="/infrastructure/"]) {
+  border-left: 3px solid #22c55e;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* Frontend & UI */
+.VPSidebar .group:has(a[href^="/frontend-engineering/"]),
+.VPSidebar .group:has(a[href^="/ui-design-systems/"]) {
+  border-left: 3px solid #06b6d4;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* Performance */
+.VPSidebar .group:has(a[href^="/performance/"]) {
+  border-left: 3px solid #eab308;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* Data Engineering */
+.VPSidebar .group:has(a[href^="/data-engineering/"]) {
+  border-left: 3px solid #14b8a6;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* Testing */
+.VPSidebar .group:has(a[href^="/testing/"]) {
+  border-left: 3px solid #ec4899;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* Production Blueprints / Build from Scratch / War Room */
+.VPSidebar .group:has(a[href^="/production-blueprints/"]),
+.VPSidebar .group:has(a[href^="/build-from-scratch/"]),
+.VPSidebar .group:has(a[href^="/war-room/"]) {
+  border-left: 3px solid #f59e0b;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* Algorithms & LLD */
+.VPSidebar .group:has(a[href^="/algorithms/"]),
+.VPSidebar .group:has(a[href^="/lld-interviews/"]) {
+  border-left: 3px solid #6366f1;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* Mobile Engineering */
+.VPSidebar .group:has(a[href^="/mobile-engineering/"]) {
+  border-left: 3px solid #06b6d4;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* Cheat Sheets & Learning Paths */
+.VPSidebar .group:has(a[href^="/cheat-sheets/"]),
+.VPSidebar .group:has(a[href^="/learning-paths/"]) {
+  border-left: 3px solid #84cc16;
+  padding-left: 8px;
+  margin-left: -4px;
+}
+
+/* ============================================
+   TLDR Highlight — first paragraph as summary card
+   ============================================ */
+
+.vp-doc > div > p:first-of-type {
+  background: var(--vp-c-bg-soft);
+  border-left: 3px solid var(--vp-c-brand-1);
+  padding: 14px 18px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 24px;
+  line-height: 1.7;
+  color: var(--vp-c-text-1);
+}
+
+.dark .vp-doc > div > p:first-of-type {
+  background: rgba(95, 103, 238, 0.06);
+}
+
+/* ============================================
+   Sticky Sidebar Section Headers
+   ============================================ */
+
+.VPSidebar .group > .item > .text,
+.VPSidebar .group > .VPSidebarItem > .item > .text {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--vp-c-bg);
+  padding-top: 4px;
+  padding-bottom: 4px;
+  transition: box-shadow 0.2s;
+}
+
+/* Subtle shadow when stuck — detected via intersection observer is not needed,
+   the visual separation from background is sufficient */
+.VPSidebar .group > .item:not(:first-child) > .text {
+  margin-top: 2px;
+}
+
+.dark .VPSidebar .group > .item > .text,
+.dark .VPSidebar .group > .VPSidebarItem > .item > .text {
+  background: var(--vp-c-bg);
 }

@@ -5,6 +5,14 @@ import tagData from '../data/tags.json'
 
 const { frontmatter, page } = useData()
 
+// Build path → page info map for descriptions
+const pageInfoMap = new Map<string, { description: string }>()
+for (const p of (tagData as any).pages) {
+  if (p.path) {
+    pageInfoMap.set(p.path, { description: p.description || '' })
+  }
+}
+
 const relatedPages = computed(() => {
   const currentTags: string[] = frontmatter.value.tags || []
   const currentPath = '/' + page.value.relativePath
@@ -14,7 +22,7 @@ const relatedPages = computed(() => {
   if (currentTags.length === 0) return []
 
   // Score pages by number of matching tags
-  const scored = new Map<string, { title: string; path: string; difficulty: string; score: number; matchedTags: string[] }>()
+  const scored = new Map<string, { title: string; path: string; difficulty: string; description: string; score: number; matchedTags: string[] }>()
 
   for (const tag of currentTags) {
     const pagesWithTag = tagData.tags[tag] || []
@@ -25,10 +33,12 @@ const relatedPages = computed(() => {
         existing.score++
         existing.matchedTags.push(tag)
       } else {
+        const info = pageInfoMap.get(p.path)
         scored.set(p.path, {
           title: p.title,
           path: p.path,
           difficulty: p.difficulty,
+          description: info?.description || '',
           score: 1,
           matchedTags: [tag],
         })
@@ -57,24 +67,27 @@ const difficultyColor = (d: string) => {
     <h2>Related Pages</h2>
     <div class="related-grid">
       <a
-        v-for="page in relatedPages"
-        :key="page.path"
-        :href="page.path"
+        v-for="rp in relatedPages"
+        :key="rp.path"
+        :href="rp.path"
         class="related-card"
       >
-        <div class="related-card-title">{{ page.title }}</div>
+        <div class="related-card-title">{{ rp.title }}</div>
+        <div v-if="rp.description" class="related-card-desc">
+          {{ rp.description.slice(0, 100) }}{{ rp.description.length > 100 ? '...' : '' }}
+        </div>
         <div class="related-card-meta">
           <span
-            v-if="page.difficulty"
+            v-if="rp.difficulty"
             class="difficulty-badge"
-            :style="{ backgroundColor: difficultyColor(page.difficulty) }"
+            :style="{ backgroundColor: difficultyColor(rp.difficulty) }"
           >
-            {{ page.difficulty }}
+            {{ rp.difficulty }}
           </span>
-          <span class="match-count">{{ page.score }} matching tag{{ page.score > 1 ? 's' : '' }}</span>
+          <span class="match-count">{{ rp.score }} matching tag{{ rp.score > 1 ? 's' : '' }}</span>
         </div>
         <div class="related-tags">
-          <span v-for="tag in page.matchedTags.slice(0, 3)" :key="tag" class="related-tag">
+          <span v-for="tag in rp.matchedTags.slice(0, 3)" :key="tag" class="related-tag">
             {{ tag }}
           </span>
         </div>
@@ -101,12 +114,13 @@ const difficultyColor = (d: string) => {
 
 .related-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
 
 .related-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
   padding: 14px 16px;
   border: 1px solid var(--vp-c-divider);
   border-radius: 8px;
@@ -123,8 +137,17 @@ const difficultyColor = (d: string) => {
 .related-card-title {
   font-weight: 600;
   font-size: 14px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: var(--vp-c-text-1);
+  line-height: 1.4;
+}
+
+.related-card-desc {
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+  line-height: 1.5;
+  margin-bottom: 8px;
+  flex: 1;
 }
 
 .related-card-meta {
@@ -161,7 +184,7 @@ const difficultyColor = (d: string) => {
   color: var(--vp-c-brand-1);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .related-grid {
     grid-template-columns: 1fr;
   }

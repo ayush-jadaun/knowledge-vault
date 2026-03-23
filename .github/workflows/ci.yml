@@ -43,6 +43,13 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Cache VitePress
+        uses: actions/cache@v4
+        with:
+          path: docs/.vitepress/cache
+          key: vitepress-${{ hashFiles('docs/**/*.md') }}
+          restore-keys: vitepress-
+
       - name: Install dependencies
         run: npm ci
 

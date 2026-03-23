@@ -1,6 +1,10 @@
 import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 import { sidebar } from './sidebar'
+import { createRequire } from 'module'
+
+const require = createRequire(import.meta.url)
+const pkg = require('../../package.json')
 
 export default withMermaid(
   defineConfig({
@@ -94,7 +98,7 @@ export default withMermaid(
     },
 
     ignoreDeadLinks: true,
-    lastUpdated: false,
+    lastUpdated: true,
     cleanUrls: true,
 
     markdown: {
@@ -233,6 +237,10 @@ export default withMermaid(
     },
 
     vite: {
+      define: {
+        __BUILD_DATE__: JSON.stringify(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })),
+        __APP_VERSION__: JSON.stringify(pkg.version),
+      },
       optimizeDeps: {
         include: ['mermaid'],
       },

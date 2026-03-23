@@ -61,6 +61,8 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Schema: Social Media', link: '/system-design/databases/schema-design-social' },
         { text: 'Schema: SaaS Multi-Tenant', link: '/system-design/databases/schema-design-saas' },
         { text: 'Schema: Chat Application', link: '/system-design/databases/schema-design-chat' },
+        { text: 'PostgreSQL DBA Guide', link: '/system-design/databases/postgresql-dba' },
+        { text: 'Multi-Region Database', link: '/system-design/databases/multi-region-database' },
       ],
     },
     {
@@ -171,6 +173,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Event-Driven APIs', link: '/system-design/api-design/event-driven-apis' },
         { text: 'Webhook Infrastructure', link: '/system-design/api-design/webhook-infrastructure' },
         { text: 'API Gateway Patterns', link: '/system-design/api-design/api-gateway-patterns' },
+        { text: 'tRPC', link: '/system-design/api-design/trpc' },
       ],
     },
     {
@@ -239,6 +242,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Transactional Outbox', link: '/architecture-patterns/event-driven/transactional-outbox' },
         { text: 'Idempotent Consumers', link: '/architecture-patterns/event-driven/idempotent-consumers' },
         { text: 'Event Versioning', link: '/architecture-patterns/event-driven/event-versioning' },
+        { text: 'Event Sourcing in Practice', link: '/architecture-patterns/event-driven/event-sourcing-practice' },
       ],
     },
     {
@@ -489,6 +493,9 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Deno & Bun', link: '/infrastructure/languages/deno-bun' },
         { text: 'Python Async', link: '/infrastructure/languages/python-async' },
         { text: 'Python Data Tools', link: '/infrastructure/languages/python-data-tools' },
+        { text: 'Next.js Patterns', link: '/infrastructure/languages/nextjs-patterns' },
+        { text: 'Fastify Deep Dive', link: '/infrastructure/languages/fastify-deep-dive' },
+        { text: 'Tailwind Architecture', link: '/infrastructure/languages/tailwind-architecture' },
       ],
     },
     {
@@ -738,6 +745,15 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Feature Flags Deployment', link: '/devops/deployment-strategies/feature-flags-deployment' },
         { text: 'Database Migrations', link: '/devops/deployment-strategies/database-migrations' },
         { text: 'Rollback Procedures', link: '/devops/deployment-strategies/rollback-procedures' },
+      ],
+    },
+    {
+      text: 'Deployment Guides',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/devops/deployment-guides/' },
+        { text: 'Deploy Node.js', link: '/devops/deployment-guides/deploy-nodejs' },
+        { text: 'Deploy Next.js', link: '/devops/deployment-guides/deploy-nextjs' },
       ],
     },
     {
@@ -1862,6 +1878,71 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Intermittent 502 Errors', link: '/debugging-playbooks/intermittent-502' },
         { text: 'Memory Leak', link: '/debugging-playbooks/memory-leak' },
         { text: 'Pods Restarting', link: '/debugging-playbooks/pods-restarting' },
+      ],
+    },
+  ],
+
+  '/comparisons/': [
+    {
+      text: 'Technology Comparisons',
+      items: [
+        { text: 'Overview', link: '/comparisons/' },
+      ],
+    },
+    {
+      text: 'Frontend',
+      collapsed: false,
+      items: [
+        { text: 'React vs Vue vs Svelte', link: '/comparisons/react-vs-vue-vs-svelte' },
+        { text: 'Next.js vs Nuxt vs SvelteKit', link: '/comparisons/nextjs-vs-nuxt-vs-sveltekit' },
+        { text: 'Tailwind vs CSS Modules vs Styled Components', link: '/comparisons/tailwind-vs-css-modules' },
+        { text: 'Vite vs Webpack vs Turbopack vs Rspack', link: '/comparisons/vite-vs-webpack' },
+      ],
+    },
+    {
+      text: 'Backend',
+      collapsed: false,
+      items: [
+        { text: 'Express vs Fastify vs Hono vs Elysia', link: '/comparisons/express-vs-fastify-vs-hono' },
+        { text: 'Prisma vs Drizzle vs TypeORM vs Knex', link: '/comparisons/prisma-vs-drizzle-vs-typeorm' },
+        { text: 'REST vs GraphQL vs gRPC vs tRPC', link: '/comparisons/rest-vs-graphql-vs-grpc-vs-trpc' },
+      ],
+    },
+    {
+      text: 'Testing',
+      collapsed: false,
+      items: [
+        { text: 'Jest vs Vitest vs Mocha', link: '/comparisons/jest-vs-vitest' },
+        { text: 'Playwright vs Cypress vs Selenium', link: '/comparisons/playwright-vs-cypress' },
+      ],
+    },
+    {
+      text: 'Tooling',
+      collapsed: false,
+      items: [
+        { text: 'pnpm vs npm vs yarn vs bun', link: '/comparisons/pnpm-vs-npm-vs-yarn' },
+      ],
+    },
+    {
+      text: 'DevOps & Infrastructure',
+      collapsed: false,
+      items: [
+        { text: 'Vercel vs Netlify vs Cloudflare vs Amplify', link: '/comparisons/vercel-vs-netlify-vs-cloudflare' },
+        { text: 'Terraform vs Pulumi vs CDK vs Crossplane', link: '/comparisons/terraform-vs-pulumi' },
+        { text: 'GitHub Actions vs GitLab CI vs Jenkins', link: '/comparisons/github-actions-vs-gitlab-ci' },
+        { text: 'Docker vs Podman', link: '/comparisons/docker-vs-podman' },
+        { text: 'Nginx vs Caddy vs Traefik', link: '/comparisons/nginx-vs-caddy-vs-traefik' },
+        { text: 'Datadog vs Grafana vs New Relic', link: '/comparisons/datadog-vs-grafana' },
+        { text: 'Redis vs Memcached vs DragonflyDB', link: '/comparisons/redis-vs-memcached-vs-dragonfly' },
+      ],
+    },
+    {
+      text: 'BaaS & AI',
+      collapsed: false,
+      items: [
+        { text: 'Supabase vs Firebase vs Appwrite', link: '/comparisons/supabase-vs-firebase' },
+        { text: 'OpenAI vs Anthropic vs Google vs Mistral', link: '/comparisons/openai-vs-anthropic-vs-google' },
+        { text: 'LangChain vs LlamaIndex vs Raw API', link: '/comparisons/langchain-vs-llamaindex' },
       ],
     },
   ],

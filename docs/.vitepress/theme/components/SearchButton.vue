@@ -4,6 +4,40 @@ import { onMounted, ref, nextTick } from 'vue'
 const isOpen = ref(false)
 let pagefindUI: any = null
 
+const activeResultIndex = ref(-1)
+
+function getResultLinks(): HTMLAnchorElement[] {
+  const container = document.getElementById('pagefind-container')
+  if (!container) return []
+  return Array.from(container.querySelectorAll('.pagefind-ui__result-link')) as HTMLAnchorElement[]
+}
+
+function handleSearchKeys(e: KeyboardEvent) {
+  if (!isOpen.value) return
+
+  const links = getResultLinks()
+  if (links.length === 0) return
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    activeResultIndex.value = Math.min(activeResultIndex.value + 1, links.length - 1)
+    links.forEach((l, i) => l.classList.toggle('pagefind-kb-active', i === activeResultIndex.value))
+    links[activeResultIndex.value]?.scrollIntoView({ block: 'nearest' })
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    activeResultIndex.value = Math.max(activeResultIndex.value - 1, 0)
+    links.forEach((l, i) => l.classList.toggle('pagefind-kb-active', i === activeResultIndex.value))
+    links[activeResultIndex.value]?.scrollIntoView({ block: 'nearest' })
+  } else if (e.key === 'Enter' && activeResultIndex.value >= 0) {
+    e.preventDefault()
+    const link = links[activeResultIndex.value]
+    if (link) {
+      isOpen.value = false
+      window.location.href = link.href
+    }
+  }
+}
+
 onMounted(() => {
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -13,11 +47,13 @@ onMounted(() => {
     if (e.key === 'Escape' && isOpen.value) {
       isOpen.value = false
     }
+    handleSearchKeys(e)
   })
 })
 
 function toggle() {
   isOpen.value = !isOpen.value
+  activeResultIndex.value = -1
   if (isOpen.value) {
     nextTick(() => initPagefind())
   }
@@ -70,6 +106,14 @@ async function initPagefind() {
         })
       }
     }, 200)
+
+    // Reset keyboard index when user types
+    setTimeout(() => {
+      const input = document.querySelector('#pagefind-container input') as HTMLInputElement
+      if (input) {
+        input.addEventListener('input', () => { activeResultIndex.value = -1 })
+      }
+    }, 150)
 
     setTimeout(() => {
       const input = document.querySelector('#pagefind-container input') as HTMLInputElement
@@ -507,6 +551,14 @@ mark.pagefind-ui__result-highlight {
 /* Hide default pagefind branding */
 .pagefind-ui__drawer .pagefind-ui__message::after {
   display: none !important;
+}
+
+/* Keyboard navigation active result */
+.pagefind-ui__result-link.pagefind-kb-active {
+  background: var(--vp-c-brand-soft) !important;
+  border-radius: 4px !important;
+  outline: 2px solid var(--vp-c-brand-1) !important;
+  outline-offset: 1px !important;
 }
 
 /* Load more button */
