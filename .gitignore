@@ -18,3 +18,5 @@ doc_build/
 rspress.config.ts
 styles/
 FUTURE_PAGES.md
+.claude/
+ROADMAP.md
