@@ -105,7 +105,7 @@ export function ThemedImage({ lightSrc, darkSrc, alt, className }: ThemedImagePr
 
 The cleanest solution for icons and simple illustrations: design SVGs to use `currentColor` for strokes and fills. They automatically adapt to any color context.
 
-```svg
+```xml
 <!-- Before: hardcoded colors -->
 <svg viewBox="0 0 24 24">
   <path fill="#1a1a1a" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10..." />
@@ -137,7 +137,7 @@ The cleanest solution for icons and simple illustrations: design SVGs to use `cu
 
 For multi-color SVGs, use CSS custom properties:
 
-```svg
+```xml
 <!-- SVG with CSS variable fills -->
 <svg viewBox="0 0 100 100">
   <rect fill="var(--icon-bg, #3b82f6)" x="0" y="0" width="50" height="50" />

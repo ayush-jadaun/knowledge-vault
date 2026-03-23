@@ -68,7 +68,7 @@ listen NAME     # Combined frontend + backend (shorthand)
 
 ### Global Section
 
-```haproxy
+```ini
 global
     # Process management
     daemon
@@ -104,7 +104,7 @@ global
 
 ### Defaults Section
 
-```haproxy
+```ini
 defaults
     log     global
     mode    http
@@ -144,7 +144,7 @@ Timeout values are the single most important HAProxy configuration. Too low and 
 
 ### Frontend Configuration
 
-```haproxy
+```ini
 # HTTP to HTTPS redirect
 frontend ft_http
     bind *:80
@@ -212,7 +212,7 @@ frontend ft_https
 
 ### Backend Configuration
 
-```haproxy
+```ini
 # API backend with advanced configuration
 backend bk_api
     mode http
@@ -328,7 +328,7 @@ backend bk_acme
 
 ### Complex ACL Combinations
 
-```haproxy
+```ini
 frontend ft_complex
     bind *:443 ssl crt /etc/haproxy/certs/
 
@@ -362,7 +362,7 @@ Stick tables are HAProxy's in-memory key-value stores for tracking connection st
 
 ### Stick Table Configuration
 
-```haproxy
+```ini
 # Rate limiting table
 backend st_per_ip
     stick-table type ip size 1m expire 30s store http_req_rate(10s),conn_cur,conn_rate(10s),bytes_out_rate(60s)
@@ -378,7 +378,7 @@ backend st_abuse
 
 ### Rate Limiting with Stick Tables
 
-```haproxy
+```ini
 frontend ft_ratelimit
     bind *:443 ssl crt /etc/haproxy/certs/
 
@@ -419,7 +419,7 @@ backend st_per_api_key
 
 ### Session Persistence with Stick Tables
 
-```haproxy
+```ini
 backend bk_web_sticky
     mode http
     balance roundrobin
@@ -443,7 +443,7 @@ backend bk_web_sticky
 
 ### HTTP Health Checks
 
-```haproxy
+```ini
 backend bk_advanced_health
     mode http
 
@@ -465,7 +465,7 @@ backend bk_advanced_health
 
 ### Advanced Health Check Patterns
 
-```haproxy
+```ini
 # Multi-step health check (HAProxy 2.2+)
 backend bk_deep_health
     mode http
@@ -517,7 +517,7 @@ stateDiagram-v2
 
 ### SSL Termination
 
-```haproxy
+```ini
 frontend ft_ssl
     # Single certificate
     bind *:443 ssl crt /etc/haproxy/certs/example.com.pem
@@ -538,7 +538,7 @@ frontend ft_ssl
 
 ### SSL Pass-Through
 
-```haproxy
+```ini
 # Pass encrypted traffic directly to backend (no termination)
 frontend ft_ssl_passthrough
     bind *:443
@@ -563,7 +563,7 @@ backend bk_api_passthrough
 
 ### SSL Re-encryption
 
-```haproxy
+```ini
 # Terminate SSL at HAProxy, re-encrypt to backend
 backend bk_reencrypt
     mode http
@@ -575,7 +575,7 @@ backend bk_reencrypt
 
 ## Stats Page
 
-```haproxy
+```ini
 # Dedicated stats frontend
 listen stats
     bind *:8404
@@ -601,7 +601,7 @@ listen stats
 
 ### Prometheus Integration
 
-```haproxy
+```ini
 frontend ft_prometheus
     bind *:8405
     mode http
@@ -775,7 +775,7 @@ During reload:
 3. Old process finishes existing connections
 4. Old process exits when all connections complete (or hard-stop-after timeout)
 
-```haproxy
+```ini
 global
     hard-stop-after 60s    # Force kill old process after 60s during reload
 ```
@@ -909,7 +909,7 @@ template {
 }
 ```
 
-```haproxy
+```ini
 # haproxy.cfg.ctmpl (Consul Template)
 backend bk_api
     mode http
@@ -935,7 +935,7 @@ HAProxy 2.0+ supports multi-threading (`nbthread`), which is generally preferred
 
 ### Map Files for Dynamic Routing
 
-```haproxy
+```ini
 # /etc/haproxy/maps/host_to_backend.map
 api.example.com       bk_api
 app.example.com       bk_web
@@ -966,7 +966,7 @@ echo "del map /etc/haproxy/maps/host_to_backend.map old.example.com" | \
 
 HAProxy embeds Lua for custom logic:
 
-```haproxy
+```ini
 global
     lua-load /etc/haproxy/lua/auth.lua
 

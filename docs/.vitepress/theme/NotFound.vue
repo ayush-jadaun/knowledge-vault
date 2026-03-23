@@ -14,11 +14,12 @@ const popularPages = [
 ]
 
 async function initPagefind() {
+  if (typeof window === 'undefined') return
   try {
-    // @ts-ignore
-    const pf = await import(/* @vite-ignore */ '/pagefind/pagefind.js')
-    await pf.init()
-    searchInitialized.value = true
+    const script = document.createElement('script')
+    script.src = '/pagefind/pagefind.js'
+    script.onload = () => { searchInitialized.value = true }
+    document.head.appendChild(script)
   } catch {
     // Pagefind only available after build
   }
