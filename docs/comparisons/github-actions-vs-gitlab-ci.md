@@ -333,7 +333,7 @@ deploy:
 ```
 
 ::: warning GitHub Actions Expression Syntax
-In VitePress (Vue-based), the `${{ "\u200B" }}` expression syntax conflicts with Vue template interpolation. If you are documenting GitHub Actions workflows in VitePress, you need to escape these expressions or use raw blocks.
+In VitePress (Vue-based), the `$&#123;&#123; "\u200B" &#125;&#125;` expression syntax conflicts with Vue template interpolation. If you are documenting GitHub Actions workflows in VitePress, you need to escape these expressions or use raw blocks.
 :::
 
 ### Deployment with Approvals

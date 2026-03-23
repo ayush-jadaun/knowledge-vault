@@ -143,7 +143,7 @@ description: "What's new in Archon — recent additions and updates"
 - Added **Tag Browse** page — explore all 1,240 tags with difficulty filter
 - Added **Interactive Code** — "Run" button on TypeScript code blocks (opens in StackBlitz)
 - Switched to **Pagefind** search (post-build, no memory impact)
-- Fixed **{{ }}** Vue template syntax errors across 32 files
+- Fixed **&#123;&#123; &#125;&#125;** Vue template syntax errors across 32 files
 - Fixed **GitHub repo links** in navbar and edit links
 - Improved **sidebar** — all sections expanded by default, auto-scroll to active page
 
