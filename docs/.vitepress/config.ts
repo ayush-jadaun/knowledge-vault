@@ -9,7 +9,7 @@ const pkg = require('../../package.json')
 export default withMermaid(
   defineConfig({
     title: 'Archon',
-    description: 'The holy grail of engineering knowledge — 850+ sacred texts from first principles to production mastery',
+    description: 'The holy grail of engineering knowledge — 950+ sacred texts from first principles to production mastery',
     lang: 'en-US',
 
     head: [
@@ -32,7 +32,7 @@ export default withMermaid(
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "Archon",
-        "description": "The holy grail of engineering knowledge — 850+ deep dives from first principles to production mastery",
+        "description": "The holy grail of engineering knowledge — 950+ deep dives from first principles to production mastery",
         "url": "https://knowledge-vault-five.vercel.app",
         "potentialAction": {
           "@type": "SearchAction",
@@ -148,6 +148,7 @@ export default withMermaid(
             { text: 'Data Engineering', link: '/data-engineering/' },
             { text: 'Testing', link: '/testing/' },
             { text: 'AI/ML Engineering', link: '/ai-ml-engineering/' },
+            { text: 'Exploratory Data Analysis', link: '/eda/' },
           ],
         },
         {

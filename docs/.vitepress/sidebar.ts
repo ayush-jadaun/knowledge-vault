@@ -1946,4 +1946,132 @@ export const sidebar: DefaultTheme.Sidebar = {
       ],
     },
   ],
+
+  '/eda/': [
+    {
+      text: 'Exploratory Data Analysis',
+      items: [
+        { text: 'Overview', link: '/eda/' },
+      ],
+    },
+    {
+      text: 'Tier 0: EDA Mindset',
+      collapsed: false,
+      items: [
+        { text: 'Asking the Right Questions', link: '/eda/asking-right-questions' },
+        { text: 'EDA Workflow (10 Steps)', link: '/eda/eda-workflow' },
+        { text: 'Common Mistakes', link: '/eda/common-mistakes' },
+        { text: 'EDA for Different Domains', link: '/eda/eda-for-different-domains' },
+      ],
+    },
+    {
+      text: 'Tier 1: Data Understanding',
+      collapsed: false,
+      items: [
+        { text: 'Data Types Deep Dive', link: '/eda/data-types-deep-dive' },
+        { text: 'Data Shapes & Structures', link: '/eda/data-shapes-structures' },
+        { text: 'Data Collection', link: '/eda/data-collection' },
+        { text: 'Data Profiling', link: '/eda/data-profiling' },
+        { text: 'Understanding Distributions', link: '/eda/understanding-distributions' },
+        { text: 'Understanding Scale', link: '/eda/understanding-scale' },
+      ],
+    },
+    {
+      text: 'Tier 2: Data Cleaning',
+      collapsed: false,
+      items: [
+        { text: 'Missing Data', link: '/eda/missing-data' },
+        { text: 'Outlier Analysis', link: '/eda/outlier-analysis' },
+        { text: 'Cleaning Text Data', link: '/eda/data-cleaning-text' },
+        { text: 'Cleaning Dates & Times', link: '/eda/data-cleaning-dates' },
+        { text: 'Cleaning Categories', link: '/eda/data-cleaning-categories' },
+        { text: 'Data Quality Validation', link: '/eda/data-quality-validation' },
+        { text: 'Edge Cases', link: '/eda/data-cleaning-edge-cases' },
+      ],
+    },
+    {
+      text: 'Tier 7: Libraries',
+      collapsed: true,
+      items: [
+        { text: 'NumPy for EDA', link: '/eda/numpy' },
+        { text: 'Pandas Fundamentals', link: '/eda/pandas-fundamentals' },
+        { text: 'Pandas Advanced', link: '/eda/pandas-advanced' },
+        { text: 'Matplotlib', link: '/eda/matplotlib' },
+        { text: 'Seaborn', link: '/eda/seaborn' },
+        { text: 'Plotly', link: '/eda/plotly' },
+        { text: 'SciPy Statistics', link: '/eda/scipy-stats' },
+        { text: 'Polars for EDA', link: '/eda/polars-for-eda' },
+      ],
+    },
+    {
+      text: 'Tier 8: Streamlit & Tools',
+      collapsed: true,
+      items: [
+        { text: 'Streamlit', link: '/eda/streamlit' },
+        { text: 'Streamlit EDA App', link: '/eda/streamlit-eda-app' },
+        { text: 'Automated EDA Tools', link: '/eda/automated-eda' },
+      ],
+    },
+    {
+      text: 'Tier 9: Projects',
+      collapsed: true,
+      items: [
+        { text: 'Project: Titanic', link: '/eda/project-titanic' },
+        { text: 'Project: E-Commerce', link: '/eda/project-ecommerce' },
+        { text: 'Project: Financial', link: '/eda/project-financial' },
+        { text: 'Project: Healthcare', link: '/eda/project-healthcare' },
+        { text: 'Project: NLP/Text', link: '/eda/project-nlp' },
+      ],
+    },
+    {
+      text: 'Tier 10: Reference',
+      collapsed: true,
+      items: [
+        { text: 'EDA Checklist (60 Items)', link: '/eda/eda-checklist' },
+        { text: 'Visualization Decision Tree', link: '/eda/visualization-decision-tree' },
+        { text: 'Statistical Test Selector', link: '/eda/statistical-test-selector' },
+        { text: 'Pandas EDA Cheat Sheet', link: '/cheat-sheets/pandas-eda' },
+      ],
+    },
+    {
+      text: 'Tier 11: Geospatial & Media',
+      collapsed: true,
+      items: [
+        { text: 'Geospatial EDA', link: '/eda/geospatial-eda' },
+        { text: 'Image & Audio EDA', link: '/eda/image-audio-eda' },
+      ],
+    },
+    {
+      text: 'Tier 12: Data Leakage & Sampling',
+      collapsed: true,
+      items: [
+        { text: 'Data Leakage Detection', link: '/eda/data-leakage' },
+        { text: 'Sampling Strategies', link: '/eda/sampling-strategies' },
+      ],
+    },
+    {
+      text: 'Tier 13: Post-Modeling EDA',
+      collapsed: true,
+      items: [
+        { text: 'Residual & Error Analysis', link: '/eda/post-modeling-eda' },
+        { text: 'Explainability as EDA', link: '/eda/explainability-eda' },
+      ],
+    },
+    {
+      text: 'Tier 14: Reproducibility',
+      collapsed: true,
+      items: [
+        { text: 'Reproducibility', link: '/eda/reproducibility' },
+        { text: 'Communicating Findings', link: '/eda/communicating-findings' },
+      ],
+    },
+    {
+      text: 'Tier 15-18: Advanced',
+      collapsed: true,
+      items: [
+        { text: 'Statistical Power', link: '/eda/statistical-power' },
+        { text: 'Relational Data EDA', link: '/eda/relational-data-eda' },
+      ],
+    },
+  ],
 }

@@ -97,6 +97,12 @@ features:
     link: /debugging-playbooks/
     linkText: Diagnose the issue
 
+  - icon: 📊
+    title: Exploratory Data Analysis
+    details: "69 pages of pure EDA mastery. From asking the right questions to SHAP explainability. NumPy, pandas, matplotlib, seaborn, plotly, Streamlit. 5 real-world projects. The complete data scientist's toolkit."
+    link: /eda/
+    linkText: Explore the data
+
   - icon: 🌊
     title: Data Engineering
     details: Taming the data deluge. Stream processing, windowing, watermarks, CDC, dimensional modeling, data vault, pipeline orchestration, real-time analytics with ClickHouse.
@@ -123,14 +129,14 @@ features:
 
   - icon: 🗺️
     title: Learning Paths & Cheat Sheets
-    details: Your quest map. 9 guided paths through the vault — Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack. Plus 19 cheat sheets for when you need answers, not explanations.
+    details: Your quest map. 11 guided paths through the vault — Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack, Cybersecurity, EDA. Plus 23 cheat sheets for when you need answers, not explanations.
     link: /learning-paths/
     linkText: Choose your path
 ---
 
 <div class="home-stats">
   <div class="stat-item">
-    <div class="stat-number">850+</div>
+    <div class="stat-number">950+</div>
     <div class="stat-label">Sacred texts</div>
   </div>
   <div class="stat-item">

@@ -7,6 +7,26 @@ description: "What's new in Archon — recent additions and updates"
 
 ## March 2026
 
+### March 24, 2026 — The EDA Expansion
+
+**+69 EDA pages. Archon reaches 950+ pages.**
+
+#### Exploratory Data Analysis (69 pages)
+- **EDA Mindset** (5) — Philosophy, asking right questions, 10-step workflow, 30+ common mistakes, domain-specific EDA
+- **Data Understanding** (6) — Data types, shapes, collection, profiling, distributions, scale
+- **Data Cleaning** (7) — Missing data (MCAR/MAR/MNAR), outliers, text cleaning, datetime hell, categories, validation, 20 edge cases
+- **Univariate Analysis** (4) — Numerical, categorical, temporal, text
+- **Bivariate & Multivariate** (5) — Num-num, cat-num, cat-cat, multivariate, correlation traps (Simpson's paradox)
+- **Feature Engineering** (6) — Transformations, encoding (12 strategies), creation, datetime, text, scaling
+- **Special Situations** (5) — Imbalanced data, multicollinearity, high cardinality, large datasets (Dask/Polars), small datasets
+- **Libraries** (8) — NumPy, pandas (2), matplotlib, seaborn, plotly, scipy, polars
+- **Streamlit** (3) — Basics, full interactive EDA app (300+ lines), automated EDA tools
+- **Real-World Projects** (5) — Titanic, e-commerce (RFM/cohort), financial (stocks/risk), healthcare (survival), NLP (sentiment/topics)
+- **Reference** (4) — 60-item checklist, chart decision tree, statistical test selector, pandas cheat sheet
+- **Advanced** (11) — Geospatial EDA, image/audio EDA, data leakage, sampling strategies, post-modeling EDA, SHAP/LIME explainability, reproducibility, communicating findings, statistical power, relational data, data drift, ethics & bias
+
+---
+
 ### March 20, 2026 — The Mega Expansion (Part 2)
 
 **+200 more pages. Archon reaches 850+ pages.**

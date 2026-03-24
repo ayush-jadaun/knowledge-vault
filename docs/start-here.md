@@ -5,7 +5,7 @@ description: "Your quest through Archon begins here — choose your path, forge 
 
 # Begin Your Journey
 
-You stand before **850+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
+You stand before **950+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
 
 Choose your quest.
 
@@ -112,6 +112,21 @@ Choose your quest.
 
 ---
 
+### "I want to master data analysis / EDA"
+
+**Time needed:** 3-4 weeks (1 hour/day)
+
+1. **Mindset** — [EDA Overview](/eda/) → [Asking Right Questions](/eda/asking-right-questions) → [EDA Workflow](/eda/eda-workflow) → [Common Mistakes](/eda/common-mistakes)
+2. **Libraries** — [NumPy](/eda/numpy) → [pandas Fundamentals](/eda/pandas-fundamentals) → [pandas Advanced](/eda/pandas-advanced)
+3. **Cleaning** — [Missing Data](/eda/missing-data) → [Outliers](/eda/outlier-analysis) → [Edge Cases](/eda/data-cleaning-edge-cases)
+4. **Analysis** — [Univariate](/eda/univariate-numerical) → [Bivariate](/eda/bivariate-num-num) → [Multivariate](/eda/multivariate) → [Correlation Traps](/eda/correlation-traps)
+5. **Visualization** — [matplotlib](/eda/matplotlib) → [seaborn](/eda/seaborn) → [plotly](/eda/plotly) → [Best Practices](/eda/visualization-decision-tree)
+6. **Feature Engineering** — [Transformations](/eda/transformations) → [Encoding](/eda/encoding-strategies) → [Scaling](/eda/scaling-normalization)
+7. **Projects** — [Titanic](/eda/project-titanic) → [E-Commerce](/eda/project-ecommerce) → [Financial](/eda/project-financial)
+8. **Advanced** — [Data Leakage](/eda/data-leakage) → [Explainability](/eda/explainability-eda) → [Data Drift](/eda/data-drift)
+
+---
+
 ### "I want to become a cybersecurity engineer"
 
 **Time needed:** 4-6 weeks (1 hour/day)
@@ -145,7 +160,7 @@ Choose your quest.
 
 ### "I just want to browse and explore"
 
-- [Knowledge Graph](/graph) — visual map of all 850+ topics and how they connect
+- [Knowledge Graph](/graph) — visual map of all 950+ topics and how they connect
 - [Browse by Tag](/tags) — 3,000+ tags, filter by difficulty
 - [Compare Technologies](/compare) — side-by-side comparison (Kafka vs RabbitMQ, Postgres vs MongoDB, etc.)
 - [Cheat Sheets](/cheat-sheets/) — 22 quick reference cards
@@ -171,6 +186,7 @@ Choose your quest.
 | **Cybersecurity** | 22 | Complete security engineer path: pentesting, OSINT, reverse engineering, red/blue team, Active Directory, Web3, mobile, bug bounty, forensics |
 | **DevOps** | 60+ | Monitoring, logging, alerting, deployment, incident response, SRE, Git, engineering practices, checklists, runbooks, migrations, feature flags |
 | **AI/ML Engineering** | 25+ | LangChain (2000 lines), LangGraph (2200 lines), RAG, vector DBs, embeddings, AI agents, fine-tuning, guardrails, production AI, Claude/OpenAI/HuggingFace APIs |
+| **Exploratory Data Analysis** | 69 | EDA mindset, data cleaning (7 pages), univariate/bivariate/multivariate, feature engineering, NumPy/pandas/matplotlib/seaborn/plotly/Streamlit, 5 projects, leakage, drift, ethics |
 | **Frontend Engineering** | 12 | Web performance, browser rendering, SSR/SSG, state management, React internals, WebAssembly, i18n, data visualization |
 | **Mobile Engineering** | 6 | React Native, Flutter, mobile performance, push notifications, offline-first |
 | **Testing** | 8 | Unit, integration, E2E, contract, property-based, TDD/BDD, test architecture |
