@@ -1990,6 +1990,50 @@ export const sidebar: DefaultTheme.Sidebar = {
       ],
     },
     {
+      text: 'Tier 3: Univariate Analysis',
+      collapsed: true,
+      items: [
+        { text: 'Numerical', link: '/eda/univariate-numerical' },
+        { text: 'Categorical', link: '/eda/univariate-categorical' },
+        { text: 'Temporal', link: '/eda/univariate-temporal' },
+        { text: 'Text', link: '/eda/univariate-text' },
+      ],
+    },
+    {
+      text: 'Tier 4: Bivariate & Multivariate',
+      collapsed: true,
+      items: [
+        { text: 'Numerical vs Numerical', link: '/eda/bivariate-num-num' },
+        { text: 'Categorical vs Numerical', link: '/eda/bivariate-cat-num' },
+        { text: 'Categorical vs Categorical', link: '/eda/bivariate-cat-cat' },
+        { text: 'Multivariate Analysis', link: '/eda/multivariate' },
+        { text: 'Correlation Traps', link: '/eda/correlation-traps' },
+      ],
+    },
+    {
+      text: 'Tier 5: Feature Engineering',
+      collapsed: true,
+      items: [
+        { text: 'Transformations', link: '/eda/transformations' },
+        { text: 'Encoding Strategies', link: '/eda/encoding-strategies' },
+        { text: 'Feature Creation', link: '/eda/feature-creation' },
+        { text: 'Datetime Features', link: '/eda/datetime-features' },
+        { text: 'Text Features', link: '/eda/text-features' },
+        { text: 'Scaling & Normalization', link: '/eda/scaling-normalization' },
+      ],
+    },
+    {
+      text: 'Tier 6: Special Situations',
+      collapsed: true,
+      items: [
+        { text: 'Imbalanced Data', link: '/eda/imbalanced-data' },
+        { text: 'Multicollinearity', link: '/eda/multicollinearity' },
+        { text: 'High Cardinality', link: '/eda/high-cardinality' },
+        { text: 'Large Datasets', link: '/eda/large-datasets' },
+        { text: 'Small Datasets', link: '/eda/small-datasets' },
+      ],
+    },
+    {
       text: 'Tier 7: Libraries',
       collapsed: true,
       items: [
@@ -2071,6 +2115,8 @@ export const sidebar: DefaultTheme.Sidebar = {
       items: [
         { text: 'Statistical Power', link: '/eda/statistical-power' },
         { text: 'Relational Data EDA', link: '/eda/relational-data-eda' },
+        { text: 'Data Drift & Evolution', link: '/eda/data-drift' },
+        { text: 'Ethics & Bias Detection', link: '/eda/eda-ethics-bias' },
       ],
     },
   ],
