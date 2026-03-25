@@ -1365,6 +1365,7 @@ export const sidebar: DefaultTheme.Sidebar = {
       items: [
         { text: 'Knight Capital $440M Bug (2012)', link: '/war-room/knight-capital-2012' },
         { text: 'CrowdStrike Global BSOD (2024)', link: '/war-room/crowdstrike-july-2024' },
+        { text: 'LiteLLM Supply Chain Attack (2026)', link: '/war-room/litellm-supply-chain-2026' },
         { text: 'Cloudflare Regex Outage (2019)', link: '/war-room/cloudflare-regex-2019' },
       ],
     },
