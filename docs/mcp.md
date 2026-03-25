@@ -15,10 +15,28 @@ No browser needed. Just ask your AI assistant about system design, algorithms, s
 
 ## Quick Start
 
-### Claude Code
+### Option 1: Remote (no install needed)
 
 ```bash
-claude mcp add archon -- npx archon-mcp
+claude mcp add archon --transport http https://archon-eight.vercel.app/api/mcp
+```
+
+Works instantly. No npm, no cloning, no setup. The server runs on Vercel and queries all 1,000+ pages remotely.
+
+**Test it:** [https://archon-eight.vercel.app/api/mcp](https://archon-eight.vercel.app/api/mcp)
+
+### Option 2: npm package
+
+```bash
+claude mcp add archon -- npx archon-mcp-server
+```
+
+### Option 3: Local (clone the repo)
+
+```bash
+git clone https://github.com/ayush-jadaun/knowledge-vault.git
+cd knowledge-vault/mcp-server && npm install
+claude mcp add archon -- node index.js
 ```
 
 ### Cursor

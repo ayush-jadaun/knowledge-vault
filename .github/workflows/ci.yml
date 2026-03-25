@@ -70,11 +70,21 @@ jobs:
           cp api/chat.js .vercel/output/functions/api/chat.func/index.js
           echo '{"runtime":"edge","entrypoint":"index.js"}' > .vercel/output/functions/api/chat.func/.vc-config.json
 
+          mkdir -p .vercel/output/functions/api/mcp.func
+          cp api/mcp.js .vercel/output/functions/api/mcp.func/index.js
+          echo '{"runtime":"nodejs20.x","entrypoint":"index.js","maxDuration":30}' > .vercel/output/functions/api/mcp.func/.vc-config.json
+
+          mkdir -p .vercel/output/functions/api/page.func
+          cp api/page.js .vercel/output/functions/api/page.func/index.js
+          echo '{"runtime":"nodejs20.x","entrypoint":"index.js","maxDuration":10}' > .vercel/output/functions/api/page.func/.vc-config.json
+
           cat > .vercel/output/config.json << 'CONF'
           {
             "version": 3,
             "routes": [
               { "src": "/api/chat", "dest": "/api/chat" },
+              { "src": "/api/mcp", "dest": "/api/mcp" },
+              { "src": "/api/page", "dest": "/api/page" },
               { "handle": "filesystem" },
               { "src": "/(.*)", "status": 404, "dest": "/404.html" }
             ]
