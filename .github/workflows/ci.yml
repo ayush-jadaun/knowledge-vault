@@ -72,11 +72,11 @@ jobs:
 
           mkdir -p .vercel/output/functions/api/mcp.func
           cp api/mcp.js .vercel/output/functions/api/mcp.func/index.js
-          echo '{"runtime":"nodejs20.x","entrypoint":"index.js","maxDuration":30}' > .vercel/output/functions/api/mcp.func/.vc-config.json
+          echo '{"runtime":"edge","entrypoint":"index.js"}' > .vercel/output/functions/api/mcp.func/.vc-config.json
 
           mkdir -p .vercel/output/functions/api/page.func
           cp api/page.js .vercel/output/functions/api/page.func/index.js
-          echo '{"runtime":"nodejs20.x","entrypoint":"index.js","maxDuration":10}' > .vercel/output/functions/api/page.func/.vc-config.json
+          echo '{"runtime":"edge","entrypoint":"index.js"}' > .vercel/output/functions/api/page.func/.vc-config.json
 
           cat > .vercel/output/config.json << 'CONF'
           {

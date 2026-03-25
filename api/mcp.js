@@ -1,219 +1,97 @@
-// Archon MCP — Remote endpoint via Vercel Serverless
-// Handles MCP Streamable HTTP transport
+// Archon MCP — Remote Edge Function endpoint
 // URL: https://archon-eight.vercel.app/api/mcp
 
+export const config = { runtime: 'edge' }
+
 const SITE_URL = 'https://archon-eight.vercel.app'
-
-// Rate limiting (in-memory, per Vercel instance)
+const RATE_LIMIT = 60
+const RATE_WINDOW = 60000
 const rateLimits = new Map()
-const RATE_LIMIT = 60 // requests per minute
-const RATE_WINDOW = 60 * 1000
 
-function checkRateLimit(ip) {
+function checkRate(ip) {
   const now = Date.now()
-  const key = ip || 'unknown'
-  const entry = rateLimits.get(key)
-  if (!entry || now - entry.start > RATE_WINDOW) {
-    rateLimits.set(key, { start: now, count: 1 })
-    return { allowed: true, remaining: RATE_LIMIT - 1 }
-  }
-  entry.count++
-  if (entry.count > RATE_LIMIT) {
-    return { allowed: false, remaining: 0 }
-  }
-  return { allowed: true, remaining: RATE_LIMIT - entry.count }
+  const e = rateLimits.get(ip)
+  if (!e || now - e.s > RATE_WINDOW) { rateLimits.set(ip, { s: now, c: 1 }); return true }
+  return ++e.c <= RATE_LIMIT
 }
 
-// Lightweight in-memory cache
-let indexCache = null
-let indexLoadedAt = 0
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+let cache = null
+let cacheAt = 0
 
 async function loadIndex() {
-  const now = Date.now()
-  if (indexCache && now - indexLoadedAt < CACHE_TTL) return indexCache
-  try {
-    const res = await fetch(`${SITE_URL}/ai-context.json`)
-    if (!res.ok) throw new Error(`Failed to fetch index: ${res.status}`)
-    indexCache = await res.json()
-    indexLoadedAt = now
-    return indexCache
-  } catch {
-    if (indexCache) return indexCache // stale cache better than nothing
-    throw new Error('Cannot load Archon index')
-  }
+  if (cache && Date.now() - cacheAt < 300000) return cache
+  const r = await fetch(`${SITE_URL}/ai-context.json`)
+  if (!r.ok) { if (cache) return cache; throw new Error('Cannot load index') }
+  cache = await r.json()
+  cacheAt = Date.now()
+  return cache
 }
 
-function searchPages(pages, query, limit = 10) {
-  const terms = query.toLowerCase().split(/\s+/).filter(Boolean)
-  const scored = pages.map(p => {
-    let score = 0
-    const title = (p.title || '').toLowerCase()
-    const desc = (p.description || '').toLowerCase()
-    const tags = (p.tags || []).join(' ').toLowerCase()
-    const content = (p.content || '').toLowerCase().slice(0, 2000)
-    for (const t of terms) {
-      if (title.includes(t)) score += 10
-      if (desc.includes(t)) score += 5
-      if (tags.includes(t)) score += 3
-      if (content.includes(t)) score += 1
-    }
-    return { ...p, score }
-  }).filter(r => r.score > 0)
-  scored.sort((a, b) => b.score - a.score)
-  return scored.slice(0, limit).map(({ score, content, ...rest }) => ({
-    ...rest,
-    score,
-    snippet: (content || '').slice(0, 200)
-  }))
+function search(pages, q, limit = 10) {
+  const terms = q.toLowerCase().split(/\s+/)
+  return pages.map(p => {
+    let s = 0
+    const t = (p.title || '').toLowerCase(), d = (p.description || '').toLowerCase()
+    const tags = (p.tags || []).join(' ').toLowerCase(), b = (p.content || '').toLowerCase().slice(0, 2000)
+    for (const w of terms) { if (t.includes(w)) s += 10; if (d.includes(w)) s += 5; if (tags.includes(w)) s += 3; if (b.includes(w)) s += 1 }
+    return { ...p, score: s }
+  }).filter(r => r.score > 0).sort((a, b) => b.score - a.score).slice(0, limit)
+    .map(({ content, ...r }) => ({ ...r, snippet: (content || '').slice(0, 200) }))
 }
 
-// Tool handlers
 const TOOLS = {
-  search_archon: async (args, pages) => {
-    const results = searchPages(pages, args.query, args.limit || 10)
-    return { results, total: results.length }
-  },
-  get_page: async (args, pages) => {
-    const path = args.path.replace(/^\//, '').replace(/\.md$/, '')
-    const page = pages.find(p => p.path === path || p.path?.endsWith(path))
-    if (!page) return { error: `Page not found: ${args.path}` }
-    return { title: page.title, path: page.path, content: page.content }
-  },
-  list_sections: async (_, pages) => {
-    const sections = {}
-    pages.forEach(p => {
-      const section = (p.path || '').split('/')[0] || 'root'
-      sections[section] = (sections[section] || 0) + 1
-    })
-    return { sections, total: pages.length }
-  },
-  list_pages: async (args, pages) => {
-    const section = args.section.replace(/^\//, '').replace(/\/$/, '')
-    const filtered = pages.filter(p => p.path?.startsWith(section + '/'))
-    return {
-      section,
-      pages: filtered.map(p => ({ title: p.title, path: p.path, description: p.description })),
-      total: filtered.length
-    }
-  },
-  get_related: async (args, pages) => {
-    const path = args.path.replace(/^\//, '').replace(/\.md$/, '')
-    const page = pages.find(p => p.path === path || p.path?.endsWith(path))
-    if (!page) return { error: `Page not found: ${args.path}` }
-    const pageTags = new Set(page.tags || [])
-    const related = pages
-      .filter(p => p.path !== page.path)
-      .map(p => {
-        const shared = (p.tags || []).filter(t => pageTags.has(t))
-        return { ...p, sharedTags: shared.length }
-      })
-      .filter(r => r.sharedTags > 0)
-      .sort((a, b) => b.sharedTags - a.sharedTags)
-      .slice(0, 5)
-    return { page: page.title, related: related.map(r => ({ title: r.title, path: r.path, sharedTags: r.sharedTags })) }
-  },
-  random_page: async (_, pages) => {
-    const page = pages[Math.floor(Math.random() * pages.length)]
-    return { title: page.title, path: page.path, description: page.description }
-  },
-  list_all_tags: async (_, pages) => {
-    const tags = {}
-    pages.forEach(p => (p.tags || []).forEach(t => { tags[t] = (tags[t] || 0) + 1 }))
-    const sorted = Object.entries(tags).sort((a, b) => b[1] - a[1])
-    return { tags: Object.fromEntries(sorted), total: sorted.length }
-  }
+  search_archon: (a, p) => ({ results: search(p, a.query, a.limit || 10) }),
+  get_page: (a, p) => { const pg = p.find(x => x.path === a.path || x.path?.endsWith(a.path)); return pg ? { title: pg.title, path: pg.path, content: pg.content } : { error: 'Not found' } },
+  list_sections: (_, p) => { const s = {}; p.forEach(x => { const k = (x.path || '').split('/')[0]; s[k] = (s[k] || 0) + 1 }); return { sections: s, total: p.length } },
+  list_pages: (a, p) => { const f = p.filter(x => x.path?.startsWith(a.section)); return { pages: f.map(x => ({ title: x.title, path: x.path, description: x.description })), total: f.length } },
+  get_related: (a, p) => { const pg = p.find(x => x.path?.endsWith(a.path)); if (!pg) return { error: 'Not found' }; const ts = new Set(pg.tags || []); return { related: p.filter(x => x.path !== pg.path).map(x => ({ ...x, shared: (x.tags || []).filter(t => ts.has(t)).length })).filter(x => x.shared > 0).sort((a, b) => b.shared - a.shared).slice(0, 5).map(({ content, ...r }) => r) } },
+  random_page: (_, p) => { const pg = p[Math.floor(Math.random() * p.length)]; return { title: pg.title, path: pg.path, description: pg.description } },
+  list_all_tags: (_, p) => { const t = {}; p.forEach(x => (x.tags || []).forEach(tag => { t[tag] = (t[tag] || 0) + 1 })); return { tags: t } },
 }
 
-// JSON-RPC handler
+const TOOL_LIST = [
+  { name: 'search_archon', description: 'Search 1000+ engineering pages', inputSchema: { type: 'object', properties: { query: { type: 'string' }, limit: { type: 'number' } }, required: ['query'] } },
+  { name: 'get_page', description: 'Get full page content by path', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
+  { name: 'list_sections', description: 'List all sections with page counts', inputSchema: { type: 'object', properties: {} } },
+  { name: 'list_pages', description: 'List pages in a section', inputSchema: { type: 'object', properties: { section: { type: 'string' } }, required: ['section'] } },
+  { name: 'get_related', description: 'Find related pages', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
+  { name: 'random_page', description: 'Get a random page', inputSchema: { type: 'object', properties: {} } },
+  { name: 'list_all_tags', description: 'List all tags', inputSchema: { type: 'object', properties: {} } },
+]
+
 async function handleRPC(body) {
   const { method, params, id } = body
-
-  if (method === 'initialize') {
-    return {
-      jsonrpc: '2.0', id,
-      result: {
-        protocolVersion: '2024-11-05',
-        serverInfo: { name: 'archon-mcp', version: '1.0.0' },
-        capabilities: { tools: {} }
-      }
-    }
-  }
-
-  if (method === 'tools/list') {
-    return {
-      jsonrpc: '2.0', id,
-      result: {
-        tools: [
-          { name: 'search_archon', description: 'Search across 1000+ engineering pages', inputSchema: { type: 'object', properties: { query: { type: 'string' }, limit: { type: 'number' } }, required: ['query'] } },
-          { name: 'get_page', description: 'Get full content of a page by path', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
-          { name: 'list_sections', description: 'List all sections with page counts', inputSchema: { type: 'object', properties: {} } },
-          { name: 'list_pages', description: 'List pages in a section', inputSchema: { type: 'object', properties: { section: { type: 'string' } }, required: ['section'] } },
-          { name: 'get_related', description: 'Find related pages by shared tags', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
-          { name: 'random_page', description: 'Get a random page', inputSchema: { type: 'object', properties: {} } },
-          { name: 'list_all_tags', description: 'List all tags with counts', inputSchema: { type: 'object', properties: {} } },
-        ]
-      }
-    }
-  }
-
+  if (method === 'initialize') return { jsonrpc: '2.0', id, result: { protocolVersion: '2024-11-05', serverInfo: { name: 'archon-mcp', version: '1.0.0' }, capabilities: { tools: {} } } }
+  if (method === 'tools/list') return { jsonrpc: '2.0', id, result: { tools: TOOL_LIST } }
   if (method === 'tools/call') {
-    const { name, arguments: args } = params
-    const handler = TOOLS[name]
-    if (!handler) {
-      return { jsonrpc: '2.0', id, error: { code: -32601, message: `Unknown tool: ${name}` } }
-    }
-    try {
-      const pages = await loadIndex()
-      const result = await handler(args || {}, Array.isArray(pages) ? pages : pages.pages || [])
-      return {
-        jsonrpc: '2.0', id,
-        result: { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }
-      }
-    } catch (err) {
-      return { jsonrpc: '2.0', id, error: { code: -32000, message: err.message } }
-    }
+    const h = TOOLS[params.name]
+    if (!h) return { jsonrpc: '2.0', id, error: { code: -32601, message: `Unknown tool: ${params.name}` } }
+    const pages = await loadIndex()
+    const arr = Array.isArray(pages) ? pages : pages.pages || []
+    const result = h(params.arguments || {}, arr)
+    return { jsonrpc: '2.0', id, result: { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] } }
   }
-
-  return { jsonrpc: '2.0', id, error: { code: -32601, message: `Method not found: ${method}` } }
+  return { jsonrpc: '2.0', id, error: { code: -32601, message: `Unknown method: ${method}` } }
 }
 
-export default async function handler(req, res) {
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+export default async function handler(req) {
+  if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } })
 
-  if (req.method === 'OPTIONS') return res.status(200).end()
+  const headers = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'
+  if (!checkRate(ip)) return new Response(JSON.stringify({ error: 'Rate limited' }), { status: 429, headers })
 
-  // Rate limiting
-  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket?.remoteAddress
-  const rateCheck = checkRateLimit(ip)
-  res.setHeader('X-RateLimit-Limit', RATE_LIMIT)
-  res.setHeader('X-RateLimit-Remaining', rateCheck.remaining)
-  if (!rateCheck.allowed) {
-    return res.status(429).json({ error: 'Rate limit exceeded. 60 requests per minute.' })
-  }
-
-  if (req.method === 'GET') {
-    return res.status(200).json({
-      name: 'archon-mcp',
-      version: '1.0.0',
-      description: 'Archon MCP Server — query 1000+ pages of engineering knowledge',
-      tools: Object.keys(TOOLS).length,
-      docs: 'https://archon-eight.vercel.app/mcp'
-    })
-  }
+  if (req.method === 'GET') return new Response(JSON.stringify({ name: 'archon-mcp', version: '1.0.0', tools: TOOL_LIST.length, docs: `${SITE_URL}/mcp` }), { headers })
 
   if (req.method === 'POST') {
     try {
-      const body = req.body
+      const body = await req.json()
       const result = await handleRPC(body)
-      return res.status(200).json(result)
-    } catch (err) {
-      return res.status(500).json({ jsonrpc: '2.0', error: { code: -32000, message: err.message } })
+      return new Response(JSON.stringify(result), { headers })
+    } catch (e) {
+      return new Response(JSON.stringify({ error: e.message }), { status: 500, headers })
     }
   }
 
-  return res.status(405).json({ error: 'Method not allowed' })
+  return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers })
 }

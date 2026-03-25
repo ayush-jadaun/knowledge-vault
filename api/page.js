@@ -1,60 +1,45 @@
-// Archon — On-demand page content endpoint
+// Archon — On-demand page content Edge Function
 // GET /api/page?path=system-design/databases/postgres-internals
-// Returns full markdown content for a single page
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400')
+export const config = { runtime: 'edge' }
 
-  if (req.method === 'OPTIONS') return res.status(200).end()
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
+const SITE_URL = 'https://archon-eight.vercel.app'
+let cache = null
+let cacheAt = 0
 
-  const path = req.query.path
-  if (!path) return res.status(400).json({ error: 'Missing ?path= parameter' })
+async function loadIndex() {
+  if (cache && Date.now() - cacheAt < 300000) return cache
+  const r = await fetch(`${SITE_URL}/ai-context.json`)
+  if (!r.ok) { if (cache) return cache; throw new Error('Cannot load index') }
+  cache = await r.json()
+  cacheAt = Date.now()
+  return cache
+}
 
-  // Sanitize — prevent path traversal
+export default async function handler(req) {
+  const headers = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json', 'Cache-Control': 'public, s-maxage=3600' }
+
+  if (req.method === 'OPTIONS') return new Response(null, { status: 200, headers })
+
+  const url = new URL(req.url)
+  const path = url.searchParams.get('path')
+  if (!path) return new Response(JSON.stringify({ error: 'Missing ?path=' }), { status: 400, headers })
+
   const clean = path.replace(/\.\./g, '').replace(/^\//, '').replace(/\.md$/, '')
-  if (!clean || clean.includes('..')) {
-    return res.status(400).json({ error: 'Invalid path' })
-  }
+  if (!clean) return new Response(JSON.stringify({ error: 'Invalid path' }), { status: 400, headers })
 
   try {
-    // Try fetching from the static dist
-    const url = `https://archon-eight.vercel.app/${clean}.html`
-    const response = await fetch(url)
+    const pages = await loadIndex()
+    const arr = Array.isArray(pages) ? pages : pages.pages || []
+    const page = arr.find(p => p.path === clean || p.path?.endsWith(clean))
+    if (!page) return new Response(JSON.stringify({ error: `Not found: ${clean}` }), { status: 404, headers })
 
-    if (!response.ok) {
-      return res.status(404).json({ error: `Page not found: ${clean}` })
-    }
-
-    // Return the path info — full content is in the ai-context.json
-    // For the npm MCP package, we serve from the full index
-    const SITE_URL = 'https://archon-eight.vercel.app'
-    const indexRes = await fetch(`${SITE_URL}/ai-context.json`)
-    if (!indexRes.ok) {
-      return res.status(500).json({ error: 'Cannot load content index' })
-    }
-
-    const pages = await indexRes.json()
-    const pageList = Array.isArray(pages) ? pages : pages.pages || []
-    const page = pageList.find(p => p.path === clean || p.path?.endsWith(clean))
-
-    if (!page) {
-      return res.status(404).json({ error: `Page not found in index: ${clean}` })
-    }
-
-    return res.status(200).json({
-      path: page.path,
-      title: page.title,
-      description: page.description,
-      tags: page.tags,
-      difficulty: page.difficulty,
-      content: page.content,
+    return new Response(JSON.stringify({
+      path: page.path, title: page.title, description: page.description,
+      tags: page.tags, difficulty: page.difficulty, content: page.content,
       url: `${SITE_URL}/${clean}`
-    })
-  } catch (err) {
-    return res.status(500).json({ error: err.message })
+    }), { headers })
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e.message }), { status: 500, headers })
   }
 }
