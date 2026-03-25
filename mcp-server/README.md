@@ -1,8 +1,12 @@
+<p align="center">
+  <img src="https://archon-eight.vercel.app/logo.svg" width="80" height="80" alt="Archon Logo">
+</p>
+
 # Archon MCP Server
 
-MCP (Model Context Protocol) server for **Archon** — a 950+ page engineering knowledge base covering system design, algorithms, security, AI/ML, EDA, DevOps, and more. Lets any MCP-compatible client query the knowledge base directly.
+MCP (Model Context Protocol) server for **[Archon](https://archon-eight.vercel.app)** — a 1,000+ page engineering knowledge base covering system design, algorithms, security, AI/ML, Spring Boot, EDA, DevOps, and more. Query the knowledge base directly from Claude Code, Cursor, or any MCP client.
 
-**21 tools** | **3 resource templates** | **5 prompts**
+**21 tools** | **3 resource templates** | **5 prompts** | **[Live Docs](https://archon-eight.vercel.app/mcp)**
 
 ## Installation
 

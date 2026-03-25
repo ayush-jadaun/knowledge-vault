@@ -283,7 +283,8 @@ const glossaryIndex = parseGlossary();
 const server = new McpServer({
   name: "archon",
   version: "1.0.0",
-  description: "Query 950+ pages of engineering knowledge — system design, algorithms, security, AI/ML, EDA, and more",
+  description: "Query 1000+ pages of engineering knowledge — system design, algorithms, security, AI/ML, Spring Boot, EDA, and more",
+  icon: "https://archon-eight.vercel.app/logo.svg",
 });
 
 // ===== TOOL 1: search_archon =====
