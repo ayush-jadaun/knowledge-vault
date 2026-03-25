@@ -1,8 +1,16 @@
 name: archon-mcp
-description: Query 1000+ pages of engineering knowledge — system design, algorithms, security, AI/ML, Spring Boot, EDA, and more
-version: 1.0.0
+displayName: Archon — Engineering Knowledge Base
+description: Query 1000+ pages of engineering knowledge directly from your AI assistant. Covers system design, algorithms, security, AI/ML, Spring Boot, EDA, cybersecurity, and more. 21 tools, 3 resources, 5 prompts.
+version: 1.0.1
 repository: https://github.com/ayush-jadaun/knowledge-vault
+homepage: https://archon-eight.vercel.app
 icon: https://archon-eight.vercel.app/logo.svg
+license: MIT
+author: Ayush Jadaun
 tools: 21
 resources: 3
 prompts: 5
+configSchema:
+  type: object
+  properties: {}
+  description: No configuration required. Archon is a public read-only knowledge base.

@@ -179,7 +179,7 @@ Read the full [Verification Guide](https://archon-eight.vercel.app/verify).
 
 ## License
 
-MIT
+[MIT License](LICENSE)
 
 ---
 
