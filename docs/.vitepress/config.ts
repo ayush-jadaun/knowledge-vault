@@ -136,7 +136,6 @@ export default withMermaid(
             { text: 'Security', link: '/security/' },
             { text: 'Cybersecurity', link: '/cybersecurity/' },
             { text: 'DevOps', link: '/devops/' },
-            { text: 'Debugging Playbooks', link: '/debugging-playbooks/' },
           ],
         },
         {
@@ -152,14 +151,21 @@ export default withMermaid(
           ],
         },
         {
+          text: 'Real World',
+          items: [
+            { text: 'War Room', link: '/war-room/' },
+            { text: 'Company Architecture', link: '/company-architecture/' },
+            { text: 'Build From Scratch', link: '/build-from-scratch/' },
+            { text: 'Debugging Playbooks', link: '/debugging-playbooks/' },
+            { text: 'Comparisons', link: '/comparisons/' },
+          ],
+        },
+        {
           text: 'Resources',
           items: [
             { text: 'Prompts', link: '/prompt-engineering/' },
             { text: 'UI & Design', link: '/ui-design-systems/' },
             { text: 'Blueprints', link: '/production-blueprints/' },
-            { text: 'War Room', link: '/war-room/' },
-            { text: 'Build From Scratch', link: '/build-from-scratch/' },
-            { text: 'Company Architecture', link: '/company-architecture/' },
             { text: 'Cheat Sheets', link: '/cheat-sheets/' },
           ],
         },

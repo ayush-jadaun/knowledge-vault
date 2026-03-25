@@ -199,16 +199,10 @@ Choose your quest.
 | **Debugging Playbooks** | 7 | "API slow", "memory leak", "DB CPU 100%", "pods restarting", "502s", "error spike" |
 | **Checklists & Runbooks** | 10 | Pre-launch (90 items), security review, performance review, DB failover, DDoS response |
 | **Learning Paths** | 11 | Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack, Cybersecurity, Resources |
-| **Cheat Sheets** | 22 | Docker, K8s, Git, SQL, TS, Linux, Redis, Terraform, Python, Go, Rust, Bash, Nginx, PromQL, AWS CLI, kubectl, Helm, GraphQL, Regex, SQL Advanced, Docker Compose, LLM APIs |
-| **Frontend Engineering** | 10 | Web performance, rendering, state management, React internals, WebAssembly |
-| **Testing** | 8 | Unit, integration, E2E, contract, property-based, TDD/BDD, test architecture |
-| **Performance** | 30+ | Profiling, optimization, caching, DB tuning, edge computing, load testing |
-| **Data Engineering** | 25+ | ETL, stream processing, data modeling, pipelines, lakehouse |
-| **Production Blueprints** | 50+ | Auth, billing, notifications, rate limiter, job queue, search, chat, payments, and more |
+| **Cheat Sheets** | 23 | Docker, K8s, Git, SQL, TS, Linux, Redis, Terraform, Python, Go, Rust, Bash, Nginx, PromQL, AWS CLI, kubectl, Helm, GraphQL, Regex, SQL Advanced, Docker Compose, LLM APIs, pandas EDA |
 | **Prompt Engineering** | 20+ | 500+ prompts for engineering, product, UI, and architecture |
 | **UI & Design Systems** | 35+ | Typography, color, spacing, accessibility, dark mode, animations |
-| **Learning Paths** | 9 | Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack |
-| **Cheat Sheets** | 19 | Docker, K8s, Git, SQL, TS, Linux, Redis, Terraform, Python, Go, Rust, Bash, Nginx, PromQL, AWS CLI, kubectl, Helm, GraphQL, Regex |
+| **Comparisons** | 20 | React/Vue/Svelte, Next/Nuxt/SvelteKit, Express/Fastify, Prisma/Drizzle, Vite/Webpack, and 15 more |
 
 ---
 
@@ -237,9 +231,10 @@ Every page follows a consistent, deep-dive format:
 | Prepare for coding interviews | [Algorithms & Data Structures](/algorithms/) |
 | Prepare for behavioral interviews | [Behavioral Interviews](/learning-paths/behavioral-interviews) |
 | Learn a specific topic | [Browse by Tag](/tags) |
-| Get a quick reference | [19 Cheat Sheets](/cheat-sheets/) |
+| Get a quick reference | [23 Cheat Sheets](/cheat-sheets/) |
 | See how topics connect | [Knowledge Graph](/graph) |
-| Compare two technologies | [Compare Mode](/compare) |
+| Compare technologies | [20 Comparisons](/comparisons/) |
 | Find AI-powered answers | Click the chat bubble (bottom-right) |
-| Follow a structured path | [9 Learning Paths](/learning-paths/) |
-| Build a production service | [14 Production Blueprints](/production-blueprints/) |
+| Follow a structured path | [11 Learning Paths](/learning-paths/) |
+| Build a production service | [55+ Production Blueprints](/production-blueprints/) |
+| Learn from real incidents | [13 War Room Case Studies](/war-room/) |

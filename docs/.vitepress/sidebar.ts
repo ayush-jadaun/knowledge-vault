@@ -479,6 +479,14 @@ export const sidebar: DefaultTheme.Sidebar = {
       collapsed: false,
       items: [
         { text: 'Observability Deep Dive', link: '/infrastructure/observability/' },
+        { text: 'Observability Tools', link: '/devops/observability-tools/' },
+      ],
+    },
+    {
+      text: 'API Gateway',
+      collapsed: false,
+      items: [
+        { text: 'API Gateway Deep Dive', link: '/infrastructure/api-gateway/' },
       ],
     },
     {
@@ -590,6 +598,17 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Passwordless', link: '/security/authentication/passwordless' },
         { text: 'API Key Design', link: '/security/authentication/api-key-design' },
         { text: 'Biometric Auth', link: '/security/authentication/biometric-auth' },
+        { text: 'Auth Architecture', link: '/security/authentication/auth-architecture' },
+        { text: 'Token Strategies', link: '/security/authentication/token-strategies' },
+        { text: 'OAuth 2.0 Flows', link: '/security/authentication/oauth2-flows' },
+        { text: 'Session Deep Dive', link: '/security/authentication/session-deep-dive' },
+        { text: 'Account Sharing Prevention', link: '/security/authentication/account-sharing-prevention' },
+        { text: 'Enterprise SSO', link: '/security/authentication/enterprise-sso' },
+        { text: 'Passkeys & WebAuthn', link: '/security/authentication/passkeys-webauthn' },
+        { text: 'MFA Deep Dive', link: '/security/authentication/mfa-deep-dive' },
+        { text: 'Auth Providers', link: '/security/authentication/auth-providers' },
+        { text: 'Device Trust & Risk', link: '/security/authentication/device-trust' },
+        { text: 'Auth Attacks & Defense', link: '/security/authentication/auth-attack-defense' },
       ],
     },
     {
@@ -1752,6 +1771,17 @@ export const sidebar: DefaultTheme.Sidebar = {
       items: [
         { text: 'Advanced Data Structures', link: '/algorithms/advanced-data-structures' },
         { text: 'Math Patterns in System Design', link: '/algorithms/system-design-math' },
+      ],
+    },
+    {
+      text: 'Interview Questions',
+      collapsed: true,
+      items: [
+        { text: 'JavaScript (50+)', link: '/algorithms/javascript-interview' },
+        { text: 'React', link: '/algorithms/react-interview' },
+        { text: 'Node.js', link: '/algorithms/nodejs-interview' },
+        { text: 'Probability for Engineers', link: '/algorithms/probability-for-engineers' },
+        { text: 'Statistics & A/B Testing', link: '/algorithms/statistics-ab-testing' },
       ],
     },
   ],
