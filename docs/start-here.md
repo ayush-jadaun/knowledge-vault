@@ -112,6 +112,48 @@ Choose your quest.
 
 ---
 
+### "I want to master Spring Boot"
+
+**Time needed:** 4-6 weeks (1 hour/day)
+
+1. **Fundamentals** — [Overview](/spring-boot/) → [Core Concepts](/spring-boot/core-concepts) → [REST API](/spring-boot/rest-api) → [Exception Handling](/spring-boot/exception-handling)
+2. **Data** — [Spring Data JPA](/spring-boot/spring-data-jpa) → [Hibernate Tuning](/spring-boot/hibernate-tuning) → [Migrations](/spring-boot/database-migrations)
+3. **Security** — [Spring Security](/spring-boot/security) → [JWT Auth](/spring-boot/jwt-auth) → [OAuth2](/spring-boot/oauth2-oidc)
+4. **Cloud** — [Spring Cloud](/spring-boot/spring-cloud) → [Gateway](/spring-boot/spring-cloud-gateway) → [Resilience4j](/spring-boot/resilience)
+5. **Messaging** — [Kafka](/spring-boot/kafka) → [Event-Driven](/spring-boot/event-driven) → [Spring Batch](/spring-boot/spring-batch-deep-dive)
+6. **Advanced** — [WebFlux](/spring-boot/spring-webflux-deep-dive) → [Modulith](/spring-boot/spring-modulith-deep-dive) → [Virtual Threads](/spring-boot/virtual-threads) → [Spring AI](/spring-boot/spring-ai)
+7. **Production** — [Docker](/spring-boot/docker) → [Actuator](/spring-boot/actuator) → [Deployment](/spring-boot/deployment)
+
+---
+
+### "I want to build data pipelines"
+
+**Time needed:** 2-3 weeks (1 hour/day)
+
+1. **Collection** — [Pipeline Overview](/data-pipeline/) → [Web Scraping](/data-pipeline/web-scraping) → [API Ingestion](/data-pipeline/api-ingestion) → [File Formats](/data-pipeline/file-formats)
+2. **Preprocessing** — [Pipeline Architecture](/data-pipeline/preprocessing-pipeline) → [String Preprocessing](/data-pipeline/string-preprocessing) → [Datetime Preprocessing](/data-pipeline/datetime-preprocessing)
+3. **Validation** — [Great Expectations](/data-pipeline/great-expectations) → [Pandera](/data-pipeline/pandera-validation) → [Data Contracts](/data-pipeline/data-contracts)
+4. **Orchestration** — [Airflow](/data-pipeline/airflow-pipelines) → [Prefect](/data-pipeline/prefect-pipelines) → [Pipeline Patterns](/data-pipeline/pipeline-patterns)
+5. **Projects** — [E-Commerce Pipeline](/data-pipeline/project-ecommerce-pipeline) → [Real Estate Pipeline](/data-pipeline/project-real-estate)
+
+---
+
+### "I want to use Archon via MCP (AI assistant)"
+
+Connect Archon to Claude Code, Cursor, or Claude Desktop — query 1,000+ pages without opening a browser:
+
+```bash
+# Remote (no install)
+claude mcp add archon --transport http https://archon-eight.vercel.app/api/mcp
+
+# Or via npm
+claude mcp add archon -- npx archon-mcp-server
+```
+
+[Full MCP docs](/mcp) — 21 tools, 3 resources, 5 prompts.
+
+---
+
 ### "I want to master data analysis / EDA"
 
 **Time needed:** 3-4 weeks (1 hour/day)
@@ -191,6 +233,8 @@ Choose your quest.
 | **Mobile Engineering** | 6 | React Native, Flutter, mobile performance, push notifications, offline-first |
 | **Testing** | 8 | Unit, integration, E2E, contract, property-based, TDD/BDD, test architecture |
 | **Performance** | 35+ | Profiling, optimization, caching, database tuning, edge computing, load testing, benchmarks, compilers |
+| **Spring Boot** | 55 | REST, JPA, Security, JWT, OAuth2, Cloud Gateway, Kafka, Batch, Integration, WebFlux, GraphQL, gRPC, Modulith, Native Image, Virtual Threads, Spring AI |
+| **Data Pipeline** | 25 | Web scraping, API ingestion, preprocessing (strings/dates/text/images), Airflow, Prefect, Great Expectations, Pandera, 3 end-to-end projects |
 | **Data Engineering** | 30+ | Stream processing, data modeling, pipelines, CDC, lakehouse, real-time analytics |
 | **Production Blueprints** | 55+ | Auth, billing, notifications, rate limiter, search, chat, payments, email, scheduler, and more |
 | **War Room** | 12 | GitHub, Cloudflare, Knight Capital, AWS S3, Facebook, GitLab, Stripe, Discord, Twitter, Netflix, CrowdStrike |

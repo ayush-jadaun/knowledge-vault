@@ -4,9 +4,19 @@
 
 The holy grail of engineering knowledge. 1000+ sacred texts, from first principles to production mastery.
 
-**1000+ pages | 800K+ lines | 48 system design interviews | 23 cheat sheets | 11 learning paths | 69 EDA pages | AI chatbot**
+**1,034 pages | 55 Spring Boot | 69 EDA | 48 System Design Interviews | 25 Data Pipeline | 21 MCP Tools | AI Chatbot**
 
-[Live Site](https://archon-eight.vercel.app) · [Start Here](https://archon-eight.vercel.app/start-here) · [System Design Interviews](https://archon-eight.vercel.app/system-design-interviews/) · [Cheat Sheets](https://archon-eight.vercel.app/cheat-sheets/)
+[Live Site](https://archon-eight.vercel.app) · [Start Here](https://archon-eight.vercel.app/start-here) · [MCP Server](https://archon-eight.vercel.app/mcp) · [Spring Boot](https://archon-eight.vercel.app/spring-boot/) · [Cheat Sheets](https://archon-eight.vercel.app/cheat-sheets/)
+
+### Use via MCP (Claude Code / Cursor)
+
+```bash
+# Remote (no install)
+claude mcp add archon --transport http https://archon-eight.vercel.app/api/mcp
+
+# Or via npm
+claude mcp add archon -- npx archon-mcp-server
+```
 
 ---
 

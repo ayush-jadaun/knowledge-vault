@@ -103,6 +103,24 @@ features:
     link: /eda/
     linkText: Explore the data
 
+  - icon: 🍃
+    title: Spring Boot
+    details: "55 pages covering the entire Spring ecosystem. REST, JPA, Security, Cloud Gateway, Kafka, Batch, Integration, WebFlux, GraphQL, gRPC, Modulith, GraalVM Native, Virtual Threads, Spring AI."
+    link: /spring-boot/
+    linkText: Enter the Spring
+
+  - icon: 🔗
+    title: MCP Server
+    details: "Query Archon from Claude Code, Cursor, or any MCP client. 21 tools, 3 resources, 5 prompts. No browser needed — your AI assistant becomes an engineering expert."
+    link: /mcp
+    linkText: Connect your AI
+
+  - icon: 🔄
+    title: Data Pipeline
+    details: "From scraping to preprocessing to EDA. Web scraping, API ingestion, string/datetime/image preprocessing, Airflow, Prefect, Great Expectations, Pandera. 3 end-to-end projects."
+    link: /data-pipeline/
+    linkText: Build the pipeline
+
   - icon: 🌊
     title: Data Engineering
     details: Taming the data deluge. Stream processing, windowing, watermarks, CDC, dimensional modeling, data vault, pipeline orchestration, real-time analytics with ClickHouse.

@@ -7,6 +7,40 @@ description: "What's new in Archon — recent additions and updates"
 
 ## March 2026
 
+### March 25, 2026 — Spring Boot, Data Pipeline & MCP Server
+
+**Archon crosses 1,000 pages. MCP server goes live.**
+
+#### Spring Boot (55 pages)
+- **Fundamentals** — Core concepts, REST API, exception handling, auto-configuration
+- **Data Access** — Spring Data JPA, Hibernate tuning, Flyway/Liquibase migrations, QueryDSL, multi-datasource
+- **Security** — Spring Security, JWT auth, OAuth2/OIDC, advanced security (@PreAuthorize, RBAC, audit logging)
+- **Cloud & Microservices** — Spring Cloud Gateway, Config Server, Eureka, Resilience4j, distributed tracing
+- **Messaging** — Spring Kafka, Spring Integration (Enterprise Integration Patterns)
+- **Web & API** — WebSocket/STOMP, GraphQL, gRPC, API versioning, OpenAPI/Swagger, file uploads
+- **Batch & Integration** — Spring Batch deep dive, Spring Integration, event-driven architecture
+- **Advanced** — Spring WebFlux/Reactor, Spring Modulith, State Machine, AOT/GraalVM native image, virtual threads (Project Loom), Spring AI (LLM integration)
+- **Operations** — Actuator, Micrometer observability, Docker, Kubernetes deployment, caching, logging
+- **Reference** — Best practices, anti-patterns, migration guide (Boot 2→3), cheat sheet
+
+#### Data Pipeline (25 pages)
+- **Collection** — Web scraping (Scrapy), API ingestion, database extraction (CDC/Debezium), file formats (CSV/Parquet/Avro)
+- **Preprocessing** — Pipeline architecture, type inference, string/numerical/categorical/datetime/text/image preprocessing, deduplication, advanced imputation (KNN/MICE/MissForest)
+- **Orchestration** — Airflow DAGs, Prefect flows, pipeline design patterns, monitoring & alerting
+- **Validation** — Great Expectations, Pandera schemas, data contracts
+- **Projects** — E-commerce pipeline, real estate pipeline, IoT streaming pipeline
+
+#### MCP Server
+- **21 tools** — search, get_page, list_sections, get_related, list_pages, get_cheat_sheet, search_by_tag, search_by_difficulty, get_comparison, get_interview, get_lld, get_war_room, get_checklist, get_runbook, get_learning_path, get_glossary_term, get_code_examples, random_page, get_build_guide, get_eda_guide, list_all_tags
+- **3 MCP resource templates** — sections, cheat sheets, learning paths
+- **5 MCP prompts** — explain-concept, interview-prep, debug-issue, compare-tech, eda-workflow
+- **Remote endpoint** — `https://archon-eight.vercel.app/api/mcp`
+- **npm publishable** as `archon-mcp-server`
+- **Rate limiting** — 60 requests/minute
+- **Smithery config** for marketplace listing
+
+---
+
 ### March 24, 2026 — The EDA Expansion
 
 **+69 EDA pages. Archon reaches 950+ pages.**
