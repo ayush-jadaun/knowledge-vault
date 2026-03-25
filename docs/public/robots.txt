@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://knowledge-vault-five.vercel.app/sitemap.xml
+Sitemap: https://archon-eight.vercel.app/sitemap.xml

@@ -6,7 +6,7 @@ The holy grail of engineering knowledge. 950+ sacred texts, from first principle
 
 **950+ pages | 800K+ lines | 48 system design interviews | 23 cheat sheets | 11 learning paths | 69 EDA pages | AI chatbot**
 
-[Live Site](https://knowledge-vault-five.vercel.app) · [Start Here](https://knowledge-vault-five.vercel.app/start-here) · [System Design Interviews](https://knowledge-vault-five.vercel.app/system-design-interviews/) · [Cheat Sheets](https://knowledge-vault-five.vercel.app/cheat-sheets/)
+[Live Site](https://archon-eight.vercel.app) · [Start Here](https://archon-eight.vercel.app/start-here) · [System Design Interviews](https://archon-eight.vercel.app/system-design-interviews/) · [Cheat Sheets](https://archon-eight.vercel.app/cheat-sheets/)
 
 ---
 
@@ -165,7 +165,7 @@ All pages are AI-generated and marked as **Unverified**. Help verify them:
 3. Add verification frontmatter + submit PR
 4. Your name, GitHub avatar, and LinkedIn appear on the page permanently
 
-Read the full [Verification Guide](https://knowledge-vault-five.vercel.app/verify).
+Read the full [Verification Guide](https://archon-eight.vercel.app/verify).
 
 ## License
 

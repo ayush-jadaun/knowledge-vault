@@ -354,7 +354,7 @@ html {
    External Link Indicator
    ============================================ */
 
-.vp-doc a[href^="http"]:not([href*="knowledge-vault-five.vercel.app"])::after {
+.vp-doc a[href^="http"]:not([href*="archon-eight.vercel.app"])::after {
   content: ' \2197';
   font-size: 0.75em;
   vertical-align: super;

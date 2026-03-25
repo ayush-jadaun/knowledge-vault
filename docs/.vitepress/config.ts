@@ -17,14 +17,14 @@ export default withMermaid(
       ['meta', { name: 'theme-color', content: '#5f67ee' }],
       ['meta', { property: 'og:type', content: 'website' }],
       ['meta', { property: 'og:site_name', content: 'Archon' }],
-      ['meta', { property: 'og:image', content: 'https://knowledge-vault-five.vercel.app/og-image.svg' }],
+      ['meta', { property: 'og:image', content: 'https://archon-eight.vercel.app/og-image.svg' }],
       ['meta', { property: 'og:image:width', content: '1200' }],
       ['meta', { property: 'og:image:height', content: '630' }],
       ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-      ['meta', { name: 'twitter:image', content: 'https://knowledge-vault-five.vercel.app/og-image.svg' }],
+      ['meta', { name: 'twitter:image', content: 'https://archon-eight.vercel.app/og-image.svg' }],
       ['meta', { name: 'author', content: 'Ayush Jadaun' }],
-      ['meta', { name: 'keywords', content: 'system design, engineering, architecture, kubernetes, docker, aws, security, devops, performance, data engineering' }],
-      ['link', { rel: 'canonical', href: 'https://knowledge-vault-five.vercel.app' }],
+      ['meta', { name: 'keywords', content: 'system design, engineering, architecture, kubernetes, docker, aws, security, devops, performance, data engineering, algorithms, LangChain, LangGraph, RAG, EDA, exploratory data analysis, cybersecurity, pentesting, React, Node.js, PostgreSQL, machine learning, AI engineering, interview prep, cheat sheets' }],
+      ['link', { rel: 'canonical', href: 'https://archon-eight.vercel.app' }],
       ['link', { rel: 'manifest', href: '/manifest.json' }],
       ['link', { rel: 'alternate', type: 'application/rss+xml', title: 'Archon RSS', href: '/feed.xml' }],
       ['script', {}, `if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js')`],
@@ -33,10 +33,10 @@ export default withMermaid(
         "@type": "WebSite",
         "name": "Archon",
         "description": "The holy grail of engineering knowledge — 950+ deep dives from first principles to production mastery",
-        "url": "https://knowledge-vault-five.vercel.app",
+        "url": "https://archon-eight.vercel.app",
         "potentialAction": {
           "@type": "SearchAction",
-          "target": "https://knowledge-vault-five.vercel.app/?q={search_term_string}",
+          "target": "https://archon-eight.vercel.app/?q={search_term_string}",
           "query-input": "required name=search_term_string"
         },
         "author": {
@@ -49,14 +49,14 @@ export default withMermaid(
           "name": "Archon",
           "logo": {
             "@type": "ImageObject",
-            "url": "https://knowledge-vault-five.vercel.app/logo.svg"
+            "url": "https://archon-eight.vercel.app/logo.svg"
           }
         }
       })],
     ],
 
     sitemap: {
-      hostname: 'https://knowledge-vault-five.vercel.app',
+      hostname: 'https://archon-eight.vercel.app',
     },
 
     transformPageData(pageData) {
@@ -64,7 +64,7 @@ export default withMermaid(
       const title = pageData.frontmatter.title || pageData.title
       const description = pageData.frontmatter.description || 'Engineering knowledge from first principles to research-level depth'
 
-      const url = `https://knowledge-vault-five.vercel.app/${pageData.relativePath.replace(/index\.md$/, '').replace(/\.md$/, '')}`
+      const url = `https://archon-eight.vercel.app/${pageData.relativePath.replace(/index\.md$/, '').replace(/\.md$/, '')}`
       const tags = pageData.frontmatter.tags || []
       const difficulty = pageData.frontmatter.difficulty || ''
 
