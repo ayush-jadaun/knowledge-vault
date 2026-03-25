@@ -78,25 +78,25 @@ const TOOLS = {
 // ===== TOOL DEFINITIONS =====
 const TOOL_LIST = [
   { name: 'search_archon', description: 'Full-text search across 1000+ engineering pages with relevance scoring', inputSchema: { type: 'object', properties: { query: { type: 'string', description: 'Search query' }, limit: { type: 'number', description: 'Max results (default 10)' } }, required: ['query'] }, annotations: { readOnly: true, openWorld: false } },
-  { name: 'get_page', description: 'Get full markdown content of any page by its path', inputSchema: { type: 'object', properties: { path: { type: 'string', description: 'Page path e.g. system-design/databases/postgres-internals' } }, required: ['path'] } },
-  { name: 'list_sections', description: 'List all top-level sections with page counts', inputSchema: { type: 'object', properties: {} } },
-  { name: 'list_pages', description: 'List all pages in a section with titles and descriptions', inputSchema: { type: 'object', properties: { section: { type: 'string', description: 'Section name e.g. spring-boot, eda, security' } }, required: ['section'] } },
-  { name: 'get_related', description: 'Find top 5 related pages by shared tags', inputSchema: { type: 'object', properties: { path: { type: 'string', description: 'Page path to find related pages for' } }, required: ['path'] } },
-  { name: 'random_page', description: 'Get a random page for discovery and learning', inputSchema: { type: 'object', properties: {} } },
-  { name: 'list_all_tags', description: 'List all unique tags with page counts, sorted by frequency', inputSchema: { type: 'object', properties: {} } },
-  { name: 'search_by_tag', description: 'Find all pages with a specific tag', inputSchema: { type: 'object', properties: { tag: { type: 'string', description: 'Tag to search for e.g. kubernetes, redis, react' } }, required: ['tag'] } },
-  { name: 'search_by_difficulty', description: 'Find all pages at a difficulty level', inputSchema: { type: 'object', properties: { difficulty: { type: 'string', description: 'beginner, intermediate, advanced, or expert' } }, required: ['difficulty'] } },
+  { name: 'get_page', description: 'Get full markdown content of any page by its path', inputSchema: { type: 'object', properties: { path: { type: 'string', description: 'Page path e.g. system-design/databases/postgres-internals' } }, required: ['path'] }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'list_sections', description: 'List all top-level sections with page counts', inputSchema: { type: 'object', properties: {} }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'list_pages', description: 'List all pages in a section with titles and descriptions', inputSchema: { type: 'object', properties: { section: { type: 'string', description: 'Section name e.g. spring-boot, eda, security' } }, required: ['section'] }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'get_related', description: 'Find top 5 related pages by shared tags', inputSchema: { type: 'object', properties: { path: { type: 'string', description: 'Page path to find related pages for' } }, required: ['path'] }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'random_page', description: 'Get a random page for discovery and learning', inputSchema: { type: 'object', properties: {} }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'list_all_tags', description: 'List all unique tags with page counts, sorted by frequency', inputSchema: { type: 'object', properties: {} }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'search_by_tag', description: 'Find all pages with a specific tag', inputSchema: { type: 'object', properties: { tag: { type: 'string', description: 'Tag to search for e.g. kubernetes, redis, react' } }, required: ['tag'] }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'search_by_difficulty', description: 'Find all pages at a difficulty level', inputSchema: { type: 'object', properties: { difficulty: { type: 'string', description: 'beginner, intermediate, advanced, or expert' } }, required: ['difficulty'] }, annotations: { readOnly: true, openWorld: false } },
   { name: 'get_comparison', description: 'Get a head-to-head technology comparison page', inputSchema: { type: 'object', properties: { query: { type: 'string', description: 'Comparison to find e.g. react-vs-vue, kafka-vs-rabbitmq' } }, required: ['query'] }, annotations: { readOnly: true, openWorld: false } },
-  { name: 'get_interview', description: 'Get a system design interview walkthrough', inputSchema: { type: 'object', properties: { topic: { type: 'string', description: 'Interview topic e.g. instagram, uber, chatgpt' } }, required: ['topic'] } },
-  { name: 'get_lld', description: 'Get a low-level design interview problem', inputSchema: { type: 'object', properties: { topic: { type: 'string', description: 'LLD topic e.g. parking-lot, elevator, chess' } }, required: ['topic'] } },
+  { name: 'get_interview', description: 'Get a system design interview walkthrough', inputSchema: { type: 'object', properties: { topic: { type: 'string', description: 'Interview topic e.g. instagram, uber, chatgpt' } }, required: ['topic'] }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'get_lld', description: 'Get a low-level design interview problem', inputSchema: { type: 'object', properties: { topic: { type: 'string', description: 'LLD topic e.g. parking-lot, elevator, chess' } }, required: ['topic'] }, annotations: { readOnly: true, openWorld: false } },
   { name: 'get_war_room', description: 'Get a real production incident case study', inputSchema: { type: 'object', properties: { query: { type: 'string', description: 'Incident to find e.g. github, cloudflare, facebook' } }, required: ['query'] }, annotations: { readOnly: true, openWorld: false } },
-  { name: 'get_checklist', description: 'Get a production readiness checklist', inputSchema: { type: 'object', properties: { topic: { type: 'string', description: 'Checklist type e.g. pre-launch, security, performance' } }, required: ['topic'] } },
-  { name: 'get_runbook', description: 'Get an operational runbook', inputSchema: { type: 'object', properties: { topic: { type: 'string', description: 'Runbook topic e.g. database-failover, ddos, certificate' } }, required: ['topic'] } },
-  { name: 'get_learning_path', description: 'Get a structured learning path', inputSchema: { type: 'object', properties: { path: { type: 'string', description: 'Path name e.g. backend-engineer, ai-ml-engineer, platform-engineer' } }, required: ['path'] } },
-  { name: 'get_glossary_term', description: 'Look up an engineering term from the glossary', inputSchema: { type: 'object', properties: { term: { type: 'string', description: 'Term to look up e.g. CQRS, CAP theorem, eBPF' } }, required: ['term'] } },
-  { name: 'get_code_examples', description: 'Extract code blocks from a page, optionally filtered by language', inputSchema: { type: 'object', properties: { path: { type: 'string', description: 'Page path' }, language: { type: 'string', description: 'Filter by language e.g. python, typescript, java' } }, required: ['path'] } },
-  { name: 'get_build_guide', description: 'Get a build-from-scratch tutorial', inputSchema: { type: 'object', properties: { topic: { type: 'string', description: 'What to build e.g. redis, rate-limiter, load-balancer' } }, required: ['topic'] } },
-  { name: 'get_eda_guide', description: 'Get an EDA (Exploratory Data Analysis) guide', inputSchema: { type: 'object', properties: { topic: { type: 'string', description: 'EDA topic e.g. missing-data, outliers, matplotlib, correlation' } }, required: ['topic'] } },
+  { name: 'get_checklist', description: 'Get a production readiness checklist', inputSchema: { type: 'object', properties: { topic: { type: 'string', description: 'Checklist type e.g. pre-launch, security, performance' } }, required: ['topic'] }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'get_runbook', description: 'Get an operational runbook', inputSchema: { type: 'object', properties: { topic: { type: 'string', description: 'Runbook topic e.g. database-failover, ddos, certificate' } }, required: ['topic'] }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'get_learning_path', description: 'Get a structured learning path', inputSchema: { type: 'object', properties: { path: { type: 'string', description: 'Path name e.g. backend-engineer, ai-ml-engineer, platform-engineer' } }, required: ['path'] }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'get_glossary_term', description: 'Look up an engineering term from the glossary', inputSchema: { type: 'object', properties: { term: { type: 'string', description: 'Term to look up e.g. CQRS, CAP theorem, eBPF' } }, required: ['term'] }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'get_code_examples', description: 'Extract code blocks from a page, optionally filtered by language', inputSchema: { type: 'object', properties: { path: { type: 'string', description: 'Page path' }, language: { type: 'string', description: 'Filter by language e.g. python, typescript, java' } }, required: ['path'] }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'get_build_guide', description: 'Get a build-from-scratch tutorial', inputSchema: { type: 'object', properties: { topic: { type: 'string', description: 'What to build e.g. redis, rate-limiter, load-balancer' } }, required: ['topic'] }, annotations: { readOnly: true, openWorld: false } },
+  { name: 'get_eda_guide', description: 'Get an EDA (Exploratory Data Analysis) guide', inputSchema: { type: 'object', properties: { topic: { type: 'string', description: 'EDA topic e.g. missing-data, outliers, matplotlib, correlation' } }, required: ['topic'] }, annotations: { readOnly: true, openWorld: false } },
 ]
 
 // ===== RESOURCES =====
@@ -120,7 +120,18 @@ async function handleRPC(body) {
   const { method, params, id } = body
 
   if (method === 'initialize') {
-    return { jsonrpc: '2.0', id, result: { protocolVersion: '2024-11-05', serverInfo: { name: 'archon-mcp', version: '1.0.1', icon: `${SITE_URL}/logo.svg` }, capabilities: { tools: {}, resources: {}, prompts: {} } } }
+    return { jsonrpc: '2.0', id, result: {
+      protocolVersion: '2024-11-05',
+      serverInfo: {
+        name: 'archon-mcp',
+        displayName: 'Archon — Engineering Knowledge Base',
+        version: '1.0.1',
+        description: 'Query 1000+ pages of engineering knowledge. System design, algorithms, security, AI/ML, Spring Boot, EDA, cybersecurity, and more.',
+        icon: `${SITE_URL}/logo.svg`,
+        homepage: `${SITE_URL}`,
+      },
+      capabilities: { tools: {}, resources: {}, prompts: {} }
+    } }
   }
 
   if (method === 'tools/list') return { jsonrpc: '2.0', id, result: { tools: TOOL_LIST } }
