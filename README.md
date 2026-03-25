@@ -2,9 +2,9 @@
 
 > *"Give me six hours to chop down a tree and I'll spend four sharpening the axe."* — This is the axe.
 
-The holy grail of engineering knowledge. 950+ sacred texts, from first principles to production mastery.
+The holy grail of engineering knowledge. 1000+ sacred texts, from first principles to production mastery.
 
-**950+ pages | 800K+ lines | 48 system design interviews | 23 cheat sheets | 11 learning paths | 69 EDA pages | AI chatbot**
+**1000+ pages | 800K+ lines | 48 system design interviews | 23 cheat sheets | 11 learning paths | 69 EDA pages | AI chatbot**
 
 [Live Site](https://archon-eight.vercel.app) · [Start Here](https://archon-eight.vercel.app/start-here) · [System Design Interviews](https://archon-eight.vercel.app/system-design-interviews/) · [Cheat Sheets](https://archon-eight.vercel.app/cheat-sheets/)
 
@@ -35,7 +35,7 @@ The holy grail of engineering knowledge. 950+ sacred texts, from first principle
 ## Features
 
 - **AI Chatbot** — Ask anything, get answers with page citations (Gemini 2.5 Flash)
-- **Knowledge Graph** — Interactive visual map of all 950+ topics
+- **Knowledge Graph** — Interactive visual map of all 1000+ topics
 - **Compare Mode** — Side-by-side technology comparison (24 technologies)
 - **Pagefind Search** — Full-text search across all pages
 - **Keyboard Shortcuts** — Press `?` to see all

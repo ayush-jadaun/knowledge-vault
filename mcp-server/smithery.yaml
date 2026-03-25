@@ -1,0 +1,5 @@
+name: archon-mcp
+description: Query 950+ pages of engineering knowledge — system design, algorithms, security, AI/ML, EDA, and more
+version: 0.1.0
+repository: https://github.com/ayush-jadaun/knowledge-vault
+tools: 21

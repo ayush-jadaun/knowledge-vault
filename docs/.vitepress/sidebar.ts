@@ -1641,6 +1641,97 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Helm', link: '/cheat-sheets/helm' },
         { text: 'kubectl Advanced', link: '/cheat-sheets/kubectl-advanced' },
         { text: 'Regex', link: '/cheat-sheets/regex' },
+        { text: 'Spring Boot', link: '/cheat-sheets/spring-boot' },
+      ],
+    },
+  ],
+
+  '/spring-boot/': [
+    {
+      text: 'Spring Boot',
+      items: [
+        { text: 'Overview', link: '/spring-boot/' },
+      ],
+    },
+    {
+      text: 'Fundamentals',
+      collapsed: false,
+      items: [
+        { text: 'Core Concepts', link: '/spring-boot/core-concepts' },
+        { text: 'REST API Development', link: '/spring-boot/rest-api' },
+        { text: 'Exception Handling', link: '/spring-boot/exception-handling' },
+        { text: 'Best Practices', link: '/spring-boot/best-practices' },
+      ],
+    },
+    {
+      text: 'Data Access',
+      collapsed: false,
+      items: [
+        { text: 'Spring Data JPA', link: '/spring-boot/spring-data-jpa' },
+        { text: 'Spring Data Advanced', link: '/spring-boot/spring-data-advanced' },
+        { text: 'Hibernate Tuning', link: '/spring-boot/hibernate-tuning' },
+        { text: 'Database Migrations', link: '/spring-boot/database-migrations' },
+      ],
+    },
+    {
+      text: 'Security',
+      collapsed: false,
+      items: [
+        { text: 'Spring Security', link: '/spring-boot/security' },
+        { text: 'Spring Security Deep Dive', link: '/spring-boot/spring-security-deep-dive' },
+        { text: 'JWT Authentication', link: '/spring-boot/jwt-auth' },
+        { text: 'OAuth2 & OIDC', link: '/spring-boot/oauth2-oidc' },
+      ],
+    },
+    {
+      text: 'Web & API',
+      collapsed: false,
+      items: [
+        { text: 'Spring WebFlux Deep Dive', link: '/spring-boot/spring-webflux-deep-dive' },
+        { text: 'Spring for GraphQL Deep Dive', link: '/spring-boot/spring-graphql-deep-dive' },
+      ],
+    },
+    {
+      text: 'Batch & Integration',
+      collapsed: false,
+      items: [
+        { text: 'Spring Batch Deep Dive', link: '/spring-boot/spring-batch-deep-dive' },
+        { text: 'Spring Integration', link: '/spring-boot/spring-integration' },
+        { text: 'Spring State Machine', link: '/spring-boot/spring-statemachine' },
+      ],
+    },
+    {
+      text: 'Microservices & Messaging',
+      collapsed: false,
+      items: [
+        { text: 'Spring Cloud', link: '/spring-boot/spring-cloud' },
+        { text: 'Spring Cloud Gateway', link: '/spring-boot/spring-cloud-gateway' },
+        { text: 'Spring Cloud Config', link: '/spring-boot/spring-cloud-config' },
+        { text: 'Service Discovery', link: '/spring-boot/service-discovery' },
+        { text: 'Microservices Patterns', link: '/spring-boot/microservices-patterns' },
+        { text: 'Spring Modulith Deep Dive', link: '/spring-boot/spring-modulith-deep-dive' },
+        { text: 'Spring Kafka', link: '/spring-boot/kafka' },
+      ],
+    },
+    {
+      text: 'Operations',
+      collapsed: false,
+      items: [
+        { text: 'Testing', link: '/spring-boot/testing' },
+        { text: 'Actuator & Monitoring', link: '/spring-boot/actuator' },
+        { text: 'Spring Boot Observability', link: '/spring-boot/observability' },
+        { text: 'Docker & Deployment', link: '/spring-boot/docker' },
+        { text: 'Caching', link: '/spring-boot/caching' },
+        { text: 'Async & Scheduling', link: '/spring-boot/async' },
+      ],
+    },
+    {
+      text: 'Advanced',
+      collapsed: false,
+      items: [
+        { text: 'Virtual Threads (Project Loom)', link: '/spring-boot/virtual-threads' },
+        { text: 'Spring AOT & Native', link: '/spring-boot/spring-aot' },
+        { text: 'Spring AI', link: '/spring-boot/spring-ai' },
       ],
     },
   ],
@@ -2151,4 +2242,68 @@ export const sidebar: DefaultTheme.Sidebar = {
       ],
     },
   ],
+
+  '/data-pipeline/': [
+    {
+      text: 'Data Pipeline',
+      items: [
+        { text: 'Overview', link: '/data-pipeline/' },
+      ],
+    },
+    {
+      text: 'Data Collection',
+      collapsed: false,
+      items: [
+        { text: 'Web Scraping at Scale', link: '/data-pipeline/web-scraping' },
+        { text: 'API Data Ingestion', link: '/data-pipeline/api-ingestion' },
+        { text: 'Database Extraction', link: '/data-pipeline/database-extraction' },
+        { text: 'File Formats Deep Dive', link: '/data-pipeline/file-formats' },
+      ],
+    },
+    {
+      text: 'Data Preprocessing',
+      collapsed: false,
+      items: [
+        { text: 'Pipeline Architecture', link: '/data-pipeline/preprocessing-pipeline' },
+        { text: 'Type Inference & Casting', link: '/data-pipeline/type-inference' },
+        { text: 'String Preprocessing', link: '/data-pipeline/string-preprocessing' },
+        { text: 'Numerical Preprocessing', link: '/data-pipeline/numerical-preprocessing' },
+        { text: 'Categorical Preprocessing', link: '/data-pipeline/categorical-preprocessing' },
+        { text: 'Datetime Preprocessing', link: '/data-pipeline/datetime-preprocessing' },
+        { text: 'Text Preprocessing (NLP)', link: '/data-pipeline/text-preprocessing' },
+        { text: 'Image Preprocessing', link: '/data-pipeline/image-preprocessing' },
+        { text: 'Deduplication Strategies', link: '/data-pipeline/deduplication' },
+        { text: 'Missing Data Imputation', link: '/data-pipeline/missing-imputation' },
+      ],
+    },
+    {
+      text: 'Pipeline Orchestration',
+      collapsed: false,
+      items: [
+        { text: 'Airflow for Data Pipelines', link: '/data-pipeline/airflow-pipelines' },
+        { text: 'Prefect for Data Pipelines', link: '/data-pipeline/prefect-pipelines' },
+        { text: 'Pipeline Design Patterns', link: '/data-pipeline/pipeline-patterns' },
+        { text: 'Pipeline Monitoring & Alerting', link: '/data-pipeline/pipeline-monitoring' },
+      ],
+    },
+    {
+      text: 'Data Validation',
+      collapsed: false,
+      items: [
+        { text: 'Great Expectations', link: '/data-pipeline/great-expectations' },
+        { text: 'Pandera Schema Validation', link: '/data-pipeline/pandera-validation' },
+        { text: 'Data Contracts', link: '/data-pipeline/data-contracts' },
+      ],
+    },
+    {
+      text: 'End-to-End Projects',
+      collapsed: false,
+      items: [
+        { text: 'Project: E-Commerce Pipeline', link: '/data-pipeline/project-ecommerce-pipeline' },
+        { text: 'Project: Real Estate Pipeline', link: '/data-pipeline/project-real-estate' },
+        { text: 'Project: IoT Sensor Pipeline', link: '/data-pipeline/project-iot-streaming' },
+      ],
+    },
+  ],
+
 }

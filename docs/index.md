@@ -136,7 +136,7 @@ features:
 
 <div class="home-stats">
   <div class="stat-item">
-    <div class="stat-number">950+</div>
+    <div class="stat-number">1000+</div>
     <div class="stat-label">Sacred texts</div>
   </div>
   <div class="stat-item">

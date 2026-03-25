@@ -1,0 +1,27 @@
+{
+  "name": "archon-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for Archon — query 950+ pages of engineering knowledge (system design, algorithms, security, AI/ML, EDA, and more)",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "archon-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "start:http": "node index.js --http"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "knowledge-base",
+    "system-design",
+    "engineering",
+    "archon"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "express": "^5.1.0"
+  }
+}

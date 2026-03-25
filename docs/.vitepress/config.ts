@@ -9,7 +9,7 @@ const pkg = require('../../package.json')
 export default withMermaid(
   defineConfig({
     title: 'Archon',
-    description: 'The holy grail of engineering knowledge — 950+ sacred texts from first principles to production mastery',
+    description: 'The holy grail of engineering knowledge — 1000+ sacred texts from first principles to production mastery',
     lang: 'en-US',
 
     head: [
@@ -32,7 +32,7 @@ export default withMermaid(
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "Archon",
-        "description": "The holy grail of engineering knowledge — 950+ deep dives from first principles to production mastery",
+        "description": "The holy grail of engineering knowledge — 1000+ deep dives from first principles to production mastery",
         "url": "https://archon-eight.vercel.app",
         "potentialAction": {
           "@type": "SearchAction",
@@ -148,6 +148,8 @@ export default withMermaid(
             { text: 'Testing', link: '/testing/' },
             { text: 'AI/ML Engineering', link: '/ai-ml-engineering/' },
             { text: 'Exploratory Data Analysis', link: '/eda/' },
+            { text: 'Data Pipeline', link: '/data-pipeline/' },
+            { text: 'Spring Boot', link: '/spring-boot/' },
           ],
         },
         {
@@ -183,6 +185,7 @@ export default withMermaid(
           { text: 'Knowledge Graph', link: '/graph' },
           { text: 'Compare Technologies', link: '/compare' },
           { text: 'Browse by Tag', link: '/tags' },
+          { text: 'MCP Server', link: '/mcp' },
           { text: "What's New", link: '/changelog' },
         ]},
       ],
