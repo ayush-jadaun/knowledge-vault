@@ -512,6 +512,8 @@ function getActiveUsers(users) {
 
 ### Fix: Upstream Dependency Slow
 
+::: code-group
+
 ```javascript
 // Add timeouts and circuit breakers to all external calls
 const circuitBreaker = new CircuitBreaker(callExternalAPI, {
@@ -537,6 +539,8 @@ if err != nil {
     return fallbackResponse, nil
 }
 ```
+
+:::
 
 ## Prevention
 

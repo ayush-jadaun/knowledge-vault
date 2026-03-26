@@ -397,6 +397,8 @@ Fallback chain (in order of preference):
 
 SockJS is transparent to application code. The STOMP layer works identically regardless of the underlying transport:
 
+::: code-group
+
 ```java
 // Server side — just add .withSockJS()
 registry.addEndpoint("/ws")
@@ -411,6 +413,8 @@ const client = new Client({
     // ... rest of config
 });
 ```
+
+:::
 
 ## Real-Time Notification System
 
@@ -752,6 +756,8 @@ public class ChatMessage {
 
 ### Typing Indicator
 
+::: code-group
+
 ```java
 @MessageMapping("/chat.typing")
 public void typingIndicator(@Payload TypingEvent event,
@@ -785,6 +791,8 @@ messageInput.addEventListener('input', () => {
     }, 2000);
 });
 ```
+
+:::
 
 ## Performance Tuning
 

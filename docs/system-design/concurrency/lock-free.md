@@ -62,6 +62,8 @@ CAS(address, expected, desired) → boolean
 
 Most lock-free algorithms follow a retry loop: read the current value, compute the new value, attempt CAS. If CAS fails (another thread changed the value), retry.
 
+::: code-group
+
 ```go
 // Go: atomic counter using CAS
 import "sync/atomic"
@@ -116,6 +118,8 @@ fn fetch_add(counter: &AtomicUsize, val: usize) -> usize {
     }
 }
 ```
+
+:::
 
 ## The ABA Problem
 
@@ -195,6 +199,8 @@ func (tp *TaggedPointer) CompareAndSwap(
 
 The Treiber stack (1986) is the simplest lock-free data structure. It is a singly-linked list where push and pop use CAS on the head pointer.
 
+::: code-group
+
 ```typescript
 // TypeScript: conceptual lock-free stack
 // (Note: true lock-free requires atomic CAS, which JS does not have.
@@ -263,6 +269,8 @@ public class TreiberStack<T> {
     }
 }
 ```
+
+:::
 
 ## Lock-Free Queue (Michael-Scott Queue)
 

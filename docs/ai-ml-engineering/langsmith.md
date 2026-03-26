@@ -81,6 +81,8 @@ Every LangChain/LangGraph call is automatically captured with:
 
 For non-LangChain applications:
 
+::: code-group
+
 ```python
 from langsmith import traceable, Client
 from openai import OpenAI
@@ -137,6 +139,8 @@ const ragPipeline = traceable(
   { name: "rag_pipeline" }
 );
 ```
+
+:::
 
 ### Trace Anatomy
 

@@ -45,6 +45,8 @@ All Claude interactions go through the Messages API. Unlike OpenAI's legacy comp
 
 ### Basic Request
 
+::: code-group
+
 ```python
 import anthropic
 
@@ -76,6 +78,8 @@ const message = await client.messages.create({
 
 console.log(message.content[0].text);
 ```
+
+:::
 
 ### System Prompts
 
@@ -353,6 +357,8 @@ Caching is most valuable when: (1) you have a large system prompt or context doc
 
 For real-time applications, stream Claude's response token by token.
 
+::: code-group
+
 ```python
 with client.messages.stream(
     model="claude-sonnet-4-20250514",
@@ -385,6 +391,8 @@ for await (const event of stream) {
 
 const finalMessage = await stream.finalMessage();
 ```
+
+:::
 
 ### Server-Sent Events (SSE) Stream Format
 

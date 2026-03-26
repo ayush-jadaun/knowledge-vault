@@ -54,6 +54,8 @@ Why do pure functions matter? Because they are:
 
 In FP, data structures are never modified in place. Instead, transformations produce new data structures, leaving the originals untouched.
 
+::: code-group
+
 ```typescript
 // Mutable approach (imperative)
 const users = [{ name: 'Alice', active: true }, { name: 'Bob', active: false }];
@@ -81,6 +83,8 @@ alice = User(name="Alice", email="alice@example.com")
 # alice.active = False  # Raises FrozenInstanceError
 inactive_alice = replace(alice, active=False)  # New object
 ```
+
+:::
 
 ### 3. Referential Transparency
 

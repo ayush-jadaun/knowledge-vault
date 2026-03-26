@@ -121,6 +121,18 @@ features:
     link: /data-pipeline/
     linkText: Build the pipeline
 
+  - icon: 🧮
+    title: Machine Learning
+    details: "30 pages from math foundations to production. Linear regression to gradient boosting, clustering to recommender systems. Every algorithm: intuition, full math derivations, from-scratch NumPy code, scikit-learn, real datasets."
+    link: /machine-learning/
+    linkText: Train the models
+
+  - icon: 🧬
+    title: Deep Learning
+    details: "25 pages of neural network mastery. Backprop from scratch, CNN, RNN/LSTM, Transformers (full attention math), GANs, VAE, diffusion models, BERT, YOLO, reinforcement learning. PyTorch code for everything."
+    link: /deep-learning/
+    linkText: Go deeper
+
   - icon: 🌊
     title: Data Engineering
     details: Taming the data deluge. Stream processing, windowing, watermarks, CDC, dimensional modeling, data vault, pipeline orchestration, real-time analytics with ClickHouse.
@@ -154,7 +166,7 @@ features:
 
 <div class="home-stats">
   <div class="stat-item">
-    <div class="stat-number">1000+</div>
+    <div class="stat-number">1090+</div>
     <div class="stat-label">Sacred texts</div>
   </div>
   <div class="stat-item">

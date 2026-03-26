@@ -59,6 +59,8 @@ Vision-language models (VLMs) accept images alongside text and can describe, ana
 
 ### Sending Images to Models
 
+::: code-group
+
 ```python
 from openai import OpenAI
 import base64
@@ -137,6 +139,8 @@ const response = await anthropic.messages.create({
   ],
 });
 ```
+
+:::
 
 ### Vision Model Comparison
 
@@ -267,6 +271,8 @@ def parse_document(pdf_path: str) -> list[dict]:
 
 Whisper is an open-source automatic speech recognition (ASR) model. Use it via the OpenAI API or run it locally.
 
+::: code-group
+
 ```python
 from openai import OpenAI
 
@@ -299,6 +305,8 @@ const transcription = await openai.audio.transcriptions.create({
   response_format: "verbose_json",
 });
 ```
+
+:::
 
 ### Running Whisper Locally
 

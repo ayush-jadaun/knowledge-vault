@@ -430,6 +430,8 @@ app.get('/ready', (req, res) => {
 
 ### Fix: Keep-Alive Timeout Mismatch
 
+::: code-group
+
 ```javascript
 // Node.js: set keep-alive timeout LONGER than LB idle timeout
 const server = app.listen(8080);
@@ -447,6 +449,8 @@ srv := &http.Server{
     WriteTimeout: 30 * time.Second,
 }
 ```
+
+:::
 
 ```yaml
 # If using NGINX ingress, align timeouts:

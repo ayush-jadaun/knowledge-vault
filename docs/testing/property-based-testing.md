@@ -76,6 +76,8 @@ The hardest part of property-based testing is knowing what property to assert. H
 
 If you serialize and deserialize, you should get back the original value.
 
+::: code-group
+
 ```typescript
 test.prop([fc.jsonValue()])(
   'JSON round-trip preserves data',
@@ -102,6 +104,8 @@ def test_json_roundtrip(data):
     except (TypeError, ValueError):
         pass  # Some types are not JSON-serializable — that is fine
 ```
+
+:::
 
 ### 2. Invariants
 
@@ -455,6 +459,8 @@ unit tests
 
 Property-based tests are non-deterministic by default — they generate different inputs on each run. This is a feature, not a bug. But it means a test might pass locally and fail in CI (or vice versa). To handle this:
 
+::: code-group
+
 ```typescript
 // fast-check — set a seed for reproducibility
 fc.assert(
@@ -482,6 +488,8 @@ from hypothesis import settings, Phase
 def test_property(n):
     ...
 ```
+
+:::
 
 ::: tip Reproducing Failures
 Both fast-check and Hypothesis print the failing seed when a test fails. Save this seed to reproduce the exact failure:

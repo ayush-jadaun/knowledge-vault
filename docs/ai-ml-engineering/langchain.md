@@ -65,6 +65,8 @@ graph TB
 
 Prompt templates separate the static structure of a prompt from the dynamic variables. This is critical for versioning, testing, and reuse.
 
+::: code-group
+
 ```python
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -96,6 +98,8 @@ const formatted = await prompt.invoke({
   question: "How do I handle connection pooling in asyncio?",
 });
 ```
+
+:::
 
 ### Few-Shot Prompting
 
@@ -189,6 +193,8 @@ Every LCEL component implements the `Runnable` interface with three key methods:
 
 Components are composed with the `|` operator:
 
+::: code-group
+
 ```python
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
@@ -235,6 +241,8 @@ const result = await chain.invoke({
   audience: "junior developer",
 });
 ```
+
+:::
 
 ### Parallel Execution with RunnableParallel
 

@@ -38,7 +38,7 @@ The two-pointer technique uses two indices that move through the array, typicall
 
 Given a sorted array, find two numbers that add up to a target.
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function twoSumSorted(nums: number[], target: number): [number, number] {
@@ -60,8 +60,6 @@ function twoSumSorted(nums: number[], target: number): [number, number] {
 }
 ```
 
-**Python:**
-
 ```python
 def two_sum_sorted(nums: list[int], target: int) -> tuple[int, int]:
     left, right = 0, len(nums) - 1
@@ -78,6 +76,8 @@ def two_sum_sorted(nums: list[int], target: int) -> tuple[int, int]:
     return (-1, -1)  # no solution found
 ```
 
+:::
+
 **Complexity:** $O(n)$ time, $O(1)$ space.
 
 **Why it works:** Since the array is sorted, moving the left pointer increases the sum and moving the right pointer decreases it. We're guaranteed to find the pair if it exists because we never skip a valid combination.
@@ -86,7 +86,7 @@ def two_sum_sorted(nums: list[int], target: int) -> tuple[int, int]:
 
 Given heights, find two lines that form a container holding the most water.
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function maxArea(height: number[]): number {
@@ -112,8 +112,6 @@ function maxArea(height: number[]): number {
 }
 ```
 
-**Python:**
-
 ```python
 def max_area(height: list[int]) -> int:
     left, right = 0, len(height) - 1
@@ -132,13 +130,15 @@ def max_area(height: list[int]) -> int:
     return max_water
 ```
 
+:::
+
 **Complexity:** $O(n)$ time, $O(1)$ space.
 
 ### Three Sum Pattern
 
 For problems requiring three elements (like 3Sum), fix one element and run two pointers on the rest:
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function threeSum(nums: number[]): number[][] {
@@ -171,8 +171,6 @@ function threeSum(nums: number[]): number[][] {
 }
 ```
 
-**Python:**
-
 ```python
 def three_sum(nums: list[int]) -> list[list[int]]:
     nums.sort()
@@ -202,6 +200,8 @@ def three_sum(nums: list[int]) -> list[list[int]]:
     return result
 ```
 
+:::
+
 **Complexity:** $O(n^2)$ time (sort + nested two-pointer), $O(1)$ extra space (ignoring output).
 
 ## Pattern 2: Sliding Window
@@ -227,7 +227,7 @@ graph LR
     end
 ```
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function maxSumSubarray(nums: number[], k: number): number {
@@ -250,8 +250,6 @@ function maxSumSubarray(nums: number[], k: number): number {
 }
 ```
 
-**Python:**
-
 ```python
 def max_sum_subarray(nums: list[int], k: int) -> int:
     window_sum = sum(nums[:k])
@@ -264,6 +262,8 @@ def max_sum_subarray(nums: list[int], k: int) -> int:
     return max_sum
 ```
 
+:::
+
 **Complexity:** $O(n)$ time, $O(1)$ space.
 
 ### Variable-Size Window
@@ -272,7 +272,7 @@ For variable windows, expand the right boundary until a condition breaks, then s
 
 **Classic Problem: Longest Substring Without Repeating Characters**
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function lengthOfLongestSubstring(s: string): number {
@@ -296,8 +296,6 @@ function lengthOfLongestSubstring(s: string): number {
 }
 ```
 
-**Python:**
-
 ```python
 def length_of_longest_substring(s: str) -> int:
     char_index: dict[str, int] = {}
@@ -314,13 +312,15 @@ def length_of_longest_substring(s: str) -> int:
     return max_len
 ```
 
+:::
+
 **Complexity:** $O(n)$ time, $O(\min(n, |\Sigma|))$ space where $|\Sigma|$ is the alphabet size.
 
 ### Minimum Window Substring
 
 This is the hardest sliding window pattern — find the minimum window in `s` that contains all characters in `t`.
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function minWindow(s: string, t: string): string {
@@ -363,8 +363,6 @@ function minWindow(s: string, t: string): string {
 }
 ```
 
-**Python:**
-
 ```python
 from collections import Counter
 
@@ -397,6 +395,8 @@ def min_window(s: str, t: str) -> str:
     return result
 ```
 
+:::
+
 **Complexity:** $O(|s| + |t|)$ time, $O(|\Sigma|)$ space.
 
 ## Pattern 3: Prefix Sums
@@ -411,7 +411,7 @@ $$
 \text{sum}(l, r) = \text{prefix}[r+1] - \text{prefix}[l]
 $$
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function buildPrefixSum(nums: number[]): number[] {
@@ -445,8 +445,6 @@ function subarraySum(nums: number[], k: number): number {
 }
 ```
 
-**Python:**
-
 ```python
 def build_prefix_sum(nums: list[int]) -> list[int]:
     prefix = [0] * (len(nums) + 1)
@@ -472,6 +470,8 @@ def subarray_sum(nums: list[int], k: int) -> int:
     return count
 ```
 
+:::
+
 **Complexity:** $O(n)$ preprocessing, $O(1)$ per range query. Subarray sum equals K: $O(n)$ time, $O(n)$ space.
 
 ::: warning
@@ -494,7 +494,7 @@ Most string problems reduce to array problems once you treat strings as arrays o
 
 ### Palindrome Check
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function isPalindrome(s: string): boolean {
@@ -511,8 +511,6 @@ function isPalindrome(s: string): boolean {
 }
 ```
 
-**Python:**
-
 ```python
 def is_palindrome(s: str) -> bool:
     left, right = 0, len(s) - 1
@@ -524,11 +522,13 @@ def is_palindrome(s: str) -> bool:
     return True
 ```
 
+:::
+
 ### Anagram Detection
 
 Two strings are anagrams if they have the same character frequencies.
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function isAnagram(s: string, t: string): boolean {
@@ -544,14 +544,14 @@ function isAnagram(s: string, t: string): boolean {
 }
 ```
 
-**Python:**
-
 ```python
 from collections import Counter
 
 def is_anagram(s: str, t: str) -> bool:
     return Counter(s) == Counter(t)
 ```
+
+:::
 
 ### String Hashing (Rabin-Karp)
 

@@ -375,6 +375,8 @@ WebSockets are stateful — each connection lives on a specific server. In a mul
 
 Long polling is the simplest push simulation. The client makes an HTTP request, and the server holds it open until data is available or a timeout is reached.
 
+::: code-group
+
 ```python
 from fastapi import FastAPI
 import asyncio
@@ -420,6 +422,8 @@ async function longPoll(
   }
 }
 ```
+
+:::
 
 ## AsyncAPI Specification
 

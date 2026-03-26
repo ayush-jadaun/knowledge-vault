@@ -77,6 +77,8 @@ Native development means building separate apps for iOS and Android using each p
 - Feature parity drift — iOS and Android teams implement features at different speeds
 - Higher cost — roughly 1.5-2x the engineering investment of cross-platform
 
+::: code-group
+
 ```swift
 // SwiftUI — declarative, native iOS
 import SwiftUI
@@ -145,6 +147,8 @@ fun ProductCard(product: Product) {
     }
 }
 ```
+
+:::
 
 ### Cross-Platform Development
 

@@ -52,6 +52,8 @@ The Chat Completions endpoint is the workhorse of the OpenAI API. Every text int
 
 ### Basic Usage
 
+::: code-group
+
 ```python
 from openai import OpenAI
 
@@ -89,9 +91,13 @@ const response = await client.chat.completions.create({
 console.log(response.choices[0].message.content);
 ```
 
+:::
+
 ### Streaming
 
 For user-facing applications, streaming eliminates the perceived latency of waiting for the full response.
+
+::: code-group
 
 ```python
 stream = client.chat.completions.create(
@@ -118,6 +124,8 @@ for await (const chunk of stream) {
   if (content) process.stdout.write(content);
 }
 ```
+
+:::
 
 ### Reasoning Models (o1 / o3)
 

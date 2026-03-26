@@ -215,6 +215,8 @@ Mobile devices have far less memory than desktops, and the OS aggressively kills
 
 ### Common Memory Leaks
 
+::: code-group
+
 ```typescript
 // React Native: Common memory leak patterns
 
@@ -318,6 +320,8 @@ class _DataListenerState extends State<DataListener> {
 }
 ```
 
+:::
+
 ::: warning Android Low Memory Killer
 Android's Low Memory Killer (LMK) assigns an `oom_adj_score` to each process. When memory is scarce, processes with the highest score are killed first. Background apps get a high score. If your app uses excessive memory even while backgrounded (e.g., holding large bitmaps in memory), it will be killed more aggressively, leading to a poor user experience when the user returns.
 :::
@@ -357,6 +361,8 @@ A 12MP camera photo decoded at full resolution uses ~46 MB of memory — for a s
 :::
 
 ### Image Optimization Strategies
+
+::: code-group
 
 ```typescript
 // React Native: Use expo-image for optimal loading
@@ -416,6 +422,8 @@ class OptimizedImage extends StatelessWidget {
   }
 }
 ```
+
+:::
 
 ---
 
@@ -615,6 +623,8 @@ gantt
 | **Use static splash screen** | Low | Low | Both |
 | **Inline critical data in bundle** | Medium | High | Both |
 
+::: code-group
+
 ```typescript
 // React Native: Deferred initialization pattern
 import { InteractionManager, AppState } from 'react-native';
@@ -662,6 +672,8 @@ void main() async {
   });
 }
 ```
+
+:::
 
 ---
 

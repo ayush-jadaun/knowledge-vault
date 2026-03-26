@@ -253,6 +253,8 @@ flowchart LR
 
 ### Injecting Trace Context into Logs
 
+::: code-group
+
 ```typescript
 // Node.js — inject trace ID into structured logs
 import { trace, context } from '@opentelemetry/api';
@@ -302,6 +304,8 @@ formatter = logging.Formatter(
     '%(asctime)s %(levelname)s [trace_id=%(trace_id)s span_id=%(span_id)s] %(message)s'
 )
 ```
+
+:::
 
 ### Exemplars (Metrics to Traces)
 
@@ -510,6 +514,8 @@ flowchart LR
 
 ### Instrumenting Applications
 
+::: code-group
+
 ```go
 // Go — Pyroscope SDK
 package main
@@ -554,6 +560,8 @@ pyroscope.configure(
 with pyroscope.tag_wrapper({"endpoint": "/api/process"}):
     process_heavy_request()
 ```
+
+:::
 
 ### Profile Types
 

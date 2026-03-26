@@ -25,6 +25,8 @@ Good unit tests share five properties, sometimes called the F.I.R.S.T. principle
 
 Every well-structured unit test follows three phases: **Arrange**, **Act**, **Assert**. This pattern is universal across languages and frameworks.
 
+::: code-group
+
 ```typescript
 // TypeScript — Vitest / Jest
 import { describe, it, expect } from 'vitest';
@@ -77,6 +79,8 @@ func TestCalculateDiscount_StandardTierOver100(t *testing.T) {
     }
 }
 ```
+
+:::
 
 ### Why AAA Works
 

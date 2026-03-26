@@ -55,6 +55,8 @@ LLM pricing changes frequently. These prices are approximate as of early 2026. A
 
 ## Authentication
 
+::: code-group
+
 ```python
 # OpenAI
 from openai import OpenAI
@@ -94,6 +96,8 @@ const genai = new GoogleGenerativeAI("...");
 import { Mistral } from "@mistralai/mistralai";
 const mistral = new Mistral({ apiKey: "..." });
 ```
+
+:::
 
 ---
 

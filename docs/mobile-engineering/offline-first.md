@@ -325,6 +325,8 @@ Building CRDTs from scratch for complex data structures (rich text, nested objec
 
 The most widely deployed database in the world. Available on every mobile platform.
 
+::: code-group
+
 ```typescript
 // React Native: WatermelonDB (built on SQLite, optimized for React Native)
 import { Database } from '@nozbe/watermelondb';
@@ -416,6 +418,8 @@ class AppDatabase extends _$AppDatabase {
   }
 }
 ```
+
+:::
 
 ### Database Comparison
 

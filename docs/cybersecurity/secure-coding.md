@@ -143,6 +143,8 @@ The same data must be encoded differently depending on where it appears in the o
 | **CSS value** | CSS hex encoding | `(` becomes `\28` |
 | **JSON** | JSON string escaping | `"` becomes `\"` |
 
+::: code-group
+
 ```python
 # Python: context-dependent encoding
 from markupsafe import escape as html_escape
@@ -188,6 +190,8 @@ element.textContent = userInput;  // Automatically encoded
 // DANGEROUS: <div v-html="userInput"></div>
 ```
 
+:::
+
 ---
 
 ## Authentication Implementation Checklist
@@ -231,6 +235,8 @@ def is_password_breached(password: str) -> bool:
 
 ## Secure Session Management
 
+::: code-group
+
 ```python
 # Session configuration checklist (Flask example)
 app.config.update(
@@ -270,6 +276,8 @@ app.post('/login', (req, res) => {
   });
 });
 ```
+
+:::
 
 ---
 

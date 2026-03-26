@@ -5,7 +5,7 @@ description: "Your quest through Archon begins here — choose your path, forge 
 
 # Begin Your Journey
 
-You stand before **1000+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
+You stand before **1090+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
 
 Choose your quest.
 
@@ -202,7 +202,7 @@ claude mcp add archon -- npx archon-mcp-server
 
 ### "I just want to browse and explore"
 
-- [Knowledge Graph](/graph) — visual map of all 1000+ topics and how they connect
+- [Knowledge Graph](/graph) — visual map of all 1090+ topics and how they connect
 - [Browse by Tag](/tags) — 3,000+ tags, filter by difficulty
 - [Compare Technologies](/compare) — side-by-side comparison (Kafka vs RabbitMQ, Postgres vs MongoDB, etc.)
 - [Cheat Sheets](/cheat-sheets/) — 22 quick reference cards
@@ -229,6 +229,8 @@ claude mcp add archon -- npx archon-mcp-server
 | **DevOps** | 60+ | Monitoring, logging, alerting, deployment, incident response, SRE, Git, engineering practices, checklists, runbooks, migrations, feature flags |
 | **AI/ML Engineering** | 25+ | LangChain (2000 lines), LangGraph (2200 lines), RAG, vector DBs, embeddings, AI agents, fine-tuning, guardrails, production AI, Claude/OpenAI/HuggingFace APIs |
 | **Exploratory Data Analysis** | 69 | EDA mindset, data cleaning (7 pages), univariate/bivariate/multivariate, feature engineering, NumPy/pandas/matplotlib/seaborn/plotly/Streamlit, 5 projects, leakage, drift, ethics |
+| **Machine Learning** | 30 | Math foundations, linear/logistic regression, decision trees, random forests, XGBoost/LightGBM, SVM, KNN, naive bayes, clustering, PCA, anomaly detection, time series, recommendations, SHAP/LIME — all with from-scratch code + real datasets |
+| **Deep Learning** | 25 | Neural networks from scratch, PyTorch, CNN, RNN/LSTM, Transformers (attention math), VAE, GANs, GNNs, BERT, text generation, YOLO, U-Net, diffusion models, RL, CLIP — full math + PyTorch code |
 | **Frontend Engineering** | 12 | Web performance, browser rendering, SSR/SSG, state management, React internals, WebAssembly, i18n, data visualization |
 | **Mobile Engineering** | 6 | React Native, Flutter, mobile performance, push notifications, offline-first |
 | **Testing** | 8 | Unit, integration, E2E, contract, property-based, TDD/BDD, test architecture |

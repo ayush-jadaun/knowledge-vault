@@ -41,7 +41,7 @@ graph TD
 
 Each node has at most two children: left and right.
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 class TreeNode<T> {
@@ -57,8 +57,6 @@ class TreeNode<T> {
 }
 ```
 
-**Python:**
-
 ```python
 class TreeNode:
     def __init__(self, val=0, left=None, right=None):
@@ -66,6 +64,8 @@ class TreeNode:
         self.left = left
         self.right = right
 ```
+
+:::
 
 ## Traversals
 
@@ -90,7 +90,7 @@ graph TD
 
 ### Recursive Traversals
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function inorder(root: TreeNode<number> | null, result: number[] = []): number[] {
@@ -118,8 +118,6 @@ function postorder(root: TreeNode<number> | null, result: number[] = []): number
 }
 ```
 
-**Python:**
-
 ```python
 def inorder(root: TreeNode | None) -> list[int]:
     if not root:
@@ -137,9 +135,11 @@ def postorder(root: TreeNode | None) -> list[int]:
     return postorder(root.left) + postorder(root.right) + [root.val]
 ```
 
+:::
+
 ### Iterative Inorder (using stack)
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function inorderIterative(root: TreeNode<number> | null): number[] {
@@ -162,8 +162,6 @@ function inorderIterative(root: TreeNode<number> | null): number[] {
 }
 ```
 
-**Python:**
-
 ```python
 def inorder_iterative(root: TreeNode | None) -> list[int]:
     result = []
@@ -181,9 +179,11 @@ def inorder_iterative(root: TreeNode | None) -> list[int]:
     return result
 ```
 
+:::
+
 ### Level-Order Traversal (BFS)
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function levelOrder(root: TreeNode<number> | null): number[][] {
@@ -209,8 +209,6 @@ function levelOrder(root: TreeNode<number> | null): number[][] {
   return result;
 }
 ```
-
-**Python:**
 
 ```python
 from collections import deque
@@ -239,6 +237,8 @@ def level_order(root: TreeNode | None) -> list[list[int]]:
     return result
 ```
 
+:::
+
 **Complexity:** All traversals are $O(n)$ time. Recursive uses $O(h)$ stack space where $h$ is height. Level-order uses $O(w)$ space where $w$ is the maximum width.
 
 ## Binary Search Tree (BST)
@@ -260,7 +260,7 @@ graph TD
 
 ### BST Operations
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function bstSearch(root: TreeNode<number> | null, target: number): TreeNode<number> | null {
@@ -303,8 +303,6 @@ function bstDelete(root: TreeNode<number> | null, key: number): TreeNode<number>
 }
 ```
 
-**Python:**
-
 ```python
 def bst_search(root: TreeNode | None, target: int) -> TreeNode | None:
     if not root or root.val == target:
@@ -343,6 +341,8 @@ def bst_delete(root: TreeNode | None, key: int) -> TreeNode | None:
 
     return root
 ```
+
+:::
 
 | Operation | Average | Worst (skewed) |
 |---|---|---|

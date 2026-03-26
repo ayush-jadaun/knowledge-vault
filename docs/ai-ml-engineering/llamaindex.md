@@ -55,6 +55,8 @@ The two fundamental data structures:
 - **Document** — A container for a source document (a PDF page, a web page, a database row). Has text content and metadata.
 - **Node** — A chunk of a document. Nodes are the atomic units that get indexed, embedded, and retrieved. Each node maintains a reference to its parent document and optional references to sibling nodes.
 
+::: code-group
+
 ```python
 from llama_index.core import Document
 from llama_index.core.node_parser import SentenceSplitter
@@ -90,6 +92,8 @@ const documents = [
 const splitter = new SentenceSplitter({ chunkSize: 1024, chunkOverlap: 200 });
 const nodes = splitter.getNodesFromDocuments(documents);
 ```
+
+:::
 
 ## Index Types
 

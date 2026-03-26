@@ -298,6 +298,8 @@ rustup target add wasm32-wasi
 cargo build --target wasm32-wasi --release
 ```
 
+::: code-group
+
 ```rust
 // src/lib.rs
 use wasm_bindgen::prelude::*;
@@ -363,6 +365,8 @@ console.log(fibonacci(50));  // 12586269025
 const processor = new ImageProcessor(1920, 1080);
 processor.grayscale();
 ```
+
+:::
 
 ### Go (via TinyGo)
 

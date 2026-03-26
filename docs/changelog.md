@@ -7,6 +7,31 @@ description: "What's new in Archon — recent additions and updates"
 
 ## March 2026
 
+### March 25, 2026 — Machine Learning & Deep Learning
+
+**+56 pages. Archon reaches 1,091 pages.**
+
+#### Machine Learning (30 pages)
+- **Foundations** (5) — Math for ML (linear algebra, calculus, probability with code), ML workflow, Python ecosystem, data preparation
+- **Supervised Learning** (8) — Linear regression (OLS, gradient descent from scratch), logistic regression (MLE derivation), decision trees (CART/Gini/entropy), random forests (bagging, OOB), gradient boosting (XGBoost/LightGBM/CatBoost internals), SVM (kernel trick, Lagrangian), KNN, naive bayes — all with from-scratch NumPy + scikit-learn + real datasets
+- **Unsupervised Learning** (5) — Clustering (K-Means/DBSCAN/GMM), dimensionality reduction (PCA/t-SNE/UMAP from scratch), anomaly detection (Isolation Forest), association rules (Apriori), topic modeling (LDA/BERTopic)
+- **Evaluation & Selection** (4) — All metrics with math, cross-validation (7 methods), hyperparameter tuning (Optuna), model selection (bias-variance proof)
+- **Advanced** (5) — Feature engineering, ensemble methods (stacking from scratch), time series ML (ARIMA), recommendation systems (SVD/ALS from scratch on MovieLens), SHAP/LIME interpretability
+- **Reference** (3) — 50-item checklist, algorithm selection flowchart, scikit-learn cheat sheet
+
+#### Deep Learning (25 pages)
+- **Foundations** (3) — Neural network basics (backprop derivation from scratch), PyTorch fundamentals, training techniques (BatchNorm, dropout, LR scheduling math)
+- **Architectures** (6) — CNN (LeNet→ResNet→EfficientNet), RNN/LSTM (gate equations), Transformers (full attention math from "Attention is All You Need"), VAE (ELBO derivation), GANs (minimax, WGAN), Graph Neural Networks (message passing, PyG)
+- **NLP** (4) — Tokenization (BPE from scratch), language models (scaling laws), BERT family (fine-tuning CoLA+NER), text generation (top-k/top-p/temperature math, RLHF)
+- **Computer Vision** (3) — Image classification (ViT, transfer learning), object detection (YOLO, DETR), segmentation (U-Net from scratch, SAM)
+- **Advanced** (5) — Transfer learning (few-shot, zero-shot CLIP), model optimization (quantization INT8, pruning, distillation), diffusion models (DDPM, Stable Diffusion), reinforcement learning (DQN, PPO, CartPole), multimodal models (CLIP contrastive learning)
+- **Reference** (3) — DL checklist, architecture selection guide, 30 must-read papers
+- **Learning Path** — 16-week ML + DL study plan
+
+Every page: full KaTeX math derivations + from-scratch NumPy/PyTorch code + library code + real dataset end-to-end example.
+
+---
+
 ### March 25, 2026 — Spring Boot, Data Pipeline & MCP Server
 
 **Archon crosses 1,000 pages. MCP server goes live.**

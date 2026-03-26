@@ -296,6 +296,8 @@ Datafusion operates on Apache Arrow RecordBatches — a columnar, zero-copy in-m
 
 ### Example: Datafusion in Rust
 
+::: code-group
+
 ```rust
 use datafusion::prelude::*;
 
@@ -344,6 +346,8 @@ df = ctx.sql("""
 
 print(df.to_pandas())
 ```
+
+:::
 
 ### When Datafusion Falls Short
 

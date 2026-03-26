@@ -105,6 +105,8 @@ counter.value();     // 12
 
 Closures are the FP equivalent of constructor injection — they bind configuration to behavior:
 
+::: code-group
+
 ```python
 # Python: closure for database configuration
 def create_user_repository(connection_pool):
@@ -152,6 +154,8 @@ err := retry(func() error {
     return httpClient.Post(url, payload)
 })
 ```
+
+:::
 
 ## Currying
 
@@ -222,6 +226,8 @@ const formatEUR = formatPrice('\u20AC', 2);
 
 Partial application fixes some arguments of a function, producing a new function with fewer parameters. Unlike currying (which always produces single-argument functions), partial application can fix any number of arguments at once.
 
+::: code-group
+
 ```typescript
 // Generic partial application
 function partial<A, B extends unknown[], R>(
@@ -254,6 +260,8 @@ cube = partial(power, exponent=3)
 list(map(square, [1, 2, 3, 4]))  # [1, 4, 9, 16]
 list(map(cube, [1, 2, 3, 4]))    # [1, 8, 27, 64]
 ```
+
+:::
 
 ## Map, Filter, Reduce
 
@@ -302,6 +310,8 @@ const byCustomer = orders.reduce<Record<string, Order[]>>(
 
 ### Composing Map/Filter/Reduce
 
+::: code-group
+
 ```typescript
 // Full pipeline: calculate total revenue from active premium orders
 const premiumRevenue = orders
@@ -323,6 +333,8 @@ premium_revenue = reduce(
     0,
 )
 ```
+
+:::
 
 ::: warning Performance Consideration
 Chaining `.map().filter().reduce()` creates intermediate arrays. For large datasets, consider:
@@ -394,6 +406,8 @@ processEmail('  Alice@Example.COM  '); // "alice@example.com"
 
 ### Real-World Pipeline: Data Processing
 
+::: code-group
+
 ```typescript
 // Processing a CSV of transactions
 const processTransactions = flow(
@@ -425,6 +439,8 @@ result = pipe(
     lambda users: users[:50],
 )
 ```
+
+:::
 
 ## Advanced Patterns
 

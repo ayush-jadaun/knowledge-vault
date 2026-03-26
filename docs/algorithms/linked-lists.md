@@ -38,7 +38,7 @@ graph LR
 
 Each node has a value and a `next` pointer. Traversal is one-way.
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 class ListNode<T> {
@@ -88,8 +88,6 @@ class SinglyLinkedList<T> {
 }
 ```
 
-**Python:**
-
 ```python
 class ListNode:
     def __init__(self, val=0, next=None):
@@ -128,6 +126,8 @@ class SinglyLinkedList:
         return False
 ```
 
+:::
+
 ### Complexity Summary
 
 | Operation | Singly | Doubly |
@@ -164,7 +164,7 @@ graph LR
     style N3 fill:#f96,stroke:#333
 ```
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function hasCycle(head: ListNode<number> | null): boolean {
@@ -182,8 +182,6 @@ function hasCycle(head: ListNode<number> | null): boolean {
 }
 ```
 
-**Python:**
-
 ```python
 def has_cycle(head: ListNode | None) -> bool:
     slow = fast = head
@@ -197,6 +195,8 @@ def has_cycle(head: ListNode | None) -> bool:
 
     return False
 ```
+
+:::
 
 **Why it works:** If there is a cycle, the fast pointer will eventually "lap" the slow pointer inside the cycle. If there is no cycle, the fast pointer reaches `null`.
 
@@ -216,7 +216,7 @@ When they meet:
 
 So starting one pointer at head and one at the meeting point, both moving one step, they will meet at the cycle start after $F$ steps.
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function detectCycleStart(head: ListNode<number> | null): ListNode<number> | null {
@@ -243,8 +243,6 @@ function detectCycleStart(head: ListNode<number> | null): ListNode<number> | nul
 }
 ```
 
-**Python:**
-
 ```python
 def detect_cycle_start(head: ListNode | None) -> ListNode | None:
     slow = fast = head
@@ -267,11 +265,13 @@ def detect_cycle_start(head: ListNode | None) -> ListNode | None:
     return slow
 ```
 
+:::
+
 ### Finding the Middle Node
 
 The slow pointer will be at the middle when the fast pointer reaches the end.
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function findMiddle(head: ListNode<number> | null): ListNode<number> | null {
@@ -287,8 +287,6 @@ function findMiddle(head: ListNode<number> | null): ListNode<number> | null {
 }
 ```
 
-**Python:**
-
 ```python
 def find_middle(head: ListNode | None) -> ListNode | None:
     slow = fast = head
@@ -297,6 +295,8 @@ def find_middle(head: ListNode | None) -> ListNode | None:
         fast = fast.next.next
     return slow
 ```
+
+:::
 
 ## Pattern 2: Linked List Reversal
 
@@ -318,7 +318,7 @@ graph RL
     end
 ```
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function reverseList(head: ListNode<number> | null): ListNode<number> | null {
@@ -336,8 +336,6 @@ function reverseList(head: ListNode<number> | null): ListNode<number> | null {
 }
 ```
 
-**Python:**
-
 ```python
 def reverse_list(head: ListNode | None) -> ListNode | None:
     prev = None
@@ -352,9 +350,13 @@ def reverse_list(head: ListNode | None) -> ListNode | None:
     return prev
 ```
 
+:::
+
 **Complexity:** $O(n)$ time, $O(1)$ space.
 
 ### Recursive Reversal
+
+::: code-group
 
 ```typescript
 function reverseListRecursive(head: ListNode<number> | null): ListNode<number> | null {
@@ -380,13 +382,15 @@ def reverse_list_recursive(head: ListNode | None) -> ListNode | None:
     return new_head
 ```
 
+:::
+
 **Complexity:** $O(n)$ time, $O(n)$ space (call stack).
 
 ### Reverse Between Positions
 
 Reverse only the sublist from position `left` to position `right`:
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function reverseBetween(
@@ -416,8 +420,6 @@ function reverseBetween(
 }
 ```
 
-**Python:**
-
 ```python
 def reverse_between(head: ListNode | None, left: int, right: int) -> ListNode | None:
     dummy = ListNode(0)
@@ -437,11 +439,13 @@ def reverse_between(head: ListNode | None, left: int, right: int) -> ListNode | 
     return dummy.next
 ```
 
+:::
+
 ## Pattern 3: Merge Lists
 
 ### Merge Two Sorted Lists
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function mergeTwoLists(
@@ -467,8 +471,6 @@ function mergeTwoLists(
 }
 ```
 
-**Python:**
-
 ```python
 def merge_two_lists(l1: ListNode | None, l2: ListNode | None) -> ListNode | None:
     dummy = ListNode(0)
@@ -486,6 +488,8 @@ def merge_two_lists(l1: ListNode | None, l2: ListNode | None) -> ListNode | None
     tail.next = l1 or l2
     return dummy.next
 ```
+
+:::
 
 ### Merge K Sorted Lists
 
@@ -526,7 +530,7 @@ See [Heaps & Priority Queues](/algorithms/heaps-priority-queues) for more heap-b
 
 Partition a list around a value — all nodes less than the value come before nodes greater than or equal to it.
 
-**TypeScript:**
+::: code-group
 
 ```typescript
 function partition(
@@ -557,8 +561,6 @@ function partition(
 }
 ```
 
-**Python:**
-
 ```python
 def partition(head: ListNode | None, x: int) -> ListNode | None:
     less_head = ListNode(0)
@@ -581,6 +583,8 @@ def partition(head: ListNode | None, x: int) -> ListNode | None:
 
     return less_head.next
 ```
+
+:::
 
 ## Advanced: LRU Cache
 

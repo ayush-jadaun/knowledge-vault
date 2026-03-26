@@ -520,6 +520,8 @@ sequenceDiagram
     C->>D: Future completes with value
 ```
 
+::: code-group
+
 ```dart
 // Dart side
 import 'dart:io';
@@ -613,6 +615,8 @@ class BatteryPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     }
 }
 ```
+
+:::
 
 ::: warning Platform Channel Performance
 Platform channels use asynchronous message passing with binary serialization. For high-frequency calls (60+ times per second), the overhead is noticeable. For performance-critical native interop, use Dart FFI (`dart:ffi`) to call C/C++ code directly, bypassing the message channel entirely.
