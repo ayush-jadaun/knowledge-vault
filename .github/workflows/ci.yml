@@ -15,40 +15,54 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
-      NODE_OPTIONS: --max-old-space-size=24576 --max-semi-space-size=1024
+      NODE_OPTIONS: --max-old-space-size=24576 --max-semi-space-size=1024 --optimize-for-size --gc-interval=100
 
     steps:
-      - name: Free disk space for swap
+      - name: Free disk space
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift /usr/local/graalvm /usr/local/.ghcup
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift /usr/local/graalvm /usr/local/.ghcup /opt/hostedtoolcache/go /opt/hostedtoolcache/Ruby /opt/hostedtoolcache/Python
           sudo apt-get clean
-          df -h
+          docker system prune -af 2>/dev/null || true
 
-      - name: Create 16GB swap
+      - name: Create zram + disk swap
         run: |
           sudo swapoff -a || true
-          sudo rm -f /swapfile /mnt/swapfile
+          # zram compressed swap (8GB compressed ≈ 16-24GB effective)
+          sudo modprobe zram 2>/dev/null || true
+          if [ -e /dev/zram0 ]; then
+            echo lz4 | sudo tee /sys/block/zram0/comp_algorithm 2>/dev/null || true
+            echo 8G | sudo tee /sys/block/zram0/disksize
+            sudo mkswap /dev/zram0
+            sudo swapon -p 100 /dev/zram0
+          fi
+          # Disk swap fallback
           sudo fallocate -l 16G /mnt/swapfile
           sudo chmod 600 /mnt/swapfile
           sudo mkswap /mnt/swapfile
-          sudo swapon /mnt/swapfile
+          sudo swapon -p 50 /mnt/swapfile
+          # Tune swappiness for better performance
+          sudo sysctl vm.swappiness=60
           free -h
 
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Cache VitePress
         uses: actions/cache@v4
         with:
-          path: docs/.vitepress/cache
-          key: vitepress-${{ hashFiles('docs/**/*.md') }}
-          restore-keys: vitepress-
+          path: |
+            docs/.vitepress/cache
+            node_modules/.vite
+          key: vitepress-${{ hashFiles('package-lock.json') }}-${{ hashFiles('docs/.vitepress/config.ts') }}
+          restore-keys: |
+            vitepress-${{ hashFiles('package-lock.json') }}-
+            vitepress-
 
       - name: Install dependencies
         run: npm ci
