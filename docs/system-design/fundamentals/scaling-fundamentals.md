@@ -417,3 +417,23 @@ For an overview of all building blocks and when to use each, see the [Building B
 - **[Building Blocks Overview](/system-design/fundamentals/building-blocks)** — All the components you will use when scaling
 - **[Load Balancing](/system-design/load-balancing)** — How traffic gets distributed across servers
 - **[Caching Strategies](/system-design/caching/caching-strategies)** — The single biggest performance lever for most applications
+
+## Real-World Examples
+
+::: tip Netflix
+Netflix uses **horizontal scaling** for its microservices layer, running thousands of EC2 instances behind Zuul (their custom load balancer). Their stateless services auto-scale based on traffic, handling over 400 billion events per day across 200+ microservices. Each service team independently scales their instances.
+:::
+
+::: tip Shopify
+Shopify uses **vertical scaling first** for their MySQL databases (upgrading to 12 TB RAM machines) and only shards when absolutely necessary. Their "Pods" architecture horizontally scales by assigning groups of shops to independent infrastructure stacks, keeping each pod simple while scaling the overall system.
+:::
+
+::: tip Twitter/X
+Twitter moved from a Ruby monolith (the "Fail Whale" era) to **horizontally scaled JVM services**. Their timeline service precomputes home timelines into Redis clusters. For celebrities with 100M+ followers, they switch from fan-out-on-write (push) to fan-out-on-read (pull), demonstrating hybrid scaling at extreme load.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"I'd start by identifying the bottleneck — is it CPU, memory, database reads, or writes? For application servers, I'd scale horizontally because they're stateless and easy to clone behind a load balancer. For the database, I'd first optimize queries, then add caching (Redis reduces DB load by 80-90%), then read replicas, and only shard as a last resort because sharding is complex and hard to reverse. Companies like Instagram ran on just 3 engineers with this progressive approach up to 30 million users."
+:::

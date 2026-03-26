@@ -735,3 +735,103 @@ def diameter(root: TreeNode | None) -> int:
 - [Backtracking & Recursion](/algorithms/backtracking-recursion) — recursive tree patterns
 - [Database Indexing](/system-design/databases/indexing-deep-dive) — B-trees in production
 - [Heaps & Priority Queues](/algorithms/heaps-priority-queues) — complete binary tree structure
+
+## Try It Yourself
+
+**Problem 1:** Given the binary tree `[3, 9, 20, null, null, 15, 7]`, find its maximum depth.
+
+::: details Solution
+Use recursion: `maxDepth(node) = 1 + max(maxDepth(left), maxDepth(right))`.
+- maxDepth(3) = 1 + max(maxDepth(9), maxDepth(20))
+- maxDepth(9) = 1 + max(0, 0) = 1
+- maxDepth(20) = 1 + max(maxDepth(15), maxDepth(7)) = 1 + max(1, 1) = 2
+- maxDepth(3) = 1 + max(1, 2) = **3**
+:::
+
+**Problem 2:** Verify whether the following BST is valid: root=5, left=1, right=8, right.left=3, right.right=9.
+
+::: details Solution
+A BST requires all nodes in the left subtree < root and all nodes in the right subtree > root. Check node 3 (right.left of root 5): it is in the right subtree of 5, so it must be > 5. But 3 < 5.
+Answer: **Not a valid BST**. This is why you must propagate valid ranges, not just check immediate children.
+:::
+
+**Problem 3:** Given a BST with nodes `[6, 2, 8, 0, 4, 7, 9, 3, 5]`, find the Lowest Common Ancestor of nodes 2 and 8.
+
+::: details Solution
+Starting at root 6:
+- p=2 and q=8 are on different sides of 6 (2 < 6, 8 > 6)
+- When p and q are on opposite sides, the current node is the LCA.
+Answer: **6**
+:::
+
+**Problem 4:** Perform level-order traversal on the tree: root=1, left=2, right=3, left.left=4, left.right=5.
+
+::: details Solution
+Use a queue (BFS):
+- Level 0: dequeue 1, enqueue 2, 3 → output: [1]
+- Level 1: dequeue 2 (enqueue 4, 5), dequeue 3 → output: [2, 3]
+- Level 2: dequeue 4, dequeue 5 → output: [4, 5]
+Answer: **[[1], [2, 3], [4, 5]]**
+:::
+
+**Problem 5:** Insert the words "cat", "car", "card" into a Trie. How many nodes (excluding root) does the Trie have?
+
+::: details Solution
+Build the trie:
+- "cat": root -> c -> a -> t (3 new nodes)
+- "car": root -> c -> a -> r (1 new node, `c` and `a` shared)
+- "card": root -> c -> a -> r -> d (1 new node, `c`, `a`, `r` shared)
+Total nodes excluding root: **5** (c, a, t, r, d)
+:::
+
+## Quick Quiz
+
+**1. What traversal of a BST produces elements in sorted order?**
+- a) Preorder
+- b) Inorder
+- c) Postorder
+- d) Level-order
+
+::: details Answer
+**b) Inorder** — Inorder traversal visits left subtree, then root, then right subtree. Since a BST has left < root < right, this produces a sorted sequence.
+:::
+
+**2. What is the worst-case time complexity for search in an unbalanced BST?**
+- a) $O(1)$
+- b) $O(\log n)$
+- c) $O(n)$
+- d) $O(n \log n)$
+
+::: details Answer
+**c) $O(n)$** — A skewed BST (all nodes form a single chain) degenerates to a linked list, requiring traversal of all $n$ nodes in the worst case.
+:::
+
+**3. How many edges does a tree with $n$ nodes have?**
+- a) $n$
+- b) $n - 1$
+- c) $n + 1$
+- d) $2n$
+
+::: details Answer
+**b) $n - 1$** — A tree is a connected acyclic graph. Every node except the root has exactly one parent edge, giving exactly $n - 1$ edges.
+:::
+
+**4. What data structure does level-order traversal use internally?**
+- a) Stack
+- b) Queue
+- c) Heap
+- d) Hash map
+
+::: details Answer
+**b) Queue** — Level-order traversal (BFS) processes nodes level by level using a FIFO queue. Each node's children are enqueued for processing after the current level completes.
+:::
+
+**5. What is the time complexity of inserting a word of length $m$ into a Trie?**
+- a) $O(1)$
+- b) $O(\log m)$
+- c) $O(m)$
+- d) $O(m^2)$
+
+::: details Answer
+**c) $O(m)$** — Insertion traverses or creates one node per character in the word, doing constant work at each step.
+:::

@@ -655,3 +655,135 @@ Edit distance is used everywhere: spell checkers, DNA sequence alignment, fuzzy 
 - [Hash Tables](/algorithms/hash-tables) — hashing fundamentals used in Rabin-Karp
 - [Advanced Data Structures](/algorithms/advanced-data-structures) — segment trees for range queries on strings
 - [Bit Manipulation](/algorithms/bit-manipulation) — bitwise tricks in rolling hashes
+
+## Try It Yourself
+
+**Problem 1:** Use the KMP algorithm to find all occurrences of pattern `"ABA"` in text `"ABABABA"`. First, build the failure function.
+
+::: details Solution
+Failure function for "ABA":
+- pi[0] = 0 (A: no proper prefix = suffix)
+- pi[1] = 0 (AB: no match)
+- pi[2] = 1 (ABA: "A" is both prefix and suffix)
+
+KMP search on "ABABABA":
+- i=0: A matches A, j=1
+- i=1: B matches B, j=2
+- i=2: A matches A, j=3 → match at index **0**. j = pi[2] = 1
+- i=3: B matches B, j=2
+- i=4: A matches A, j=3 → match at index **2**. j = pi[2] = 1
+- i=5: B matches B, j=2
+- i=6: A matches A, j=3 → match at index **4**. j = pi[2] = 1
+
+Answer: Matches at indices **[0, 2, 4]**.
+:::
+
+**Problem 2:** Insert the words "app", "apple", "ape", "apply" into a Trie. How many nodes does the Trie have (excluding root)?
+
+::: details Solution
+Build the trie character by character:
+- "app": root → a → p → p (3 nodes)
+- "apple": root → a → p → p → l → e (2 new nodes: l, e)
+- "ape": root → a → p → e (1 new node: e after the first p)
+- "apply": root → a → p → p → l → y (1 new node: y)
+
+Total nodes excluding root: **7** (a, p, p, l, e, e, y)
+:::
+
+**Problem 3:** Find the longest palindromic substring in `"babad"`.
+
+::: details Solution
+Expand from each center (including between-character centers):
+- Center at index 0 (b): "b" (length 1)
+- Center at index 1 (a): "a" (1), expand: "bab" (3)
+- Center at index 2 (b): "b" (1), expand: "aba" (3)
+- Center at index 3 (a): "a" (1)
+- Center at index 4 (d): "d" (1)
+- Between-character centers: no even-length palindromes longer than 0.
+
+Answer: **"bab"** or **"aba"** (both length 3).
+:::
+
+**Problem 4:** Compute the edit distance between `"horse"` and `"ros"`.
+
+::: details Solution
+Build the DP table:
+```
+    ""  r  o  s
+""   0  1  2  3
+h    1  1  2  3
+o    2  2  1  2
+r    3  2  2  2
+s    4  3  3  2
+e    5  4  4  3
+```
+- horse → rorse (replace h with r)
+- rorse → rose (remove r at position 2)
+- rose → ros (remove e)
+Answer: **3** operations.
+:::
+
+**Problem 5:** Given the suffix array concept, list all suffixes of `"abac"` in sorted order.
+
+::: details Solution
+All suffixes:
+- Index 0: "abac"
+- Index 1: "bac"
+- Index 2: "ac"
+- Index 3: "c"
+
+Sorted alphabetically: "abac", "ac", "bac", "c"
+Suffix array: **[0, 2, 1, 3]**
+:::
+
+## Quick Quiz
+
+**1. What is the time complexity of the KMP pattern matching algorithm?**
+- a) $O(nm)$
+- b) $O(n + m)$
+- c) $O(n \log m)$
+- d) $O(n^2)$
+
+::: details Answer
+**b) $O(n + m)$** — KMP preprocesses the pattern in $O(m)$ to build the failure function, then scans the text in $O(n)$. It never backtracks on the text.
+:::
+
+**2. What is the key advantage of Rabin-Karp over KMP?**
+- a) Guaranteed $O(n + m)$ worst case
+- b) Lower memory usage
+- c) Ability to search for multiple patterns simultaneously
+- d) Better cache performance
+
+::: details Answer
+**c) Ability to search for multiple patterns simultaneously** — Rabin-Karp can compute rolling hashes for multiple patterns at once, checking all of them against each window hash. KMP requires a separate failure function per pattern.
+:::
+
+**3. What is the space complexity of a Trie storing $N$ words of average length $L$ over an alphabet of size $|\Sigma|$?**
+- a) $O(N)$
+- b) $O(N \cdot L)$
+- c) $O(N \cdot L \cdot |\Sigma|)$
+- d) $O(|\Sigma|^L)$
+
+::: details Answer
+**c) $O(N \cdot L \cdot |\Sigma|)$** — In the worst case (no shared prefixes), there are $N \cdot L$ nodes, each potentially storing $|\Sigma|$ child pointers. With shared prefixes, the actual space is typically much less.
+:::
+
+**4. What technique does Manacher's algorithm use to achieve $O(n)$ for finding the longest palindromic substring?**
+- a) Dynamic programming
+- b) Rolling hash
+- c) Exploiting mirror symmetry of palindromes within a known palindrome boundary
+- d) Divide and conquer
+
+::: details Answer
+**c) Exploiting mirror symmetry of palindromes within a known palindrome boundary** — When expanding palindromes, Manacher's algorithm reuses information from the mirror position of the current center within the rightmost known palindrome, avoiding redundant character comparisons.
+:::
+
+**5. Edit distance is an example of which DP pattern?**
+- a) 1D linear sequence
+- b) 2D two-sequence comparison
+- c) Interval DP
+- d) Bitmask DP
+
+::: details Answer
+**b) 2D two-sequence comparison** — Edit distance compares two strings character by character, with `dp[i][j]` representing the minimum operations to transform the first $i$ characters of one string into the first $j$ characters of the other.
+:::

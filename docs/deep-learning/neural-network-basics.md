@@ -23,6 +23,25 @@ $$
 
 The decision boundary is a hyperplane $w \cdot x + b = 0$.
 
+::: details Worked Example — Perceptron Decision
+
+**Input:**
+| | $x_1$ | $x_2$ |
+|---|---|---|
+| Sample | 1 | 0.5 |
+
+Weights: $w = [0.6, -0.4]$, bias $b = -0.1$
+
+**Step 1:** Compute weighted sum
+$$w \cdot x + b = (0.6)(1) + (-0.4)(0.5) + (-0.1) = 0.6 - 0.2 - 0.1 = 0.3$$
+
+**Step 2:** Apply threshold
+$$0.3 > 0 \implies \hat{y} = 1$$
+
+**Result:** The perceptron predicts class 1. The sample is on the positive side of the decision boundary $0.6x_1 - 0.4x_2 - 0.1 = 0$.
+
+:::
+
 ### Perceptron Learning Rule
 
 The weight update for a misclassified sample is:
@@ -36,6 +55,26 @@ b \leftarrow b + \eta (y - \hat{y})
 $$
 
 where $\eta$ is the learning rate and $y$ is the true label.
+
+::: details Worked Example — Perceptron Learning Rule
+
+**Input:** Sample $x = [1, 0.5]$, true label $y = 0$, predicted $\hat{y} = 1$, learning rate $\eta = 0.1$
+
+Current: $w = [0.6, -0.4]$, $b = -0.1$
+
+**Step 1:** Compute error
+$$y - \hat{y} = 0 - 1 = -1$$
+
+**Step 2:** Update weights
+$$w_1 \leftarrow 0.6 + 0.1 \times (-1) \times 1 = 0.5$$
+$$w_2 \leftarrow -0.4 + 0.1 \times (-1) \times 0.5 = -0.45$$
+
+**Step 3:** Update bias
+$$b \leftarrow -0.1 + 0.1 \times (-1) = -0.2$$
+
+**Result:** New weights $w = [0.5, -0.45]$, $b = -0.2$. The decision boundary shifted to reduce the score for this misclassified sample. Recheck: $0.5(1) + (-0.45)(0.5) + (-0.2) = 0.5 - 0.225 - 0.2 = 0.075$ --- still positive, so more iterations needed.
+
+:::
 
 ::: warning The XOR Problem
 A single perceptron can only learn linearly separable functions. It cannot learn XOR. This limitation drove the development of multi-layer networks.
@@ -97,6 +136,33 @@ $$
 
 where $W^{(l)} \in \mathbb{R}^{n_l \times n_{l-1}}$ is the weight matrix for layer $l$, $b^{(l)} \in \mathbb{R}^{n_l}$ is the bias, and $\sigma^{(l)}$ is the activation function.
 
+::: details Worked Example — MLP Forward Pass (2-layer)
+
+**Input:** $x = [1.0, 0.5]$ (2 features), hidden layer size 2, output size 2
+
+**Weights:**
+$$W^{(1)} = \begin{bmatrix} 0.3 & 0.7 \\ -0.2 & 0.4 \end{bmatrix}, \quad b^{(1)} = \begin{bmatrix} 0.1 \\ -0.1 \end{bmatrix}$$
+
+$$W^{(2)} = \begin{bmatrix} 0.5 & -0.3 \\ 0.2 & 0.6 \end{bmatrix}, \quad b^{(2)} = \begin{bmatrix} 0.0 \\ 0.0 \end{bmatrix}$$
+
+**Step 1:** Pre-activation layer 1
+$$z^{(1)} = W^{(1)} x + b^{(1)} = \begin{bmatrix} 0.3(1) + 0.7(0.5) + 0.1 \\ -0.2(1) + 0.4(0.5) - 0.1 \end{bmatrix} = \begin{bmatrix} 0.75 \\ -0.1 \end{bmatrix}$$
+
+**Step 2:** Apply ReLU
+$$a^{(1)} = \text{ReLU}(z^{(1)}) = \begin{bmatrix} 0.75 \\ 0 \end{bmatrix}$$
+
+The second neuron is "dead" (negative pre-activation zeroed by ReLU).
+
+**Step 3:** Pre-activation layer 2
+$$z^{(2)} = W^{(2)} a^{(1)} + b^{(2)} = \begin{bmatrix} 0.5(0.75) + (-0.3)(0) \\ 0.2(0.75) + 0.6(0) \end{bmatrix} = \begin{bmatrix} 0.375 \\ 0.15 \end{bmatrix}$$
+
+**Step 4:** Softmax output
+$$\hat{y} = \text{softmax}([0.375, 0.15]) = \left[\frac{e^{0.375}}{e^{0.375} + e^{0.15}}, \frac{e^{0.15}}{e^{0.375} + e^{0.15}}\right] = [0.556, 0.444]$$
+
+**Result:** The network predicts class 0 with 55.6% probability. Only one hidden neuron contributed because the other had a negative pre-activation and was zeroed by ReLU.
+
+:::
+
 ## Activation Functions
 
 Activation functions introduce nonlinearity. Without them, stacking linear layers collapses to a single linear transformation: $W_2(W_1 x + b_1) + b_2 = W' x + b'$.
@@ -126,6 +192,32 @@ $$
 $$
 
 **Properties:** Output in $(0, 1)$. Suffers from vanishing gradients --- when $|x|$ is large, $\sigma' \approx 0$, which kills gradient flow. Used mainly in output layers for binary classification.
+
+::: details Worked Example — Sigmoid Activation and Derivative
+
+**Input values:** $x = [-2, 0, 0.75, 3]$
+
+**Step 1:** Compute $\sigma(x) = \frac{1}{1 + e^{-x}}$
+
+| $x$ | $e^{-x}$ | $\sigma(x)$ |
+|---|---|---|
+| -2 | 7.389 | $1/8.389 = 0.119$ |
+| 0 | 1.000 | $1/2 = 0.500$ |
+| 0.75 | 0.472 | $1/1.472 = 0.679$ |
+| 3 | 0.050 | $1/1.050 = 0.953$ |
+
+**Step 2:** Compute derivative $\sigma'(x) = \sigma(x)(1 - \sigma(x))$
+
+| $x$ | $\sigma(x)$ | $\sigma'(x)$ |
+|---|---|---|
+| -2 | 0.119 | $0.119 \times 0.881 = 0.105$ |
+| 0 | 0.500 | $0.500 \times 0.500 = 0.250$ |
+| 0.75 | 0.679 | $0.679 \times 0.321 = 0.218$ |
+| 3 | 0.953 | $0.953 \times 0.047 = 0.045$ |
+
+**Result:** The derivative peaks at $x = 0$ (max value 0.25) and decays toward zero for large $|x|$. At $x = 3$, the gradient is only 0.045 --- this is why sigmoid causes vanishing gradients in deep networks.
+
+:::
 
 ### Tanh
 
@@ -192,6 +284,23 @@ $$
 $$
 
 Converts a vector of logits into a probability distribution. Used in the output layer of multi-class classifiers.
+
+::: details Worked Example — Softmax
+
+**Input logits:** $z = [2.0, 1.0, 0.1]$ (3-class classifier)
+
+**Step 1:** Compute exponentials
+$$e^{2.0} = 7.389, \quad e^{1.0} = 2.718, \quad e^{0.1} = 1.105$$
+
+**Step 2:** Sum
+$$\sum = 7.389 + 2.718 + 1.105 = 11.212$$
+
+**Step 3:** Normalize
+$$\text{softmax} = \left[\frac{7.389}{11.212}, \frac{2.718}{11.212}, \frac{1.105}{11.212}\right] = [0.659, 0.242, 0.099]$$
+
+**Result:** The model assigns 65.9% probability to class 0, 24.2% to class 1, and 9.9% to class 2. Probabilities sum to 1.0. The largest logit (2.0) dominates after softmax amplification.
+
+:::
 
 ### Activation Function Comparison
 
@@ -301,6 +410,28 @@ $$
 
 **Why cross-entropy, not MSE, for classification?** MSE gradients near 0 or 1 are tiny (due to sigmoid saturation), so learning is very slow. Cross-entropy produces large gradients when the prediction is wrong, enabling faster learning.
 
+::: details Worked Example — MSE and Cross-Entropy Loss
+
+**Setup:** 3-class problem, true label = class 1 (one-hot: $y = [0, 1, 0]$)
+
+Prediction (softmax output): $\hat{y} = [0.1, 0.7, 0.2]$
+
+**MSE Loss:**
+$$\mathcal{L}_{\text{MSE}} = \frac{1}{3}\left[(0 - 0.1)^2 + (1 - 0.7)^2 + (0 - 0.2)^2\right] = \frac{0.01 + 0.09 + 0.04}{3} = 0.0467$$
+
+**Cross-Entropy Loss:**
+$$\mathcal{L}_{\text{CE}} = -[0 \cdot \log(0.1) + 1 \cdot \log(0.7) + 0 \cdot \log(0.2)] = -\log(0.7) = 0.357$$
+
+Now consider a bad prediction: $\hat{y} = [0.1, 0.1, 0.8]$ (confident but wrong)
+
+**MSE:** $\frac{(0.01 + 0.81 + 0.64)}{3} = 0.487$
+
+**CE:** $-\log(0.1) = 2.303$
+
+**Result:** Cross-entropy penalizes the bad prediction 6.5x more harshly ($2.303 / 0.357$), while MSE only penalizes 10x ($0.487 / 0.0467$). CE produces much stronger gradients for wrong confident predictions, enabling faster learning.
+
+:::
+
 ### Binary Cross-Entropy
 
 $$
@@ -369,6 +500,17 @@ $$
 
 Let $\delta^{(2)} = \hat{y} - y$.
 
+::: details Worked Example — Backpropagation Output Layer Gradient
+
+**Setup:** 2-class output, true label = class 0 ($y = [1, 0]$), softmax output $\hat{y} = [0.6, 0.4]$
+
+**Step 1:** Compute $\delta^{(2)} = \hat{y} - y$
+$$\delta^{(2)} = [0.6 - 1, \; 0.4 - 0] = [-0.4, \; 0.4]$$
+
+**Result:** The gradient for class 0 is $-0.4$ (negative because prediction was too low --- push it up). The gradient for class 1 is $+0.4$ (positive because prediction was too high --- push it down). This elegantly simple gradient is why softmax + cross-entropy is the standard pairing.
+
+:::
+
 ### Step 2: Weight Gradients (Output Layer)
 
 $$
@@ -414,6 +556,37 @@ $$
 $$
 
 This is why we store $z^{(l)}$ and $a^{(l)}$ during the forward pass --- we need them to compute the gradients.
+
+::: details Worked Example — Full Backprop Through a 2-Layer Network
+
+**Setup:** Input $x = [1.0, 0.5]$, true label $y = [1, 0]$ (class 0), sigmoid activation, learning rate $\eta = 0.5$
+
+$W^{(1)} = \begin{bmatrix} 0.3 & 0.7 \\ -0.2 & 0.4 \end{bmatrix}$, $b^{(1)} = [0, 0]$, $W^{(2)} = \begin{bmatrix} 0.5 & -0.3 \\ 0.2 & 0.6 \end{bmatrix}$, $b^{(2)} = [0, 0]$
+
+**Forward pass:**
+- $z^{(1)} = [0.3(1)+0.7(0.5),\; -0.2(1)+0.4(0.5)] = [0.65,\; 0.0]$
+- $a^{(1)} = \sigma([0.65, 0.0]) = [0.657, 0.500]$
+- $z^{(2)} = [0.5(0.657)+(-0.3)(0.5),\; 0.2(0.657)+0.6(0.5)] = [0.179, 0.431]$
+- $\hat{y} = \text{softmax}([0.179, 0.431]) = [0.438, 0.562]$
+
+**Backprop Step 1:** Output gradient
+$$\delta^{(2)} = \hat{y} - y = [0.438-1,\; 0.562-0] = [-0.562,\; 0.562]$$
+
+**Backprop Step 2:** Weight gradients (output layer)
+$$\frac{\partial \mathcal{L}}{\partial W^{(2)}} = \delta^{(2)} (a^{(1)})^T = \begin{bmatrix} -0.562 \\ 0.562 \end{bmatrix} \begin{bmatrix} 0.657 & 0.500 \end{bmatrix} = \begin{bmatrix} -0.369 & -0.281 \\ 0.369 & 0.281 \end{bmatrix}$$
+
+**Backprop Step 3:** Propagate to hidden layer
+$$\delta^{(1)} = (W^{(2)})^T \delta^{(2)} \odot \sigma'(z^{(1)})$$
+$$(W^{(2)})^T \delta^{(2)} = \begin{bmatrix} 0.5 & 0.2 \\ -0.3 & 0.6 \end{bmatrix} \begin{bmatrix} -0.562 \\ 0.562 \end{bmatrix} = \begin{bmatrix} -0.169 \\ 0.506 \end{bmatrix}$$
+$$\sigma'(z^{(1)}) = [0.657(1-0.657),\; 0.5(1-0.5)] = [0.225, 0.250]$$
+$$\delta^{(1)} = [-0.169 \times 0.225,\; 0.506 \times 0.250] = [-0.038, 0.127]$$
+
+**Backprop Step 4:** Update $W^{(2)}$
+$$W^{(2)}_{\text{new}} = W^{(2)} - 0.5 \times \frac{\partial \mathcal{L}}{\partial W^{(2)}} = \begin{bmatrix} 0.5+0.185 & -0.3+0.141 \\ 0.2-0.185 & 0.6-0.141 \end{bmatrix} = \begin{bmatrix} 0.685 & -0.159 \\ 0.015 & 0.459 \end{bmatrix}$$
+
+**Result:** The weight connecting the active hidden neuron (0.657) to the correct output class increased from 0.5 to 0.685, strengthening the path to the correct prediction.
+
+:::
 
 ## Gradient Descent Variants
 
@@ -480,6 +653,30 @@ $$
 $$
 
 Default hyperparameters: $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\epsilon = 10^{-8}$.
+
+::: details Worked Example — Adam Optimizer (3 Steps)
+
+**Setup:** Single parameter $\theta_0 = 5.0$, $\eta = 0.1$, $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\epsilon = 10^{-8}$
+
+Gradients: $g_1 = 2.0$, $g_2 = 1.5$, $g_3 = 3.0$, init $m_0 = 0$, $v_0 = 0$
+
+**Step 1** ($t = 1$, $g_1 = 2.0$):
+- $m_1 = 0.9(0) + 0.1(2.0) = 0.2$
+- $v_1 = 0.999(0) + 0.001(4.0) = 0.004$
+- $\hat{m}_1 = 0.2 / (1 - 0.9^1) = 0.2 / 0.1 = 2.0$ (bias correction is huge at $t=1$)
+- $\hat{v}_1 = 0.004 / (1 - 0.999^1) = 0.004 / 0.001 = 4.0$
+- $\theta_1 = 5.0 - 0.1 \times 2.0 / (\sqrt{4.0} + 10^{-8}) = 5.0 - 0.1 = 4.9$
+
+**Step 2** ($t = 2$, $g_2 = 1.5$):
+- $m_2 = 0.9(0.2) + 0.1(1.5) = 0.33$
+- $v_2 = 0.999(0.004) + 0.001(2.25) = 0.00625$
+- $\hat{m}_2 = 0.33 / (1 - 0.81) = 1.737$
+- $\hat{v}_2 = 0.00625 / (1 - 0.998) = 3.125$
+- $\theta_2 = 4.9 - 0.1 \times 1.737 / \sqrt{3.125} = 4.9 - 0.098 = 4.802$
+
+**Result:** Adam adapts the effective learning rate per parameter. The bias correction at early steps is critical --- without it, $m_1 = 0.2$ would severely underestimate the true mean gradient, causing tiny updates.
+
+:::
 
 ::: tip Adam Is the Default
 Adam works well out of the box for most problems. Start with Adam and a learning rate of $3 \times 10^{-4}$. Switch to SGD+momentum only if you need the last bit of generalization (SGD often finds flatter minima).

@@ -652,4 +652,31 @@ class AuditAspectTest {
 }
 ```
 
-AOP is powerful but invisible — aspects execute without any visible call in the business code. Use it for genuinely cross-cutting concerns (logging, security, monitoring, transactions), not for business logic. When debugging, remember that aspects wrap your methods in proxy layers. Too many aspects create "magic" that makes code hard to follow. The rule of thumb: if someone reading the business code needs to understand the aspect to understand the business behavior, the aspect is in the wrong place.
+AOP is powerful but invisible -- aspects execute without any visible call in the business code. Use it for genuinely cross-cutting concerns (logging, security, monitoring, transactions), not for business logic. When debugging, remember that aspects wrap your methods in proxy layers. Too many aspects create "magic" that makes code hard to follow. The rule of thumb: if someone reading the business code needs to understand the aspect to understand the business behavior, the aspect is in the wrong place.
+
+## Interview Questions
+
+**Q1: What is AOP and what problems does it solve?**
+::: details Answer
+AOP (Aspect-Oriented Programming) separates cross-cutting concerns (logging, security, transactions, caching, retry logic) from business logic. Without AOP, these concerns are duplicated across methods: every service method would have timing code, logging, error handling, and transaction management. AOP defines these concerns once in an **aspect** and applies them declaratively to methods via **pointcut expressions**. Spring AOP uses runtime proxies (JDK dynamic proxies or CGLIB) to wrap beans and execute **advice** (the cross-cutting logic) before, after, or around method invocations.
+:::
+
+**Q2: What is the difference between @Before, @After, @Around, @AfterReturning, and @AfterThrowing?**
+::: details Answer
+`@Before` runs before the method and cannot prevent execution (unless it throws). `@After` runs after the method regardless of outcome (like `finally`). `@AfterReturning` runs only on successful return and has access to the return value. `@AfterThrowing` runs only when the method throws and has access to the exception. `@Around` is the most powerful -- it wraps the entire method, controls whether `joinPoint.proceed()` is called, can modify arguments and return value, handle exceptions, and measure timing. Use `@Around` when you need full control; use the others for simpler, specific behavior.
+:::
+
+**Q3: What is the self-invocation problem in Spring AOP and how do you solve it?**
+::: details Answer
+Spring AOP works through proxies. When you call `this.method()` from within the same class, the call goes directly to the target object, bypassing the proxy. This means annotations like `@Transactional`, `@Async`, `@Cacheable`, and custom aspects have no effect on self-invoked methods. Solutions: (1) Inject the bean into itself with `@Lazy @Autowired private MyService self;` and call `self.method()`. (2) Extract the method to a separate bean. (3) Use `AopContext.currentProxy()` (requires `exposeProxy = true`). (4) Use full AspectJ weaving instead of Spring AOP proxies.
+:::
+
+**Q4: How do pointcut expressions work in Spring AOP?**
+::: details Answer
+Pointcut expressions define where advice applies using patterns: `execution(* com.example.service.*.*(..))` matches all methods in the service package. Components: return type (`*` = any), class (`OrderService`), method (`create*`), parameters (`(..)` = any, `(String, ..)` = first param String). Designators: `execution` (method execution), `@annotation` (methods with annotation), `@within` (classes with annotation), `bean` (by bean name), `within` (within a package). Combine with `&&` (AND), `||` (OR), `!` (NOT). Define reusable pointcuts with `@Pointcut` methods.
+:::
+
+**Q5: What are the limitations of Spring AOP compared to AspectJ?**
+::: details Answer
+Spring AOP limitations: (1) Only intercepts method calls on Spring beans (not `new` objects). (2) Cannot intercept `private`, `static`, or `final` methods. (3) Cannot intercept field access or constructor calls. (4) Self-invocation bypasses the proxy. (5) Only supports method execution join points. AspectJ supports all of these via compile-time or load-time weaving, modifying bytecode directly. Spring AOP is sufficient for most applications (logging, security, transactions). Use AspectJ only when you need field-level pointcuts, constructor interception, or non-Spring-managed objects.
+:::

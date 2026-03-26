@@ -497,3 +497,23 @@ For every external dependency your service has:
 - [Real-World Architectures](/system-design/advanced/real-world-architectures) — how companies avoid these anti-patterns
 - [Architecture Review Exercises](/system-design/advanced/architecture-review) — practice spotting anti-patterns
 - [Observability in Design](/system-design/advanced/observability-in-design) — detecting anti-patterns in production
+
+## Real-World Examples
+
+::: tip Segment (Premature Microservices)
+Segment built **140+ microservices** and then migrated back to a monolith. The operational overhead of maintaining service meshes, distributed tracing, and coordinated deployments consumed more engineering time than building their product. Their blog post "Goodbye Microservices: From 100s of Problem Children to 1 Superstar" became a landmark case study against premature decomposition.
+:::
+
+::: tip Knight Capital (No Failure Design)
+Knight Capital Group lost **$440 million in 45 minutes** in 2012 due to a deployment anti-pattern. Old code was accidentally activated on one of eight servers (inconsistent deployment), and the system had no circuit breaker or kill switch to stop the runaway trading. This is the most expensive example of Anti-Pattern #9 (Not Designing for Failure) — a single deployment error with no safety net bankrupted the company.
+:::
+
+::: tip Etsy (Avoiding the Distributed Monolith)
+Etsy initially tried microservices, then **returned to their PHP monolith** after realizing they had built a distributed monolith with shared databases and synchronous chains. They instead invested in making their monolith modular and deployable 50+ times per day. Their approach proved that a well-maintained monolith with good CI/CD can be more productive than poorly-executed microservices.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"The most common anti-pattern I watch for is the distributed monolith — teams split code into services but keep a shared database, eliminating every benefit of microservices while adding all the complexity. The test is simple: can each service be deployed independently? If the answer is no, it's a distributed monolith. I'd also always insist on circuit breakers for every synchronous inter-service call, because chain availability is the product of individual availabilities — five services at 99% means 95.1% combined. Segment's story of migrating 140 microservices back to a monolith is a powerful reminder that the question isn't 'should we use microservices?' but 'do we have the organizational scale and operational maturity to justify the complexity?'"
+:::

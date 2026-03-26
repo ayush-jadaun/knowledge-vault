@@ -404,3 +404,48 @@ In every major incident, there is a temptation to blame the individual who "caus
 - [Chaos Engineering](/devops/incident-response/chaos-engineering) — Testing failure modes before they happen in production
 - [GitHub's October 2018 Outage](/war-room/github-october-2018) — Automated failover causing more damage than the original problem
 - [Cloudflare's Regex Outage](/war-room/cloudflare-regex-2019) — Global deployment without staged rollout
+
+## What Would You Do?
+
+Test your decision-making against the scenarios Knight Capital's team actually faced.
+
+::: details Scenario 1: It is 9:31 AM on August 1. Your operations team sees abnormal order volume — far higher than expected. You have no kill switch and no per-server dashboards. Do you (A) shut down all eight SMARS servers immediately, (B) investigate which server is the source first, or (C) call the exchange to halt your trading?
+**What Knight Capital did:** They chose **(B) — investigate first**, which took 44 minutes and cost $440 million. They had no centralized kill switch and no per-server dashboards, so they had to manually connect to each of the eight servers to find the rogue one. A kill switch that halted all SMARS trading would have stopped the bleeding within seconds. At $10 million per minute, even a 5-minute investigation cost $50 million.
+:::
+
+::: details Scenario 2: You are the lead developer designing the new RLP feature. You need a feature flag to control it. You notice an old flag identifier from the decommissioned Power Peg feature is available for reuse. Do you (A) reuse the old flag since Power Peg is disabled, (B) create a new unique flag identifier, or (C) reuse the flag but first verify Power Peg code is removed from all servers?
+**What Knight Capital did:** They chose **(A) — reuse the old flag** without verifying that Power Peg code was removed everywhere. On 7 of 8 servers, the old code had been removed during the deployment, so the reused flag activated the new RLP logic correctly. On the 8th server, the deployment was missed, and the reused flag reactivated the dormant Power Peg algorithm. The correct answer was **(B)** — never reuse feature flags. Treat them like database primary keys.
+:::
+
+::: details Scenario 3: Post-mortem. The SEC asks what controls you will implement. You can only prioritize three changes. Which three do you pick from: automated deployment, kill switch, position limits, per-server monitoring, feature flag policy, pre-market testing?
+**What the industry did after Knight Capital:** The three highest-impact changes were: **(1) automated kill switch** with loss and position limits that halt trading within seconds, **(2) automated deployment** with verification that all servers run identical code, and **(3) pre-market testing** that runs simulated trading to detect anomalies before market open. The SEC specifically cited the absence of pre-trade risk controls as a regulatory violation.
+:::
+
+## Prevention Checklist
+
+- [ ] All deployments are automated with verification that every target server runs identical code versions
+- [ ] A kill switch exists that can halt all system activity within seconds
+- [ ] Automated circuit breakers enforce position limits, loss limits, and order rate limits
+- [ ] Feature flags have unique identifiers that are never reused across the lifetime of the system
+- [ ] Dead code from decommissioned features is deleted from the codebase, not just disabled
+- [ ] Pre-production verification compares behavior across all instances before going live
+- [ ] Per-instance monitoring dashboards exist for all critical metrics, not just aggregates
+- [ ] Pre-mortem exercises are conducted before high-stakes deployments
+
+## Quick Quiz
+
+::: details Question 1: Why did only one of eight SMARS servers behave differently on August 1?
+During the manual deployment of the new RLP code, technicians successfully updated 7 of 8 servers but missed server 8. When the RLP feature flag was activated, servers 1-7 ran the new RLP code (the old Power Peg code had been removed). Server 8 still had the old Power Peg code and no new RLP code, so the same flag reactivated the dormant Power Peg algorithm instead.
+:::
+
+::: details Question 2: Why was the damage irreversible, unlike most software outages?
+Knight Capital was executing real trades on real exchanges with real money. Every trade was final — there was no rollback, undo, or restore from backup. The system was taking irreversible actions (buying at the ask, selling at the bid) that guaranteed a loss on every trade. By the time the rogue server was identified and shut down, $440 million in losses had already been realized and settled.
+:::
+
+::: details Question 3: How could a $10 million automated loss limit have changed the outcome?
+A circuit breaker that tripped at $10 million in cumulative losses would have halted all SMARS trading within the first 60 seconds. Instead of $440 million in losses over 45 minutes, the damage would have been capped at roughly $10 million — a manageable incident instead of a company-destroying catastrophe. The return on investment of building that one safety check is almost impossible to overstate.
+:::
+
+## One-Liner Lesson
+
+Dead code is live code waiting to happen — delete it, never reuse feature flags, and always build a kill switch before you need it.

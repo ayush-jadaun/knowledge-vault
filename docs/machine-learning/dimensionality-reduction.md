@@ -63,6 +63,33 @@ The proportion of variance explained by the first $k$ components:
 
 $$\text{EVR}(k) = \frac{\sum_{i=1}^{k} \lambda_i}{\sum_{i=1}^{d} \lambda_i}$$
 
+::: details Worked Example — PCA Explained Variance Ratio
+
+**Eigenvalues from a 4-feature dataset: lambda = [5.0, 2.5, 1.0, 0.5]**
+
+**Step 1:** Total variance
+  total = 5.0 + 2.5 + 1.0 + 0.5 = 9.0
+
+**Step 2:** Individual explained variance ratios
+  EVR_1 = 5.0 / 9.0 = 0.556 (55.6%)
+  EVR_2 = 2.5 / 9.0 = 0.278 (27.8%)
+  EVR_3 = 1.0 / 9.0 = 0.111 (11.1%)
+  EVR_4 = 0.5 / 9.0 = 0.056 (5.6%)
+
+**Step 3:** Cumulative explained variance
+  k=1: 55.6%
+  k=2: 55.6% + 27.8% = 83.3%
+  k=3: 83.3% + 11.1% = 94.4%
+  k=4: 94.4% + 5.6% = 100.0%
+
+**Step 4:** Choose k for 95% threshold
+  We need k=4 for >= 95% (94.4% at k=3 is just under). In practice, k=3 retaining 94.4% is often acceptable.
+
+**Interpret:**
+  "The first 2 components capture 83.3% of variance — reducing 4 dimensions to 2 with only 16.7% information loss. The first component alone captures over half the total variance."
+
+:::
+
 A common rule: keep enough components to explain 95% of the variance.
 
 ### PCA via SVD
@@ -401,6 +428,32 @@ Unlike PCA (unsupervised), LDA is **supervised** — it uses class labels to fin
 Given $C$ classes, LDA maximizes the **Fisher criterion**:
 
 $$J(w) = \frac{w^T S_B w}{w^T S_W w}$$
+
+::: details Worked Example — LDA Fisher Criterion
+
+**2-class, 1-feature problem:**
+- Class 0: samples = [1, 2, 3], mean mu0 = 2
+- Class 1: samples = [7, 8, 9], mean mu1 = 8
+- Overall mean: mu = (2+8)/2 = 5
+
+**Step 1:** Between-class scatter S_B
+  S_B = n0*(mu0 - mu)^2 + n1*(mu1 - mu)^2
+      = 3*(2-5)^2 + 3*(8-5)^2
+      = 3*9 + 3*9 = 27 + 27 = 54
+
+**Step 2:** Within-class scatter S_W
+  S_W = sum of squared deviations within each class
+  Class 0: (1-2)^2 + (2-2)^2 + (3-2)^2 = 1 + 0 + 1 = 2
+  Class 1: (7-8)^2 + (8-8)^2 + (9-8)^2 = 1 + 0 + 1 = 2
+  S_W = 2 + 2 = 4
+
+**Step 3:** Fisher criterion
+  J = S_B / S_W = 54 / 4 = 13.5
+
+**Interpret:**
+  "J = 13.5 is high, meaning the classes are well-separated relative to their internal spread. LDA would project onto this direction since it maximally separates the class means (distance of 6) relative to the within-class spread (std dev ~0.82 each)."
+
+:::
 
 where:
 

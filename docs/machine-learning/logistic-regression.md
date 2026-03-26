@@ -21,6 +21,20 @@ The **sigmoid function** maps any real number to $(0, 1)$:
 
 $$\sigma(z) = \frac{1}{1 + e^{-z}}$$
 
+::: details Worked Example — Sigmoid Function
+
+**Compute sigmoid for z = -2, 0, 1, 3:**
+
+**Step 1:** sigma(-2) = 1/(1 + e^2) = 1/(1 + 7.389) = 1/8.389 = 0.119
+**Step 2:** sigma(0) = 1/(1 + e^0) = 1/(1 + 1) = 1/2 = 0.500
+**Step 3:** sigma(1) = 1/(1 + e^(-1)) = 1/(1 + 0.368) = 1/1.368 = 0.731
+**Step 4:** sigma(3) = 1/(1 + e^(-3)) = 1/(1 + 0.050) = 1/1.050 = 0.953
+
+**Interpret:**
+  "Negative z gives probability < 0.5, positive z gives probability > 0.5. At z=0, the probability is exactly 0.5 (the decision boundary). The more positive z is, the closer to 1; the more negative, the closer to 0."
+
+:::
+
 Properties of sigmoid:
 - $\sigma(0) = 0.5$
 - $\sigma(z) \to 1$ as $z \to +\infty$
@@ -69,6 +83,37 @@ for z_val in [-5, -2, 0, 2, 5]:
 ### The Logistic Regression Model
 
 $$P(y = 1 | \mathbf{x}) = \sigma(\mathbf{w}^T\mathbf{x} + b) = \frac{1}{1 + e^{-(\mathbf{w}^T\mathbf{x} + b)}}$$
+
+::: details Worked Example — Logistic Regression Prediction
+
+**Mini Dataset (spam classification):**
+| # free words (x1) | # links (x2) | Spam (y) |
+|--------------------|-------------|----------|
+| 5                  | 3           | 1        |
+| 0                  | 1           | 0        |
+| 3                  | 2           | 1        |
+| 1                  | 0           | 0        |
+
+Suppose trained weights: w1=0.8, w2=0.5, b=-2.0
+
+**Step 1:** For sample 1 (x1=5, x2=3), compute z
+  z = 0.8(5) + 0.5(3) + (-2.0) = 4.0 + 1.5 - 2.0 = 3.5
+
+**Step 2:** Apply sigmoid
+  P(spam) = 1/(1 + e^(-3.5)) = 1/(1 + 0.030) = 1/1.030 = 0.971
+
+**Step 3:** For sample 2 (x1=0, x2=1), compute z
+  z = 0.8(0) + 0.5(1) + (-2.0) = 0 + 0.5 - 2.0 = -1.5
+  P(spam) = 1/(1 + e^(1.5)) = 1/(1 + 4.482) = 1/5.482 = 0.182
+
+**Step 4:** Classify with threshold 0.5
+  Sample 1: P=0.971 > 0.5 -> predict SPAM (correct)
+  Sample 2: P=0.182 < 0.5 -> predict NOT SPAM (correct)
+
+**Interpret:**
+  "An email with 5 'free' words and 3 links has a 97.1% probability of being spam. An email with 0 'free' words and 1 link has only 18.2% probability."
+
+:::
 
 ### Log-Odds Interpretation
 
@@ -132,6 +177,31 @@ We maximize $\ell$ or equivalently minimize the **negative log-likelihood** (bin
 
 $$J(\mathbf{w}, b) = -\frac{1}{n} \sum_{i=1}^n \left[ y_i \log \hat{p}_i + (1 - y_i) \log(1 - \hat{p}_i) \right]$$
 
+::: details Worked Example — Binary Cross-Entropy Loss
+
+**Using predictions from the spam example:**
+
+| Sample | y_true | p_hat | y*log(p) | (1-y)*log(1-p) |
+|--------|--------|-------|----------|----------------|
+| 1      | 1      | 0.971 | 1*log(0.971) = -0.029 | 0 |
+| 2      | 0      | 0.182 | 0 | 1*log(0.818) = -0.201 |
+| 3      | 1      | 0.818 | 1*log(0.818) = -0.201 | 0 |
+| 4      | 0      | 0.310 | 0 | 1*log(0.690) = -0.371 |
+
+(For sample 3: z = 0.8(3)+0.5(2)-2.0 = 1.5, p=0.818)
+(For sample 4: z = 0.8(1)+0.5(0)-2.0 = -1.2, p=0.231... let's use p=0.310 for illustration)
+
+**Step 1:** Sum the loss terms
+  Sum = (-0.029) + (-0.201) + (-0.201) + (-0.371) = -0.802
+
+**Step 2:** Compute cross-entropy
+  J = -(1/4)(-0.802) = 0.802/4 = 0.201
+
+**Step 3:** Interpret
+  "The cross-entropy loss is 0.201. A perfect model would have J=0 (all predictions are 1.0 for positives and 0.0 for negatives). A random model predicting 0.5 for everything would have J = -log(0.5) = 0.693. Our model at 0.201 is much better than random."
+
+:::
+
 ### Gradient Derivation
 
 The gradient of the cross-entropy loss with respect to weight $w_j$:
@@ -143,6 +213,37 @@ In matrix form:
 $$\nabla_{\mathbf{w}} J = \frac{1}{n} \mathbf{X}^T (\hat{\mathbf{p}} - \mathbf{y})$$
 
 This is remarkably clean: the gradient is the same as linear regression but with $\hat{p}$ instead of $\hat{y}$.
+
+::: details Worked Example — Gradient of Cross-Entropy
+
+**Using 4 samples with x1 feature only, w1=0.8, b=-2.0:**
+
+| Sample | x1 | y | p_hat | error (p-y) |
+|--------|-----|---|-------|-------------|
+| 1      | 5   | 1 | 0.971 | -0.029      |
+| 2      | 0   | 0 | 0.119 | +0.119      |
+| 3      | 3   | 1 | 0.818 | -0.182      |
+| 4      | 1   | 0 | 0.232 | +0.232      |
+
+**Step 1:** Compute dJ/dw1 = (1/4) * sum(x1_i * error_i)
+  = (1/4)[5(-0.029) + 0(0.119) + 3(-0.182) + 1(0.232)]
+  = (1/4)[-0.145 + 0 - 0.546 + 0.232]
+  = (1/4)(-0.459)
+  = -0.115
+
+**Step 2:** Compute dJ/db = (1/4) * sum(error_i)
+  = (1/4)[-0.029 + 0.119 - 0.182 + 0.232]
+  = (1/4)(0.140)
+  = 0.035
+
+**Step 3:** Update with learning rate eta=0.5
+  w1_new = 0.8 - 0.5(-0.115) = 0.8 + 0.058 = 0.858
+  b_new = -2.0 - 0.5(0.035) = -2.0 - 0.018 = -2.018
+
+**Interpret:**
+  "The gradient for w1 is negative, meaning increasing w1 decreases the loss. So gradient descent increases w1 from 0.8 to 0.858, strengthening the 'free words' signal for spam detection."
+
+:::
 
 ---
 
@@ -420,6 +521,31 @@ plt.show()
 For $K > 2$ classes, logistic regression generalizes to **softmax regression**:
 
 $$P(y = k | \mathbf{x}) = \frac{e^{\mathbf{w}_k^T \mathbf{x} + b_k}}{\sum_{j=1}^{K} e^{\mathbf{w}_j^T \mathbf{x} + b_j}}$$
+
+::: details Worked Example — Softmax for 3 Classes
+
+**3 classes. Linear scores (logits) for a sample: z = [2.0, 1.0, 0.5]**
+
+**Step 1:** Compute exponentials
+  e^2.0 = 7.389
+  e^1.0 = 2.718
+  e^0.5 = 1.649
+
+**Step 2:** Sum of exponentials
+  sum = 7.389 + 2.718 + 1.649 = 11.756
+
+**Step 3:** Softmax probabilities
+  P(class 1) = 7.389 / 11.756 = 0.629
+  P(class 2) = 2.718 / 11.756 = 0.231
+  P(class 3) = 1.649 / 11.756 = 0.140
+
+**Step 4:** Verify probabilities sum to 1
+  0.629 + 0.231 + 0.140 = 1.000
+
+**Interpret:**
+  "The model is 62.9% confident in class 1, 23.1% in class 2, and 14.0% in class 3. The softmax converts raw scores into a proper probability distribution. Class 1 has the highest logit (2.0) and gets the highest probability."
+
+:::
 
 The loss becomes categorical cross-entropy:
 

@@ -638,3 +638,106 @@ def rabin_karp(text: str, pattern: str) -> int:
 - [Sorting & Searching](/algorithms/sorting-searching) — binary search on sorted arrays
 - [Dynamic Programming](/algorithms/dynamic-programming) — when sliding window isn't enough
 - [Trees: Tries](/algorithms/trees#tries) — for prefix-based string problems
+
+## Try It Yourself
+
+**Problem 1:** Given array `[3, 1, 4, 1, 5, 9]`, find two numbers that sum to 10.
+
+::: details Solution
+Sort the array: `[1, 1, 3, 4, 5, 9]`. Use two pointers.
+- Left=0 (1), Right=5 (9) → sum=10.
+Answer: **[1, 9]**
+:::
+
+**Problem 2:** Find the length of the longest substring without repeating characters in `"abcabcbb"`.
+
+::: details Solution
+Use a sliding window with a hash map to track the last seen index of each character.
+- Window expands right: `a`, `ab`, `abc` (length 3)
+- `a` repeats → shrink left to index 1: `bca`, `bcab` → `b` repeats → shrink
+- Maximum window length encountered: **3** (`"abc"`)
+:::
+
+**Problem 3:** Given `[2, 3, 1, 2, 4, 3]` and target sum `7`, find the minimal length subarray with sum >= 7.
+
+::: details Solution
+Use a variable-size sliding window. Expand right to increase sum, shrink left when sum >= 7.
+- Window `[2,3,1,2]` sum=8 >= 7, length=4. Shrink: `[3,1,2]` sum=6 < 7.
+- Expand: `[3,1,2,4]` sum=10, length=4. Shrink: `[1,2,4]` sum=7, length=3. Shrink: `[2,4]` sum=6 < 7.
+- Expand: `[2,4,3]` sum=9, length=3. Shrink: `[4,3]` sum=7, length=2.
+Answer: **2** (subarray `[4, 3]`)
+:::
+
+**Problem 4:** Check if `"racecar"` is a palindrome using the two-pointer technique.
+
+::: details Solution
+Use two pointers starting from both ends:
+- Left=0 (`r`), Right=6 (`r`) → match, move inward
+- Left=1 (`a`), Right=5 (`a`) → match
+- Left=2 (`c`), Right=4 (`c`) → match
+- Left=3 (`e`), Right=3 → pointers crossed
+Answer: **Yes**, it is a palindrome.
+:::
+
+**Problem 5:** Given `nums = [1, 1, 1]` and `k = 2`, count the number of subarrays that sum to `k`.
+
+::: details Solution
+Use prefix sum with a hash map.
+- prefix=0: map={0:1}
+- prefix=1: check 1-2=-1 (not in map), map={0:1, 1:1}
+- prefix=2: check 2-2=0 (in map, count=1), map={0:1, 1:1, 2:1}
+- prefix=3: check 3-2=1 (in map, count=2), map={0:1, 1:1, 2:1, 3:1}
+Answer: **2** (subarrays `[1,1]` at indices 0-1 and 1-2)
+:::
+
+## Quick Quiz
+
+**1. What is the time complexity of the two-pointer technique on a sorted array?**
+- a) $O(n^2)$
+- b) $O(n \log n)$
+- c) $O(n)$
+- d) $O(\log n)$
+
+::: details Answer
+**c) $O(n)$** — Each pointer moves at most $n$ steps total, so the combined work is linear.
+:::
+
+**2. When using a sliding window, what determines whether to use a fixed-size or variable-size window?**
+- a) Whether the array is sorted
+- b) Whether the problem specifies a fixed window size $k$ or asks for min/max length satisfying a constraint
+- c) Whether the elements are positive or negative
+- d) The size of the input array
+
+::: details Answer
+**b) Whether the problem specifies a fixed window size $k$ or asks for min/max length satisfying a constraint** — Fixed-size windows have a known $k$. Variable-size windows expand and shrink to find the optimal length meeting a condition.
+:::
+
+**3. What does a prefix sum array allow you to do in $O(1)$ time?**
+- a) Find the minimum element in a range
+- b) Sort a subarray
+- c) Compute the sum of any subarray
+- d) Find duplicates in a range
+
+::: details Answer
+**c) Compute the sum of any subarray** — After $O(n)$ preprocessing, `sum(l, r) = prefix[r+1] - prefix[l]` is $O(1)$.
+:::
+
+**4. In the "Subarray Sum Equals K" problem, why do we use a hash map with prefix sums instead of a simple sliding window?**
+- a) Sliding window is slower
+- b) Sliding window only works when all elements are positive; prefix sum + hash map handles negatives
+- c) Hash maps use less memory
+- d) It is just a style preference
+
+::: details Answer
+**b) Sliding window only works when all elements are positive; prefix sum + hash map handles negatives** — The sliding window shrink step relies on the invariant that removing elements decreases the sum, which breaks with negative numbers.
+:::
+
+**5. What is the space complexity of the "Longest Substring Without Repeating Characters" solution?**
+- a) $O(1)$
+- b) $O(n)$
+- c) $O(n^2)$
+- d) $O(\min(n, |\Sigma|))$ where $|\Sigma|$ is the alphabet size
+
+::: details Answer
+**d) $O(\min(n, |\Sigma|))$** — The hash map stores at most one entry per unique character. For a fixed alphabet (e.g., ASCII with 128 characters), this is effectively $O(1)$, but in the general case it is bounded by both the string length and alphabet size.
+:::

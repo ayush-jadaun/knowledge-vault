@@ -554,3 +554,57 @@ class OrderEventIntegrationTest {
 - **[Async & Scheduling](./async)** — Async processing patterns
 - **[Testing](./testing)** — Kafka testing with Testcontainers
 - **[Actuator & Monitoring](./actuator)** — Kafka consumer lag metrics
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Using auto-commit with manual acknowledgment
+Enabling `enable-auto-commit: true` while also using `MANUAL` ack mode causes messages to be committed before processing completes, leading to message loss on failures.
+**Fix:** Set `spring.kafka.consumer.enable-auto-commit: false` and use `MANUAL_IMMEDIATE` ack mode. Only call `ack.acknowledge()` after successful processing.
+:::
+
+::: danger Pitfall 2: Not configuring a Dead Letter Topic (DLT)
+Without a DLT, messages that consistently fail processing block the partition (with retries) or are silently lost (without retries).
+**Fix:** Configure a `DefaultErrorHandler` with `DeadLetterPublishingRecoverer` and exponential backoff. Monitor the DLT and process failed messages manually or through a retry pipeline.
+:::
+
+::: danger Pitfall 3: Not setting trusted packages for JSON deserialization
+Spring Kafka's `JsonDeserializer` rejects classes not in trusted packages, causing `ClassNotFoundException` at runtime.
+**Fix:** Set `spring.kafka.consumer.properties.spring.json.trusted.packages: com.example.*` in your configuration. Never use `*` in production -- whitelist only your application packages.
+:::
+
+::: danger Pitfall 4: Using the same consumer group ID across different services
+Two different services with the same `group-id` will compete for partitions, meaning each service only processes a fraction of the messages.
+**Fix:** Use unique consumer group IDs per service, typically `${spring.application.name}`. Different services reading the same topic should use different group IDs to each receive all messages.
+:::
+
+::: danger Pitfall 5: Not making consumers idempotent
+Kafka guarantees at-least-once delivery. Consumers may receive the same message multiple times during rebalancing or retries.
+**Fix:** Make consumers idempotent by using unique event IDs for deduplication, upsert operations (INSERT ON CONFLICT), or database constraints that reject duplicate processing.
+:::
+
+## Interview Questions
+
+**Q1: What is the difference between Kafka consumer groups and partitions?**
+::: details Answer
+A topic is divided into partitions for parallelism. Each partition is an ordered, append-only log. A consumer group is a set of consumers that cooperate to consume a topic. Kafka assigns each partition to exactly one consumer within a group, ensuring each message is processed once per group. If a topic has 6 partitions and a consumer group has 3 consumers, each consumer handles 2 partitions. If the group has 6+ consumers, some will be idle. Multiple consumer groups reading the same topic each receive all messages independently -- this enables multiple services to react to the same events.
+:::
+
+**Q2: How does Spring Kafka handle error handling and retries?**
+::: details Answer
+Spring Kafka's `DefaultErrorHandler` provides configurable retry and recovery. You configure a `BackOff` policy (fixed or exponential) that retries failed messages within the same consumer poll cycle. After exhausting retries, a `DeadLetterPublishingRecoverer` sends the failed message to a DLT topic (e.g., `orders.events.DLT`) with error metadata in headers. You can classify exceptions as retryable (transient failures like `IOException`) or not-retryable (serialization errors, validation errors) using `addRetryableExceptions()` and `addNotRetryableExceptions()`.
+:::
+
+**Q3: What are the exactly-once semantics in Kafka and how do you achieve them?**
+::: details Answer
+Exactly-once semantics (EOS) ensures each message is processed exactly once, even with failures and retries. It requires three components: (1) **Idempotent producer**: Set `enable.idempotence: true` so Kafka deduplicates retried sends using sequence numbers. (2) **Transactional producer**: Set `transaction-id-prefix` and use `kafkaTemplate.executeInTransaction()` to atomically commit produces and consumer offsets. (3) **Consumer with read-committed isolation**: Set `isolation.level: read_committed` so consumers only see messages from committed transactions. EOS adds overhead, so use it only when duplicates are unacceptable (financial transactions, inventory updates).
+:::
+
+**Q4: How do you ensure message ordering in Kafka?**
+::: details Answer
+Kafka guarantees ordering only within a single partition. Messages with the same key are sent to the same partition (via hash-based partitioning). To ensure ordering for a specific entity (e.g., all events for order #123), use the entity ID as the message key. For global ordering, use a single-partition topic (but this limits throughput to one consumer). With `max.in.flight.requests.per.connection: 5` and `enable.idempotence: true`, Kafka maintains ordering even with retries on a single partition.
+:::
+
+**Q5: What is the difference between `@KafkaListener` and Spring Cloud Stream for Kafka consumption?**
+::: details Answer
+`@KafkaListener` is Spring Kafka's native annotation that provides direct control over consumer configuration, partition assignment, error handling, and manual acknowledgment. It uses Kafka-specific APIs. Spring Cloud Stream is a higher-level abstraction that uses functional interfaces (`Consumer<T>`, `Function<T,R>`) and provides broker-agnostic programming -- you can switch from Kafka to RabbitMQ by changing a dependency. Use `@KafkaListener` when you need fine-grained Kafka control (manual offsets, partition assignment, headers). Use Spring Cloud Stream when you want broker portability or prefer the functional programming model.
+:::

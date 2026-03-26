@@ -566,3 +566,57 @@ class ProductControllerOAuth2Test {
 - **[JWT Authentication](./jwt-auth)** — Custom JWT implementation
 - **[Spring Cloud](./spring-cloud)** — API Gateway with OAuth2 token relay
 - **[Docker & Deployment](./docker)** — Keycloak Docker setup
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Confusing OAuth2 roles (Client vs Resource Server)
+Using `spring-boot-starter-oauth2-client` when you need `spring-boot-starter-oauth2-resource-server` (or vice versa) leads to incorrect authentication flow.
+**Fix:** Use `oauth2-resource-server` for APIs that validate tokens from an IdP. Use `oauth2-client` for server-rendered apps that redirect users to an IdP for login. Backend-for-Frontend (BFF) patterns may need both.
+:::
+
+::: danger Pitfall 2: Not mapping IdP roles to Spring Security authorities correctly
+Keycloak puts roles in `realm_access.roles`; Auth0 uses custom claims; Google uses scopes. Default Spring Security may not extract them, leaving users without proper authorities.
+**Fix:** Implement a custom `JwtAuthenticationConverter` or `JwtGrantedAuthoritiesConverter` that maps your IdP's specific claim structure to Spring Security `GrantedAuthority` objects.
+:::
+
+::: danger Pitfall 3: Not validating the token issuer
+Without issuer validation, tokens from different Keycloak realms or different Auth0 tenants could be accepted as valid.
+**Fix:** Set `spring.security.oauth2.resourceserver.jwt.issuer-uri` to your specific IdP realm/tenant URL. Spring Security will validate the `iss` claim automatically.
+:::
+
+::: danger Pitfall 4: Hardcoding IdP URLs in application.yml
+Hardcoding the Keycloak or Auth0 URL makes it impossible to switch environments without code changes.
+**Fix:** Use environment variables (`${KEYCLOAK_URL}`) or Spring Cloud Config for IdP URLs. Use the `.well-known/openid-configuration` discovery endpoint via `issuer-uri` for automatic configuration.
+:::
+
+::: danger Pitfall 5: Not consolidating social login users with local accounts
+When a user logs in with Google and later with GitHub using the same email, two separate accounts are created, causing data fragmentation.
+**Fix:** Implement a `UserConsolidationService` that links social accounts to a single local user by matching on email. Store provider and provider ID in a `social_accounts` table linked to the user.
+:::
+
+## Interview Questions
+
+**Q1: What is the difference between OAuth2 and OpenID Connect (OIDC)?**
+::: details Answer
+OAuth2 is an authorization framework that grants third-party applications limited access to a user's resources without sharing credentials. It defines flows for obtaining access tokens but does not define how to authenticate users. OIDC is an authentication layer built on top of OAuth2. It adds an ID Token (a JWT containing user identity claims like `sub`, `email`, `name`), a UserInfo endpoint, and standardized scopes (`openid`, `profile`, `email`). In short: OAuth2 answers "what can this app access?" while OIDC answers "who is this user?"
+:::
+
+**Q2: Explain the Authorization Code flow in OAuth2.**
+::: details Answer
+(1) The client redirects the user to the IdP's `/authorize` endpoint with `response_type=code`, `client_id`, `redirect_uri`, `scope`, and a `state` parameter for CSRF protection. (2) The user authenticates at the IdP. (3) The IdP redirects back to the client's `redirect_uri` with an authorization code. (4) The client exchanges the code for tokens by calling the IdP's `/token` endpoint with the code, `client_id`, `client_secret`, and `grant_type=authorization_code`. (5) The IdP returns an access token, refresh token, and optionally an ID token. This flow is the most secure because the access token is never exposed to the browser.
+:::
+
+**Q3: How does Spring Security validate JWT tokens from an external IdP?**
+::: details Answer
+Spring Security uses the JWKS (JSON Web Key Set) endpoint published by the IdP to validate JWT signatures. When configured with `jwk-set-uri`, it fetches the IdP's public keys and caches them. For each incoming request with a `Bearer` token, it: (1) Decodes the JWT header to find the key ID (`kid`). (2) Looks up the matching public key from the JWKS cache. (3) Verifies the signature. (4) Validates claims: `exp` (not expired), `iss` (matches expected issuer), and `aud` (if configured). (5) Converts claims to a `Jwt` authentication object with granted authorities.
+:::
+
+**Q4: What is token introspection and when would you use it instead of JWT validation?**
+::: details Answer
+Token introspection (RFC 7662) is used for opaque (non-JWT) tokens. Instead of validating the token locally, the resource server sends it to the IdP's introspection endpoint, which returns whether the token is active and its associated claims. Use introspection when: (1) The IdP issues opaque tokens instead of JWTs. (2) You need real-time revocation checks (JWTs cannot be revoked until they expire). (3) You want the IdP to remain the single authority on token validity. The tradeoff is a network call for every request, which adds latency.
+:::
+
+**Q5: How do you test OAuth2-secured endpoints without a real IdP?**
+::: details Answer
+Spring Security Test provides `jwt()` request post-processor for MockMvc: `mockMvc.perform(get("/api/data").with(jwt().jwt(j -> j.subject("user123").claim("roles", List.of("USER")))))`. This creates a mock JWT authentication without requiring a real IdP. You can set any claims, authorities, and principal attributes. For `@WithMockUser`, use `@WithMockUser(roles = "ADMIN")` for simple role-based tests. For WebFlux, use `WebTestClient` with `mutateWith(mockJwt())`.
+:::

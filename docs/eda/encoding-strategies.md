@@ -465,3 +465,200 @@ for name, X in encodings.items():
 - WOE encoding is standard in credit scoring and provides built-in feature importance via Information Value.
 - For very high cardinality (1000+), consider hashing or learned embeddings.
 - Always benchmark multiple encodings on your actual model. The best encoding depends on the model type, cardinality, and data distribution.
+
+## Try It Yourself
+
+**Exercise 1:** You have a dataset with a `city` column containing 500 unique cities. You need to encode it for a Logistic Regression model. One-hot encoding would create 500 columns. Implement target encoding with k-fold cross-validation and smoothing to avoid leakage and overfitting on rare cities.
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import KFold
+
+def target_encode_kfold(df, col, target_col, n_folds=5, smoothing=10):
+    """K-fold target encoding to prevent leakage."""
+    global_mean = df[target_col].mean()
+    encoded = pd.Series(np.nan, index=df.index)
+
+    kf = KFold(n_splits=n_folds, shuffle=True, random_state=42)
+    for train_idx, val_idx in kf.split(df):
+        train = df.iloc[train_idx]
+        agg = train.groupby(col)[target_col].agg(['mean', 'count'])
+
+        # Smoothing: blend category mean with global mean
+        agg['weight'] = agg['count'] / (agg['count'] + smoothing)
+        agg['smoothed'] = agg['weight'] * agg['mean'] + (1 - agg['weight']) * global_mean
+        mapping = agg['smoothed'].to_dict()
+
+        encoded.iloc[val_idx] = df.iloc[val_idx][col].map(mapping)
+
+    # Fill unmapped (new categories) with global mean
+    encoded = encoded.fillna(global_mean)
+    return encoded
+
+df['city_encoded'] = target_encode_kfold(df, 'city', 'target', n_folds=5, smoothing=20)
+
+print(f"Original: 500 unique cities -> 1 encoded column")
+print(f"Encoded range: [{df['city_encoded'].min():.4f}, {df['city_encoded'].max():.4f}]")
+print(f"NaN count: {df['city_encoded'].isna().sum()}")
+
+# Verify: no leakage (correlation should be moderate, not near-perfect)
+from scipy.stats import pointbiserialr
+r, p = pointbiserialr(df['target'], df['city_encoded'])
+print(f"Correlation with target: r={r:.4f} (if > 0.8, suspect leakage)")
+```
+:::
+
+**Exercise 2:** A dataset has a `color` column with 5 categories and an `education` column with 4 ordered levels (HS, BS, MS, PhD). Encode `color` with one-hot (drop_first for linear model) and `education` with ordinal encoding. Build a pipeline that handles both correctly.
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+
+# Define encoding strategies by column type
+nominal_cols = ['color']            # no inherent order
+ordinal_cols = ['education']        # meaningful order
+numeric_cols = ['age', 'income']    # continuous
+
+# Ordinal encoding with explicit order
+edu_order = [['HS', 'BS', 'MS', 'PhD']]
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('nominal', OneHotEncoder(drop='first', sparse_output=False), nominal_cols),
+        ('ordinal', OrdinalEncoder(categories=edu_order), ordinal_cols),
+        ('numeric', 'passthrough', numeric_cols),
+    ]
+)
+
+# Build full pipeline
+pipeline = Pipeline([
+    ('preprocess', preprocessor),
+    ('model', LogisticRegression(max_iter=1000)),
+])
+
+# Fit and verify
+from sklearn.model_selection import cross_val_score
+scores = cross_val_score(pipeline, df[nominal_cols + ordinal_cols + numeric_cols],
+                          df['target'], cv=5, scoring='roc_auc')
+print(f"AUC: {scores.mean():.4f} (+/- {scores.std():.4f})")
+
+# Inspect transformed feature names
+pipeline.fit(df[nominal_cols + ordinal_cols + numeric_cols], df['target'])
+ohe_names = pipeline.named_steps['preprocess'].transformers_[0][1].get_feature_names_out(nominal_cols)
+print(f"\nOne-hot columns: {ohe_names.tolist()}")
+print(f"Ordinal column: education -> 0(HS), 1(BS), 2(MS), 3(PhD)")
+```
+:::
+
+**Exercise 3:** Compare the performance of 4 encoding strategies (one-hot, label, target, frequency) for a `product_type` column with 30 categories. Benchmark using both Logistic Regression and GradientBoosting. Which encoding works best for each model type?
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import cross_val_score
+
+X_base = df[['age', 'income']].copy()
+y = df['target']
+
+encodings = {}
+
+# 1. One-Hot
+ohe = pd.get_dummies(df['product_type'], prefix='pt', dtype=int)
+encodings['One-Hot'] = pd.concat([X_base, ohe], axis=1)
+
+# 2. Label
+le = LabelEncoder()
+X_label = X_base.copy()
+X_label['product_type'] = le.fit_transform(df['product_type'])
+encodings['Label'] = X_label
+
+# 3. Target (k-fold)
+X_target = X_base.copy()
+X_target['product_type'] = target_encode_kfold(df, 'product_type', 'target')
+encodings['Target'] = X_target
+
+# 4. Frequency
+freq_map = df['product_type'].value_counts(normalize=True).to_dict()
+X_freq = X_base.copy()
+X_freq['product_type'] = df['product_type'].map(freq_map)
+encodings['Frequency'] = X_freq
+
+# Benchmark
+print(f"{'Encoding':<20} {'LR AUC':>10} {'GBM AUC':>10} {'Columns':>10}")
+print("-" * 55)
+
+for name, X in encodings.items():
+    X = X.fillna(X.median())
+    lr_auc = cross_val_score(
+        LogisticRegression(max_iter=1000), StandardScaler().fit_transform(X),
+        y, cv=5, scoring='roc_auc'
+    ).mean()
+    gbm_auc = cross_val_score(
+        GradientBoostingClassifier(n_estimators=100, random_state=42),
+        X, y, cv=5, scoring='roc_auc'
+    ).mean()
+    print(f"{name:<20} {lr_auc:>10.4f} {gbm_auc:>10.4f} {X.shape[1]:>10}")
+
+# Typical findings:
+# LR: One-Hot or Target encoding wins (linear models need proper encoding)
+# GBM: Label encoding is fine (trees handle arbitrary integers)
+```
+:::
+
+## Quick Quiz
+
+**1. Why should you NEVER use label encoding for nominal variables in a linear model?**
+- a) Label encoding is too slow
+- b) It assigns arbitrary integers that the model interprets as having magnitude and order (Red=3 is not 3x Blue=1)
+- c) It creates too many features
+
+::: details Answer
+**b) It assigns arbitrary integers that the model interprets as having magnitude and order (Red=3 is not 3x Blue=1).** A linear model's coefficient multiplies the encoded value, so it treats the difference between Red(3) and Blue(1) as twice the difference between Blue(1) and Black(0). This is meaningless for nominal categories with no inherent order. Tree-based models are fine with label encoding because they split on thresholds, not magnitudes.
+:::
+
+**2. What is the biggest risk of target encoding without cross-validation?**
+- a) It creates too many features
+- b) Target leakage -- the encoding uses the target variable, overfitting to noise in small categories
+- c) It cannot handle missing values
+
+::: details Answer
+**b) Target leakage -- the encoding uses the target variable, overfitting to noise in small categories.** If a category has only 3 samples and all 3 are positive, it gets encoded as 1.0. This is noise, not signal. K-fold target encoding prevents this by encoding each fold using only the other folds' target values, and smoothing pulls rare categories toward the global mean.
+:::
+
+**3. When is hash encoding most useful?**
+- a) For ordinal variables with 5 categories
+- b) For very high cardinality features (1000+) where unseen categories may appear at prediction time
+- c) Only for text data
+
+::: details Answer
+**b) For very high cardinality features (1000+) where unseen categories may appear at prediction time.** Hash encoding maps any category to a fixed number of columns using a hash function, regardless of how many categories exist. New categories are automatically handled (they just hash to one of the existing columns). The trade-off is hash collisions, where different categories map to the same column.
+:::
+
+**4. You have a binary target and a categorical feature with 8 categories. The Information Value (IV) from WOE encoding is 0.35. How predictive is this feature?**
+- a) Not predictive at all
+- b) Strong predictor
+- c) Suspiciously overfitted
+
+::: details Answer
+**b) Strong predictor.** Information Value interpretation: < 0.02 = not predictive, 0.02-0.1 = weak, 0.1-0.3 = medium, 0.3-0.5 = strong, > 0.5 = suspicious (likely overfit or leaky). An IV of 0.35 indicates a genuinely strong predictor, commonly seen in credit scoring for features like credit bureau scores.
+:::
+
+**5. A column has 10,000 unique categories. One-hot encoding would create 10,000 columns. What are three better alternatives?**
+- a) Frequency encoding, target encoding with heavy smoothing, and hash encoding
+- b) Label encoding, ordinal encoding, and binary encoding
+- c) Drop the column, create dummy variables, and use mode imputation
+
+::: details Answer
+**a) Frequency encoding, target encoding with heavy smoothing, and hash encoding.** Frequency encoding creates 1 column (each category mapped to its proportion). Target encoding with heavy smoothing creates 1 column (each category mapped to smoothed target mean). Hash encoding creates a fixed number of columns (e.g., 32). All three reduce 10,000 dimensions to a manageable number without the memory explosion of one-hot encoding.
+:::

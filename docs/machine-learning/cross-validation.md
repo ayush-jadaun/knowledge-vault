@@ -37,6 +37,34 @@ Cross-validation addresses all of these by using **every data point for both tra
    - **Evaluate** on $F_i$: $s_i = \text{metric}(f_{\mathcal{D}_{\text{train}}}, F_i)$
 4. Report: $\bar{s} = \frac{1}{K}\sum_{i=1}^{K} s_i \pm \text{std}(s_1, \ldots, s_K)$
 
+::: details Worked Example — 5-Fold Cross-Validation
+
+**Dataset: 20 samples, K=5 folds of 4 samples each. Accuracy per fold:**
+
+| Fold | Train Size | Test Size | Accuracy |
+|------|-----------|-----------|----------|
+| 1    | 16        | 4         | 0.75     |
+| 2    | 16        | 4         | 0.50     |
+| 3    | 16        | 4         | 1.00     |
+| 4    | 16        | 4         | 0.75     |
+| 5    | 16        | 4         | 0.75     |
+
+**Step 1:** Compute mean
+  s_bar = (0.75 + 0.50 + 1.00 + 0.75 + 0.75) / 5 = 3.75/5 = 0.75
+
+**Step 2:** Compute standard deviation
+  deviations = [0, -0.25, +0.25, 0, 0]
+  variance = (0 + 0.0625 + 0.0625 + 0 + 0) / 5 = 0.025
+  std = sqrt(0.025) = 0.158
+
+**Step 3:** Report
+  CV Accuracy = 0.75 +/- 0.158
+
+**Interpret:**
+  "The model's estimated generalization accuracy is 75% with notable variability (std=0.158). Fold 2 had unusually low accuracy (0.50), suggesting the model may struggle with certain data patterns. Each sample was used for testing exactly once."
+
+:::
+
 ### Mathematical Properties
 
 **Bias-variance tradeoff of $K$**:
@@ -211,6 +239,37 @@ For linear regression, LOOCV can be computed in **closed form** without refittin
 $$\text{CV}_{\text{LOO}} = \frac{1}{n}\sum_{i=1}^{n}\left(\frac{y_i - \hat{y}_i}{1 - h_{ii}}\right)^2$$
 
 where $h_{ii}$ is the $i$-th diagonal element of the hat matrix $H = X(X^TX)^{-1}X^T$. This avoids $n$ separate fits.
+
+::: details Worked Example — LOOCV Shortcut for Linear Regression
+
+**3 points: X = [[1,1],[1,2],[1,3]], y = [2, 4, 5]**
+
+**Step 1:** Fit full model (OLS on all data)
+  X^T X = [[3,6],[6,14]], (X^T X)^(-1) = (1/6)[[14,-6],[-6,3]]
+  theta = (X^T X)^(-1) X^T y = (1/6)[[14,-6],[-6,3]] @ [11,28]
+        = (1/6)[154-168, -66+84] = (1/6)[-14, 18] = [-2.33, 3.0]
+  Wait, let me recompute... X^T y = [2+4+5, 1(2)+2(4)+3(5)] = [11, 25]
+  theta = (1/6)[[14,-6],[-6,3]] @ [11, 25] = (1/6)[154-150, -66+75] = (1/6)[4, 9] = [0.667, 1.500]
+  y_hat = [0.667+1.5, 0.667+3.0, 0.667+4.5] = [2.167, 3.667, 5.167]
+
+**Step 2:** Compute H = X(X^T X)^(-1)X^T
+  H diag: h11, h22, h33 (leverage values)
+  For balanced design: h11 = 5/6, h22 = 2/6, h33 = 5/6
+  (Simplified: h_ii values are typically between 1/n and 1)
+
+**Step 3:** Apply LOOCV shortcut
+  LOOCV = (1/3) * sum[(y_i - y_hat_i)^2 / (1-h_ii)^2]
+
+  Residual_1 = 2 - 2.167 = -0.167, adjusted = -0.167/(1-5/6) = -0.167/0.167 = -1.0
+  Residual_2 = 4 - 3.667 = 0.333, adjusted = 0.333/(1-2/6) = 0.333/0.667 = 0.500
+  Residual_3 = 5 - 5.167 = -0.167, adjusted = -0.167/(1-5/6) = -1.0
+
+  LOOCV MSE = (1.0^2 + 0.5^2 + 1.0^2)/3 = (1+0.25+1)/3 = 0.750
+
+**Interpret:**
+  "The LOOCV MSE is 0.750, computed from a single model fit using the hat matrix trick. Without the shortcut, we'd need to fit 3 separate models."
+
+:::
 
 ```python
 from sklearn.linear_model import LinearRegression

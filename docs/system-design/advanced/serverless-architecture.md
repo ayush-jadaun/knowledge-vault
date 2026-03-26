@@ -648,3 +648,23 @@ functions:
 - [Edge Computing](/system-design/advanced/edge-computing) — serverless at the edge
 - [SQS and SNS](/system-design/message-queues/sqs-sns) — queue-based Lambda triggers
 - [DynamoDB Internals](/system-design/databases/dynamodb-internals) — the serverless database
+
+## Real-World Examples
+
+::: tip BBC Online
+BBC Online serves **over 60 million weekly users** using a serverless architecture on AWS Lambda. Their content delivery pipeline processes article metadata, generates page variants, and serves personalized content — all without managing a single server. Lambda handles their massive traffic spikes during breaking news events (10-50x normal traffic in minutes), scaling automatically from idle to thousands of concurrent executions.
+:::
+
+::: tip Coca-Cola
+Coca-Cola migrated their vending machine backend to **AWS Lambda + API Gateway**. Their 1 million+ smart vending machines send telemetry data sporadically — Lambda's pay-per-use model means they pay only for the milliseconds of processing each event requires, rather than maintaining servers 24/7. This reduced their infrastructure costs by over 65% compared to EC2.
+:::
+
+::: tip iRobot
+iRobot uses **AWS Step Functions** to orchestrate the entire lifecycle of Roomba robot commands. When a user presses "Clean" in the app, a Step Function workflow validates the command, sends it to the robot via IoT Core, monitors execution progress, and handles failures with automatic retries. The visual state machine makes the complex workflow auditable and debuggable without custom orchestration code.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"Serverless is ideal for event-driven, spiky workloads where you'd otherwise pay for idle capacity. I'd use Lambda for API endpoints under 50M requests/month, S3-triggered file processing, and cron jobs that run minutes per day. The key constraints are: 15-minute execution limit, cold starts (150-300ms for Node.js, 3-8s for Java without SnapStart), and the connection pooling problem (1000 Lambda instances opening 1000 database connections). I'd mitigate cold starts with provisioned concurrency for latency-sensitive paths, use RDS Proxy for connection pooling, and isolate business logic from the Lambda handler for portability. Beyond 100M requests/month with steady traffic, containers become cheaper — the crossover point matters."
+:::

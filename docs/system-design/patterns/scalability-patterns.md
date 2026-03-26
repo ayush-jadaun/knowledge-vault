@@ -542,3 +542,23 @@ graph TD
 ---
 
 *Scalability is not a binary state — it is a continuous practice of identifying bottlenecks and applying the right pattern at the right time. The best architects resist the urge to over-engineer day one and instead build systems that are easy to evolve as load grows.*
+
+## Real-World Examples
+
+::: tip Netflix
+Netflix applies all three Scale Cube axes. **X-axis:** hundreds of instances of each microservice behind Zuul. **Y-axis:** 200+ independently deployed microservices (recommendation, streaming, billing). **Z-axis:** data partitioned by region and user segment. Their EVCache layer serves 30+ million requests/second using consistent hashing for key distribution.
+:::
+
+::: tip Shopify (BFCM)
+Shopify handles **Black Friday/Cyber Monday** peaks of 1+ million requests per second. They use **predictive auto-scaling** to pre-provision capacity days before, combined with **reactive scaling** for unexpected spikes. Their architecture uses a "pod" model (Z-axis) where groups of shops are assigned to independent infrastructure stacks, so a viral sale on one shop doesn't affect others.
+:::
+
+::: tip Pinterest
+Pinterest uses **CQRS** to separate their read and write paths. Writes go to MySQL (normalized), while reads are served from denormalized Redis and HBase stores optimized for feed generation. Their homefeed service reads from a precomputed timeline cache rather than constructing it from the write database, enabling sub-100ms feed loads for 400+ million users.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"I use the Scale Cube to frame my scaling strategy. X-axis (cloning) is the default — stateless servers behind a load balancer. I'd use Y-axis (decomposition) when a single service's codebase is too large for one team or when components need independent scaling. Z-axis (data partitioning) is a last resort for the database layer because sharding is hard to undo. My order of operations is always: optimize code, add caching, add read replicas, scale horizontally, and shard only when forced. Twitter's evolution from the Fail Whale to handling 500K tweets/second follows exactly this progression."
+:::

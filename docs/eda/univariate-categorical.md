@@ -619,3 +619,180 @@ Before moving on from univariate categorical analysis, verify the following for 
 - Imbalance ratios above 10:1 require special treatment in ML pipelines (stratified splits, class weights, or resampling).
 - Clean dirty categories before analysis: normalize case, trim whitespace, fix typos with fuzzy matching.
 - Distinguish ordinal from nominal — encoding ordinal variables as unordered categories destroys information.
+
+## Try It Yourself
+
+**Exercise 1:** An e-commerce dataset has a `product_category` column with 200 unique values. The top 5 categories make up 78% of orders, and 150 categories each have fewer than 10 orders (out of 50,000 total). Write code to do a Pareto analysis, compute entropy, and group rare categories into an "Other" bucket.
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+from scipy.stats import entropy as sp_entropy
+
+vc = df['product_category'].value_counts()
+cumulative_pct = vc.cumsum() / vc.sum() * 100
+
+# Pareto analysis
+n_80 = (cumulative_pct <= 80).sum() + 1
+print(f"Pareto: {n_80} of {len(vc)} categories cover 80% of orders")
+print(f"That is {n_80/len(vc)*100:.1f}% of categories")
+
+# Entropy
+probs = vc / vc.sum()
+h = sp_entropy(probs, base=2)
+h_max = np.log2(len(vc))
+h_norm = h / h_max
+print(f"\nShannon entropy: {h:.3f} bits")
+print(f"Normalized entropy: {h_norm:.3f} (1.0 = balanced)")
+print(f"Interpretation: {'Highly imbalanced' if h_norm < 0.5 else 'Imbalanced'}")
+
+# Group rare categories
+min_count = 50  # categories with fewer than 50 orders -> "Other"
+rare_cats = vc[vc < min_count].index.tolist()
+df['product_category_grouped'] = df['product_category'].copy()
+df.loc[df['product_category_grouped'].isin(rare_cats), 'product_category_grouped'] = 'Other'
+
+print(f"\nBefore grouping: {df['product_category'].nunique()} categories")
+print(f"After grouping:  {df['product_category_grouped'].nunique()} categories")
+print(f"Grouped {len(rare_cats)} rare categories into 'Other'")
+print(f"\nNew top 10:")
+print(df['product_category_grouped'].value_counts().head(10))
+```
+:::
+
+**Exercise 2:** You have a survey column `satisfaction` with values: "Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied", plus some messy entries like "very satisfied", "V. Satisfied", "N/A", and empty strings. Write code to clean it, recognize it as ordinal, and produce a proper ordered bar chart.
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+from difflib import get_close_matches
+import matplotlib.pyplot as plt
+
+# Step 1: Clean — normalize case, strip whitespace
+cleaned = df['satisfaction'].str.strip().str.lower()
+
+# Step 2: Map known null values
+null_values = {'', 'n/a', 'na', 'none', 'null', '-'}
+cleaned = cleaned.replace(null_values, np.nan)
+
+# Step 3: Fuzzy match to canonical values
+canonical = ['very satisfied', 'satisfied', 'neutral', 'dissatisfied', 'very dissatisfied']
+
+def fuzzy_map(val, canonical_list, cutoff=0.6):
+    if pd.isna(val):
+        return np.nan
+    matches = get_close_matches(val, canonical_list, n=1, cutoff=cutoff)
+    return matches[0] if matches else np.nan
+
+cleaned = cleaned.apply(lambda x: fuzzy_map(x, canonical))
+
+# Step 4: Convert to ordered categorical
+order = ['Very Dissatisfied', 'Dissatisfied', 'Neutral', 'Satisfied', 'Very Satisfied']
+cleaned = cleaned.str.title()
+df['satisfaction_clean'] = pd.Categorical(cleaned, categories=order, ordered=True)
+
+print(f"Parse success: {df['satisfaction_clean'].notna().sum()}/{len(df)}")
+print(df['satisfaction_clean'].value_counts().reindex(order))
+
+# Step 5: Ordered bar chart
+fig, ax = plt.subplots(figsize=(10, 5))
+vc = df['satisfaction_clean'].value_counts().reindex(order)
+colors = plt.cm.RdYlGn(np.linspace(0.2, 0.8, len(order)))
+ax.bar(order, vc.values, color=colors, edgecolor='black')
+ax.set_title('Satisfaction Distribution (Ordered)')
+ax.set_ylabel('Count')
+plt.tight_layout()
+plt.show()
+```
+:::
+
+**Exercise 3:** A dataset has a `payment_method` column. The imbalance ratio is 45:1 (Credit Card: 90%, Crypto: 2%). Write code to compute the imbalance ratio, Gini impurity, and chi-squared goodness-of-fit test against a uniform distribution. Then recommend whether special handling is needed for ML modeling.
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+from scipy import stats
+
+vc = df['payment_method'].value_counts()
+n_cats = df['payment_method'].nunique()
+total = len(df)
+expected = total / n_cats
+
+# Imbalance ratio
+imbalance_ratio = vc.iloc[0] / vc.iloc[-1]
+print(f"Most common:  {vc.index[0]} ({vc.iloc[0]:,}, {vc.iloc[0]/total*100:.1f}%)")
+print(f"Least common: {vc.index[-1]} ({vc.iloc[-1]:,}, {vc.iloc[-1]/total*100:.1f}%)")
+print(f"Imbalance ratio: {imbalance_ratio:.1f}:1")
+
+# Gini impurity
+probs = vc / total
+gini = 1 - (probs ** 2).sum()
+gini_max = 1 - 1/n_cats
+gini_norm = gini / gini_max
+print(f"\nGini impurity: {gini:.4f} (normalized: {gini_norm:.4f})")
+
+# Chi-squared vs uniform
+chi2, p_value = stats.chisquare(vc)
+print(f"Chi-squared vs uniform: chi2={chi2:.1f}, p={p_value:.2e}")
+
+# Recommendation
+print(f"\n--- ML Recommendation ---")
+if imbalance_ratio > 10:
+    print(f"Imbalance ratio {imbalance_ratio:.0f}:1 is SEVERE.")
+    print("1. Use stratified train/test splits")
+    print("2. Consider grouping Crypto into 'Other' if it has <50 samples")
+    print("3. If payment_method is the TARGET, use SMOTE or class weights")
+    print("4. If it is a FEATURE, use target encoding instead of one-hot")
+    print("   (one-hot creates a near-zero-variance column for Crypto)")
+```
+:::
+
+## Quick Quiz
+
+**1. Why are pie charts almost always the wrong choice for categorical data?**
+- a) They require too much computation
+- b) Humans are poor at comparing angles and areas, leading to 10-25% perception error
+- c) They cannot display more than 3 categories
+
+::: details Answer
+**b) Humans are poor at comparing angles and areas, leading to 10-25% perception error.** Research in visual perception shows that humans compare positions on a common scale (bar charts) with about 0.5% error, but compare angles and areas (pie charts) with 10-25% error. Two slices at 28% and 32% look nearly identical in a pie chart but are clearly different in a bar chart.
+:::
+
+**2. What does normalized entropy of 0.45 tell you about a categorical variable?**
+- a) The variable is nearly uniformly distributed
+- b) The variable is highly imbalanced, dominated by one or two categories
+- c) The variable has too many categories
+
+::: details Answer
+**b) The variable is highly imbalanced, dominated by one or two categories.** Normalized entropy ranges from 0 (single category) to 1 (perfectly uniform). A value of 0.45 means the distribution uses less than half of its possible "diversity." This typically means a few categories carry most of the data while many others are rare.
+:::
+
+**3. When should you use ordinal encoding instead of one-hot encoding?**
+- a) When the categories have a natural, meaningful order (e.g., education level)
+- b) When there are more than 10 categories
+- c) When using tree-based models
+
+::: details Answer
+**a) When the categories have a natural, meaningful order (e.g., education level).** Ordinal encoding assigns integers that respect the inherent order: HS=1, BS=2, MS=3, PhD=4. This preserves the information that PhD > MS > BS > HS. One-hot encoding would treat them as completely unrelated categories, destroying the ordering information.
+:::
+
+**4. What is a Pareto analysis used for in categorical EDA?**
+- a) Testing if a variable is normally distributed
+- b) Identifying the vital few categories that account for most of the data (80/20 rule)
+- c) Computing the correlation between two categorical variables
+
+::: details Answer
+**b) Identifying the vital few categories that account for most of the data (80/20 rule).** A Pareto chart plots categories in descending frequency with a cumulative percentage line. It reveals that often 20% of categories account for 80% of observations. This guides decisions about which categories to keep, which to group into "Other," and where to focus analysis.
+:::
+
+**5. You have a column with values "New York", "new york", "NY", "N.Y.", and "NewYork". What is the correct cleaning approach?**
+- a) Delete all rows with non-standard values
+- b) Normalize case, strip whitespace, then use fuzzy matching to map variants to canonical values
+- c) One-hot encode all variants as separate categories
+
+::: details Answer
+**b) Normalize case, strip whitespace, then use fuzzy matching to map variants to canonical values.** The correct approach is: (1) `str.lower().str.strip()` to normalize case and whitespace, (2) replace known abbreviations (NY -> new york), and (3) use `difflib.get_close_matches()` with a similarity cutoff to catch typos. This collapses all 5 variants into a single canonical "new york" category.
+:::

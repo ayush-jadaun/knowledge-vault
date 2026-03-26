@@ -649,3 +649,57 @@ public class OutboxRelay {
 | Small, focused events | One event per significant state change. Don't combine unrelated changes. |
 
 Event-driven architecture decouples services in time (async processing), in space (services don't know about each other), and in implementation (each service chooses its own tech stack). But it introduces complexity in debugging, ordering guarantees, and eventual consistency. Start with in-process events, graduate to the outbox pattern when you need reliability, and adopt full streaming only when you have the operational maturity to manage it.
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Not understanding the difference between @EventListener and @TransactionalEventListener
+`@EventListener` runs inside the publisher's transaction. If it fails, the entire transaction rolls back. `@TransactionalEventListener` (AFTER_COMMIT) runs after the transaction commits.
+**Fix:** Use `@EventListener` for operations that must succeed for the transaction to commit (inventory reservation). Use `@TransactionalEventListener(phase = AFTER_COMMIT)` for notifications, emails, and analytics.
+:::
+
+::: danger Pitfall 2: The dual-write problem
+Writing to the database AND publishing to Kafka in sequence means one can succeed while the other fails, creating data inconsistency.
+**Fix:** Use the transactional outbox pattern: write the event to an `outbox_events` table in the same database transaction as the business data. A separate relay process polls the outbox and publishes to the broker.
+:::
+
+::: danger Pitfall 3: Not making event consumers idempotent
+Events may be delivered more than once (broker retries, rebalancing). Non-idempotent consumers process the same event multiple times, causing duplicate records or incorrect state.
+**Fix:** Use unique event IDs for deduplication. Use database constraints (`INSERT ON CONFLICT DO NOTHING`). Track processed event IDs in a deduplication table.
+:::
+
+::: danger Pitfall 4: Putting mutable state in events
+Modifying event objects after creation or including references to mutable entities breaks event immutability and can cause race conditions.
+**Fix:** Events should be immutable records (Java records or classes with final fields). Use `List.copyOf()` for collections. Events represent facts that happened -- they should never change.
+:::
+
+::: danger Pitfall 5: AFTER_COMMIT listener throwing exceptions
+If an `AFTER_COMMIT` listener throws, the transaction is already committed. The exception propagates to the caller, who may think the operation failed when it actually succeeded.
+**Fix:** Wrap `AFTER_COMMIT` listener logic in try-catch. Log failures and enqueue for retry rather than throwing. These listeners must be resilient to failures.
+:::
+
+## Interview Questions
+
+**Q1: What is the transactional outbox pattern and why is it needed?**
+::: details Answer
+The outbox pattern solves the dual-write problem: when you need to update a database AND publish an event, but cannot do both atomically. Instead of publishing directly to a broker, you write the event to an `outbox_events` table within the same database transaction as the business data. A separate relay process polls the outbox table (or uses Change Data Capture) and publishes events to the message broker. This guarantees that if the business data is committed, the event will eventually be published. It trades immediate delivery for guaranteed delivery.
+:::
+
+**Q2: What is the difference between `@EventListener`, `@TransactionalEventListener`, and `@Async @EventListener`?**
+::: details Answer
+`@EventListener` runs synchronously in the same thread and transaction as the publisher. If it throws, the transaction rolls back. `@TransactionalEventListener` (default phase: AFTER_COMMIT) runs after the transaction commits, ensuring the data is persisted before side effects execute. It runs synchronously in the same thread. `@Async @EventListener` runs asynchronously in a separate thread from a configured executor. It does not participate in the publisher's transaction. Combine `@Async` with `@TransactionalEventListener` for non-blocking, post-commit processing (e.g., sending emails after order confirmation).
+:::
+
+**Q3: What is event sourcing and how does it differ from event-driven architecture?**
+::: details Answer
+Event-driven architecture uses events for communication between components -- events are notifications about state changes. The source of truth is the current state in the database. Event sourcing goes further: the event log IS the source of truth. Instead of storing current state, you store the complete sequence of events that produced the state. Current state is derived by replaying events. Event sourcing provides a complete audit trail, enables temporal queries ("what was the state at time X?"), and supports retroactive bug fixes by replaying corrected events. It adds significant complexity and is appropriate for domains with strong audit requirements (finance, healthcare).
+:::
+
+**Q4: How do you handle event ordering in a distributed event-driven system?**
+::: details Answer
+Event ordering is only guaranteed within a single partition (Kafka) or queue. Strategies: (1) Use the entity ID as the partition key so all events for a specific entity go to the same partition and are processed in order. (2) Include a sequence number or version in events for consumers to detect out-of-order delivery. (3) Design consumers to be commutative (order-independent) where possible. (4) For strict global ordering, use a single partition (limits throughput). (5) Use event timestamps and idempotent consumers that can handle duplicate or reordered events gracefully.
+:::
+
+**Q5: How does Spring Cloud Stream differ from Spring Kafka for event-driven architectures?**
+::: details Answer
+Spring Kafka is a low-level library providing direct access to Kafka's producer, consumer, and admin APIs with `KafkaTemplate` and `@KafkaListener`. It is Kafka-specific and gives maximum control. Spring Cloud Stream is a higher-level abstraction using functional interfaces (`Consumer<T>`, `Function<T,R>`, `Supplier<T>`) that works with multiple brokers (Kafka, RabbitMQ) through binder implementations. You can switch brokers by changing a dependency. Use Spring Kafka when you need fine-grained Kafka control (manual partition assignment, exactly-once semantics, Kafka Streams). Use Spring Cloud Stream when you want broker portability or prefer functional composition.
+:::

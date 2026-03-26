@@ -54,6 +54,33 @@ $$G = 1 - \sum_{k=1}^{K} p_k^2$$
 
 where $p_k$ is the proportion of class $k$ in the node.
 
+::: details Worked Example — Gini Impurity
+
+**Mini Dataset (node with 10 passengers):**
+| Passenger | Survived |
+|-----------|----------|
+| 1-6       | No (0)   |
+| 7-10      | Yes (1)  |
+
+So we have 6 "No" and 4 "Yes" in this node.
+
+**Step 1:** Compute class proportions
+  p_No = 6/10 = 0.6
+  p_Yes = 4/10 = 0.4
+
+**Step 2:** Compute Gini impurity
+  G = 1 - (0.6^2 + 0.4^2) = 1 - (0.36 + 0.16) = 1 - 0.52 = 0.48
+
+**Step 3:** Compare with pure and maximally impure nodes
+  Pure node (all "No"):   G = 1 - (1.0^2) = 0
+  Maximally impure (50/50): G = 1 - (0.5^2 + 0.5^2) = 1 - 0.5 = 0.5
+  Our node: G = 0.48 (close to maximum impurity)
+
+**Interpret:**
+  "A Gini of 0.48 means the node is very mixed. If we randomly picked a sample and randomly labeled it according to the node's distribution, we'd have a 48% chance of misclassifying it."
+
+:::
+
 **Derivation:** If we randomly pick a sample (probability $p_k$ of being class $k$) and randomly label it (probability $p_k$ of labeling it class $k$), the probability of correct classification is $\sum p_k^2$. So the probability of misclassification is $1 - \sum p_k^2$.
 
 Properties:
@@ -66,6 +93,27 @@ Properties:
 Entropy measures the information content (uncertainty) of the class distribution:
 
 $$H = -\sum_{k=1}^{K} p_k \log_2 p_k$$
+
+::: details Worked Example — Entropy
+
+**Same node: 6 "No", 4 "Yes" (p_No=0.6, p_Yes=0.4):**
+
+**Step 1:** Compute each term
+  -p_No * log2(p_No) = -0.6 * log2(0.6) = -0.6 * (-0.737) = 0.442
+  -p_Yes * log2(p_Yes) = -0.4 * log2(0.4) = -0.4 * (-1.322) = 0.529
+
+**Step 2:** Sum
+  H = 0.442 + 0.529 = 0.971 bits
+
+**Step 3:** Compare
+  Pure node: H = 0 bits (no uncertainty)
+  50/50 split: H = -0.5*log2(0.5) - 0.5*log2(0.5) = 0.5 + 0.5 = 1.0 bit
+  Our node: H = 0.971 bits (close to maximum)
+
+**Interpret:**
+  "An entropy of 0.971 means we need almost 1 bit of information to determine a sample's class. This is close to the maximum of 1.0 bit, confirming the node is very mixed."
+
+:::
 
 Properties:
 - $H = 0$ when the node is pure
@@ -120,6 +168,34 @@ for p in [0.0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0]:
 The best split maximizes **information gain** — the reduction in impurity:
 
 $$\text{IG} = H(\text{parent}) - \sum_{c \in \{L, R\}} \frac{n_c}{n} H(\text{child}_c)$$
+
+::: details Worked Example — Information Gain
+
+**Parent node: 6 "No", 4 "Yes" (H_parent = 0.971). Split on Age <= 30:**
+
+Left child (Age <= 30): 1 "No", 4 "Yes" (5 samples)
+Right child (Age > 30): 5 "No", 0 "Yes" (5 samples)
+
+**Step 1:** Compute H(left)
+  p_No = 1/5 = 0.2, p_Yes = 4/5 = 0.8
+  H_left = -0.2*log2(0.2) - 0.8*log2(0.8)
+         = -0.2*(-2.322) - 0.8*(-0.322)
+         = 0.464 + 0.258 = 0.722
+
+**Step 2:** Compute H(right)
+  p_No = 5/5 = 1.0 (pure!)
+  H_right = -1.0*log2(1.0) = 0.0
+
+**Step 3:** Compute weighted child entropy
+  H_children = (5/10)(0.722) + (5/10)(0.0) = 0.361 + 0 = 0.361
+
+**Step 4:** Compute information gain
+  IG = 0.971 - 0.361 = 0.610
+
+**Interpret:**
+  "Splitting on Age <= 30 gives an information gain of 0.610 bits. This is a very good split — it perfectly separates all 5 older passengers (all died) and leaves the younger group with mostly survivors."
+
+:::
 
 ```python
 # information_gain.py — Computing information gain for a split
@@ -347,6 +423,33 @@ $$R_\alpha(T) = R(T) + \alpha |T|$$
 
 where $R(T)$ is the training error, $|T|$ is the number of leaves, and $\alpha$ is the complexity parameter.
 
+::: details Worked Example — Cost-Complexity Pruning
+
+**Compare two trees on a 100-sample dataset:**
+
+Tree A: 20 leaves, training error (misclassification rate) = 0.02
+Tree B: 5 leaves, training error = 0.08
+
+**Step 1:** With alpha = 0 (no pruning)
+  R_alpha(A) = 0.02 + 0(20) = 0.02
+  R_alpha(B) = 0.08 + 0(5) = 0.08
+  -> Tree A wins (lower cost)
+
+**Step 2:** With alpha = 0.005
+  R_alpha(A) = 0.02 + 0.005(20) = 0.02 + 0.10 = 0.12
+  R_alpha(B) = 0.08 + 0.005(5) = 0.08 + 0.025 = 0.105
+  -> Tree B wins (lower cost)
+
+**Step 3:** Find the break-even alpha
+  0.02 + alpha*20 = 0.08 + alpha*5
+  15*alpha = 0.06
+  alpha = 0.004
+
+**Interpret:**
+  "For alpha < 0.004, the complex tree (20 leaves) is preferred. For alpha > 0.004, the simpler tree (5 leaves) is preferred. Cross-validation is used to find the best alpha."
+
+:::
+
 ```python
 # pruning.py — Cost-complexity pruning
 from sklearn.datasets import load_breast_cancer
@@ -555,6 +658,33 @@ for i in idx:
 Decision trees also work for regression. Instead of Gini/entropy, they minimize variance:
 
 $$\text{Impurity} = \frac{1}{n} \sum_{i=1}^n (y_i - \bar{y})^2$$
+
+::: details Worked Example — Regression Tree Variance Impurity
+
+**A node with 5 house prices: y = [200, 220, 210, 400, 380]**
+
+**Step 1:** Compute mean
+  y_bar = (200+220+210+400+380)/5 = 1410/5 = 282
+
+**Step 2:** Compute variance (impurity)
+  = [(200-282)^2 + (220-282)^2 + (210-282)^2 + (400-282)^2 + (380-282)^2] / 5
+  = [6724 + 3844 + 5184 + 13924 + 9604] / 5
+  = 39280 / 5 = 7856
+
+**Step 3:** Split into left {200, 220, 210} and right {400, 380}
+  Left mean = 210, variance = [(200-210)^2+(220-210)^2+(210-210)^2]/3 = [100+100+0]/3 = 66.7
+  Right mean = 390, variance = [(400-390)^2+(380-390)^2]/2 = [100+100]/2 = 100
+
+**Step 4:** Weighted child variance
+  = (3/5)(66.7) + (2/5)(100) = 40.0 + 40.0 = 80.0
+
+**Step 5:** Variance reduction
+  = 7856 - 80.0 = 7776
+
+**Interpret:**
+  "The split reduced variance from 7856 to 80 — a massive improvement. The left leaf predicts $210k and the right predicts $390k. The tree found a natural split between cheap and expensive houses."
+
+:::
 
 The prediction in each leaf is the mean of the target values in that leaf.
 

@@ -89,6 +89,32 @@ $$
 
 This has the same fixed point but stronger gradients early in training.
 
+::: details Worked Example — Discriminator and Generator Loss
+
+**Setup:** Mini-batch of 4 samples. Discriminator outputs (probability of being real):
+
+| Sample | Type | $D(x)$ |
+|---|---|---|
+| $x_1$ | Real | 0.9 |
+| $x_2$ | Real | 0.7 |
+| $G(z_1)$ | Fake | 0.3 |
+| $G(z_2)$ | Fake | 0.6 |
+
+**Discriminator loss** (wants to maximize $V$, so we negate for minimization):
+$$\mathcal{L}_D = -\frac{1}{2}\left[\frac{1}{2}\sum \log D(x_i) + \frac{1}{2}\sum \log(1 - D(G(z_j)))\right]$$
+
+Real part: $\frac{1}{2}[\log(0.9) + \log(0.7)] = \frac{1}{2}[-0.105 + (-0.357)] = -0.231$
+
+Fake part: $\frac{1}{2}[\log(1-0.3) + \log(1-0.6)] = \frac{1}{2}[\log(0.7) + \log(0.4)] = \frac{1}{2}[-0.357 + (-0.916)] = -0.637$
+
+$$\mathcal{L}_D = -(-0.231 + (-0.637)) = 0.868$$
+
+**Generator loss** (non-saturating): $\mathcal{L}_G = -\frac{1}{2}[\log(0.3) + \log(0.6)] = -\frac{1}{2}[-1.204 + (-0.511)] = 0.857$
+
+**Result:** The discriminator is doing well on real images ($D = 0.9, 0.7$) but fooled by $G(z_2)$ ($D = 0.6$ for a fake). The generator's loss is high for $G(z_1)$ (only 0.3 --- easily detected) but lower for $G(z_2)$ (0.6 --- partially fooling D). Training will push D to output lower scores for fakes and G to produce more convincing fakes.
+
+:::
+
 ## Mode Collapse
 
 The most notorious GAN failure mode. The generator produces only a few types of output, ignoring other modes of the data distribution.
@@ -370,6 +396,27 @@ $$
 $$
 
 Lower FID = better quality and diversity. Compute using features from a pretrained Inception network.
+
+::: details Worked Example — FID Score (Simplified 2D)
+
+**Setup:** 2D feature space (real FID uses 2048-dim Inception features).
+
+Real images: $\mu_r = [3.0, 5.0]$, $\Sigma_r = \begin{bmatrix} 1.0 & 0.2 \\ 0.2 & 1.5 \end{bmatrix}$
+
+Generated images: $\mu_g = [3.5, 4.5]$, $\Sigma_g = \begin{bmatrix} 1.2 & 0.1 \\ 0.1 & 2.0 \end{bmatrix}$
+
+**Step 1:** Mean distance: $\|\mu_r - \mu_g\|^2 = (3-3.5)^2 + (5-4.5)^2 = 0.25 + 0.25 = 0.50$
+
+**Step 2:** Trace terms: $\text{Tr}(\Sigma_r) = 1.0 + 1.5 = 2.5$, $\text{Tr}(\Sigma_g) = 1.2 + 2.0 = 3.2$
+
+**Step 3:** Matrix square root term: $\text{Tr}((\Sigma_r \Sigma_g)^{1/2}) \approx 2.65$ (requires eigendecomposition)
+
+**Step 4:** FID:
+$$\text{FID} = 0.50 + 2.5 + 3.2 - 2 \times 2.65 = 0.50 + 5.7 - 5.3 = 0.90$$
+
+**Result:** FID = 0.90. A perfect generator ($\mu_g = \mu_r$, $\Sigma_g = \Sigma_r$) would give FID = 0. Typical good GANs achieve FID of 5-30 on real datasets; state-of-the-art is below 2 on CIFAR-10.
+
+:::
 
 **IS (Inception Score):**
 

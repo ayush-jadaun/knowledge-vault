@@ -700,4 +700,58 @@ public class GrpcHealthService extends HealthGrpc.HealthImplBase {
 | High-throughput, low-latency | gRPC — binary serialization, HTTP/2 multiplexing |
 | Mobile clients (bandwidth-sensitive) | gRPC — 5-10x smaller payloads |
 
-gRPC excels at internal service-to-service communication where performance and type safety matter. For external-facing APIs, REST remains the pragmatic choice. Many production systems use both — gRPC internally, REST (or GraphQL) externally — with an API gateway handling the translation at the boundary.
+gRPC excels at internal service-to-service communication where performance and type safety matter. For external-facing APIs, REST remains the pragmatic choice. Many production systems use both -- gRPC internally, REST (or GraphQL) externally -- with an API gateway handling the translation at the boundary.
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Not setting deadlines (timeouts) on gRPC calls
+Without deadlines, a slow or unresponsive server causes the client to wait indefinitely, consuming threads and cascading failures across services.
+**Fix:** Always set deadlines on client stubs: `stub.withDeadlineAfter(3, TimeUnit.SECONDS)`. Configure a default deadline in the client YAML with `deadline-after: 5s`.
+:::
+
+::: danger Pitfall 2: Using blocking stubs in reactive or async code paths
+Using `UserServiceBlockingStub` in a reactive pipeline or async method blocks the event loop or async thread, defeating the purpose of non-blocking code.
+**Fix:** Use `UserServiceFutureStub` for async calls or `UserServiceStub` (async streaming) for fully non-blocking patterns. Convert `ListenableFuture` to `CompletableFuture` for integration with Java async APIs.
+:::
+
+::: danger Pitfall 3: Not handling gRPC status codes properly on the client side
+Catching only generic `Exception` loses the rich status information (status code, description, metadata) that gRPC provides.
+**Fix:** Catch `StatusRuntimeException` and check `e.getStatus().getCode()` to differentiate between `NOT_FOUND`, `ALREADY_EXISTS`, `DEADLINE_EXCEEDED`, `UNAVAILABLE`, etc. Map each to appropriate application exceptions.
+:::
+
+::: danger Pitfall 4: Forgetting to evolve protobuf schemas safely
+Renaming or changing the type of existing fields breaks backward compatibility with older clients or services.
+**Fix:** Follow protobuf evolution rules: never reuse field numbers, only add new fields with new numbers, use `reserved` to prevent reuse of removed field numbers. Use `oneof` for fields that may have different types in the future.
+:::
+
+::: danger Pitfall 5: Not implementing health checks for gRPC services
+Without gRPC health checks, Kubernetes and load balancers cannot detect unhealthy gRPC services, continuing to route traffic to failing instances.
+**Fix:** Implement the standard gRPC health check protocol (`grpc.health.v1.Health`) with `Check` and `Watch` methods. The `grpc-spring-boot-starter` provides auto-configuration for health checks.
+:::
+
+## Interview Questions
+
+**Q1: What advantages does gRPC have over REST for microservice communication?**
+::: details Answer
+(1) **Performance**: Protocol Buffers are 2-10x smaller than JSON (binary encoding). (2) **HTTP/2**: Multiplexed streams over a single connection, no head-of-line blocking. (3) **Type safety**: Code-generated client and server stubs enforce the API contract at compile time. (4) **Streaming**: Native support for server streaming, client streaming, and bidirectional streaming. (5) **Code generation**: Generate client libraries for any language (Java, Go, Python, TypeScript) from `.proto` files. (6) **Latency**: Binary serialization and HTTP/2 reduce per-request overhead to ~1ms vs ~5ms for JSON/HTTP/1.1.
+:::
+
+**Q2: Explain the four types of gRPC service methods.**
+::: details Answer
+(1) **Unary RPC**: Client sends one request, server returns one response. Like REST. Example: `GetUser(GetUserRequest) returns (User)`. (2) **Server streaming**: Client sends one request, server returns a stream of responses. Example: real-time feed, `ListUsers(ListRequest) returns (stream User)`. (3) **Client streaming**: Client sends a stream of requests, server returns one response. Example: bulk upload, `BulkCreate(stream CreateRequest) returns (BulkResponse)`. (4) **Bidirectional streaming**: Both client and server send streams concurrently. Example: chat, `Chat(stream Message) returns (stream Message)`.
+:::
+
+**Q3: How do gRPC interceptors work and what are they used for?**
+::: details Answer
+gRPC interceptors are middleware that wrap service calls, similar to servlet filters in HTTP. **Server interceptors** (`ServerInterceptor`) intercept incoming calls for logging, authentication, metrics, rate limiting, and request validation. **Client interceptors** (`ClientInterceptor`) intercept outgoing calls for adding metadata headers (auth tokens, correlation IDs), retries, and logging. Interceptors access the call metadata, can modify headers, and wrap the `ServerCallListener` (server) or `ClientCall` (client) to intercept request/response lifecycle events.
+:::
+
+**Q4: How does error handling differ between gRPC and REST?**
+::: details Answer
+REST uses HTTP status codes (200, 404, 500) with a JSON error body. gRPC uses its own status codes (`OK`, `NOT_FOUND`, `ALREADY_EXISTS`, `INVALID_ARGUMENT`, `UNAVAILABLE`, `DEADLINE_EXCEEDED`, etc.) which are more specific than HTTP codes. Error details are sent as `Status` with a description string and optional `Metadata` trailers. For rich errors, use `com.google.rpc.Status` with `Any`-packed details like `BadRequest.FieldViolation` for validation errors. The `StatusRuntimeException` class carries both the status code and description.
+:::
+
+**Q5: When should you use gRPC vs REST vs GraphQL?**
+::: details Answer
+**gRPC**: Internal service-to-service communication where performance, type safety, and streaming are priorities. Not suitable for browser clients (requires gRPC-Web proxy). **REST**: External-facing APIs consumed by browsers, third-party developers, and mobile apps. Best for simple CRUD with wide tooling support. **GraphQL**: APIs with multiple clients needing different data shapes, deeply nested data models, or over-fetching problems. All three can coexist: gRPC for internal communication, REST or GraphQL for external APIs, with an API gateway handling protocol translation at the boundary.
+:::

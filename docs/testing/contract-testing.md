@@ -530,3 +530,154 @@ If your consumer test uses `given('a user exists')` but the provider does not im
 - [Event Schema Evolution](/architecture-patterns/event-driven/event-schema-evolution) — managing breaking changes in event-driven contracts
 - [API Gateway Pattern](/architecture-patterns/microservices/api-gateway-pattern) — where contract testing meets API gateways
 - [Test Architecture](/testing/test-architecture) — organizing contract tests within your broader test strategy
+
+---
+
+## Key Takeaway
+
+::: tip
+- Contract tests verify the shape of API agreements (fields, types, status codes) between services independently, without requiring them to run simultaneously.
+- Consumer-driven contracts (CDC) let each consumer define what it needs, and the provider verifies all consumer expectations before deploying -- catching silent breakages before production.
+- The Pact Broker's `can-i-deploy` command is the critical CI gate: no service deploys unless it is verified compatible with all consumers and providers in production.
+:::
+
+## Common Misconceptions
+
+::: warning Misconception: Contract tests replace integration tests
+Contract tests verify the shape of communication (fields, types, status codes) but not the behavior (does the query return the right user for a given ID?). They are complementary: use contract tests for structural compatibility and integration tests for critical behavioral flows.
+:::
+
+::: warning Misconception: The provider should define the contract
+If the provider defines the contract, it has no way of knowing which fields each consumer actually uses. Consumer-driven contracts ensure the provider knows exactly what every consumer depends on, so renaming `name` to `fullName` is caught immediately.
+:::
+
+::: warning Misconception: Contract testing works for all API types
+Contract testing with Pact is optimized for HTTP REST APIs and message-based systems. It does not fit well with GraphQL (query-based approach) or third-party APIs (you cannot run provider verification). Use schema validation for GraphQL and recorded response tests for third-party APIs.
+:::
+
+::: warning Misconception: Pact matchers should use exact values
+Using exact values (`id: 'usr-1'`) defeats the purpose of contract testing. Use type matchers (`like('usr-1')`) to verify shape, not content. Be specific with format matchers (`uuid()`, `email()`, `datetime()`) to catch more breakages.
+:::
+
+## In Production
+
+::: tip Uber
+Uber uses consumer-driven contract testing across 4,000+ microservices. Their internal contract testing platform automatically triggers provider verification whenever a consumer publishes a new contract. The `can-i-deploy` check is mandatory before any service promotion to production.
+:::
+
+::: tip Stripe
+Stripe's API versioning strategy is backed by contract tests. When they release a new API version, contract tests from all consumer teams (internal and partner integrations) are verified against the new version before it goes live. This is how Stripe maintains backward compatibility across hundreds of API versions.
+:::
+
+::: tip Netflix
+Netflix uses contract testing for their event-driven architecture. Producers of Kafka events publish message contracts, and all consumers verify they can deserialize the events. When a producer wants to change an event schema, the contract broker shows exactly which consumers would break.
+:::
+
+## Try It Yourself
+
+**Exercise 1: Write a consumer contract test**
+
+Write a Pact consumer test for an `OrderService` that expects to call `GET /api/products/{id}` and receive a response with `id`, `name`, `price`, and `inStock` fields.
+
+::: details Solution
+```typescript
+import { PactV4, MatchersV3 } from '@pact-foundation/pact';
+const { like, integer, boolean } = MatchersV3;
+
+const provider = new PactV4({
+  consumer: 'OrderService',
+  provider: 'ProductService',
+});
+
+describe('ProductApiClient', () => {
+  it('fetches a product by ID', async () => {
+    await provider
+      .addInteraction()
+      .given('product P-1 exists')
+      .uponReceiving('a request for product P-1')
+      .withRequest('GET', '/api/products/P-1')
+      .willRespondWith(200, (builder) => {
+        builder.jsonBody({
+          id: like('P-1'),
+          name: like('Widget'),
+          price: integer(2999),
+          inStock: boolean(true),
+        });
+      })
+      .executeTest(async (mockServer) => {
+        const client = new ProductApiClient(mockServer.url);
+        const product = await client.getById('P-1');
+        expect(product.name).toBe('Widget');
+        expect(product.price).toBe(2999);
+      });
+  });
+});
+```
+:::
+
+**Exercise 2: Implement provider state handlers**
+
+Write provider state handlers for two scenarios: "product P-1 exists" and "no products exist". These handlers should seed or clean the database before Pact replays each interaction.
+
+::: details Solution
+```typescript
+const stateHandlers = {
+  'product P-1 exists': async () => {
+    await db.products.deleteAll();
+    await db.products.create({
+      id: 'P-1',
+      name: 'Widget',
+      price: 2999,
+      inStock: true,
+    });
+  },
+  'no products exist': async () => {
+    await db.products.deleteAll();
+  },
+};
+
+// Used in provider verification
+await new Verifier({
+  providerBaseUrl: `http://localhost:${port}`,
+  pactBrokerUrl: process.env.PACT_BROKER_URL,
+  provider: 'ProductService',
+  stateHandlers,
+}).verifyProvider();
+```
+:::
+
+## Quick Quiz
+
+**1. What does the consumer publish in consumer-driven contract testing?**
+- A) The provider's API documentation
+- B) A contract file (pact) describing expected requests and responses
+- C) The provider's source code
+- D) Integration test results
+
+::: details Answer
+**B) A contract file (pact) describing expected requests and responses.** The consumer defines what it expects, and this is published as a versioned artifact to the Pact Broker.
+:::
+
+**2. What does `can-i-deploy` check before a service deploys?**
+- A) Whether the service has 100% code coverage
+- B) Whether the service's version is compatible with all consumers and providers in production
+- C) Whether the service passes unit tests
+- D) Whether the service has been manually approved
+
+::: details Answer
+**B) Whether the service's version is compatible with all consumers and providers in production.** It queries the Pact Broker's verification matrix to determine if all contracts have been verified successfully.
+:::
+
+**3. When should you NOT use contract testing?**
+- A) In a microservices architecture with 10+ services
+- B) For event-driven message-based communication
+- C) For third-party APIs you do not control
+- D) For HTTP REST APIs between internal services
+
+::: details Answer
+**C) For third-party APIs you do not control.** You cannot run provider verification against a third-party API. Use integration tests with recorded responses instead.
+:::
+
+---
+
+> **One-Liner Summary:** Contract tests catch silent API breakages between services before production by letting consumers define their expectations and providers verify them independently.

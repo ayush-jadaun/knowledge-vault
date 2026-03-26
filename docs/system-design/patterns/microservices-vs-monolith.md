@@ -390,3 +390,23 @@ graph TD
 ---
 
 *Start with a monolith. Make it modular. Extract services only when you have a specific reason — not because a conference talk told you to. The companies that successfully run microservices at scale did not start with microservices. They earned them.*
+
+## Real-World Examples
+
+::: tip Shopify
+Shopify runs a **modular monolith** with 1,000+ developers on a single Ruby on Rails application. They enforce module boundaries using their "Packwerk" tool, which statically analyzes imports to prevent cross-module coupling. This proves you can have a productive, large-scale engineering organization without microservices — the key is disciplined module boundaries, not separate deployments.
+:::
+
+::: tip Segment
+Segment **migrated from microservices back to a monolith**. They had 140+ microservices that required a dedicated team just to keep running. The operational overhead — service mesh, distributed tracing, coordinated deployments — consumed more engineering time than building product. After consolidation, their development velocity increased significantly, proving that microservices are not always the answer.
+:::
+
+::: tip Amazon
+Amazon's journey from a **monolith to microservices** took years and was driven by organizational scaling, not technical preference. Their "two-pizza team" rule (each team small enough to be fed by two pizzas) naturally led to independently deployable services. With hundreds of teams deploying independently, microservices became a necessity for organizational autonomy — not a technology choice.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"My recommendation depends entirely on team size and organizational structure, not technical preferences. Under 10 developers, a monolith is almost always correct — more services than engineers is a red flag. Between 10-50 developers, a modular monolith (like Shopify with 1,000+ devs) gives you clear boundaries without distributed systems complexity. Microservices make sense at 50+ developers when team autonomy and independent deployment become critical. I'd always start monolithic and extract services using the Strangler Fig pattern when there's a concrete reason — independent scaling needs, different technology requirements, or deployment coupling slowing down teams. Segment's story of moving back to a monolith is a powerful reminder that microservices have real costs."
+:::

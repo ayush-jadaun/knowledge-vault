@@ -70,6 +70,32 @@ The harmonic mean of precision and recall:
 
 $$F_1 = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}} = \frac{2TP}{2TP + FP + FN}$$
 
+::: details Worked Example — Precision, Recall, and F1
+
+**Confusion matrix for a disease screening test (200 patients):**
+|              | Predicted Sick | Predicted Healthy |
+|--------------|---------------|-------------------|
+| Actually Sick    | TP = 40       | FN = 10           |
+| Actually Healthy | FP = 20       | TN = 130          |
+
+**Step 1:** Accuracy
+  Accuracy = (40 + 130) / (40 + 130 + 20 + 10) = 170/200 = 0.850
+
+**Step 2:** Precision ("Of those I flagged as sick, how many truly are?")
+  Precision = TP / (TP + FP) = 40 / (40 + 20) = 40/60 = 0.667
+
+**Step 3:** Recall ("Of all sick patients, how many did I catch?")
+  Recall = TP / (TP + FN) = 40 / (40 + 10) = 40/50 = 0.800
+
+**Step 4:** F1 Score
+  F1 = 2 * (0.667 * 0.800) / (0.667 + 0.800)
+     = 2 * 0.534 / 1.467 = 1.067 / 1.467 = 0.727
+
+**Interpret:**
+  "The model catches 80% of sick patients (good recall) but 33% of its positive predictions are wrong (precision = 66.7%). The F1 of 0.727 balances both. For disease screening, we'd want higher recall even at the cost of precision."
+
+:::
+
 **Why harmonic mean?** It penalizes extreme imbalances. If precision = 1.0 and recall = 0.01, then:
 - Arithmetic mean = 0.505 (misleadingly high)
 - Harmonic mean = 0.0198 (correctly low)
@@ -119,6 +145,30 @@ print(f"Log Loss:           {log_loss(y_true, y_proba):.4f}")
 MCC uses all four confusion matrix values and works well even with imbalanced data:
 
 $$\text{MCC} = \frac{TP \cdot TN - FP \cdot FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}$$
+
+::: details Worked Example — MCC
+
+**Using the disease screening confusion matrix (TP=40, TN=130, FP=20, FN=10):**
+
+**Step 1:** Compute numerator
+  TP*TN - FP*FN = 40*130 - 20*10 = 5200 - 200 = 5000
+
+**Step 2:** Compute denominator
+  (TP+FP) = 60, (TP+FN) = 50, (TN+FP) = 150, (TN+FN) = 140
+  sqrt(60 * 50 * 150 * 140) = sqrt(63,000,000) = 7937.3
+
+**Step 3:** Compute MCC
+  MCC = 5000 / 7937.3 = 0.630
+
+**Compare with "predict all healthy" model (TP=0, FP=0, FN=50, TN=150):**
+  Numerator = 0*150 - 0*50 = 0
+  MCC = 0 (correctly identifies this model as useless!)
+  But accuracy = 150/200 = 0.75 (misleadingly high)
+
+**Interpret:**
+  "MCC of 0.630 indicates a moderately good classifier. Unlike accuracy (0.85), MCC correctly penalizes a model that just predicts the majority class."
+
+:::
 
 - MCC = +1: Perfect prediction
 - MCC = 0: Random prediction
@@ -252,6 +302,31 @@ plt.show()
 
 $$\text{Log Loss} = -\frac{1}{n}\sum_{i=1}^n [y_i \log(\hat{p}_i) + (1 - y_i)\log(1 - \hat{p}_i)]$$
 
+::: details Worked Example — Log Loss
+
+**4 predictions with true labels and predicted probabilities:**
+
+| Sample | y_true | p_hat | Loss contribution |
+|--------|--------|-------|-------------------|
+| 1      | 1      | 0.90  | -1*log(0.90) = 0.105  |
+| 2      | 0      | 0.20  | -1*log(0.80) = 0.223  |
+| 3      | 1      | 0.60  | -1*log(0.60) = 0.511  |
+| 4      | 0      | 0.95  | -1*log(0.05) = 2.996  |
+
+**Step 1:** Sum contributions
+  = 0.105 + 0.223 + 0.511 + 2.996 = 3.835
+
+**Step 2:** Average
+  Log Loss = 3.835 / 4 = 0.959
+
+**Step 3:** Notice sample 4 dominates the loss
+  Sample 4 alone contributes 2.996 — it predicted 95% positive but the true label is negative (confident and wrong!).
+
+**Interpret:**
+  "Log loss = 0.959 is high, mainly because sample 4 was confidently wrong (p=0.95 for a negative). Log loss harshly penalizes confident wrong predictions: being 95% sure and wrong costs 2.996, while being 90% sure and right only contributes 0.105."
+
+:::
+
 Log loss measures the quality of probability estimates, not just binary predictions. It penalizes confident wrong predictions heavily.
 
 ```python
@@ -309,6 +384,34 @@ Properties:
 
 $$R^2 = 1 - \frac{\sum_{i=1}^n (y_i - \hat{y}_i)^2}{\sum_{i=1}^n (y_i - \bar{y})^2} = 1 - \frac{SS_{res}}{SS_{tot}}$$
 
+::: details Worked Example — R-Squared, MSE, RMSE, MAE
+
+**Mini regression results:**
+| y_true | y_pred | error | |error| | error^2 |
+|--------|--------|-------|---------|---------|
+| 10     | 12     | -2    | 2       | 4       |
+| 20     | 18     | 2     | 2       | 4       |
+| 30     | 33     | -3    | 3       | 9       |
+| 40     | 39     | 1     | 1       | 1       |
+| 50     | 48     | 2     | 2       | 4       |
+
+y_bar = (10+20+30+40+50)/5 = 30
+
+**Step 1:** MSE = (4+4+9+1+4)/5 = 22/5 = 4.40
+**Step 2:** RMSE = sqrt(4.40) = 2.10
+**Step 3:** MAE = (2+2+3+1+2)/5 = 10/5 = 2.00
+
+**Step 4:** R-squared
+  SS_res = 4+4+9+1+4 = 22
+  SS_tot = (10-30)^2 + (20-30)^2 + (30-30)^2 + (40-30)^2 + (50-30)^2
+         = 400 + 100 + 0 + 100 + 400 = 1000
+  R^2 = 1 - 22/1000 = 1 - 0.022 = 0.978
+
+**Interpret:**
+  "R^2 = 0.978 means the model explains 97.8% of the variance in y. RMSE = 2.10 means predictions are off by about 2.1 units on average."
+
+:::
+
 Properties:
 - $R^2 = 1$: Perfect prediction
 - $R^2 = 0$: Model is as good as predicting the mean
@@ -325,6 +428,29 @@ Standard $R^2$ always increases (or stays the same) when you add features — ev
 $$R^2_{adj} = 1 - \frac{(1 - R^2)(n - 1)}{n - d - 1}$$
 
 where $n$ is the number of samples and $d$ is the number of features.
+
+::: details Worked Example — Adjusted R-Squared
+
+**Model with n=50 samples, d=5 features, R^2 = 0.80**
+
+**Step 1:** Compute adjusted R^2
+  R^2_adj = 1 - (1 - 0.80)(50 - 1) / (50 - 5 - 1)
+          = 1 - (0.20)(49) / 44
+          = 1 - 9.8/44
+          = 1 - 0.2227 = 0.777
+
+**Step 2:** Compare: what if we add 10 useless features (d=15, R^2 stays 0.80)?
+  R^2_adj = 1 - (0.20)(49) / (50 - 15 - 1)
+          = 1 - 9.8/34
+          = 1 - 0.288 = 0.712
+
+**Step 3:** What if adding those features improves R^2 to 0.82?
+  R^2_adj = 1 - (0.18)(49) / 34 = 1 - 8.82/34 = 1 - 0.259 = 0.741
+
+**Interpret:**
+  "Original model: R^2=0.80, R^2_adj=0.777. Adding 10 useless features keeps R^2 at 0.80 but drops R^2_adj to 0.712 (penalizing complexity). Even if R^2 improves slightly to 0.82, R^2_adj is only 0.741 — still lower than the simpler model. Adjusted R^2 correctly favors the simpler model."
+
+:::
 
 ```python
 # regression_metrics.py — All regression metrics

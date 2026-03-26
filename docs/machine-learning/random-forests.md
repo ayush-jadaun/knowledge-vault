@@ -23,6 +23,29 @@ For $T$ independent classifiers, each with accuracy $p$, the ensemble accuracy u
 
 $$P(\text{majority correct}) = \sum_{k=\lceil T/2 \rceil}^{T} \binom{T}{k} p^k (1-p)^{T-k}$$
 
+::: details Worked Example — Majority Vote Accuracy
+
+**5 trees, each with individual accuracy p=0.7. What is the ensemble accuracy?**
+
+Majority vote requires >= 3 out of 5 trees to be correct.
+
+**Step 1:** P(exactly 3 correct)
+  C(5,3) * 0.7^3 * 0.3^2 = 10 * 0.343 * 0.09 = 0.3087
+
+**Step 2:** P(exactly 4 correct)
+  C(5,4) * 0.7^4 * 0.3^1 = 5 * 0.2401 * 0.3 = 0.3602
+
+**Step 3:** P(exactly 5 correct)
+  C(5,5) * 0.7^5 * 0.3^0 = 1 * 0.16807 * 1 = 0.1681
+
+**Step 4:** P(majority correct)
+  = 0.3087 + 0.3602 + 0.1681 = 0.8370
+
+**Interpret:**
+  "5 trees with individual 70% accuracy combine to give 83.7% ensemble accuracy through majority voting. This is the power of ensembles — even mediocre classifiers combine to be strong. With 101 trees: accuracy = 99.9%."
+
+:::
+
 ```python
 # ensemble_math.py — Why ensembles work
 import numpy as np
@@ -151,6 +174,28 @@ where $\Delta I(s)$ is the impurity decrease at split $s$ using feature $j$.
 Permutation importance measures how much the model's score drops when a feature's values are randomly shuffled:
 
 $$\text{PI}(j) = \text{score}(\mathbf{X}, y) - \text{score}(\mathbf{X}_{\text{permuted}_j}, y)$$
+
+::: details Worked Example — Permutation Importance
+
+**Model accuracy on test set: 0.92. Permute each feature and re-score:**
+
+| Feature Permuted | New Accuracy | Importance (drop) |
+|-----------------|-------------|-------------------|
+| feature_1       | 0.85        | 0.92 - 0.85 = 0.07 |
+| feature_2       | 0.72        | 0.92 - 0.72 = 0.20 |
+| feature_3       | 0.91        | 0.92 - 0.91 = 0.01 |
+| feature_4       | 0.89        | 0.92 - 0.89 = 0.03 |
+
+**Ranking by importance:**
+  1. feature_2: 0.20 (most important — accuracy drops 20 points)
+  2. feature_1: 0.07
+  3. feature_4: 0.03
+  4. feature_3: 0.01 (least important — model barely cares)
+
+**Interpret:**
+  "Shuffling feature_2 destroys 20% of accuracy — the model heavily relies on it. Feature_3 with importance 0.01 is nearly irrelevant and could potentially be removed without harm."
+
+:::
 
 **Advantage:** Unbiased, works with any metric, captures interactions.
 

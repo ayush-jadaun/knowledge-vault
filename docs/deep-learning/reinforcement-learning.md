@@ -75,6 +75,33 @@ $$
 
 The optimal policy: $\pi^*(s) = \arg\max_a Q^*(s, a)$.
 
+::: details Worked Example — Bellman Equation for a 3-State MDP
+
+**Setup:** 3 states {A, B, C}, 2 actions {left, right}, $\gamma = 0.9$. Policy: always go right.
+
+Transitions and rewards:
+- A --right--> B, reward = 5
+- B --right--> C, reward = 2
+- C --right--> C, reward = 1 (terminal loop)
+
+**Step 1:** Compute $V^\pi$ from the end:
+
+$V^\pi(C)$: from C, going right gives reward 1 and stays in C forever.
+$$V^\pi(C) = 1 + 0.9(1) + 0.9^2(1) + \ldots = \frac{1}{1 - 0.9} = 10$$
+
+$V^\pi(B)$: reward 2 then transitions to C.
+$$V^\pi(B) = 2 + 0.9 \times V^\pi(C) = 2 + 0.9 \times 10 = 11$$
+
+$V^\pi(A)$: reward 5 then transitions to B.
+$$V^\pi(A) = 5 + 0.9 \times V^\pi(B) = 5 + 0.9 \times 11 = 14.9$$
+
+**Verify Bellman equation for state A:**
+$$V^\pi(A) = R(A, \text{right}) + \gamma V^\pi(B) = 5 + 0.9(11) = 14.9 \quad \checkmark$$
+
+**Result:** State A has the highest value (14.9) because the agent collects rewards of 5, then 2, then 1 forever. The discount factor $\gamma = 0.9$ makes the infinite stream of 1s worth only 10. If $\gamma = 0.5$ instead, $V(C) = 2$, $V(B) = 3$, $V(A) = 6.5$ --- the agent cares less about distant rewards.
+
+:::
+
 ## Q-Learning from Scratch
 
 Q-learning is an off-policy algorithm that learns $Q^*$ directly:
@@ -84,6 +111,33 @@ Q(s, a) \leftarrow Q(s, a) + \alpha \left[R + \gamma \max_{a'} Q(s', a') - Q(s, 
 $$
 
 The term in brackets is the TD (temporal difference) error.
+
+::: details Worked Example — Q-Value Update in a Grid World
+
+**Setup:** 3x3 grid world. Agent at state $s = (1,1)$ (center), takes action "right" to reach $s' = (1,2)$, receives reward $R = -1$ (step penalty). $\alpha = 0.1$, $\gamma = 0.9$.
+
+Current Q-table (partial):
+
+| State | Left | Right | Up | Down |
+|---|---|---|---|---|
+| (1,1) | 2.0 | **3.0** | 1.5 | 1.0 |
+| (1,2) | 1.0 | 0.0 | **5.0** | 2.0 |
+
+**Step 1:** Find $\max_{a'} Q(s', a')$:
+$$\max Q((1,2), \cdot) = \max(1.0, 0.0, 5.0, 2.0) = 5.0 \quad \text{(action "Up")}$$
+
+**Step 2:** Compute TD target:
+$$\text{target} = R + \gamma \max_{a'} Q(s', a') = -1 + 0.9 \times 5.0 = -1 + 4.5 = 3.5$$
+
+**Step 3:** Compute TD error:
+$$\delta = \text{target} - Q(s, a) = 3.5 - 3.0 = 0.5$$
+
+**Step 4:** Update Q-value:
+$$Q((1,1), \text{right}) \leftarrow 3.0 + 0.1 \times 0.5 = 3.05$$
+
+**Result:** The Q-value for "right" at (1,1) increased slightly from 3.0 to 3.05. The TD error was positive (0.5) because the next state (1,2) has a high max Q-value (5.0 for "Up"), making "right" a better action than previously estimated. Over many episodes, Q-values converge to the true optimal values.
+
+:::
 
 ```python
 import numpy as np
@@ -359,6 +413,35 @@ $$
 is the probability ratio, $\hat{A}_t$ is the advantage estimate, and $\epsilon = 0.2$ is the clipping parameter.
 
 **Why clipping?** Without it, large ratio values could lead to catastrophically large policy updates. Clipping ensures $r_t$ stays in $[0.8, 1.2]$.
+
+::: details Worked Example — PPO Clipped Surrogate
+
+**Setup:** $\epsilon = 0.2$, for one state-action pair:
+- Old policy: $\pi_{\text{old}}(a|s) = 0.4$
+- New policy: $\pi_\theta(a|s) = 0.6$
+- Advantage: $\hat{A} = 2.0$ (this action was good)
+
+**Step 1:** Probability ratio:
+$$r(\theta) = \frac{0.6}{0.4} = 1.5$$
+
+**Step 2:** Unclipped objective: $r \cdot \hat{A} = 1.5 \times 2.0 = 3.0$
+
+**Step 3:** Clipped objective: $\text{clip}(1.5, 0.8, 1.2) \times 2.0 = 1.2 \times 2.0 = 2.4$
+
+**Step 4:** PPO objective: $\min(3.0, 2.4) = 2.4$
+
+The clipping limits the objective to 2.4 instead of 3.0, preventing the policy from changing too aggressively.
+
+**Now consider negative advantage** ($\hat{A} = -1.5$, bad action):
+- Unclipped: $1.5 \times (-1.5) = -2.25$
+- Clipped: $1.2 \times (-1.5) = -1.8$
+- PPO: $\min(-2.25, -1.8) = -2.25$
+
+Here the unclipped value is used because it's more conservative (smaller). The policy is penalized more for increasing the probability of a bad action.
+
+**Result:** PPO's clipping is asymmetric by design. For good actions ($\hat{A} > 0$), it prevents the ratio from exceeding $1 + \epsilon$. For bad actions ($\hat{A} < 0$), it uses the harsher penalty. This creates a "trust region" where policy updates are safe.
+
+:::
 
 ### Advantage Estimation (GAE)
 

@@ -40,6 +40,40 @@ For player $i$:
 
 $$\phi_i = \sum_{S \subseteq N \setminus \{i\}} \frac{|S|!(|N|-|S|-1)!}{|N|!} \left[v(S \cup \{i\}) - v(S)\right]$$
 
+::: details Worked Example — Shapley Value for 3 Features
+
+**Model predicts house price. 3 features: Size, Bedrooms, Location.**
+**E[f(X)] = $300k (base value), f(x) = $450k (prediction for this house).**
+**Need to attribute the $150k difference among 3 features.**
+
+Value function v(S) for all coalitions (from model):
+  v({}) = 300k (base)
+  v({Size}) = 380k
+  v({Bed}) = 320k
+  v({Loc}) = 340k
+  v({Size,Bed}) = 400k
+  v({Size,Loc}) = 420k
+  v({Bed,Loc}) = 360k
+  v({Size,Bed,Loc}) = 450k
+
+**Compute phi_Size (Shapley value for Size):**
+  S={}: weight = 0!*2!/3! = 1*2/6 = 1/3. Marginal = v({Size})-v({}) = 380-300 = 80
+  S={Bed}: weight = 1!*1!/3! = 1/6. Marginal = v({Size,Bed})-v({Bed}) = 400-320 = 80
+  S={Loc}: weight = 1!*1!/3! = 1/6. Marginal = v({Size,Loc})-v({Loc}) = 420-340 = 80
+  S={Bed,Loc}: weight = 2!*0!/3! = 2/6 = 1/3. Marginal = v({all})-v({Bed,Loc}) = 450-360 = 90
+
+  phi_Size = (1/3)(80) + (1/6)(80) + (1/6)(80) + (1/3)(90)
+           = 26.67 + 13.33 + 13.33 + 30.0 = 83.33k
+
+**Similarly: phi_Bed = 26.67k, phi_Loc = 40.0k**
+
+**Verify efficiency:** 83.33 + 26.67 + 40.0 = 150.0k = f(x) - E[f(X)]
+
+**Interpret:**
+  "Size contributes $83.33k to this house being above average, Location adds $40k, and Bedrooms add $26.67k. The contributions sum exactly to the $150k difference from the base prediction — this is the efficiency property of Shapley values."
+
+:::
+
 where:
 - $N$ = set of all players
 - $S$ = any subset not containing $i$

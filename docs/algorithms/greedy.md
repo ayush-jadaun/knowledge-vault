@@ -748,3 +748,121 @@ graph LR
 - [Heaps & Priority Queues](/algorithms/heaps-priority-queues) — the data structure powering Huffman and Prim's
 - [Advanced Data Structures](/algorithms/advanced-data-structures) — Union-Find used in Kruskal's
 - [Math Patterns in System Design](/algorithms/system-design-math) — estimation and optimization in practice
+
+## Try It Yourself
+
+**Problem 1:** Given activities with (start, finish) times: (1,4), (3,5), (0,6), (5,7), (3,9), (5,9), (6,10), (8,11), select the maximum number of non-overlapping activities.
+
+::: details Solution
+Sort by finish time: (1,4), (3,5), (0,6), (5,7), (3,9), (5,9), (6,10), (8,11).
+Greedy: always pick the activity with the earliest finish time that does not overlap:
+- Pick (1,4). lastFinish=4.
+- Skip (3,5): start 3 < 4.
+- Skip (0,6): start 0 < 4.
+- Pick (5,7): start 5 >= 4. lastFinish=7.
+- Skip (3,9), (5,9), (6,10): starts < 7.
+- Pick (8,11): start 8 >= 7.
+Answer: **3 activities**: (1,4), (5,7), (8,11).
+:::
+
+**Problem 2:** Given items with (weight, value): (10, 60), (20, 100), (30, 120) and knapsack capacity 50, solve the fractional knapsack.
+
+::: details Solution
+Calculate value/weight ratios: 60/10=6, 100/20=5, 120/30=4.
+Sort by ratio descending: (10,60,ratio=6), (20,100,ratio=5), (30,120,ratio=4).
+- Take item 1 entirely: weight=10, value=60. Remaining=40.
+- Take item 2 entirely: weight=20, value=100. Remaining=20.
+- Take 20/30 of item 3: value = 120 * (20/30) = 80.
+Total value: 60 + 100 + 80 = **240.0**
+:::
+
+**Problem 3:** Given intervals [(0,30), (5,10), (15,20)], find the minimum number of meeting rooms required.
+
+::: details Solution
+Sort by start time: (0,30), (5,10), (15,20).
+Use a min-heap of end times:
+- (0,30): heap=[30], rooms=1
+- (5,10): 5 < 30, need new room. heap=[10, 30], rooms=2
+- (15,20): 15 >= 10, reuse room. heap=[20, 30], rooms=2
+Answer: **2 rooms**
+:::
+
+**Problem 4:** Show that greedy fails for the coin change problem with denominations [1, 3, 4] and target 6.
+
+::: details Solution
+Greedy approach (largest coin first):
+- Take 4 (remaining: 2)
+- Take 1 (remaining: 1)
+- Take 1 (remaining: 0)
+- Total: **3 coins** (4 + 1 + 1)
+
+Optimal approach:
+- Take 3 + 3 = **2 coins**
+
+Greedy fails because taking the largest coin first blocks a better combination. The greedy choice property does not hold for arbitrary coin denominations.
+:::
+
+**Problem 5:** Use Kruskal's algorithm to find the MST of a graph with edges: (A,B,4), (A,C,8), (B,C,11), (B,D,8), (C,D,7), (C,E,1), (D,E,2).
+
+::: details Solution
+Sort edges by weight: (C,E,1), (D,E,2), (A,B,4), (C,D,7), (A,C,8), (B,D,8), (B,C,11).
+Process with Union-Find:
+- (C,E,1): add. Components: {A},{B},{C,E},{D}
+- (D,E,2): add. Components: {A},{B},{C,D,E}
+- (A,B,4): add. Components: {A,B},{C,D,E}
+- (C,D,7): C and D already connected. Skip.
+- (A,C,8): add. All connected.
+MST edges: **(C,E,1), (D,E,2), (A,B,4), (A,C,8)**. Total weight: **15**.
+:::
+
+## Quick Quiz
+
+**1. What two properties must a problem have for a greedy algorithm to produce an optimal solution?**
+- a) Overlapping subproblems and optimal substructure
+- b) Greedy choice property and optimal substructure
+- c) Divide and conquer structure and greedy choice property
+- d) Polynomial time and greedy choice property
+
+::: details Answer
+**b) Greedy choice property and optimal substructure** — The greedy choice property means a locally optimal choice leads to a globally optimal solution. Optimal substructure means the optimal solution contains optimal solutions to subproblems.
+:::
+
+**2. Why does greedy work for the fractional knapsack but not for the 0/1 knapsack?**
+- a) Fractional knapsack has fewer items
+- b) In fractional knapsack you can take parts of items, so the highest-ratio item is always worth taking; in 0/1 you must take whole items, and a high-ratio item may waste capacity
+- c) 0/1 knapsack is NP-hard
+- d) Greedy works for both
+
+::: details Answer
+**b) In fractional knapsack you can take parts of items, so the highest-ratio item is always worth taking; in 0/1 you must take whole items, and a high-ratio item may waste capacity** — Taking fractions ensures you never "waste" capacity, making the greedy choice (best ratio) always optimal. With whole items, a high-ratio item may leave capacity that could have been better filled by a different combination.
+:::
+
+**3. In Kruskal's MST algorithm, how are cycles detected?**
+- a) BFS
+- b) DFS
+- c) Union-Find (Disjoint Set Union)
+- d) Adjacency matrix lookup
+
+::: details Answer
+**c) Union-Find (Disjoint Set Union)** — Before adding an edge $(u, v)$, check if $u$ and $v$ are already in the same set using `find()`. If they are, adding the edge would create a cycle.
+:::
+
+**4. What is the time complexity of Huffman coding for $n$ characters?**
+- a) $O(n)$
+- b) $O(n \log n)$
+- c) $O(n^2)$
+- d) $O(2^n)$
+
+::: details Answer
+**b) $O(n \log n)$** — Building the initial heap takes $O(n)$. Extracting and inserting into the heap happens $n-1$ times, each taking $O(\log n)$, giving $O(n \log n)$ overall.
+:::
+
+**5. How do you formally prove that a greedy algorithm is correct?**
+- a) Run it on several test cases
+- b) Use an exchange argument: show that any optimal solution can be modified to include the greedy choice without worsening it
+- c) Compare it to the brute-force solution
+- d) Prove it runs in polynomial time
+
+::: details Answer
+**b) Use an exchange argument: show that any optimal solution can be modified to include the greedy choice without worsening it** — The exchange argument takes an arbitrary optimal solution and shows you can swap out a non-greedy choice for the greedy choice without losing optimality, proving the greedy strategy is correct.
+:::

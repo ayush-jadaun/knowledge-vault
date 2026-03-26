@@ -34,6 +34,30 @@ $$\text{Total fits} = \prod_{i=1}^{H} |V_i| \times K$$
 
 where $H$ is the number of hyperparameters, $|V_i|$ is the number of values for hyperparameter $i$, and $K$ is the number of CV folds.
 
+::: details Worked Example — Grid Search Cost Calculation
+
+**Tuning a Random Forest with 3 hyperparameters, 5-fold CV:**
+- n_estimators: [50, 100, 200, 500] (4 values)
+- max_depth: [3, 5, 10, 20, None] (5 values)
+- min_samples_leaf: [1, 2, 5] (3 values)
+
+**Step 1:** Total combinations
+  4 * 5 * 3 = 60 combinations
+
+**Step 2:** Total model fits (with K=5 fold CV)
+  60 * 5 = 300 fits
+
+**Step 3:** Estimate time (suppose each fit takes 2 seconds)
+  300 * 2 = 600 seconds = 10 minutes
+
+**Step 4:** What if we add a 4th hyperparameter with 4 values?
+  4 * 5 * 3 * 4 = 240 combinations -> 1200 fits -> 40 minutes
+
+**Interpret:**
+  "Grid search grows exponentially. Adding one more hyperparameter with 4 values quadrupled the search time from 10 to 40 minutes. With 10 hyperparameters, even 3 values each gives 3^10 = 59,049 combinations. This is why random search or Bayesian optimization is preferred for many hyperparameters."
+
+:::
+
 ### GridSearchCV
 
 ```python
@@ -166,6 +190,38 @@ Optuna uses TPE by default:
 3. Choose next $\theta$ that maximizes $l(\theta) / g(\theta)$ — the **Expected Improvement**
 
 $$\text{EI}(\theta) \propto \frac{l(\theta)}{g(\theta)}$$
+
+::: details Worked Example — Bayesian Optimization Intuition (TPE)
+
+**Tuning learning_rate. After 8 trials, split into "good" (top 25%) and "bad":**
+
+| Trial | learning_rate | CV Score | Group   |
+|-------|--------------|----------|---------|
+| 1     | 0.001        | 0.72     | bad     |
+| 2     | 0.100        | 0.89     | good    |
+| 3     | 0.500        | 0.65     | bad     |
+| 4     | 0.050        | 0.91     | good    |
+| 5     | 0.010        | 0.80     | bad     |
+| 6     | 0.200        | 0.75     | bad     |
+| 7     | 0.080        | 0.88     | bad     |
+| 8     | 0.030        | 0.85     | bad     |
+
+**Step 1:** "Good" trials (top 25% = top 2): learning_rates {0.100, 0.050}
+  l(theta): density peaks around 0.05-0.10
+
+**Step 2:** "Bad" trials (remaining 6): learning_rates {0.001, 0.500, 0.010, 0.200, 0.080, 0.030}
+  g(theta): density spread across the range
+
+**Step 3:** EI is high where l(theta)/g(theta) is large
+  Around 0.05-0.10: l is high (good trials cluster here), g is moderate
+  -> EI is high -> next trial will sample from this region
+
+**Step 4:** Next trial might try: learning_rate = 0.070
+
+**Interpret:**
+  "TPE learned that learning rates around 0.05-0.10 produce good scores. It focuses future trials on this promising region rather than wasting evaluations on extreme values. After ~20 trials, Bayesian optimization typically finds better hyperparameters than 100 random trials."
+
+:::
 
 This focuses sampling on promising regions of the search space.
 

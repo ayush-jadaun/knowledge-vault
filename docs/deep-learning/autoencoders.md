@@ -207,6 +207,25 @@ $$
 = -\frac{1}{2}\sum_j\left(1 + \log \sigma_j^2 - \mu_j^2 - \sigma_j^2\right)
 $$
 
+::: details Worked Example — KL Divergence for a 2D Latent Space
+
+**Input:** Encoder outputs for one sample: $\mu = [0.5, -1.0]$, $\log\sigma^2 = [-0.5, 0.3]$
+
+So $\sigma^2 = [e^{-0.5}, e^{0.3}] = [0.607, 1.350]$
+
+**Step 1:** Compute per-dimension terms: $1 + \log\sigma_j^2 - \mu_j^2 - \sigma_j^2$
+
+Dimension 0: $1 + (-0.5) - (0.5)^2 - 0.607 = 1 - 0.5 - 0.25 - 0.607 = -0.357$
+
+Dimension 1: $1 + 0.3 - (-1.0)^2 - 1.350 = 1 + 0.3 - 1.0 - 1.350 = -1.050$
+
+**Step 2:** Sum and negate with factor:
+$$D_{KL} = -\frac{1}{2}(-0.357 + (-1.050)) = -\frac{1}{2}(-1.407) = 0.704$$
+
+**Result:** $D_{KL} = 0.704$. Dimension 1 contributes more ($1.050/2 = 0.525$) because $\mu_1 = -1.0$ is far from the prior mean of 0, and $\sigma_1^2 = 1.35$ differs from the prior variance of 1. If $\mu = [0, 0]$ and $\sigma^2 = [1, 1]$ (matching the prior exactly), $D_{KL} = 0$.
+
+:::
+
 ### The Reparameterization Trick
 
 We cannot backpropagate through the sampling operation $z \sim q_\phi(z|x)$. The reparameterization trick makes sampling differentiable:

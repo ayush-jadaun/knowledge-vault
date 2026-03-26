@@ -612,3 +612,62 @@ class ProductControllerSecurityTest {
 - **[OAuth2 & OIDC](./oauth2-oidc)** — OAuth2, Keycloak, social login
 - **[Testing](./testing)** — Security testing patterns
 - **[REST API Development](./rest-api)** — Securing REST endpoints
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Disabling CSRF for session-based applications
+Disabling CSRF is correct for stateless JWT APIs but dangerous for applications using session cookies. Browsers automatically attach cookies, making session-based apps vulnerable to cross-site request forgery.
+**Fix:** Only disable CSRF for stateless APIs using bearer tokens. For session-based apps, configure `CookieCsrfTokenRepository.withHttpOnlyFalse()`.
+:::
+
+::: danger Pitfall 2: Using permitAll() too broadly
+Overly broad permit rules like `.requestMatchers("/api/**").permitAll()` accidentally expose endpoints that should require authentication.
+**Fix:** Be explicit with permit rules. List each public endpoint individually. Use `.anyRequest().authenticated()` as the final catch-all to deny unauthenticated access by default.
+:::
+
+::: danger Pitfall 3: Storing passwords with weak encoding
+Using MD5, SHA-1, or no encoding for passwords is trivially crackable with rainbow tables or brute force.
+**Fix:** Use `BCryptPasswordEncoder` with cost factor 10-12, or `Argon2PasswordEncoder` for higher security. Use `DelegatingPasswordEncoder` for migrating from older encodings.
+:::
+
+::: danger Pitfall 4: Not returning proper 401/403 responses for APIs
+Without custom entry points and access denied handlers, Spring Security redirects API requests to a login page or returns HTML, breaking API clients.
+**Fix:** Configure `authenticationEntryPoint` to return JSON 401 responses and `accessDeniedHandler` to return JSON 403 responses for REST APIs.
+:::
+
+::: danger Pitfall 5: Forgetting to secure Actuator endpoints
+Spring Boot Actuator exposes sensitive information (environment variables, configuration, heap dumps) that can be exploited if left unprotected.
+**Fix:** Restrict Actuator endpoints: allow `/actuator/health` publicly for load balancers, require `ADMIN` role for all other actuator endpoints, and disable unnecessary endpoints in production.
+:::
+
+::: danger Pitfall 6: Using the deprecated WebSecurityConfigurerAdapter
+Extending `WebSecurityConfigurerAdapter` was removed in Spring Security 6.x. Code using it fails with Spring Boot 3.x.
+**Fix:** Define `SecurityFilterChain` as a `@Bean` method in a `@Configuration` class. Use the `HttpSecurity` lambda DSL for configuration.
+:::
+
+## Interview Questions
+
+**Q1: How does the Spring Security filter chain work?**
+::: details Answer
+Spring Security operates as a chain of servlet filters intercepting every HTTP request before it reaches controllers. The `DelegatingFilterProxy` delegates to `FilterChainProxy`, which holds one or more `SecurityFilterChain` instances. Each chain contains ordered filters: `SecurityContextHolderFilter` (loads security context), `CorsFilter`, `CsrfFilter`, `LogoutFilter`, authentication filters (e.g., `UsernamePasswordAuthenticationFilter` or a custom JWT filter), and `AuthorizationFilter` (checks access rules). The request passes through each filter in order; any filter can short-circuit the chain by rejecting the request.
+:::
+
+**Q2: What is the difference between authentication and authorization in Spring Security?**
+::: details Answer
+Authentication verifies identity -- "who are you?" It is handled by `AuthenticationManager` and `AuthenticationProvider`, which validate credentials (username/password, JWT, OAuth2 token) and produce an `Authentication` object stored in `SecurityContextHolder`. Authorization verifies permissions -- "what can you do?" It is handled by `AuthorizationManager` and checked via URL-based rules (`.requestMatchers().hasRole()`) or method-level annotations (`@PreAuthorize`, `@PostAuthorize`). Authentication happens first; authorization happens only after successful authentication.
+:::
+
+**Q3: How does `@PreAuthorize` work and what can you do with SpEL expressions?**
+::: details Answer
+`@PreAuthorize` evaluates a SpEL expression before the method executes. If the expression returns `false`, access is denied with a 403 response. You can check roles (`hasRole('ADMIN')`), authorities (`hasAuthority('REPORT_VIEW')`), reference method arguments (`#userId == authentication.principal.id`), call bean methods (`@orderSecurity.isOwner(#orderId, authentication)`), and combine conditions with `and`/`or`. Enable it with `@EnableMethodSecurity` on your configuration class. `@PostAuthorize` evaluates after method execution and can reference the return value with `returnObject`.
+:::
+
+**Q4: How do you implement CORS in Spring Security?**
+::: details Answer
+Configure CORS in the `SecurityFilterChain` with `.cors(cors -> cors.configurationSource(corsConfigurationSource()))`. Define a `CorsConfigurationSource` bean that specifies allowed origins, methods, headers, exposed headers, credentials policy, and max age. Apply it to specific URL patterns. The CORS filter must run before the security filter chain, which Spring Security handles automatically when configured this way. For per-controller CORS, use `@CrossOrigin` on controller classes or methods, but the security-level configuration takes precedence.
+:::
+
+**Q5: What is the purpose of `SecurityContextHolder` and how does it work across threads?**
+::: details Answer
+`SecurityContextHolder` stores the `SecurityContext` (which contains the `Authentication` object) for the current thread using a `ThreadLocal` strategy by default. After a user authenticates, the authentication is set via `SecurityContextHolder.getContext().setAuthentication(auth)`. Any code on the same thread can access the current user with `SecurityContextHolder.getContext().getAuthentication()`. For async processing, the default `ThreadLocal` strategy loses context. Use `SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL)` or manually propagate the context with `DelegatingSecurityContextExecutorService`.
+:::

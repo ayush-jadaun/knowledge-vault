@@ -7,6 +7,34 @@ description: "What's new in Archon — recent additions and updates"
 
 ## March 2026
 
+### March 27, 2026 — Interactive Enhancements & Learning Paths Overhaul
+
+Massive quality pass across the entire site. Every section gets richer, more interactive, and more useful.
+
+#### Worked Examples (108 total)
+- **Machine Learning** — 61 worked examples across 20 pages: mini datasets, step-by-step calculations, decision tree traces, gradient descent walks
+- **Deep Learning** — 47 worked examples across 20 pages: tensor shapes, forward/backward pass traces, attention score calculations
+
+#### Quizzes & Exercises
+- **Algorithms** (13 pages) — 65 exercises + 65 quiz questions with hidden solutions
+- **EDA** (15 pages) — 45 exercises + 75 quiz questions covering pandas, matplotlib, feature engineering
+- **System Design** (23 pages) — Real-world company examples + interview tips across fundamentals, patterns, and advanced sections
+- **Spring Boot** (24 pages) — Common pitfalls + interview questions for core, data, security, cloud modules
+- **War Room** (3 pages) — "What Would You Do?" interactive incident response scenarios
+- **Testing** (4 pages) — Key takeaway boxes + quiz questions
+
+#### Learning Paths (14 paths rewritten/created)
+- **Rewritten** (10): Backend, DevOps, Frontend, System Design Interview, Security, Data Engineer, AI/ML, Platform, Full-Stack, ML & Deep Learning
+- **New** (4): Cybersecurity Engineer, Mobile Engineer, Data Scientist, Spring Boot Engineer
+- All paths now reference new ML, DL, System Design, and EDA pages
+
+#### Mobile Engineering
+- New: Mobile Testing page (unit, integration, E2E, device farms)
+
+**Archon reaches 1,150+ pages.**
+
+---
+
 ### March 25, 2026 — System Design Mastery
 
 +52 pages. System design section restructured from 90 to 140+ pages.

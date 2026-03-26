@@ -569,3 +569,115 @@ class IndexedMinPQ:
 - [Graphs](/algorithms/graphs) — Dijkstra uses a priority queue
 - [Linked Lists](/algorithms/linked-lists) — merge K sorted lists
 - [Trees](/algorithms/trees) — heaps are complete binary trees
+
+## Try It Yourself
+
+**Problem 1:** Given the array `[3, 1, 6, 5, 2, 4]`, build a min-heap. What does the resulting array look like?
+
+::: details Solution
+Use bottom-up heapification starting from the last non-leaf node:
+- Start: [3, 1, 6, 5, 2, 4]
+- Heapify index 2 (value 6): children are 4. Swap 6 and 4 → [3, 1, 4, 5, 2, 6]
+- Heapify index 1 (value 1): children are 5, 2. 1 < both, no swap.
+- Heapify index 0 (value 3): children are 1, 4. Swap 3 and 1 → [1, 3, 4, 5, 2, 6]. Heapify index 1: children are 5, 2. Swap 3 and 2 → [1, 2, 4, 5, 3, 6].
+Result: **[1, 2, 4, 5, 3, 6]**
+:::
+
+**Problem 2:** Find the 3rd largest element in `[7, 10, 4, 3, 20, 15]` using a min-heap of size 3.
+
+::: details Solution
+Process elements maintaining a min-heap of size 3:
+- 7 → heap=[7]
+- 10 → heap=[7, 10]
+- 4 → heap=[4, 10, 7]
+- 3 → 3 < heap[0]=4, skip (heap full, 3 is smaller than min)
+- 20 → push, pop min(4) → heap=[7, 10, 20]
+- 15 → push, pop min(7) → heap=[10, 20, 15]
+Answer: heap[0] = **10** (3rd largest)
+:::
+
+**Problem 3:** Using the two-heap technique, find the median after inserting values `[5, 15, 1, 3]` one at a time.
+
+::: details Solution
+Maintain max-heap (lower half) and min-heap (upper half):
+- Insert 5: maxHeap=[-5], minHeap=[] → median = **5**
+- Insert 15: maxHeap=[-5], minHeap=[15] → median = (5+15)/2 = **10**
+- Insert 1: maxHeap=[-5, -1], minHeap=[15] → rebalance: maxHeap=[-5], push 5 to min, then rebalance → maxHeap=[-5, -1], minHeap=[15] → median = **5**
+- Insert 3: maxHeap=[-5, -3, -1], minHeap=[15] → rebalance → maxHeap=[-5, -3], minHeap=[5, 15] → wait, let me redo carefully.
+After all 4 elements [5, 15, 1, 3]: sorted = [1, 3, 5, 15], median = (3+5)/2 = **4**
+:::
+
+**Problem 4:** Merge three sorted arrays `[1, 4, 7]`, `[2, 5, 8]`, `[3, 6, 9]` using a min-heap.
+
+::: details Solution
+Initialize heap with first element of each array: [(1,0,0), (2,1,0), (3,2,0)] (value, array_index, element_index).
+- Pop 1, push 4 from array 0. Result: [1]
+- Pop 2, push 5 from array 1. Result: [1, 2]
+- Pop 3, push 6 from array 2. Result: [1, 2, 3]
+- Pop 4, push 7 from array 0. Result: [1, 2, 3, 4]
+- Continue until all elements are extracted.
+Result: **[1, 2, 3, 4, 5, 6, 7, 8, 9]**. Time: $O(N \log K)$ where N=9, K=3.
+:::
+
+**Problem 5:** Why is building a heap from an array $O(n)$ instead of $O(n \log n)$?
+
+::: details Solution
+When building bottom-up, most nodes are near the bottom and need very few swaps:
+- $n/2$ leaf nodes: 0 swaps each
+- $n/4$ nodes at height 1: at most 1 swap each
+- $n/8$ nodes at height 2: at most 2 swaps each
+- Total work: $\sum_{h=0}^{\log n} \frac{n}{2^{h+1}} \cdot h = O(n)$
+The series converges because higher nodes (which require more work) are exponentially fewer in number.
+:::
+
+## Quick Quiz
+
+**1. What is the time complexity of extracting the minimum element from a min-heap?**
+- a) $O(1)$
+- b) $O(\log n)$
+- c) $O(n)$
+- d) $O(n \log n)$
+
+::: details Answer
+**b) $O(\log n)$** — The minimum is at the root ($O(1)$ to access), but after removing it, the last element is moved to the root and must bubble down through at most $O(\log n)$ levels to restore the heap property.
+:::
+
+**2. For finding the K-th largest element, what type and size of heap should you use?**
+- a) Max-heap of size $n$
+- b) Min-heap of size $K$
+- c) Max-heap of size $K$
+- d) Min-heap of size $n$
+
+::: details Answer
+**b) Min-heap of size $K$** — Maintain a min-heap of the $K$ largest elements seen so far. When the heap exceeds size $K$, remove the minimum. After processing all elements, the root is the $K$-th largest.
+:::
+
+**3. In the two-heap median finding technique, what type of heap stores the lower half?**
+- a) Min-heap
+- b) Max-heap
+- c) Either works
+- d) A balanced BST
+
+::: details Answer
+**b) Max-heap** — The lower half uses a max-heap so the maximum of the lower half (the median candidate) is at the root in $O(1)$. The upper half uses a min-heap so the minimum of the upper half is also at the root.
+:::
+
+**4. Does a heap store elements in fully sorted order?**
+- a) Yes, always
+- b) Only if it is a max-heap
+- c) No -- it only guarantees the root is the min/max
+- d) Only at the leaf level
+
+::: details Answer
+**c) No -- it only guarantees the root is the min/max** — The heap property only ensures parent-child ordering, not sibling ordering. To get all elements in sorted order, you must extract them one by one ($O(n \log n)$ total).
+:::
+
+**5. What is Python's `heapq` module -- a min-heap or max-heap?**
+- a) Max-heap
+- b) Min-heap
+- c) Both
+- d) Neither
+
+::: details Answer
+**b) Min-heap** — Python's `heapq` implements a min-heap only. To simulate a max-heap, negate all values before inserting and negate again when extracting.
+:::

@@ -418,6 +418,48 @@ $$
 \text{Transfer Gap} = \text{Performance}_{\text{target, from scratch}} - \text{Performance}_{\text{target, transferred}}
 $$
 
+::: details Worked Example — Feature Extraction vs Fine-Tuning on Same Data
+
+**Setup:** Custom medical imaging dataset with 500 images, 5 classes. ResNet-50 pretrained on ImageNet.
+
+**Approach 1: Feature Extraction (frozen backbone)**
+- Backbone weights: frozen (25.6M params, 0 trainable)
+- New classifier: Linear(2048, 256) + ReLU + Linear(256, 5) = 526K trainable params
+- Training: 10 epochs, LR = 1e-3, converges fast
+
+| Epoch | Train Acc | Val Acc |
+|---|---|---|
+| 1 | 62% | 58% |
+| 5 | 85% | 78% |
+| 10 | 92% | **80%** |
+
+**Approach 2: Full Fine-Tuning**
+- All params trainable (25.6M), LR = 1e-5 for backbone, 1e-3 for head
+- Training: 20 epochs with cosine LR decay
+
+| Epoch | Train Acc | Val Acc |
+|---|---|---|
+| 1 | 55% | 52% |
+| 5 | 78% | 75% |
+| 10 | 91% | 84% |
+| 20 | 97% | **87%** |
+
+**Approach 3: From Scratch (random init)**
+- Same architecture, all random weights
+- Training: 100 epochs, LR = 1e-2
+
+| Epoch | Train Acc | Val Acc |
+|---|---|---|
+| 10 | 35% | 30% |
+| 50 | 75% | 55% |
+| 100 | 95% | **62%** |
+
+**Transfer Gap:** $62\% - 87\% = -25\%$ (transfer learning gains 25 percentage points)
+
+**Result:** Feature extraction (80%) beats from-scratch (62%) with 1000x fewer trainable parameters. Fine-tuning (87%) beats both by adapting the backbone features to the medical domain. From-scratch severely overfits (95% train vs 62% val) because 500 images is insufficient to learn good low-level features.
+
+:::
+
 | Source $\to$ Target | Expected Benefit |
 |-------|-----------------|
 | ImageNet $\to$ Medical (X-ray) | Moderate (different domain but shared low-level features) |

@@ -556,3 +556,23 @@ CREATE TABLE users_v7 (
 ---
 
 *Choose the simplest ID scheme that meets your requirements. If you are on a single database, auto-increment is fine. If you need distributed uniqueness without time ordering, UUID v4 is the zero-coordination choice. If you need time ordering, UUID v7 is the modern standard. Only reach for Snowflake if you need 64-bit IDs at massive scale.*
+
+## Real-World Examples
+
+::: tip Twitter (Snowflake)
+Twitter created the **Snowflake** ID generator in 2010 to solve tweet ID generation across multiple data centers. Each tweet ID encodes the creation timestamp, data center, machine, and sequence number in a 64-bit integer — enabling 4 million IDs per second per machine with zero coordination between machines. The time-ordered property allows chronological sorting without an additional index.
+:::
+
+::: tip Instagram
+Instagram designed a **custom 64-bit ID scheme** using PostgreSQL sequences. Each database shard has its own sequence, and the ID encodes timestamp (41 bits) + shard ID (13 bits) + sequence (10 bits). This fits in a PostgreSQL bigint column, is time-sortable for feed ordering, and avoids the index fragmentation problem of random UUIDs — all using standard database features without external services.
+:::
+
+::: tip Stripe
+Stripe uses **prefixed random IDs** like `ch_1234abcd` (charge), `pi_5678efgh` (payment intent), and `cus_9012ijkl` (customer). The prefix makes IDs self-documenting in logs and API calls — you can tell at a glance what type of resource an ID refers to. The random suffix provides uniqueness without coordination. This pattern prioritizes developer experience over sortability.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"My default is UUID v7 for most distributed systems — it's time-ordered (good for database indexes, since sequential inserts are 3x faster than random UUID v4 in B-trees), requires zero coordination, and is a formal RFC standard. If I need 64-bit IDs (for storage efficiency or JavaScript number safety), I'd use Snowflake — it generates 4 million IDs per second per machine and embeds the timestamp for natural sorting. The key trade-off is that Snowflake requires assigning machine IDs, while UUID v7 is truly coordination-free. I'd only use auto-increment for single-database systems because it creates a single point of failure in distributed setups."
+:::

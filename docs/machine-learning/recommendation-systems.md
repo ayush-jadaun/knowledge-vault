@@ -111,6 +111,48 @@ Predict user $u$'s rating for item $i$ using the $K$ most similar users who rate
 
 $$\hat{r}_{ui} = \bar{r}_u + \frac{\sum_{v \in N_K(u)} \text{sim}(u, v) \cdot (r_{vi} - \bar{r}_v)}{\sum_{v \in N_K(u)} |\text{sim}(u, v)|}$$
 
+::: details Worked Example — User-User CF Prediction
+
+**Rating matrix (1-5 stars, ? = unknown):**
+|       | Movie A | Movie B | Movie C | Movie D |
+|-------|---------|---------|---------|---------|
+| Alice | 5       | 4       | ?       | 2       |
+| Bob   | 3       | 5       | 4       | 1       |
+| Carol | 4       | 3       | 5       | 3       |
+
+**Predict Alice's rating for Movie C. K=2 neighbors.**
+
+**Step 1:** Compute user means (on rated items only)
+  Alice: (5+4+2)/3 = 3.67
+  Bob:   (3+5+4+1)/4 = 3.25
+  Carol: (4+3+5+3)/4 = 3.75
+
+**Step 2:** Compute sim(Alice, Bob) using Pearson on common items {A, B, D}
+  Alice centered: [5-3.67, 4-3.67, 2-3.67] = [1.33, 0.33, -1.67]
+  Bob centered:   [3-3.25, 5-3.25, 1-3.25] = [-0.25, 1.75, -2.25]
+  num = 1.33(-0.25) + 0.33(1.75) + (-1.67)(-2.25) = -0.33 + 0.58 + 3.76 = 4.01
+  denom = sqrt(1.33^2+0.33^2+1.67^2) * sqrt(0.25^2+1.75^2+2.25^2)
+        = sqrt(1.77+0.11+2.79) * sqrt(0.06+3.06+5.06)
+        = sqrt(4.67) * sqrt(8.19) = 2.16 * 2.86 = 6.18
+  sim(Alice, Bob) = 4.01/6.18 = 0.649
+
+**Step 3:** Compute sim(Alice, Carol) on common items {A, B, D}
+  Carol centered: [4-3.75, 3-3.75, 3-3.75] = [0.25, -0.75, -0.75]
+  num = 1.33(0.25) + 0.33(-0.75) + (-1.67)(-0.75) = 0.33 - 0.25 + 1.25 = 1.33
+  denom = 2.16 * sqrt(0.06+0.56+0.56) = 2.16 * sqrt(1.19) = 2.16*1.09 = 2.35
+  sim(Alice, Carol) = 1.33/2.35 = 0.566
+
+**Step 4:** Predict (both neighbors rated Movie C)
+  r_hat = 3.67 + [0.649*(4-3.25) + 0.566*(5-3.75)] / (0.649+0.566)
+        = 3.67 + [0.649*0.75 + 0.566*1.25] / 1.215
+        = 3.67 + [0.487 + 0.708] / 1.215
+        = 3.67 + 1.195/1.215 = 3.67 + 0.98 = 4.65
+
+**Interpret:**
+  "Alice is predicted to rate Movie C as 4.65 stars. Both similar users rated it above their mean, and the prediction is above Alice's mean (3.67). Bob and Carol both liked Movie C, and since they have similar tastes to Alice, she probably will too."
+
+:::
+
 ### From-Scratch Implementation
 
 ```python
@@ -329,6 +371,33 @@ where $P \in \mathbb{R}^{m \times k}$ (user factors) and $Q \in \mathbb{R}^{n \t
 ### With Biases (Koren, 2009)
 
 $$\hat{r}_{ui} = \mu + b_u + b_i + p_u^T q_i$$
+
+::: details Worked Example — SVD Matrix Factorization Prediction
+
+**Suppose k=2 latent factors. Trained parameters:**
+- mu (global mean) = 3.5
+- b_Alice = +0.3 (Alice rates slightly above average)
+- b_MovieC = +0.5 (Movie C is generally well-liked)
+- p_Alice = [0.8, -0.2] (Alice's latent preferences)
+- q_MovieC = [0.6, 0.4] (Movie C's latent attributes)
+
+**Step 1:** Compute interaction term
+  p_Alice^T * q_MovieC = 0.8(0.6) + (-0.2)(0.4) = 0.48 - 0.08 = 0.40
+
+**Step 2:** Compute predicted rating
+  r_hat = 3.5 + 0.3 + 0.5 + 0.40 = 4.70
+
+**Step 3:** Decompose the prediction
+  Global mean:     3.50 (average movie gets this)
+  User bias:      +0.30 (Alice tends to rate higher)
+  Item bias:      +0.50 (Movie C is generally liked)
+  Interaction:    +0.40 (Alice's taste matches this movie's profile)
+  Total:           4.70
+
+**Interpret:**
+  "The predicted rating of 4.70 comes from four sources. Even without the interaction term, Movie C would get 4.30 from Alice (3.5+0.3+0.5). The latent factor interaction adds another 0.40, suggesting Alice's taste aligns well with what Movie C offers."
+
+:::
 
 where:
 - $\mu$ = global mean
@@ -597,6 +666,36 @@ def ndcg_at_k(recommended, relevant, k):
     idcg = sum(1 / np.log2(i + 2) for i in range(min(len(relevant), k)))
     return dcg / idcg if idcg > 0 else 0
 ```
+
+::: details Worked Example — Precision@K and NDCG@5
+
+**Recommended list of 5 movies: [A, B, C, D, E]. Relevant movies: {A, C, D, F}.**
+
+**Precision@5:**
+  Relevant in top-5: {A, C, D} = 3 items
+  Precision@5 = 3/5 = 0.60
+
+**NDCG@5:**
+
+**Step 1:** DCG (Discounted Cumulative Gain)
+  Position 1 (A): relevant -> 1/log2(2) = 1/1.0 = 1.000
+  Position 2 (B): not relevant -> 0
+  Position 3 (C): relevant -> 1/log2(4) = 1/2.0 = 0.500
+  Position 4 (D): relevant -> 1/log2(5) = 1/2.322 = 0.431
+  Position 5 (E): not relevant -> 0
+  DCG = 1.000 + 0 + 0.500 + 0.431 + 0 = 1.931
+
+**Step 2:** IDCG (Ideal DCG — if all relevant items were at the top)
+  Ideal ranking: 3 relevant items in positions 1, 2, 3
+  IDCG = 1/log2(2) + 1/log2(3) + 1/log2(4)
+       = 1.000 + 0.631 + 0.500 = 2.131
+
+**Step 3:** NDCG@5 = DCG/IDCG = 1.931/2.131 = 0.906
+
+**Interpret:**
+  "NDCG = 0.906 is high because the relevant movies are mostly near the top (positions 1, 3, 4). If movie C and D were at positions 4 and 5 instead, DCG would drop. NDCG penalizes relevant items appearing lower in the list."
+
+:::
 
 ---
 

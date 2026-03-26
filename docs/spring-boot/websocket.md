@@ -926,3 +926,30 @@ class ChatControllerIntegrationTest {
 ```
 
 WebSocket with STOMP gives you a robust, scalable real-time messaging layer. Use the simple broker for development and single-server deployments, switch to RabbitMQ or ActiveMQ for multi-instance production setups, and always plan for SockJS fallback because the real world is messier than your development environment.
+
+## Interview Questions
+
+**Q1: What is the difference between WebSocket, SSE, and long polling?**
+::: details Answer
+**WebSocket**: Full-duplex, persistent connection. Both client and server can send messages at any time with minimal overhead (2-byte frame header). Best for bidirectional real-time communication (chat, gaming). **SSE (Server-Sent Events)**: Unidirectional server-to-client channel over HTTP. Simple, auto-reconnects, text-only. Best for notifications, live feeds. Limited to ~6 concurrent connections per domain. **Long polling**: Client sends HTTP request, server holds it until data is available, then responds. Client immediately reconnects. Higher overhead (full HTTP headers per response), reconnection storms. WebSocket is the best choice when you need bidirectional communication; SSE is simpler for server push only.
+:::
+
+**Q2: What is STOMP and why use it over raw WebSocket?**
+::: details Answer
+STOMP (Simple Text Oriented Messaging Protocol) is a messaging protocol that runs over WebSocket. Raw WebSocket gives you a byte stream -- you must define your own message format, routing, and subscription management. STOMP provides structured commands (`CONNECT`, `SUBSCRIBE`, `SEND`, `MESSAGE`), destination-based routing (`/topic/chat`, `/queue/private`), message headers, and subscription management. Spring's STOMP support integrates with `@MessageMapping` controllers, `SimpMessagingTemplate` for server-side pushing, user-specific destinations, and Spring Security. It eliminates the need to build your own messaging protocol.
+:::
+
+**Q3: How do you scale WebSocket connections across multiple server instances?**
+::: details Answer
+The simple in-memory broker only works for a single instance because WebSocket connections are sticky to specific servers. For multi-instance deployments: (1) Use an external message broker (RabbitMQ, ActiveMQ) as a STOMP relay with `registry.enableStompBrokerRelay("/topic", "/queue")`. Messages published on any instance are relayed through the broker to all instances. (2) Configure sticky sessions on the load balancer for the WebSocket upgrade. (3) Use SockJS fallback for clients behind proxies that strip WebSocket headers. (4) Track online presence in a shared store (Redis) instead of in-memory sets.
+:::
+
+**Q4: How do you authenticate WebSocket connections in Spring Security?**
+::: details Answer
+Authentication happens during the STOMP `CONNECT` frame, not the HTTP handshake. Implement a `ChannelInterceptor` on the client inbound channel: in `preSend()`, check for `StompCommand.CONNECT`, extract the `Authorization` header from STOMP native headers, validate the JWT token, and set the `Authentication` on the accessor with `accessor.setUser(auth)`. For destination-level authorization, use `@EnableWebSocketSecurity` with `AuthorizationManager<Message<?>>` to restrict subscriptions (e.g., `/topic/admin/**` requires `ROLE_ADMIN`).
+:::
+
+**Q5: How do you implement user-specific messaging (private messages) with STOMP?**
+::: details Answer
+Spring STOMP supports user destinations with the `/user/` prefix. To send a private message to a specific user: `messagingTemplate.convertAndSendToUser(username, "/queue/private", message)`. This routes to `/user/{username}/queue/private`. The client subscribes to `/user/queue/private` (without the username -- Spring resolves it from the authenticated session). The `UserDestinationPrefix` is configured as `/user` in the broker registry. For this to work, the WebSocket connection must be authenticated so Spring can map the session to a username.
+:::

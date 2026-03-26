@@ -19,6 +19,32 @@ Linear regression models the relationship between features $\mathbf{x} \in \math
 
 $$\hat{y} = \theta_0 + \theta_1 x_1 + \theta_2 x_2 + \cdots + \theta_d x_d = \mathbf{x}^T \boldsymbol{\theta}$$
 
+::: details Worked Example — Linear Prediction
+
+**Mini Dataset:**
+| Bias (x0) | Size x1 (sqft/1000) | Bedrooms x2 | Price y ($k) |
+|-----------|---------------------|-------------|-------------|
+| 1         | 1.5                 | 2           | 200         |
+| 1         | 2.0                 | 3           | 280         |
+| 1         | 2.5                 | 3           | 320         |
+| 1         | 3.0                 | 4           | 400         |
+
+Suppose we have parameters: theta0=50, theta1=100, theta2=10.
+
+**Step 1:** Predict for the first sample (x1=1.5, x2=2)
+  y_hat = 50 + 100(1.5) + 10(2) = 50 + 150 + 20 = 220
+
+**Step 2:** Predict for all samples
+  y_hat1 = 50 + 100(1.5) + 10(2) = 220
+  y_hat2 = 50 + 100(2.0) + 10(3) = 280
+  y_hat3 = 50 + 100(2.5) + 10(3) = 330
+  y_hat4 = 50 + 100(3.0) + 10(4) = 390
+
+**Step 3:** Interpret
+  "The model predicts house prices as $50k base + $100k per 1000 sqft + $10k per bedroom. For a 1500 sqft, 2-bedroom house, it predicts $220k."
+
+:::
+
 In matrix form for all $n$ samples:
 
 $$\hat{\mathbf{y}} = \mathbf{X}\boldsymbol{\theta}$$
@@ -34,6 +60,27 @@ where $\mathbf{X} \in \mathbb{R}^{n \times (d+1)}$ includes a column of ones for
 OLS minimizes the **Mean Squared Error (MSE)**:
 
 $$J(\boldsymbol{\theta}) = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2 = \frac{1}{n} \|\mathbf{y} - \mathbf{X}\boldsymbol{\theta}\|^2$$
+
+::: details Worked Example — MSE Loss
+
+**Using the dataset above with theta0=50, theta1=100, theta2=10:**
+
+| Sample | y_true | y_hat | Error | Error^2 |
+|--------|--------|-------|-------|---------|
+| 1      | 200    | 220   | -20   | 400     |
+| 2      | 280    | 280   | 0     | 0       |
+| 3      | 320    | 330   | -10   | 100     |
+| 4      | 400    | 390   | 10    | 100     |
+
+**Step 1:** Compute each squared error (column above)
+
+**Step 2:** Compute MSE
+  J = (1/4)(400 + 0 + 100 + 100) = 600/4 = 150
+
+**Step 3:** Interpret
+  "The mean squared error is 150, meaning the average squared prediction error is $150k^2. The RMSE = sqrt(150) = 12.25, so predictions are off by about $12.25k on average."
+
+:::
 
 ### Normal Equation Derivation
 
@@ -58,6 +105,41 @@ $$\mathbf{X}^T\mathbf{X}\boldsymbol{\theta} = \mathbf{X}^T\mathbf{y}$$
 $$\boldsymbol{\theta}^* = (\mathbf{X}^T\mathbf{X})^{-1}\mathbf{X}^T\mathbf{y}$$
 
 This is the **normal equation** — a closed-form solution that requires no iteration.
+
+::: details Worked Example — Normal Equation
+
+**Mini Dataset (simple: 1 feature + bias):**
+| x0 (bias) | x1 | y  |
+|-----------|-----|-----|
+| 1         | 1   | 3   |
+| 1         | 2   | 5   |
+| 1         | 3   | 7   |
+| 1         | 4   | 9   |
+
+So X = [[1,1],[1,2],[1,3],[1,4]], y = [3,5,7,9].
+
+**Step 1:** Compute X^T X
+  X^T X = [[1,1,1,1],[1,2,3,4]] @ [[1,1],[1,2],[1,3],[1,4]]
+        = [[4, 10],[10, 30]]
+
+**Step 2:** Compute X^T y
+  X^T y = [[1,1,1,1],[1,2,3,4]] @ [3,5,7,9]
+        = [3+5+7+9, 1(3)+2(5)+3(7)+4(9)] = [24, 70]
+
+**Step 3:** Compute (X^T X)^(-1)
+  det = 4(30) - 10(10) = 120 - 100 = 20
+  (X^T X)^(-1) = (1/20)[[30, -10],[-10, 4]] = [[1.5, -0.5],[-0.5, 0.2]]
+
+**Step 4:** Compute theta = (X^T X)^(-1) X^T y
+  theta = [[1.5, -0.5],[-0.5, 0.2]] @ [24, 70]
+        = [1.5(24) + (-0.5)(70), (-0.5)(24) + 0.2(70)]
+        = [36 - 35, -12 + 14]
+        = [1, 2]
+
+**Step 5:** Interpret
+  "theta0 = 1 (intercept), theta1 = 2 (slope). The model is y = 1 + 2x, which perfectly fits this data: 1+2(1)=3, 1+2(2)=5, 1+2(3)=7, 1+2(4)=9."
+
+:::
 
 ```python
 # normal_equation.py — Linear regression via the normal equation
@@ -119,6 +201,34 @@ $$\frac{\partial J}{\partial \theta_j} = -\frac{2}{n} \sum_{i=1}^{n} x_{ij}(y_i 
 In matrix form:
 
 $$\nabla J = -\frac{2}{n} \mathbf{X}^T(\mathbf{y} - \mathbf{X}\boldsymbol{\theta})$$
+
+::: details Worked Example — One Step of Gradient Descent
+
+**Using y = 1 + 2x dataset, starting from theta = [0, 0], learning rate eta = 0.1:**
+
+X = [[1,1],[1,2],[1,3],[1,4]], y = [3,5,7,9], theta = [0,0]
+
+**Step 1:** Compute predictions y_hat = X @ theta
+  y_hat = [0, 0, 0, 0]
+
+**Step 2:** Compute residuals (y - y_hat)
+  residuals = [3, 5, 7, 9]
+
+**Step 3:** Compute gradient
+  grad = -(2/4) X^T @ residuals
+       = -0.5 * [1(3)+1(5)+1(7)+1(9), 1(3)+2(5)+3(7)+4(9)]
+       = -0.5 * [24, 70]
+       = [-12, -35]
+
+**Step 4:** Update theta
+  theta_new = [0, 0] - 0.1 * [-12, -35]
+            = [0 + 1.2, 0 + 3.5]
+            = [1.2, 3.5]
+
+**Step 5:** Interpret
+  "After one step, theta moved from [0,0] to [1.2, 3.5]. The true answer is [1, 2], so we overshot on theta1 but are heading in the right direction. More iterations with a smaller learning rate will converge."
+
+:::
 
 ```python
 # gradient_descent.py — Linear regression from scratch
@@ -294,6 +404,35 @@ $$\boldsymbol{\theta}_{\text{Ridge}} = (\mathbf{X}^T\mathbf{X} + \lambda \mathbf
 
 The $\lambda \mathbf{I}$ term ensures the matrix is always invertible (even if $\mathbf{X}^T\mathbf{X}$ is singular).
 
+::: details Worked Example — Ridge Regression
+
+**Using the same 1-feature dataset, with lambda = 10:**
+
+From the normal equation example: X^T X = [[4,10],[10,30]], X^T y = [24,70].
+
+**Step 1:** Add lambda * I to X^T X
+  X^T X + 10*I = [[4+10, 10],[10, 30+10]] = [[14, 10],[10, 40]]
+
+**Step 2:** Compute inverse of (X^T X + lambda*I)
+  det = 14(40) - 10(10) = 560 - 100 = 460
+  inverse = (1/460)[[40, -10],[-10, 14]]
+
+**Step 3:** Compute theta_ridge
+  theta = (1/460)[[40,-10],[-10,14]] @ [24, 70]
+        = (1/460)[40(24)-10(70), -10(24)+14(70)]
+        = (1/460)[960-700, -240+980]
+        = (1/460)[260, 740]
+        = [0.565, 1.609]
+
+**Step 4:** Compare with OLS (theta = [1, 2])
+  Ridge: theta = [0.565, 1.609] — coefficients are shrunk toward zero.
+  OLS:   theta = [1, 2]
+
+**Step 5:** Interpret
+  "Ridge with lambda=10 shrinks the slope from 2.0 to 1.609 and the intercept from 1.0 to 0.565. The stronger the lambda, the more the coefficients are pulled toward zero, reducing overfitting at the cost of some bias."
+
+:::
+
 ### Lasso Regression (L1)
 
 Lasso uses the absolute value of weights:
@@ -301,6 +440,25 @@ Lasso uses the absolute value of weights:
 $$J_{\text{Lasso}} = \frac{1}{n}\|\mathbf{y} - \mathbf{X}\boldsymbol{\theta}\|^2 + \lambda \sum_{j=1}^{d} |\theta_j|$$
 
 Lasso drives some coefficients to exactly zero, performing automatic feature selection. No closed-form solution exists — it requires iterative optimization (coordinate descent).
+
+::: details Worked Example — Lasso Penalty Comparison
+
+**Compare Ridge vs Lasso penalty for theta = [0.5, -2.0, 0.1]:**
+
+**Step 1:** Compute L2 penalty (Ridge)
+  L2 = 0.5^2 + (-2.0)^2 + 0.1^2 = 0.25 + 4.0 + 0.01 = 4.26
+
+**Step 2:** Compute L1 penalty (Lasso)
+  L1 = |0.5| + |-2.0| + |0.1| = 0.5 + 2.0 + 0.1 = 2.6
+
+**Step 3:** With lambda = 1, compare total losses (assume MSE = 5.0)
+  Ridge loss = 5.0 + 1.0 * 4.26 = 9.26
+  Lasso loss = 5.0 + 1.0 * 2.6 = 7.6
+
+**Step 4:** Interpret
+  "Lasso penalizes the small coefficient theta3=0.1 almost the same as Ridge does (0.1 vs 0.01). But for large coefficients like theta2=-2.0, Ridge penalizes much more (4.0 vs 2.0). This is why Lasso tends to zero out small coefficients entirely (feature selection) while Ridge only shrinks them."
+
+:::
 
 ### ElasticNet
 

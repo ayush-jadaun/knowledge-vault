@@ -2,9 +2,9 @@
 
 > *"Give me six hours to chop down a tree and I'll spend four sharpening the axe."* — This is the axe.
 
-The holy grail of engineering knowledge. 1,143 sacred texts, from first principles to production mastery.
+The holy grail of engineering knowledge. 1,150+ sacred texts, from first principles to production mastery.
 
-**1,143 pages | 30 ML | 25 DL | 55 Spring Boot | 69 EDA | 48 System Design Interviews | 25 Data Pipeline | 21 MCP Tools | AI Chatbot**
+**1,150+ pages | 30 ML | 25 DL | 140+ System Design | 55 Spring Boot | 69 EDA | 48 System Design Interviews | 25 Data Pipeline | 21 MCP Tools | AI Chatbot**
 
 [Live Site](https://archon-eight.vercel.app) · [Start Here](https://archon-eight.vercel.app/start-here) · [MCP Server](https://archon-eight.vercel.app/mcp) · [Spring Boot](https://archon-eight.vercel.app/spring-boot/) · [Cheat Sheets](https://archon-eight.vercel.app/cheat-sheets/)
 
@@ -39,13 +39,13 @@ claude mcp add archon -- npx archon-mcp-server
 | **Production Blueprints** | 50+ | Auth, billing, notifications, rate limiter, job queue, search, chat, payments, feature flags, and more |
 | **Prompt Engineering** | 20+ | 500+ prompts for engineering, product, UI, and architecture |
 | **UI & Design Systems** | 35+ | Typography, color tokens, spacing, accessibility, dark mode, animations |
-| **Learning Paths** | 9 | Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack |
+| **Learning Paths** | 16 | Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack, ML/DL, Cybersecurity, Mobile, Data Scientist, Spring Boot, Behavioral, EDA |
 | **Cheat Sheets** | 19 | Docker, K8s, Git, SQL, TS, Linux, Redis, Terraform, Python, Go, Rust, Bash, Nginx, PromQL, AWS CLI, kubectl, Helm, GraphQL, Regex |
 
 ## Features
 
 - **AI Chatbot** — Ask anything, get answers with page citations (Gemini 2.5 Flash)
-- **Knowledge Graph** — Interactive visual map of all 1000+ topics
+- **Knowledge Graph** — Interactive visual map of all 1150+ topics
 - **Compare Mode** — Side-by-side technology comparison (24 technologies)
 - **Pagefind Search** — Full-text search across all pages
 - **Keyboard Shortcuts** — Press `?` to see all

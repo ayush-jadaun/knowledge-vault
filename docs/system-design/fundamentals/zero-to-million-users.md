@@ -483,3 +483,23 @@ graph LR
 - **[System Design Characteristics](/system-design/fundamentals/characteristics)** — Understand availability, latency, and reliability numbers
 - **[Building Blocks Overview](/system-design/fundamentals/building-blocks)** — Every component mentioned on this page, explained
 - **[Estimation Practice](/system-design/fundamentals/estimation-practice)** — Learn to calculate the numbers behind each stage
+
+## Real-World Examples
+
+::: tip Instagram (2012)
+Instagram scaled from 0 to **30 million users with just 3 engineers**. They started with a single Django server on AWS, added PostgreSQL read replicas, Memcached for query caching, and Celery + RabbitMQ for async tasks. They only sharded their database after reaching massive scale — proving you can go far with a simple architecture before adding complexity.
+:::
+
+::: tip Discord
+Discord evolved from a single Go server to supporting **150 million monthly active users**. At each stage they added exactly what was needed: Cassandra for message storage (write-heavy workload), Redis for presence tracking, and Elixir for real-time WebSocket servers. They famously delayed sharding their voice servers until they absolutely had to.
+:::
+
+::: tip Notion
+Notion ran on a **single PostgreSQL database** serving millions of users until 2021. They eventually had to shard their monolithic database, but their restraint in delaying that complexity allowed the small team to focus on product. When they did shard, they used application-level routing by workspace ID.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"When discussing architecture evolution, I always start simple and add components only when I can name the specific bottleneck they solve. At Stage 1, a single server is correct — optimizing for 10 million users when you have 100 is wasted effort. My scaling checklist is: optimize code first, then add caching (biggest lever), then CDN for static assets, then read replicas, then horizontal app scaling, and sharding only as a last resort. Instagram proved this works — 30 million users with 3 engineers and a simple stack."
+:::

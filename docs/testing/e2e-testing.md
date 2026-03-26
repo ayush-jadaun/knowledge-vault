@@ -533,3 +533,168 @@ describe('Order History', () => {
 - [Contract Testing](/testing/contract-testing) — verify service agreements without E2E tests
 - [Test Architecture](/testing/test-architecture) — organizing tests, managing flakiness, and CI pipeline design
 - [Deployment Strategies](/devops/deployment-strategies/) — how E2E tests fit into blue-green and canary deploys
+
+---
+
+## Key Takeaway
+
+::: tip
+- E2E tests verify critical user journeys (signup, checkout, payment) through a real browser and backend -- write 10-30 of them, not hundreds.
+- Use the Page Object Model to encapsulate page interactions behind a clean API so tests read like user stories, and use semantic locators (getByRole, getByLabel) for resilient selectors.
+- Never use `waitForTimeout` or `cy.wait(ms)` -- always wait for specific conditions, generate unique test data per test, and disable animations to prevent flaky failures.
+:::
+
+## Common Misconceptions
+
+::: warning Misconception: More E2E tests mean better coverage
+More E2E tests mean slower CI, more flakiness, and higher maintenance cost. The testing pyramid exists for a reason: most bugs should be caught by unit and integration tests. E2E tests should cover only the critical paths that cross multiple services.
+:::
+
+::: warning Misconception: E2E tests should test edge cases and validation logic
+Validation logic belongs in unit tests. API contract verification belongs in contract tests. Edge cases belong in property-based tests. E2E tests are for verifying that the full user flow works end-to-end. Using E2E for edge cases is like driving across town to check if your front door is locked.
+:::
+
+::: warning Misconception: Flaky tests are normal and acceptable
+A flaky test is worse than no test because it teaches engineers to ignore failures. Flaky tests should be quarantined immediately and fixed within 48 hours. The root causes are almost always timing issues, shared test data, or unreliable selectors.
+:::
+
+::: warning Misconception: CSS selectors are fine for E2E test locators
+CSS selectors like `.btn-primary.submit-btn` break when designers rename classes or restructure components. Semantic locators like `getByRole('button', { name: 'Submit' })` are resilient to implementation changes and also test accessibility.
+:::
+
+## In Production
+
+::: tip Airbnb
+Airbnb maintains fewer than 50 E2E tests covering their critical booking flow. Each test creates its own listing, user, and reservation via API seeding before testing the UI. They run tests across 4 parallel Playwright shards in CI, keeping the total E2E stage under 8 minutes.
+:::
+
+::: tip Netflix
+Netflix uses visual regression testing alongside their E2E suite. Every UI change is screenshot-compared against baselines across 6 device configurations. They mask dynamic content (user avatars, timestamps) and freeze animations to prevent false positives, catching unintended layout regressions before they reach production.
+:::
+
+::: tip Stripe
+Stripe's checkout flow E2E tests run in a sandboxed payment environment with test API keys. They test the full flow from product selection through payment confirmation using Playwright, with retries on first failure and trace capture for debugging. Each test creates its own Stripe customer and cleans up afterward.
+:::
+
+## Try It Yourself
+
+**Exercise 1: Build a Page Object**
+
+Create a `SignupPage` Page Object for a registration form with email, password, and confirm password fields. Include methods for `goto()`, `signup(email, password)`, `expectError(message)`, and `expectRedirectToDashboard()`.
+
+::: details Solution
+```typescript
+import { Page, Locator, expect } from '@playwright/test';
+
+export class SignupPage {
+  private readonly emailInput: Locator;
+  private readonly passwordInput: Locator;
+  private readonly confirmPasswordInput: Locator;
+  private readonly submitButton: Locator;
+  private readonly errorMessage: Locator;
+
+  constructor(private readonly page: Page) {
+    this.emailInput = page.getByLabel('Email');
+    this.passwordInput = page.getByLabel('Password', { exact: true });
+    this.confirmPasswordInput = page.getByLabel('Confirm Password');
+    this.submitButton = page.getByRole('button', { name: 'Create Account' });
+    this.errorMessage = page.getByRole('alert');
+  }
+
+  async goto() {
+    await this.page.goto('/signup');
+  }
+
+  async signup(email: string, password: string) {
+    await this.emailInput.fill(email);
+    await this.passwordInput.fill(password);
+    await this.confirmPasswordInput.fill(password);
+    await this.submitButton.click();
+  }
+
+  async expectError(message: string) {
+    await expect(this.errorMessage).toContainText(message);
+  }
+
+  async expectRedirectToDashboard() {
+    await expect(this.page).toHaveURL('/dashboard');
+  }
+}
+```
+:::
+
+**Exercise 2: Fix a flaky test**
+
+The following test is flaky. Identify the problems and fix them.
+
+```typescript
+test('user submits order', async ({ page }) => {
+  await page.goto('/checkout');
+  await page.click('#submit-btn');
+  await page.waitForTimeout(3000);
+  expect(await page.textContent('.success')).toBe('Order placed');
+});
+```
+
+::: details Solution
+```typescript
+test('user submits order', async ({ page }) => {
+  await page.goto('/checkout');
+
+  // Use semantic locator instead of CSS selector
+  await page.getByRole('button', { name: 'Submit Order' }).click();
+
+  // Wait for specific condition instead of arbitrary timeout
+  await expect(page.getByText('Order placed')).toBeVisible({
+    timeout: 10_000,
+  });
+});
+```
+Problems fixed: (1) replaced CSS selector with semantic locator, (2) replaced `waitForTimeout` with `expect().toBeVisible()`, (3) used Playwright's built-in auto-waiting assertion.
+:::
+
+## Quick Quiz
+
+**1. Where do E2E tests sit in the testing pyramid?**
+- A) At the bottom -- you should write the most of them
+- B) In the middle -- a moderate number
+- C) At the top -- few, slow, expensive, highest confidence
+- D) Outside the pyramid -- they are optional
+
+::: details Answer
+**C) At the top.** E2E tests provide the highest confidence that a user flow works but are the slowest, most expensive, and most fragile. Aim for 5-10% of your test suite.
+:::
+
+**2. What is the primary cause of flaky E2E tests?**
+- A) Using TypeScript instead of JavaScript
+- B) Timing issues, shared test data, and unreliable selectors
+- C) Running too few tests
+- D) Using the wrong browser
+
+::: details Answer
+**B) Timing issues, shared test data, and unreliable selectors.** Arbitrary sleeps, shared test data causing collisions, and CSS selectors that break on refactoring are the top three causes.
+:::
+
+**3. Which locator strategy is most resilient to implementation changes?**
+- A) `page.locator('.btn-primary.submit')`
+- B) `page.locator('#form > div:nth-child(3) > button')`
+- C) `page.getByRole('button', { name: 'Submit' })`
+- D) `page.locator('xpath=//button[@class="submit"]')`
+
+::: details Answer
+**C) `page.getByRole('button', { name: 'Submit' })`.** Semantic locators are resilient to CSS class changes, DOM restructuring, and component refactoring. They also verify accessibility.
+:::
+
+**4. What is the recommended approach for test data in E2E tests?**
+- A) Use a shared test database with pre-loaded fixtures
+- B) Create unique test data per test via API seeding and clean up afterward
+- C) Use the same user account for all tests
+- D) Manually set up data before running the suite
+
+::: details Answer
+**B) Create unique test data per test via API seeding and clean up afterward.** Each test must own its data to prevent ordering dependencies, race conditions, and the classic "works locally, flakes in CI" problem.
+:::
+
+---
+
+> **One-Liner Summary:** E2E tests guard your critical user journeys through real browsers -- write few, make them resilient with Page Objects and semantic locators, and never sleep.

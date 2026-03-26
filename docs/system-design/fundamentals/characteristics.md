@@ -474,3 +474,23 @@ Different systems, different trade-offs, different designs.
 - **[CAP Theorem](/system-design/distributed-systems/cap-theorem)** — The formal proof that consistency and availability trade off
 - **[Estimation Practice](/system-design/fundamentals/estimation-practice)** — Practice calculating these numbers for real systems
 - **[Zero to Million Users](/system-design/fundamentals/zero-to-million-users)** — See how characteristics drive architectural decisions
+
+## Real-World Examples
+
+::: tip Google Spanner
+Google Spanner achieves **strong consistency globally** using GPS-synchronized TrueTime clocks across data centers. It provides serializable transactions with 99.999% availability — proving the CAP theorem is about trade-offs, not impossibilities. Spanner sacrifices some write latency (cross-region consensus) to give both consistency and availability.
+:::
+
+::: tip Amazon DynamoDB
+DynamoDB defaults to **eventual consistency** for reads (cheaper, faster) and offers strongly consistent reads as an opt-in per-request. This design choice reflects Amazon's "availability first" philosophy — they would rather show a slightly stale shopping cart than show an error page.
+:::
+
+::: tip Stripe
+Stripe designs for **99.999% availability** on their payments API. They achieve this with multi-region active-active deployment, automatic failover, and extensive chaos engineering. Their durability requirement is absolute — losing a payment record is legally and financially unacceptable, so they use synchronous replication with write-ahead logs.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"Every system design decision is a trade-off between characteristics. I always start by asking: which characteristics are non-negotiable? For a payments system, consistency and durability are mandatory — I'd use strong consistency even though it costs latency. For a social media feed, I'd choose eventual consistency and optimize for low latency and high throughput, because showing a like 2 seconds late is acceptable. The key insight is that each additional nine of availability costs roughly 10x more engineering effort."
+:::

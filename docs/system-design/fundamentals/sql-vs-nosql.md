@@ -356,3 +356,23 @@ For more guidance on database selection, see [Database Selection Guide](/system-
 - **[Graph Databases](/system-design/databases/graph-databases)** — When and how to use graph databases
 - **[Indexing Deep Dive](/system-design/databases/indexing-deep-dive)** — How indexes make any database faster
 - **[Isolation Levels](/system-design/databases/isolation-levels)** — Understanding ACID isolation in practice
+
+## Real-World Examples
+
+::: tip WhatsApp
+WhatsApp uses **Erlang + Mnesia (key-value)** for real-time message routing and **PostgreSQL** for persistent storage. They chose a key-value approach for the hot path (message delivery) because it needs sub-millisecond lookups by user ID, while relational storage handles the durable message history. This polyglot persistence approach lets each layer use the best-fit database.
+:::
+
+::: tip Netflix
+Netflix uses **Cassandra (wide-column)** as their primary database for streaming data, handling over 30 million reads per second with single-digit millisecond latency. They chose Cassandra over SQL because their workload is massively write-heavy (viewing history, ratings) and needs to scale linearly across multiple regions. They pair it with EVCache (Memcached) for sub-millisecond reads.
+:::
+
+::: tip Coinbase
+Coinbase uses **PostgreSQL** for all financial transactions because they require strict ACID compliance — a cryptocurrency exchange cannot afford eventual consistency on account balances. They vertically scale their PostgreSQL instances and use read replicas for non-transactional queries, proving that SQL scales well when ACID guarantees are non-negotiable.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"I never answer 'SQL or NoSQL' without first understanding the access pattern. My framework: if I need transactions and complex joins, SQL (PostgreSQL) is the default. If I need key-based lookups at massive scale, I'd choose DynamoDB or Redis. If the schema evolves frequently with varied document structures, MongoDB fits. For write-heavy time-series data, Cassandra or TimescaleDB. Most production systems use multiple databases — PostgreSQL as the source of truth, Redis for caching, and Elasticsearch for search. The real question isn't SQL vs NoSQL, it's which combination fits the access patterns."
+:::

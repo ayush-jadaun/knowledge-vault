@@ -420,3 +420,175 @@ Before trusting any correlation or trend, ask:
 - Berkson's paradox (collider bias) creates negative correlations between independent causes when you condition on their shared effect. Any filtered or selected dataset is at risk.
 - Partial correlation removes confounding effects and is the first-line defense against spurious associations.
 - No statistical test can determine causation from observational data alone. Domain knowledge is irreplaceable.
+
+## Try It Yourself
+
+**Exercise 1:** A company finds that employees who attend the company gym have 15% higher performance ratings overall. Before concluding that gym access improves performance, check for Simpson's paradox. The dataset has columns `[employee_id, gym_attendance, performance_rating, department, seniority_level]`. Write code to stratify by department and seniority, then check if the trend holds within each subgroup.
+
+::: details Solution
+```python
+import pandas as pd
+
+# Overall comparison (possibly misleading)
+overall = df.groupby('gym_attendance')['performance_rating'].mean()
+print("OVERALL:")
+print(overall.round(2))
+print(f"Gym attendees score {(overall[True] / overall[False] - 1)*100:.1f}% higher\n")
+
+# Stratify by department
+print("BY DEPARTMENT:")
+dept_strat = df.groupby(['department', 'gym_attendance'])['performance_rating'].agg(['mean', 'count'])
+for dept in df['department'].unique():
+    subset = dept_strat.loc[dept]
+    if True in subset.index and False in subset.index:
+        diff = subset.loc[True, 'mean'] - subset.loc[False, 'mean']
+        print(f"  {dept}: gym={subset.loc[True, 'mean']:.1f} vs no_gym={subset.loc[False, 'mean']:.1f} "
+              f"(diff={diff:+.1f}, n_gym={subset.loc[True, 'count']}, n_no={subset.loc[False, 'count']})")
+
+# Stratify by seniority
+print("\nBY SENIORITY:")
+sen_strat = df.groupby(['seniority_level', 'gym_attendance'])['performance_rating'].agg(['mean', 'count'])
+for level in df['seniority_level'].unique():
+    subset = sen_strat.loc[level]
+    if True in subset.index and False in subset.index:
+        diff = subset.loc[True, 'mean'] - subset.loc[False, 'mean']
+        print(f"  {level}: gym={subset.loc[True, 'mean']:.1f} vs no_gym={subset.loc[False, 'mean']:.1f} "
+              f"(diff={diff:+.1f})")
+
+# Check: who goes to the gym?
+print("\nGYM ATTENDANCE BY DEPARTMENT:")
+print(df.groupby('department')['gym_attendance'].mean().round(3))
+print("\nIf high-performance departments also have higher gym attendance,")
+print("the overall trend is confounded by department, not caused by gym use.")
+```
+:::
+
+**Exercise 2:** You are studying factors that influence startup success. Your dataset only includes startups that received Series A funding (a filtered/selected population). The dataset has columns `[technical_quality, marketing_quality, revenue_growth]`. Compute the correlation between `technical_quality` and `marketing_quality`. Then explain why Berkson's paradox might make this correlation misleading.
+
+::: details Solution
+```python
+import numpy as np
+from scipy import stats
+
+# Correlation in the filtered dataset (only funded startups)
+r_filtered, p_filtered = stats.pearsonr(df['technical_quality'], df['marketing_quality'])
+print(f"Correlation (funded startups only): r = {r_filtered:.4f} (p={p_filtered:.4f})")
+
+# Berkson's paradox explanation:
+print(f"\n--- BERKSON'S PARADOX ANALYSIS ---")
+print(f"Your dataset is CONDITIONED on 'received Series A funding'")
+print(f"Funding is a COLLIDER -- caused by both technical and marketing quality:")
+print(f"  Technical Quality --> Funding <-- Marketing Quality")
+print(f"")
+print(f"Among funded startups, you'll see a SPURIOUS NEGATIVE correlation:")
+print(f"  - A startup funded for great tech doesn't NEED great marketing")
+print(f"  - A startup funded for great marketing doesn't NEED great tech")
+print(f"  - So in the funded pool, tech and marketing appear inversely related")
+print(f"")
+print(f"In the GENERAL POPULATION of all startups, tech and marketing")
+print(f"quality are likely INDEPENDENT or even positively correlated.")
+
+# Simulation to prove it
+np.random.seed(42)
+n_all = 10000
+tech = np.random.normal(50, 15, n_all)
+mktg = np.random.normal(50, 15, n_all)  # independent in population
+funding_score = 0.5 * tech + 0.5 * mktg + np.random.normal(0, 5, n_all)
+funded = funding_score > np.percentile(funding_score, 80)
+
+r_pop, _ = stats.pearsonr(tech, mktg)
+r_funded, _ = stats.pearsonr(tech[funded], mktg[funded])
+print(f"\nSimulation: r(population) = {r_pop:.4f}, r(funded only) = {r_funded:.4f}")
+```
+:::
+
+**Exercise 3:** In a dataset of 1,000 employees, income and healthcare spending have a Pearson r = 0.65. You suspect age confounds this relationship. Compute the partial correlation between income and healthcare spending, controlling for age. How much of the original correlation was driven by the confound?
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+from scipy import stats
+from sklearn.linear_model import LinearRegression
+
+def partial_correlation(df, x, y, z_list):
+    """Partial correlation controlling for z variables."""
+    model_x = LinearRegression()
+    model_x.fit(df[z_list], df[x])
+    resid_x = df[x] - model_x.predict(df[z_list])
+
+    model_y = LinearRegression()
+    model_y.fit(df[z_list], df[y])
+    resid_y = df[y] - model_y.predict(df[z_list])
+
+    r, p = stats.pearsonr(resid_x, resid_y)
+    return r, p
+
+# Raw correlation
+r_raw, p_raw = stats.pearsonr(df['income'], df['healthcare_spending'])
+print(f"Raw correlation (income, healthcare): r = {r_raw:.4f} (p={p_raw:.2e})")
+
+# Partial correlation controlling for age
+r_partial, p_partial = partial_correlation(df, 'income', 'healthcare_spending', ['age'])
+print(f"Partial correlation (controlling age): r = {r_partial:.4f} (p={p_partial:.2e})")
+
+# How much was confounded?
+confound_pct = (1 - abs(r_partial) / abs(r_raw)) * 100
+print(f"\n{confound_pct:.0f}% of the original correlation was driven by age (confound)")
+print(f"The 'true' direct relationship is r = {r_partial:.3f}")
+
+if abs(r_partial) < 0.1:
+    print("Nearly ALL of the correlation was spurious -- age drives both variables")
+elif abs(r_partial) < abs(r_raw) * 0.5:
+    print("More than half was confounded -- the direct effect is much weaker")
+else:
+    print("Substantial direct relationship remains after controlling for age")
+```
+:::
+
+## Quick Quiz
+
+**1. What is Simpson's paradox?**
+- a) When a dataset has too many missing values
+- b) When a trend that appears in aggregated data reverses when the data is stratified by a confounding variable
+- c) When two variables have a nonlinear relationship
+
+::: details Answer
+**b) When a trend that appears in aggregated data reverses when the data is stratified by a confounding variable.** This happens because a confounding variable (like disease severity or department selectivity) is unevenly distributed across groups. The classic example: Treatment B looks better overall, but Treatment A is better within every patient subgroup -- because A was disproportionately given to severe cases.
+:::
+
+**2. What is a collider in causal inference?**
+- a) A variable that causes two other variables
+- b) A variable that is caused by two other variables, and conditioning on it creates a spurious correlation between them
+- c) A variable with missing values
+
+::: details Answer
+**b) A variable that is caused by two other variables, and conditioning on it creates a spurious correlation between them.** For example, celebrity status is caused by both talent and attractiveness. In the general population, talent and attractiveness are independent. But among celebrities only, they appear negatively correlated: highly talented celebrities do not need to be attractive, and vice versa. This is Berkson's paradox.
+:::
+
+**3. The ecological fallacy occurs when you:**
+- a) Study only ecologically valid datasets
+- b) Draw conclusions about individuals from group-level (aggregate) data
+- c) Use environmental variables in a regression
+
+::: details Answer
+**b) Draw conclusions about individuals from group-level (aggregate) data.** Countries with higher GDP have higher life expectancy (group-level correlation). But it does not follow that a richer individual within a country will live longer by the same magnitude. Within-country, the income-health relationship is much weaker. The strong aggregate pattern does not translate to the individual level.
+:::
+
+**4. What does partial correlation measure?**
+- a) The correlation between variables that are partially observed
+- b) The correlation between X and Y after removing the linear effect of one or more confounding variables
+- c) The correlation between partial derivatives of X and Y
+
+::: details Answer
+**b) The correlation between X and Y after removing the linear effect of one or more confounding variables.** Partial correlation residualizes both X and Y against the confounders (fits a linear model, takes residuals), then correlates those residuals. If the partial correlation drops to near zero, the original correlation was mostly driven by the confounder.
+:::
+
+**5. You find a strong negative correlation between per-capita chocolate consumption and Nobel Prize winners by country. This is most likely caused by:**
+- a) Chocolate reduces intelligence
+- b) A confounding variable (wealth, research funding, or GDP) that drives both
+- c) Nobel Prize winners avoid chocolate
+
+::: details Answer
+**b) A confounding variable (wealth, research funding, or GDP) that drives both.** Wealthy nations have both higher chocolate consumption (affordable luxury) and more Nobel Prizes (better research funding, universities, and infrastructure). The chocolate-Nobel correlation is a famous example of spurious correlation driven by a confounder. No causal mechanism links chocolate to scientific achievement.
+:::

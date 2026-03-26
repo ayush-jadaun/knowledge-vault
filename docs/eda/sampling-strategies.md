@@ -449,4 +449,199 @@ validate_sample(population, sample_srs, cat_cols=['group', 'region'])
 - **Bootstrap** provides confidence intervals for any statistic without distributional assumptions
 - **Power analysis** should be done BEFORE collecting data to determine the required sample size
 - Always **validate** your sample against the population using KS tests and chi-squared tests
-- For **time series**, never use random sampling — use temporal blocks to preserve autocorrelation structure
+- For **time series**, never use random sampling -- use temporal blocks to preserve autocorrelation structure
+
+## Try It Yourself
+
+**Exercise 1:** You have a dataset of 10 million rows that is too large for interactive EDA. It has columns `[user_id, purchase_amount, product_category, region, timestamp]`. The `product_category` column is imbalanced (Electronics: 45%, Books: 3%). Write code to take a stratified sample of 10,000 rows that preserves category proportions, then validate the sample against the population.
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+from scipy import stats
+
+# Stratified sample preserving product_category proportions
+sample = df.groupby('product_category', group_keys=False).apply(
+    lambda x: x.sample(frac=10000/len(df), random_state=42)
+).reset_index(drop=True)
+
+# Adjust if total is not exactly 10,000
+if len(sample) > 10000:
+    sample = sample.sample(10000, random_state=42)
+print(f"Sample size: {len(sample)}")
+
+# Validate: category proportions
+print("\nCategory Proportions (Population vs Sample):")
+pop_props = df['product_category'].value_counts(normalize=True)
+samp_props = sample['product_category'].value_counts(normalize=True)
+for cat in pop_props.index:
+    pop_pct = pop_props.get(cat, 0) * 100
+    samp_pct = samp_props.get(cat, 0) * 100
+    print(f"  {cat:20s}: pop={pop_pct:.1f}%  sample={samp_pct:.1f}%")
+
+# Validate: numeric distributions (KS test)
+print("\nDistribution Validation (KS test):")
+for col in ['purchase_amount']:
+    ks_stat, ks_p = stats.ks_2samp(df[col].dropna(), sample[col].dropna())
+    status = "OK" if ks_p > 0.05 else "MISMATCH"
+    print(f"  {col}: KS={ks_stat:.4f}, p={ks_p:.4f} [{status}]")
+
+# Validate: region proportions (chi-squared)
+pop_region = df['region'].value_counts(normalize=True)
+samp_region = sample['region'].value_counts(normalize=True)
+observed = np.array([samp_region.get(r, 0) * len(sample) for r in pop_region.index])
+expected = np.array([pop_region.get(r, 0) * len(sample) for r in pop_region.index])
+chi2, p = stats.chisquare(observed, expected)
+print(f"  region: chi2={chi2:.2f}, p={p:.4f} [{'OK' if p > 0.05 else 'MISMATCH'}]")
+```
+:::
+
+**Exercise 2:** Compute a 95% bootstrap confidence interval for the median purchase amount from a sample of 500 transactions. Use 10,000 bootstrap iterations. Then compute the bootstrap CI for the difference in median purchase amount between two regions.
+
+::: details Solution
+```python
+import numpy as np
+
+def bootstrap_ci(data, statistic_fn, n_boot=10000, ci=0.95, random_state=42):
+    """Bootstrap confidence interval for any statistic."""
+    rng = np.random.RandomState(random_state)
+    n = len(data)
+    boot_stats = np.array([
+        statistic_fn(data[rng.randint(0, n, size=n)])
+        for _ in range(n_boot)
+    ])
+    alpha = (1 - ci) / 2
+    return {
+        'estimate': statistic_fn(data),
+        'ci_lower': np.percentile(boot_stats, alpha * 100),
+        'ci_upper': np.percentile(boot_stats, (1 - alpha) * 100),
+        'se': boot_stats.std(),
+    }
+
+# CI for median purchase amount
+sample_amounts = df['purchase_amount'].sample(500, random_state=42).values
+result = bootstrap_ci(sample_amounts, np.median)
+print(f"Median purchase amount: ${result['estimate']:.2f}")
+print(f"95% CI: [${result['ci_lower']:.2f}, ${result['ci_upper']:.2f}]")
+print(f"SE: ${result['se']:.2f}")
+
+# CI for difference in medians between two regions
+region_a = df[df['region'] == 'North']['purchase_amount'].sample(250, random_state=1).values
+region_b = df[df['region'] == 'South']['purchase_amount'].sample(250, random_state=2).values
+
+rng = np.random.RandomState(42)
+n_boot = 10000
+diffs = np.zeros(n_boot)
+for i in range(n_boot):
+    boot_a = region_a[rng.randint(0, len(region_a), len(region_a))]
+    boot_b = region_b[rng.randint(0, len(region_b), len(region_b))]
+    diffs[i] = np.median(boot_a) - np.median(boot_b)
+
+observed_diff = np.median(region_a) - np.median(region_b)
+ci_lower, ci_upper = np.percentile(diffs, [2.5, 97.5])
+
+print(f"\nMedian difference (North - South): ${observed_diff:.2f}")
+print(f"95% CI: [${ci_lower:.2f}, ${ci_upper:.2f}]")
+print(f"Significant: {'Yes' if ci_lower > 0 or ci_upper < 0 else 'No (CI includes 0)'}")
+```
+:::
+
+**Exercise 3:** You are planning an A/B test for a website where the current conversion rate is 8%. You want to detect a minimum 1.5 percentage point improvement (to 9.5%) with 80% power at alpha=0.05. Calculate the required sample size per group. Then create a power curve showing how power changes with sample size for different effect sizes.
+
+::: details Solution
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+def sample_size_proportions(p1, p2, alpha=0.05, power=0.80):
+    """Required sample size per group for comparing two proportions."""
+    z_alpha = norm.ppf(1 - alpha / 2)
+    z_beta = norm.ppf(power)
+    p_bar = (p1 + p2) / 2
+    n = ((z_alpha * np.sqrt(2 * p_bar * (1 - p_bar)) +
+          z_beta * np.sqrt(p1 * (1 - p1) + p2 * (1 - p2))) ** 2) / (p1 - p2) ** 2
+    return int(np.ceil(n))
+
+p_control = 0.08
+p_treatment = 0.095
+n_required = sample_size_proportions(p_control, p_treatment)
+print(f"Control conversion: {p_control:.1%}")
+print(f"Expected treatment: {p_treatment:.1%}")
+print(f"Minimum detectable effect: {p_treatment - p_control:.1%}")
+print(f"Required per group: {n_required:,}")
+print(f"Total required: {2 * n_required:,}")
+
+# Power curve
+fig, ax = plt.subplots(figsize=(12, 6))
+sample_sizes = np.arange(500, 30000, 500)
+effects = [0.01, 0.015, 0.02, 0.03, 0.05]
+
+for delta in effects:
+    p2 = p_control + delta
+    powers = []
+    for n in sample_sizes:
+        z_alpha = norm.ppf(1 - 0.05 / 2)
+        se = np.sqrt(p_control * (1 - p_control) / n + p2 * (1 - p2) / n)
+        z_power = abs(p2 - p_control) / se - z_alpha
+        powers.append(norm.cdf(z_power))
+    ax.plot(sample_sizes, powers, linewidth=2, label=f'delta={delta:.1%}')
+
+ax.axhline(0.8, color='red', linestyle='--', alpha=0.5, label='80% power')
+ax.set_xlabel('Sample Size per Group')
+ax.set_ylabel('Power')
+ax.set_title('Power Curves for A/B Test (Conversion Rate)')
+ax.legend()
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+```
+:::
+
+## Quick Quiz
+
+**1. When is stratified sampling essential instead of simple random sampling?**
+- a) When the dataset is too large to process
+- b) When subgroups are imbalanced and you need to ensure minority groups are represented in the sample
+- c) When all groups are equally sized
+
+::: details Answer
+**b) When subgroups are imbalanced and you need to ensure minority groups are represented in the sample.** If a category makes up only 2% of data, a random sample of 1,000 would include only ~20 rows from that category -- too few for meaningful analysis. Stratified sampling guarantees proportional (or equal) representation of all subgroups, making it essential for imbalanced datasets.
+:::
+
+**2. What is reservoir sampling used for?**
+- a) Sampling from water quality datasets
+- b) Taking a random sample from a data stream of unknown size in a single pass with constant memory
+- c) Oversampling the minority class
+
+::: details Answer
+**b) Taking a random sample from a data stream of unknown size in a single pass with constant memory.** Reservoir sampling maintains a sample of size k. For each new element, it has a decreasing probability of replacing an existing sample element. After processing the entire stream, each element has an equal probability of being in the sample. This is crucial for streaming data and files too large to fit in memory.
+:::
+
+**3. A bootstrap confidence interval for the mean is [42.3, 48.7]. What does this mean?**
+- a) The population mean is exactly 45.5
+- b) If you repeated the sampling process many times, 95% of such intervals would contain the true population mean
+- c) 95% of the data falls between 42.3 and 48.7
+
+::: details Answer
+**b) If you repeated the sampling process many times, 95% of such intervals would contain the true population mean.** The bootstrap CI estimates the range within which the true population parameter likely falls. It does NOT mean 95% of data points are in this range (that would be a prediction interval), and it does NOT pinpoint the exact population mean.
+:::
+
+**4. You need to detect a "small" effect size (Cohen's d = 0.2) with 80% power. Approximately how many samples per group do you need?**
+- a) About 30
+- b) About 400
+- c) About 4,000
+
+::: details Answer
+**b) About 400.** For a two-sample t-test with d=0.2, alpha=0.05, and power=0.80, the required sample size is approximately 394 per group. This is why small effects require large studies. For comparison: d=0.5 (medium) needs ~64 per group, and d=0.8 (large) needs ~26 per group.
+:::
+
+**5. Why should you NEVER use random sampling for time series data during EDA?**
+- a) Random sampling is too slow for time series
+- b) It breaks the temporal ordering, destroying autocorrelation structure and potentially mixing future data with past data
+- c) Time series data is always too small to sample
+
+::: details Answer
+**b) It breaks the temporal ordering, destroying autocorrelation structure and potentially mixing future data with past data.** Time series values depend on their neighbors in time. Random sampling breaks this dependency, making trend analysis, seasonality detection, and lag feature computation impossible. Use temporal block sampling (contiguous time windows) to preserve the time structure.
+:::

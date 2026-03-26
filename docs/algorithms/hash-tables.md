@@ -526,3 +526,108 @@ An attacker who knows your hash function can craft inputs that all collide, turn
 - [Linked Lists](/algorithms/linked-lists) — LRU cache combines hash map with linked list
 - [Database Indexing](/system-design/databases/indexing-deep-dive) — hash indexes vs B-tree indexes
 - [Bloom Filters](/system-design/distributed-systems/bloom-filters) — probabilistic hash-based data structure
+
+## Try It Yourself
+
+**Problem 1:** Given `nums = [2, 7, 11, 15]` and `target = 9`, find two numbers that add up to the target using a hash map. Return their indices.
+
+::: details Solution
+Iterate through the array, storing each number's index in a hash map:
+- i=0, num=2: complement = 9-2 = 7. Not in map. map={2:0}
+- i=1, num=7: complement = 9-7 = 2. Found 2 at index 0.
+Answer: **[0, 1]** (nums[0] + nums[1] = 2 + 7 = 9). Time: $O(n)$, Space: $O(n)$.
+:::
+
+**Problem 2:** Group the anagrams in `["eat", "tea", "tan", "ate", "nat", "bat"]`.
+
+::: details Solution
+Use a sorted string as the hash key:
+- "eat" → sorted key "aet" → group: ["eat"]
+- "tea" → sorted key "aet" → group: ["eat", "tea"]
+- "tan" → sorted key "ant" → group: ["tan"]
+- "ate" → sorted key "aet" → group: ["eat", "tea", "ate"]
+- "nat" → sorted key "ant" → group: ["tan", "nat"]
+- "bat" → sorted key "abt" → group: ["bat"]
+Answer: **[["eat","tea","ate"], ["tan","nat"], ["bat"]]**
+:::
+
+**Problem 3:** Find the longest consecutive sequence in `[100, 4, 200, 1, 3, 2]`.
+
+::: details Solution
+Put all numbers in a hash set. For each number, only start counting if `num-1` is NOT in the set (this is the start of a sequence):
+- 100: 99 not in set → sequence: 100 → length 1
+- 4: 3 is in set → skip (not a start)
+- 200: 199 not in set → sequence: 200 → length 1
+- 1: 0 not in set → sequence: 1, 2, 3, 4 → length 4
+Answer: **4** (sequence [1, 2, 3, 4]). Time: $O(n)$.
+:::
+
+**Problem 4:** Design a hash table with separate chaining that handles the insertion of keys "alice", "bob", "carol" into a table of size 4, where h("alice")=2, h("bob")=1, h("carol")=2.
+
+::: details Solution
+- Insert "alice": bucket[2] = [("alice", val)]
+- Insert "bob": bucket[1] = [("bob", val)]
+- Insert "carol": collision at bucket[2]! Append to chain: bucket[2] = [("alice", val), ("carol", val)]
+Final table: bucket[0]=[], bucket[1]=[("bob", val)], bucket[2]=[("alice", val), ("carol", val)], bucket[3]=[]
+:::
+
+**Problem 5:** If a hash table has 12 entries and a capacity of 16, what is its load factor? Should it resize?
+
+::: details Solution
+Load factor $\alpha = n / m = 12 / 16 = 0.75$.
+- For separate chaining: 0.75 is at the common resize threshold. Most implementations (Java HashMap) resize at 0.75.
+- For open addressing: 0.75 is too high; performance degrades significantly above 0.7. It should resize.
+Answer: Load factor is **0.75**. Whether to resize depends on the collision strategy, but it is at or past the threshold for most implementations.
+:::
+
+## Quick Quiz
+
+**1. What is the average time complexity of hash table lookup?**
+- a) $O(\log n)$
+- b) $O(n)$
+- c) $O(1)$
+- d) $O(n \log n)$
+
+::: details Answer
+**c) $O(1)$** — With a good hash function and appropriate load factor, hash table operations (insert, lookup, delete) are $O(1)$ on average. The worst case is $O(n)$ when all keys collide.
+:::
+
+**2. What happens to hash table performance when the load factor approaches 1.0 with open addressing?**
+- a) Performance improves
+- b) Performance is unchanged
+- c) The expected number of probes per lookup grows dramatically
+- d) The hash function becomes faster
+
+::: details Answer
+**c) The expected number of probes per lookup grows dramatically** — With open addressing, the expected probes is $1/(1-\alpha)$. At $\alpha=0.9$, this is 10 probes; at $\alpha=0.99$, it is 100 probes.
+:::
+
+**3. Why does Java's HashMap convert chains to red-black trees when a bucket exceeds 8 entries?**
+- a) To save memory
+- b) To prevent worst-case $O(n)$ lookup from hash-flooding DoS attacks
+- c) To make insertion faster
+- d) To maintain insertion order
+
+::: details Answer
+**b) To prevent worst-case $O(n)$ lookup from hash-flooding DoS attacks** — An attacker can craft inputs that all hash to the same bucket. Converting long chains to red-black trees bounds worst-case lookup to $O(\log n)$.
+:::
+
+**4. What is the primary advantage of open addressing over separate chaining?**
+- a) Simpler deletion
+- b) Better cache performance due to contiguous memory
+- c) Higher load factor tolerance
+- d) No need for a hash function
+
+::: details Answer
+**b) Better cache performance due to contiguous memory** — Open addressing stores all entries in the array itself, benefiting from CPU cache locality. Chaining uses linked lists that scatter entries across the heap, causing cache misses.
+:::
+
+**5. In the "Subarray Sum Equals K" pattern, what is stored in the hash map?**
+- a) Element values and their indices
+- b) Prefix sum values and their occurrence counts
+- c) Subarray start and end indices
+- d) Element frequencies
+
+::: details Answer
+**b) Prefix sum values and their occurrence counts** — The hash map stores how many times each prefix sum has occurred. When `current_sum - k` exists in the map, each occurrence represents a subarray that sums to $k$.
+:::

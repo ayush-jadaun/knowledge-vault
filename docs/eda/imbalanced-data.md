@@ -451,3 +451,190 @@ threshold_cost, costs = cost_sensitive_threshold(y_test, y_prob_threshold,
 - Random undersampling discards majority data — only viable when you have plenty of majority samples.
 - SMOTE + Tomek combines oversampling with boundary cleaning for the best of both worlds.
 - The optimal strategy depends on your imbalance ratio, dataset size, and model type. Always benchmark multiple approaches.
+
+## Try It Yourself
+
+**Exercise 1:** You have a fraud detection dataset with 50,000 transactions: 49,000 legitimate and 1,000 fraudulent. A model that predicts "legitimate" for everything achieves 98% accuracy. Show why this is useless by computing the confusion matrix, F1 score, and AUC-PR for this naive model, then train a Logistic Regression with `class_weight='balanced'` and compare.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (confusion_matrix, f1_score, average_precision_score,
+                              classification_report)
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3,
+                                                      stratify=y, random_state=42)
+
+# Naive model: always predict 0 (legitimate)
+naive_pred = np.zeros_like(y_test)
+naive_prob = np.zeros_like(y_test, dtype=float)
+
+print("=== NAIVE MODEL (always predict legitimate) ===")
+print(f"Accuracy: {(naive_pred == y_test).mean():.4f}")
+print(f"F1 (fraud class): {f1_score(y_test, naive_pred):.4f}")
+print(f"Frauds detected: {(naive_pred[y_test == 1] == 1).sum()} / {(y_test == 1).sum()}")
+print(f"This model is 98% accurate but catches ZERO fraud.\n")
+
+# Logistic Regression with balanced class weights
+lr = LogisticRegression(max_iter=1000, class_weight='balanced')
+lr.fit(X_train, y_train)
+lr_pred = lr.predict(X_test)
+lr_prob = lr.predict_proba(X_test)[:, 1]
+
+print("=== LOGISTIC REGRESSION (balanced weights) ===")
+print(classification_report(y_test, lr_pred, target_names=['Legitimate', 'Fraud']))
+print(f"F1 (fraud): {f1_score(y_test, lr_pred):.4f}")
+print(f"AUC-PR: {average_precision_score(y_test, lr_prob):.4f}")
+print(f"Frauds detected: {(lr_pred[y_test == 1] == 1).sum()} / {(y_test == 1).sum()}")
+```
+:::
+
+**Exercise 2:** Apply SMOTE to a training set with 5% positive class. Then apply SMOTE+Tomek for cleaner decision boundaries. Compare both against using class weights alone by evaluating AUC-PR on a held-out test set. Important: SMOTE must ONLY be applied to training data.
+
+::: details Solution
+```python
+import numpy as np
+from imblearn.over_sampling import SMOTE
+from imblearn.combine import SMOTETomek
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import average_precision_score
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3,
+                                                      stratify=y, random_state=42)
+print(f"Train: {(y_train == 1).sum()} positive / {len(y_train)} total")
+
+# Strategy 1: No resampling, class weights
+rf_weighted = RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=42)
+rf_weighted.fit(X_train, y_train)
+auc_pr_weighted = average_precision_score(y_test, rf_weighted.predict_proba(X_test)[:, 1])
+
+# Strategy 2: SMOTE (only on training data!)
+smote = SMOTE(random_state=42, k_neighbors=5)
+X_train_smote, y_train_smote = smote.fit_resample(X_train, y_train)
+print(f"After SMOTE: {(y_train_smote == 1).sum()} positive / {len(y_train_smote)} total")
+
+rf_smote = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_smote.fit(X_train_smote, y_train_smote)
+auc_pr_smote = average_precision_score(y_test, rf_smote.predict_proba(X_test)[:, 1])
+
+# Strategy 3: SMOTE + Tomek
+smt = SMOTETomek(random_state=42)
+X_train_smt, y_train_smt = smt.fit_resample(X_train, y_train)
+print(f"After SMOTE+Tomek: {(y_train_smt == 1).sum()} positive / {len(y_train_smt)} total")
+
+rf_smt = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_smt.fit(X_train_smt, y_train_smt)
+auc_pr_smt = average_precision_score(y_test, rf_smt.predict_proba(X_test)[:, 1])
+
+# Compare
+print(f"\n{'Strategy':<25} {'AUC-PR':>10}")
+print("-" * 37)
+print(f"{'Class Weights':<25} {auc_pr_weighted:>10.4f}")
+print(f"{'SMOTE':<25} {auc_pr_smote:>10.4f}")
+print(f"{'SMOTE + Tomek':<25} {auc_pr_smt:>10.4f}")
+```
+:::
+
+**Exercise 3:** The default classification threshold of 0.5 is suboptimal for your imbalanced fraud model. Write code to find the threshold that maximizes F1 score, and a separate threshold that minimizes business cost (assuming missing a fraud costs $500 and a false alarm costs $5). Plot both trade-off curves.
+
+::: details Solution
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import precision_recall_curve, f1_score
+
+# Get predicted probabilities
+y_prob = model.predict_proba(X_test)[:, 1]
+
+# Find F1-optimal threshold
+precisions, recalls, thresholds = precision_recall_curve(y_test, y_prob)
+f1_scores = 2 * (precisions[:-1] * recalls[:-1]) / (precisions[:-1] + recalls[:-1] + 1e-10)
+f1_best_idx = np.argmax(f1_scores)
+f1_best_threshold = thresholds[f1_best_idx]
+
+# Find cost-optimal threshold
+cost_fn = 500   # cost of missing a fraud
+cost_fp = 5     # cost of a false alarm
+threshold_range = np.linspace(0.01, 0.99, 200)
+costs = []
+for t in threshold_range:
+    pred = (y_prob >= t).astype(int)
+    fn = ((y_test == 1) & (pred == 0)).sum()
+    fp = ((y_test == 0) & (pred == 1)).sum()
+    costs.append(cost_fn * fn + cost_fp * fp)
+cost_best_idx = np.argmin(costs)
+cost_best_threshold = threshold_range[cost_best_idx]
+
+print(f"Default threshold (0.5):   F1={f1_score(y_test, (y_prob >= 0.5).astype(int)):.4f}")
+print(f"F1-optimal threshold ({f1_best_threshold:.3f}): F1={f1_scores[f1_best_idx]:.4f}")
+print(f"Cost-optimal threshold ({cost_best_threshold:.3f}): Total cost=${costs[cost_best_idx]:,.0f}")
+
+# Plot
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+axes[0].plot(thresholds, f1_scores, color='steelblue', linewidth=2)
+axes[0].axvline(f1_best_threshold, color='red', linestyle='--', label=f'Best: {f1_best_threshold:.3f}')
+axes[0].set_title('F1 Score vs Threshold')
+axes[0].set_xlabel('Threshold')
+axes[0].legend()
+
+axes[1].plot(threshold_range, costs, color='crimson', linewidth=2)
+axes[1].axvline(cost_best_threshold, color='green', linestyle='--', label=f'Best: {cost_best_threshold:.3f}')
+axes[1].set_title(f'Business Cost vs Threshold (FN=${cost_fn}, FP=${cost_fp})')
+axes[1].set_xlabel('Threshold')
+axes[1].set_ylabel('Total Cost ($)')
+axes[1].legend()
+plt.tight_layout()
+plt.show()
+```
+:::
+
+## Quick Quiz
+
+**1. Why is accuracy a misleading metric for imbalanced datasets?**
+- a) It is too difficult to compute
+- b) A model that always predicts the majority class achieves high accuracy while detecting zero minority cases
+- c) It only works for regression problems
+
+::: details Answer
+**b) A model that always predicts the majority class achieves high accuracy while detecting zero minority cases.** With 98% legitimate and 2% fraud, always predicting "legitimate" gives 98% accuracy. But it catches zero fraud, making it useless. Use F1, AUC-PR, or MCC instead -- metrics that account for both precision and recall on the minority class.
+:::
+
+**2. What does SMOTE do differently from random oversampling?**
+- a) SMOTE removes majority class samples
+- b) SMOTE creates new synthetic minority samples by interpolating between existing minority points and their neighbors
+- c) SMOTE changes the model's loss function
+
+::: details Answer
+**b) SMOTE creates new synthetic minority samples by interpolating between existing minority points and their neighbors.** Random oversampling duplicates existing minority samples, which can cause overfitting to those exact points. SMOTE generates new, slightly different points by picking a minority sample, finding its k nearest minority neighbors, and creating a new point along the line between them. This adds diversity.
+:::
+
+**3. Why should SMOTE NEVER be applied to the test set?**
+- a) SMOTE is too slow for test data
+- b) It would create synthetic test samples that do not exist in reality, making evaluation unreliable
+- c) The test set is already balanced
+
+::: details Answer
+**b) It would create synthetic test samples that do not exist in reality, making evaluation unreliable.** The test set must represent real-world data distribution. If you SMOTE the test set, you are evaluating on fabricated data points that will never appear in production. SMOTE is a training-time technique only. Always apply resampling inside the training fold, never to the test set.
+:::
+
+**4. AUC-PR is preferred over AUC-ROC for imbalanced data because:**
+- a) AUC-PR is faster to compute
+- b) AUC-ROC includes the large number of true negatives, which can be misleadingly high even with poor minority-class performance
+- c) AUC-PR always gives higher values
+
+::: details Answer
+**b) AUC-ROC includes the large number of true negatives, which can be misleadingly high even with poor minority-class performance.** ROC uses the False Positive Rate (FP / (FP + TN)), which is diluted by the massive number of true negatives in imbalanced data. A model can have a high AUC-ROC even if it misses most fraud cases. AUC-PR uses Precision (TP / (TP + FP)), which directly penalizes false positives without being inflated by true negatives.
+:::
+
+**5. What is the simplest approach to try FIRST when dealing with imbalanced data?**
+- a) SMOTE with ADASYN
+- b) Setting `class_weight='balanced'` in the model
+- c) Collecting more data for the minority class
+
+::: details Answer
+**b) Setting `class_weight='balanced'` in the model.** Class weights tell the model to penalize misclassifying minority samples more heavily, proportional to their rarity. It requires no data augmentation, no additional preprocessing, and works with most scikit-learn models. It should always be the first thing you try, and in many cases, it is sufficient.
+:::

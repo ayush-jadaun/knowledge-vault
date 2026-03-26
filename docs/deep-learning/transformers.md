@@ -77,6 +77,41 @@ $$
 
 Each output is a weighted combination of value vectors, where the weights come from the attention scores.
 
+::: details Worked Example — Self-Attention QKV on a 3-Word Sentence
+
+**Input:** 3 tokens with $d_k = 2$ (tiny for hand-tracing). Embeddings already projected to Q, K, V:
+
+$$Q = \begin{bmatrix} 1 & 0 \\ 0 & 1 \\ 1 & 1 \end{bmatrix}, \quad K = \begin{bmatrix} 1 & 1 \\ 0 & 1 \\ 1 & 0 \end{bmatrix}, \quad V = \begin{bmatrix} 1 & 0 \\ 0 & 1 \\ 0.5 & 0.5 \end{bmatrix}$$
+
+Think of rows as: word "The" (row 0), "cat" (row 1), "sat" (row 2).
+
+**Step 1 --- Attention scores** $S = QK^T$:
+$$S = \begin{bmatrix} 1(1)+0(1) & 1(0)+0(1) & 1(1)+0(0) \\ 0(1)+1(1) & 0(0)+1(1) & 0(1)+1(0) \\ 1(1)+1(1) & 1(0)+1(1) & 1(1)+1(0) \end{bmatrix} = \begin{bmatrix} 1 & 0 & 1 \\ 1 & 1 & 0 \\ 2 & 1 & 1 \end{bmatrix}$$
+
+**Step 2 --- Scale** by $\sqrt{d_k} = \sqrt{2} \approx 1.414$:
+$$S_{\text{scaled}} = \begin{bmatrix} 0.707 & 0 & 0.707 \\ 0.707 & 0.707 & 0 \\ 1.414 & 0.707 & 0.707 \end{bmatrix}$$
+
+**Step 3 --- Softmax** (row-wise):
+
+Row 0: $\text{softmax}([0.707, 0, 0.707]) = [0.390, 0.192, 0.390]$ (Note: 0.028 normalization difference due to rounding)
+
+Let me compute precisely:
+- Row 0: $e^{0.707} = 2.028$, $e^0 = 1$, $e^{0.707} = 2.028$. Sum = 5.056. $\to [0.401, 0.198, 0.401]$
+- Row 1: $e^{0.707} = 2.028$, $e^{0.707} = 2.028$, $e^0 = 1$. Sum = 5.056. $\to [0.401, 0.401, 0.198]$
+- Row 2: $e^{1.414} = 4.113$, $e^{0.707} = 2.028$, $e^{0.707} = 2.028$. Sum = 8.169. $\to [0.503, 0.248, 0.248]$
+
+**Step 4 --- Weighted sum** $\alpha V$:
+
+Output for "The" (row 0): $0.401[1,0] + 0.198[0,1] + 0.401[0.5,0.5] = [0.602, 0.399]$
+
+Output for "cat" (row 1): $0.401[1,0] + 0.401[0,1] + 0.198[0.5,0.5] = [0.500, 0.500]$
+
+Output for "sat" (row 2): $0.503[1,0] + 0.248[0,1] + 0.248[0.5,0.5] = [0.627, 0.372]$
+
+**Result:** "sat" (row 2) attends most strongly to "The" (50.3%) because their Q and K vectors have the highest dot product (2.0). "cat" attends equally to "The" and "cat" (40.1% each). Each output is a blend of all value vectors, weighted by relevance.
+
+:::
+
 ### Implementation
 
 ```python
@@ -169,6 +204,36 @@ PE_{(pos, 2i+1)} = \cos\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)
 $$
 
 **Why sinusoidal?** For any fixed offset $k$, $PE_{pos+k}$ can be represented as a linear function of $PE_{pos}$. This lets the model learn to attend to relative positions:
+
+::: details Worked Example — Sinusoidal Positional Encoding
+
+**Setup:** $d_{\text{model}} = 4$, computing PE for positions 0, 1, 2.
+
+Dimension indices: $i = 0, 1$ (so $2i = 0, 2$ and $2i+1 = 1, 3$)
+
+Denominators: $10000^{2i/4}$:
+- $i=0$: $10000^{0/4} = 1$
+- $i=1$: $10000^{2/4} = 100$
+
+**Position 0:**
+$$PE_{(0,0)} = \sin(0/1) = 0, \quad PE_{(0,1)} = \cos(0/1) = 1$$
+$$PE_{(0,2)} = \sin(0/100) = 0, \quad PE_{(0,3)} = \cos(0/100) = 1$$
+$$PE_0 = [0, 1, 0, 1]$$
+
+**Position 1:**
+$$PE_{(1,0)} = \sin(1/1) = 0.841, \quad PE_{(1,1)} = \cos(1/1) = 0.540$$
+$$PE_{(1,2)} = \sin(1/100) = 0.010, \quad PE_{(1,3)} = \cos(1/100) = 1.000$$
+$$PE_1 = [0.841, 0.540, 0.010, 1.000]$$
+
+**Position 2:**
+$$PE_{(2,0)} = \sin(2) = 0.909, \quad PE_{(2,1)} = \cos(2) = -0.416$$
+$$PE_{(2,2)} = \sin(0.02) = 0.020, \quad PE_{(2,3)} = \cos(0.02) = 1.000$$
+$$PE_2 = [0.909, -0.416, 0.020, 1.000]$$
+
+**Result:** Low-index dimensions ($i=0$) oscillate rapidly (like seconds on a clock), while high-index dimensions ($i=1$) oscillate slowly (like hours). Position 0 and 1 differ mainly in the fast dimensions; positions 0 and 100 would differ in the slow dimensions too. This multi-frequency encoding allows the model to distinguish positions at any scale.
+
+:::
+
 
 $$
 PE_{pos+k} = A_k \cdot PE_{pos}

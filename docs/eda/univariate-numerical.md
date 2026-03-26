@@ -615,3 +615,177 @@ If skewness > 1 (or < -1), consider a log or Box-Cox transform before modeling. 
 - Formal normality tests are useful for small samples but over-reject at large n. Use them alongside visual evidence.
 - Box plots are excellent for comparison but dangerously hide multimodality. Pair with violin plots or histograms.
 - Outlier detection method should match your distribution shape: IQR/z-score for symmetric data, MAD for skewed data.
+
+## Try It Yourself
+
+**Exercise 1:** You have a dataset of 5,000 employee salaries. The mean is $85,000, the median is $62,000, and the skewness is 2.3. Without plotting anything, diagnose the distribution shape, choose the appropriate measure of center, and recommend a transformation.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+from scipy import stats
+
+# Diagnosis from the numbers alone:
+# 1. Mean ($85K) >> Median ($62K) -> gap is 37%, strongly right-skewed
+# 2. Skewness = 2.3 (> 1) -> confirms severe right skew
+# 3. The right tail (high earners) is pulling the mean up
+
+print("Diagnosis: Strongly right-skewed distribution")
+print(f"Mean/Median gap: {(85000/62000 - 1)*100:.1f}% -> lead with MEDIAN")
+
+# Appropriate measure of center: MEDIAN ($62,000)
+# The mean is inflated by high earners and does not represent "typical"
+
+# Recommended transformation: log transform (skewness > 2)
+log_salary = np.log(df['salary'])
+print(f"\nOriginal skewness: {df['salary'].skew():.2f}")
+print(f"Log skewness: {log_salary.skew():.2f}")
+
+# Also try Box-Cox for optimal normalization
+bc_salary, bc_lambda = stats.boxcox(df['salary'])
+print(f"Box-Cox skewness (lambda={bc_lambda:.2f}): {pd.Series(bc_salary).skew():.2f}")
+
+# Report: "The median salary is $62,000. The mean ($85,000) is inflated
+# by the right tail. Log-transformed salary has near-zero skewness
+# and is appropriate for parametric modeling."
+```
+:::
+
+**Exercise 2:** Given an array of 2,000 values, write code to produce a complete univariate profile: histogram with Freedman-Diaconis bins, KDE overlay, QQ plot, box plot, and a table of descriptive statistics including skewness, kurtosis, and coefficient of variation.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+
+# data = your 2,000 values
+series = pd.Series(data)
+
+fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+
+# 1. Histogram + KDE with Freedman-Diaconis bins
+axes[0, 0].hist(series, bins='fd', density=True, alpha=0.5,
+                color='steelblue', edgecolor='black')
+sns.kdeplot(series, ax=axes[0, 0], color='crimson', linewidth=2)
+axes[0, 0].axvline(series.mean(), color='orange', linestyle='--', label=f'Mean: {series.mean():.1f}')
+axes[0, 0].axvline(series.median(), color='green', linestyle='-.', label=f'Median: {series.median():.1f}')
+axes[0, 0].legend()
+axes[0, 0].set_title('Histogram + KDE (Freedman-Diaconis)')
+
+# 2. QQ Plot
+stats.probplot(series, dist='norm', plot=axes[0, 1])
+axes[0, 1].set_title('QQ Plot (vs Normal)')
+
+# 3. Box Plot
+axes[1, 0].boxplot(series, vert=True, patch_artist=True,
+                    boxprops=dict(facecolor='steelblue', alpha=0.7))
+axes[1, 0].set_title('Box Plot')
+
+# 4. Descriptive Statistics Table
+axes[1, 1].axis('off')
+stat_text = (
+    f"Count:     {len(series):,}\n"
+    f"Mean:      {series.mean():,.2f}\n"
+    f"Median:    {series.median():,.2f}\n"
+    f"Std Dev:   {series.std():,.2f}\n"
+    f"Skewness:  {series.skew():.3f}\n"
+    f"Kurtosis:  {series.kurtosis():.3f}\n"
+    f"IQR:       {series.quantile(0.75) - series.quantile(0.25):,.2f}\n"
+    f"CV:        {series.std() / series.mean():.3f}\n"
+    f"Min:       {series.min():,.2f}\n"
+    f"Max:       {series.max():,.2f}"
+)
+axes[1, 1].text(0.1, 0.5, stat_text, fontsize=12, fontfamily='monospace',
+                verticalalignment='center',
+                bbox=dict(boxstyle='round', facecolor='lightyellow'))
+axes[1, 1].set_title('Summary Statistics')
+
+plt.suptitle('Complete Univariate Profile', fontsize=16, fontweight='bold')
+plt.tight_layout()
+plt.show()
+```
+:::
+
+**Exercise 3:** You run a Shapiro-Wilk normality test on a dataset of 10,000 values and get p = 0.0001, but the QQ plot looks nearly perfectly linear with only slight deviation at the tails. Explain why the test and the visual disagree and what you should conclude.
+
+::: details Solution
+```python
+import numpy as np
+from scipy import stats
+
+# The disagreement is expected and is a well-known phenomenon:
+# With large n (>1000), normality tests have extremely high power
+# and will reject the null hypothesis for TRIVIAL departures from normality.
+
+# Demonstration:
+np.random.seed(42)
+data = np.random.normal(0, 1, 10000)  # perfectly generated normal data
+data = data + 0.001 * data**3         # add a TINY cubic distortion
+
+stat, p = stats.shapiro(data[:5000])
+print(f"Shapiro-Wilk: W={stat:.6f}, p={p:.6f}")
+print(f"Skewness: {pd.Series(data).skew():.4f}")
+print(f"Kurtosis: {pd.Series(data).kurtosis():.4f}")
+
+# Conclusion:
+print("\n--- What to conclude ---")
+print("1. The p=0.0001 means: 'there IS a statistically detectable departure'")
+print("2. The QQ plot means: 'the departure is practically negligible'")
+print("3. The data is 'close enough to normal' for any practical purpose")
+print("4. At n=10,000, even data generated FROM a normal distribution")
+print("   can fail the test due to floating-point arithmetic")
+print("\nRule: For n > 1000, trust the QQ plot over the p-value.")
+print("Use the test for small samples where visual inspection is unreliable.")
+```
+:::
+
+## Quick Quiz
+
+**1. The mean of a dataset is 100 and the median is 72. What does this tell you about the distribution?**
+- a) It is left-skewed
+- b) It is right-skewed
+- c) It is bimodal
+
+::: details Answer
+**b) It is right-skewed.** When the mean is substantially larger than the median (here, 39% higher), it means the right tail contains extreme values that pull the mean upward while the median remains at the true center. In this case, the median (72) is the better measure of "typical."
+:::
+
+**2. Which bin selection rule is most robust to outliers and skew?**
+- a) Sturges
+- b) Scott
+- c) Freedman-Diaconis
+
+::: details Answer
+**c) Freedman-Diaconis.** It uses the IQR instead of standard deviation to compute bin width (`2 * IQR * n^(-1/3)`). Since IQR is based on quartiles, it is not affected by extreme outliers or heavy tails, unlike Scott's rule which uses the standard deviation.
+:::
+
+**3. A QQ plot curves upward at the right end. What does this indicate?**
+- a) The data has a lighter right tail than normal
+- b) The data has a heavier right tail than normal (right-skewed)
+- c) The data is perfectly normal
+
+::: details Answer
+**b) The data has a heavier right tail than normal (right-skewed).** In a QQ plot against the normal distribution, points curving upward at the right mean the data's upper quantiles are larger than the normal distribution would predict. This is the signature of right skew or heavy right tails.
+:::
+
+**4. What does a high coefficient of variation (CV) indicate?**
+- a) The data is normally distributed
+- b) The spread is large relative to the mean
+- c) There are no outliers
+
+::: details Answer
+**b) The spread is large relative to the mean.** CV = std / mean, so a high CV means the standard deviation is a large fraction of the mean. This is useful for comparing variability across features on different scales. For example, a CV of 0.8 means the standard deviation is 80% of the mean, indicating high relative variability.
+:::
+
+**5. You see a box plot with the median line near the bottom of the box. What does this mean?**
+- a) The data is left-skewed
+- b) The data is right-skewed — the upper 50% is more spread out than the lower 50%
+- c) The data is uniformly distributed
+
+::: details Answer
+**b) The data is right-skewed -- the upper 50% is more spread out than the lower 50%.** When the median sits near Q1 (bottom of the box), it means the distance from Q1 to the median is small but the distance from the median to Q3 is large. This asymmetry indicates right skew, where most values cluster near the low end with a long tail stretching upward.
+:::

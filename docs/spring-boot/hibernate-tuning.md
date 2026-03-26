@@ -555,3 +555,62 @@ public class HibernateStatsReporter {
 - **[Database Migrations](./database-migrations)** — Schema management with Flyway
 - **[Caching](./caching)** — Application-level caching with Redis and Caffeine
 - **[Actuator & Monitoring](./actuator)** — Expose Hibernate metrics via Prometheus
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Not detecting N+1 queries during development
+N+1 issues are invisible during development with small datasets but cause catastrophic performance in production with large tables.
+**Fix:** Enable `hibernate.generate_statistics: true` and `LOG_QUERIES_SLOWER_THAN_MS: 25` in development. Use an interceptor that warns when a single request exceeds 10 queries.
+:::
+
+::: danger Pitfall 2: JOIN FETCH with multiple collections (MultipleBagFetchException)
+Fetching more than one collection (List) in a single query causes `MultipleBagFetchException` because Hibernate cannot handle a Cartesian product of two bags.
+**Fix:** Change one of the collections from `List` to `Set`, or split into two separate queries each fetching one collection.
+:::
+
+::: danger Pitfall 3: Setting maximum-pool-size too high
+Setting HikariCP's pool size to 100+ thinking more connections mean better performance. In reality, it causes CPU context switching, database lock contention, and higher memory usage.
+**Fix:** Use the formula `connections = (core_count * 2) + effective_spindle_count`. For a 4-core server with SSD, start with 10 connections and tune from there.
+:::
+
+::: danger Pitfall 4: Leaving Open Session in View enabled
+The default `spring.jpa.open-in-view=true` keeps the Hibernate session open during view rendering, allowing lazy loading in controllers and triggering queries outside the service layer.
+**Fix:** Set `spring.jpa.open-in-view=false`. Eagerly fetch all data needed for the response in the service layer using `JOIN FETCH` or `@EntityGraph`.
+:::
+
+::: danger Pitfall 5: Not using read-only transactions for queries
+Without `@Transactional(readOnly = true)`, Hibernate performs dirty checking on every loaded entity at flush time, even for pure read operations.
+**Fix:** Annotate read-only service methods or entire read-focused service classes with `@Transactional(readOnly = true)`. This skips dirty checking and can enable database read replicas.
+:::
+
+::: danger Pitfall 6: Bulk inserting entities one at a time
+Using `repository.save()` in a loop for thousands of entities generates individual INSERT statements and flushes after each save.
+**Fix:** Enable JDBC batching with `hibernate.jdbc.batch_size: 50`, `order_inserts: true`, and use `entityManager.flush()` + `entityManager.clear()` every batch to manage memory.
+:::
+
+## Interview Questions
+
+**Q1: What is the N+1 query problem and how do you solve it?**
+::: details Answer
+The N+1 problem occurs when loading a list of N entities triggers N additional queries to fetch each entity's relationship. For example, loading 100 orders and then accessing each order's customer triggers 1 query for orders + 100 queries for customers = 101 queries. Solutions: (1) `JOIN FETCH` in JPQL fetches related entities in a single query. (2) `@EntityGraph` declaratively specifies which associations to eagerly load. (3) `@BatchSize(size = 25)` or `hibernate.default_batch_fetch_size` batches lazy loads into IN queries, reducing 101 queries to about 5.
+:::
+
+**Q2: What is the difference between first-level cache (L1) and second-level cache (L2) in Hibernate?**
+::: details Answer
+The L1 cache is the Hibernate Session (EntityManager) cache. It is automatic, per-transaction, and always enabled. An entity loaded twice in the same transaction returns the same Java object. The L2 cache is the SessionFactory-level cache, shared across all sessions. It is optional, requires explicit configuration (e.g., Ehcache, Caffeine via JCache), and must be enabled per entity with `@Cacheable` and `@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)`. L1 handles identity within a transaction; L2 handles repeated reads across transactions for read-heavy, rarely-updated data.
+:::
+
+**Q3: When should you use `@EntityGraph` vs. `JOIN FETCH`?**
+::: details Answer
+Both solve the N+1 problem by eagerly loading associations. `@EntityGraph` is declarative and defined on the repository method with `@EntityGraph(attributePaths = {"customer", "items"})`. `JOIN FETCH` is written in JPQL with `@Query("SELECT o FROM Order o JOIN FETCH o.customer")`. Use `@EntityGraph` for simple cases where you want to reuse a derived query method with eager loading. Use `JOIN FETCH` for complex queries with multiple joins, filtering on the joined entity, or when you need a count query for pagination (which `@EntityGraph` does not support directly).
+:::
+
+**Q4: How does `@Transactional(readOnly = true)` improve performance?**
+::: details Answer
+`readOnly = true` provides three performance benefits: (1) Hibernate skips dirty checking at flush time because it knows no modifications will occur, saving CPU for large result sets. (2) Hibernate can use a read-only flush mode, avoiding unnecessary database writes. (3) Some databases and connection pools route read-only transactions to read replicas, distributing load. Always use it on service methods or classes that only perform queries.
+:::
+
+**Q5: What is the purpose of `hibernate.jdbc.batch_size` and how does it work?**
+::: details Answer
+JDBC batching groups multiple INSERT, UPDATE, or DELETE statements into a single network round-trip to the database. Setting `hibernate.jdbc.batch_size: 50` means Hibernate accumulates up to 50 statements before sending them as a batch. Combined with `order_inserts: true` and `order_updates: true`, Hibernate groups statements by entity type, maximizing batch efficiency. Without batching, inserting 1000 entities requires 1000 network round-trips; with a batch size of 50, it takes only 20. This is critical for bulk import and ETL operations.
+:::

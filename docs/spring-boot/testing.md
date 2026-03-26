@@ -555,3 +555,62 @@ Use the pattern `methodUnderTest_condition_expectedResult`. Examples: `placeOrde
 - **[Spring Data JPA](./spring-data-jpa)** — Repository patterns
 - **[Exception Handling](./exception-handling)** — Testing error responses
 - **[Spring Security](./security)** — Security testing with @WithMockUser
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Loading the full Spring context for every test
+Using `@SpringBootTest` for all tests loads the entire application context, making test suites painfully slow (minutes instead of seconds).
+**Fix:** Use test slices: `@WebMvcTest` for controllers, `@DataJpaTest` for repositories, `@JsonTest` for serialization. Reserve `@SpringBootTest` for end-to-end integration tests.
+:::
+
+::: danger Pitfall 2: Using H2 for repository tests instead of real databases
+H2 behaves differently from PostgreSQL/MySQL for SQL syntax, constraints, JSON columns, and full-text search, giving false confidence.
+**Fix:** Use Testcontainers with a real database image matching production. Extend a base test class that starts the container once and reuses it across tests.
+:::
+
+::: danger Pitfall 3: Over-mocking service internals
+Mocking every dependency in a test verifies mock interactions, not actual behavior. Tests pass even when the real code is broken.
+**Fix:** Test behavior, not implementation. For unit tests, mock only external boundaries (databases, HTTP clients). For integration tests, use real services with Testcontainers.
+:::
+
+::: danger Pitfall 4: Forgetting to test error paths and edge cases
+Testing only the happy path means bugs in error handling, validation, and boundary conditions are not caught until production.
+**Fix:** For every test of the success path, write tests for: invalid input (400), missing resource (404), duplicate resource (409), unauthorized access (401/403), and downstream failures (502/503).
+:::
+
+::: danger Pitfall 5: Not cleaning up test state between tests
+Shared test state (database records, cache entries) from one test leaks into another, causing flaky tests that pass individually but fail together.
+**Fix:** Use `@Transactional` on test classes (auto-rollback), `@DirtiesContext` when needed, or `@BeforeEach` cleanup methods. Testcontainers with `@Container` provide isolation by default.
+:::
+
+::: danger Pitfall 6: Creating new Testcontainers for every test class
+Starting a new PostgreSQL container for each test class adds 5-10 seconds per class, making the suite very slow.
+**Fix:** Use shared containers with `static` container fields and `@Container` with `withReuse(true)`. Or use a base class with `@ServiceConnection` that all integration tests extend.
+:::
+
+## Interview Questions
+
+**Q1: What is the difference between `@WebMvcTest`, `@DataJpaTest`, and `@SpringBootTest`?**
+::: details Answer
+`@WebMvcTest` loads only the web layer (controllers, filters, advice, converters) and provides `MockMvc` for testing HTTP requests without starting a server. Service dependencies are mocked with `@MockBean`. `@DataJpaTest` loads only the JPA layer (entities, repositories, EntityManager) with an embedded or test database. It auto-configures Flyway/Liquibase and rolls back transactions. `@SpringBootTest` loads the complete application context with all beans. Use it for end-to-end integration tests. Each slice test is faster because it loads fewer beans.
+:::
+
+**Q2: How does `@MockBean` differ from Mockito's `mock()` and when should you use each?**
+::: details Answer
+`@MockBean` is a Spring Test annotation that creates a Mockito mock AND registers it as a bean in the Spring context, replacing any existing bean of the same type. Use it in slice tests (`@WebMvcTest`, `@DataJpaTest`) to mock dependencies that the tested slice needs. Mockito's `mock()` creates a standalone mock without any Spring context involvement. Use it in pure unit tests (no Spring) where you instantiate the class under test with `new MyService(mock1, mock2)`. `@MockBean` is slower because it requires a Spring context; `mock()` is faster for pure unit tests.
+:::
+
+**Q3: What is Testcontainers and how do you use it with Spring Boot?**
+::: details Answer
+Testcontainers is a Java library that runs Docker containers for integration tests. It provides pre-built modules for PostgreSQL, Redis, Kafka, Elasticsearch, and other infrastructure. In Spring Boot, you annotate a test with `@Testcontainers`, declare a `@Container` static field (e.g., `PostgreSQLContainer`), and use `@DynamicPropertySource` or `@ServiceConnection` (Spring Boot 3.1+) to inject container connection details into Spring properties. Containers start before tests and stop after. Use `withReuse(true)` to keep containers running across test runs for faster iteration.
+:::
+
+**Q4: How do you test controllers that require authentication?**
+::: details Answer
+Spring Security Test provides several approaches: (1) `@WithMockUser(roles = "ADMIN")` creates a mock authentication with specified roles. (2) `@WithUserDetails("admin@test.com")` loads a real user from `UserDetailsService`. (3) `.with(jwt().jwt(j -> j.claim("roles", List.of("ADMIN"))))` for OAuth2/JWT-protected endpoints. (4) `.with(httpBasic("user", "password"))` for Basic auth. Always test: unauthenticated access returns 401, unauthorized role returns 403, and authorized role returns the expected response.
+:::
+
+**Q5: What is the test naming convention `methodUnderTest_condition_expectedResult` and why use it?**
+::: details Answer
+This convention (e.g., `placeOrder_insufficientStock_throwsException`, `findById_existingId_returnsProduct`) makes test failures self-documenting. When a test fails in CI, the name immediately tells you what was tested, under what condition, and what was expected. You do not need to read the test code to understand the failure. It also enforces that each test method has a single, clear assertion. Alternative conventions like `should_throwException_when_stockInsufficient` or `givenInsufficientStock_whenPlaceOrder_thenThrowsException` (BDD style) serve the same purpose.
+:::

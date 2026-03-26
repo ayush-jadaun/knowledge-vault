@@ -35,6 +35,28 @@ For the nearest points (support vectors), we normalize so that $|\mathbf{w}^T \m
 
 $$\text{margin} = \frac{2}{\|\mathbf{w}\|}$$
 
+::: details Worked Example — SVM Margin Calculation
+
+**2D dataset with w = [2, 1], b = -5:**
+
+**Step 1:** Compute ||w||
+  ||w|| = sqrt(2^2 + 1^2) = sqrt(4 + 1) = sqrt(5) = 2.236
+
+**Step 2:** Compute margin
+  margin = 2 / ||w|| = 2 / 2.236 = 0.894
+
+**Step 3:** Compute distance of point x = [3, 2] from the hyperplane
+  distance = |w^T x + b| / ||w|| = |2(3) + 1(2) - 5| / 2.236
+           = |6 + 2 - 5| / 2.236 = |3| / 2.236 = 1.342
+
+**Step 4:** Classify the point
+  f(x) = 2(3) + 1(2) - 5 = 3 > 0 -> class +1
+
+**Interpret:**
+  "The margin is 0.894 units wide. Point [3,2] is 1.342 units from the boundary (well outside the margin of 0.447 on each side), so it's confidently classified as +1."
+
+:::
+
 ### The Optimization Problem
 
 Maximize the margin = minimize $\|\mathbf{w}\|^2$:
@@ -220,6 +242,29 @@ This is computationally brilliant — the dual problem only needs dot products b
 | **Polynomial** | $K(\mathbf{x}, \mathbf{z}) = (\gamma \mathbf{x}^T \mathbf{z} + r)^d$ | $\gamma$, $r$, degree $d$ |
 | **RBF (Gaussian)** | $K(\mathbf{x}, \mathbf{z}) = \exp(-\gamma \|\mathbf{x} - \mathbf{z}\|^2)$ | $\gamma$ |
 | **Sigmoid** | $K(\mathbf{x}, \mathbf{z}) = \tanh(\gamma \mathbf{x}^T \mathbf{z} + r)$ | $\gamma$, $r$ |
+
+::: details Worked Example — Kernel Computations
+
+**Two points: x = [1, 2], z = [3, 1], gamma = 0.5:**
+
+**Step 1:** Linear kernel
+  K_linear = x^T z = 1(3) + 2(1) = 3 + 2 = 5
+
+**Step 2:** Polynomial kernel (degree=2, r=1, gamma=1)
+  K_poly = (1 * x^T z + 1)^2 = (1*5 + 1)^2 = 6^2 = 36
+
+**Step 3:** RBF kernel (gamma=0.5)
+  ||x - z||^2 = (1-3)^2 + (2-1)^2 = 4 + 1 = 5
+  K_rbf = exp(-0.5 * 5) = exp(-2.5) = 0.082
+
+**Step 4:** RBF with same point (x = z)
+  ||x - x||^2 = 0
+  K_rbf = exp(-0.5 * 0) = exp(0) = 1.0
+
+**Interpret:**
+  "The RBF kernel gives 1.0 for identical points and decays to 0 as points move apart. With gamma=0.5, points 5 squared-distance units apart have similarity 0.082 (very dissimilar). Higher gamma makes the kernel more local."
+
+:::
 
 ### RBF Kernel Deep Dive
 

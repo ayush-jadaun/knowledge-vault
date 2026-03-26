@@ -828,3 +828,67 @@ public class PaymentService {
 - **[Spring Security](./security)** — Authentication and authorization fundamentals
 - **[Testing](./testing)** — How to test beans, services, and controllers
 - **[Best Practices](./best-practices)** — Anti-patterns to avoid in production
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Using field injection instead of constructor injection
+Field injection (`@Autowired private MyService service;`) hides dependencies, prevents immutability, and makes unit testing painful because you need reflection or a Spring context to set fields.
+**Fix:** Always use constructor injection. With a single constructor, `@Autowired` is not even needed. Lombok's `@RequiredArgsConstructor` eliminates boilerplate.
+:::
+
+::: danger Pitfall 2: Putting business logic in @PostConstruct
+Heavy initialization in `@PostConstruct` slows startup, cannot be retried on failure, and runs before the application is fully ready to serve traffic.
+**Fix:** Use `ApplicationRunner` or `SmartLifecycle` for startup logic. These run after the full context is initialized and support ordering.
+:::
+
+::: danger Pitfall 3: Using @Component for everything
+Annotating every class with `@Component` instead of the appropriate stereotype (`@Service`, `@Repository`, `@Controller`) loses semantic meaning and disables features like exception translation for repositories.
+**Fix:** Use `@Service` for business logic, `@Repository` for data access (enables exception translation), `@Controller`/`@RestController` for web endpoints, and `@Component` only when nothing else fits.
+:::
+
+::: danger Pitfall 4: Not understanding prototype scope inside singleton
+Injecting a prototype-scoped bean into a singleton gives you only one instance of the prototype. The prototype scope is effectively ignored.
+**Fix:** Use `ObjectProvider<T>` or `Provider<T>` to get a new instance on each call. Alternatively, use `@Lookup` annotation on a method.
+:::
+
+::: danger Pitfall 5: Hardcoding configuration values
+Embedding environment-specific values (URLs, credentials, feature flags) directly in Java code makes deployments inflexible and insecure.
+**Fix:** Use `@ConfigurationProperties` with records for type-safe, validated configuration. Externalize secrets via environment variables or a secret manager.
+:::
+
+::: danger Pitfall 6: Ignoring the property precedence order
+Not understanding that command-line arguments override environment variables, which override application.yml, leads to unexpected behavior in different environments.
+**Fix:** Learn the Spring Boot property precedence order. Use `application-{profile}.yml` for environment-specific config, and test with the same profile structure as production.
+:::
+
+::: danger Pitfall 7: Creating circular dependencies between beans
+Two beans that depend on each other via constructor injection cause a `BeanCurrentlyInCreationException` at startup.
+**Fix:** Refactor to break the cycle. Extract shared logic into a third service, use events for decoupling, or as a last resort, apply `@Lazy` on one dependency.
+:::
+
+## Interview Questions
+
+**Q1: What is the difference between `@Component`, `@Service`, `@Repository`, and `@Controller`?**
+::: details Answer
+All four are stereotype annotations that register a class as a Spring bean. `@Component` is the generic stereotype. `@Service` indicates business logic (no special behavior beyond `@Component`). `@Repository` marks the data access layer and enables automatic exception translation from JDBC/JPA exceptions to Spring's `DataAccessException` hierarchy. `@Controller` marks a web controller with view resolution, and `@RestController` combines `@Controller` with `@ResponseBody` so every method return value is serialized directly to the response body.
+:::
+
+**Q2: Explain the Spring bean lifecycle from creation to destruction.**
+::: details Answer
+The lifecycle follows this order: (1) Bean definition is loaded from configuration. (2) The constructor is called (instantiation). (3) Dependencies are injected (field/setter injection if used). (4) `BeanPostProcessor.postProcessBeforeInitialization()` runs. (5) `@PostConstruct` method executes. (6) `InitializingBean.afterPropertiesSet()` runs. (7) Custom init-method runs. (8) `BeanPostProcessor.postProcessAfterInitialization()` runs. (9) The bean is ready for use. On shutdown: (10) `@PreDestroy` runs. (11) `DisposableBean.destroy()` runs. (12) Custom destroy-method runs. For practical purposes, use `@PostConstruct` for initialization and `@PreDestroy` for cleanup.
+:::
+
+**Q3: Why is constructor injection preferred over field injection?**
+::: details Answer
+Constructor injection is preferred for five reasons: (1) **Immutability** -- dependencies can be declared `final`, ensuring they are not changed after construction. (2) **Required dependencies enforced** -- the compiler enforces that all required dependencies are provided; with field injection, you get `NullPointerException` at runtime. (3) **Testability** -- you can instantiate the class with `new MyService(mockA, mockB)` in tests without Spring or reflection. (4) **No framework coupling** -- a constructor is plain Java; field injection requires `@Autowired` and Spring. (5) **Circular dependency detection** -- circular dependencies are caught at startup with a clear error, rather than silently working with setter/field injection.
+:::
+
+**Q4: What are Spring profiles and how do you use them?**
+::: details Answer
+Profiles let you define different configurations for different environments (dev, test, staging, prod). You activate a profile via the `SPRING_PROFILES_ACTIVE` environment variable, the `--spring.profiles.active` command-line argument, or in `application.yml`. Profile-specific properties go in `application-{profile}.yml` files. You can also annotate beans with `@Profile("dev")` to make them available only when that profile is active. Multiple profiles can be active simultaneously (e.g., `prod,kafka,metrics`). In tests, use `@ActiveProfiles("test")`.
+:::
+
+**Q5: How does `@ConfigurationProperties` work and why prefer it over `@Value`?**
+::: details Answer
+`@ConfigurationProperties` binds a group of related properties to a Java object (preferably a record). It supports type-safe binding, validation with `@Validated` and Jakarta constraints (`@NotBlank`, `@Min`), nested objects, and IDE auto-completion. Compared to `@Value`, it provides (1) type safety at startup rather than runtime failures, (2) grouped properties rather than scattered `@Value` annotations, (3) built-in validation, (4) immutability with records, and (5) easier testing since you can construct the properties object directly. Use `@EnableConfigurationProperties(MyProperties.class)` or `@ConfigurationPropertiesScan` to register them.
+:::

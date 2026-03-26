@@ -522,3 +522,166 @@ Removing an outlier because it makes your model perform better is p-hacking by a
 | [Data Cleaning — Text](/eda/data-cleaning-text) | String standardization, regex, fuzzy matching |
 | [Data Quality Validation](/eda/data-quality-validation) | Automated constraint checking |
 | [Missing Data](/eda/missing-data) | When outliers are actually missing data in disguise |
+
+## Try It Yourself
+
+**Exercise 1:** Given a dataset of 1,000 customer transactions with columns `[amount, category, timestamp, customer_id]`, how would you check for outliers in the `amount` column using both IQR and Modified Z-score? Compare the results.
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+
+# IQR method
+Q1 = df['amount'].quantile(0.25)
+Q3 = df['amount'].quantile(0.75)
+IQR = Q3 - Q1
+lower = Q1 - 1.5 * IQR
+upper = Q3 + 1.5 * IQR
+iqr_outliers = df[(df['amount'] < lower) | (df['amount'] > upper)]
+print(f"IQR method: Found {len(iqr_outliers)} outliers ({len(iqr_outliers)/len(df)*100:.1f}%)")
+print(f"  Bounds: [{lower:.2f}, {upper:.2f}]")
+
+# Modified Z-score (MAD-based)
+median = df['amount'].median()
+mad = np.median(np.abs(df['amount'] - median))
+modified_z = 0.6745 * (df['amount'] - median) / mad
+mz_outliers = df[np.abs(modified_z) > 3.5]
+print(f"\nModified Z-score: Found {len(mz_outliers)} outliers ({len(mz_outliers)/len(df)*100:.1f}%)")
+
+# Compare
+iqr_set = set(iqr_outliers.index)
+mz_set = set(mz_outliers.index)
+print(f"\nOverlap: {len(iqr_set & mz_set)} outliers detected by both methods")
+print(f"IQR only: {len(iqr_set - mz_set)}, Modified Z only: {len(mz_set - iqr_set)}")
+```
+:::
+
+**Exercise 2:** You have a 2D dataset with features `[height_cm, weight_kg]` for 500 people. The two features are positively correlated. A person with height=175 and weight=55 is not an outlier in either dimension alone but is unusual for the combination. Write code using Mahalanobis distance to detect such multivariate outliers.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+from scipy.spatial.distance import mahalanobis
+from scipy import stats
+
+X = df[['height_cm', 'weight_kg']].values
+
+# Compute Mahalanobis distance for each point
+cov_matrix = np.cov(X.T)
+cov_inv = np.linalg.inv(cov_matrix)
+center = X.mean(axis=0)
+
+distances = np.array([
+    mahalanobis(point, center, cov_inv) for point in X
+])
+
+# Threshold: chi-squared distribution with p=2 degrees of freedom
+threshold = np.sqrt(stats.chi2.ppf(0.975, df=2))
+outlier_mask = distances > threshold
+
+print(f"Mahalanobis threshold (97.5%): {threshold:.2f}")
+print(f"Multivariate outliers: {outlier_mask.sum()}")
+
+# Show that univariate methods miss these
+for col in ['height_cm', 'weight_kg']:
+    z = np.abs(stats.zscore(df[col]))
+    print(f"  {col} univariate outliers (|z|>2.5): {(z > 2.5).sum()}")
+
+# Check the specific person
+person = np.array([175, 55])
+person_dist = mahalanobis(person, center, cov_inv)
+print(f"\nPerson (175cm, 55kg) Mahalanobis distance: {person_dist:.2f}")
+print(f"Is multivariate outlier: {person_dist > threshold}")
+```
+:::
+
+**Exercise 3:** A manufacturing quality dataset has 10,000 sensor readings with columns `[temperature, pressure, vibration, output_quality]`. You need to detect anomalous sensor readings using Isolation Forest, then decide whether to remove, winsorize, or keep the outliers. Write the detection code and explain your decision framework.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import IsolationForest
+
+features = ['temperature', 'pressure', 'vibration']
+X = df[features].values
+
+# Fit Isolation Forest
+iso = IsolationForest(
+    n_estimators=200,
+    contamination=0.05,   # expect ~5% anomalies
+    random_state=42
+)
+df['anomaly'] = iso.fit_predict(X)       # 1 = normal, -1 = anomaly
+df['anomaly_score'] = iso.decision_function(X)  # lower = more anomalous
+
+n_anomalies = (df['anomaly'] == -1).sum()
+print(f"Anomalies detected: {n_anomalies} ({n_anomalies/len(df)*100:.1f}%)")
+
+# Decision framework:
+# 1. Check if anomalies correlate with poor output quality
+anomaly_quality = df.groupby('anomaly')['output_quality'].mean()
+print(f"\nMean quality — Normal: {anomaly_quality[1]:.2f}, Anomaly: {anomaly_quality[-1]:.2f}")
+
+# 2. If anomalies predict bad quality -> they ARE the signal (KEEP)
+# 3. If anomalies are random sensor glitches -> REMOVE or WINSORIZE
+# 4. If anomalies are extreme but real -> WINSORIZE to reduce influence
+
+if anomaly_quality[-1] < anomaly_quality[1] * 0.8:
+    print("Decision: KEEP — anomalies predict quality problems (they are the signal)")
+else:
+    print("Decision: WINSORIZE — cap extreme values to 1st/99th percentile")
+    for col in features:
+        lower, upper = df[col].quantile([0.01, 0.99])
+        df[col] = df[col].clip(lower, upper)
+```
+:::
+
+## Quick Quiz
+
+**1. Why is the IQR method preferred over Z-score for skewed distributions?**
+- a) IQR is faster to compute
+- b) IQR does not assume normality and uses median-based statistics
+- c) IQR always detects more outliers
+
+::: details Answer
+**b) IQR does not assume normality and uses median-based statistics.** Z-score assumes the data is approximately normal and uses mean and standard deviation, both of which are themselves distorted by outliers. IQR uses quartiles (Q1, Q3), which are robust to extreme values and make no distributional assumptions.
+:::
+
+**2. What does Isolation Forest use to determine if a point is an outlier?**
+- a) The distance to the nearest cluster center
+- b) The average number of random splits needed to isolate the point
+- c) The Z-score of each feature
+
+::: details Answer
+**b) The average number of random splits needed to isolate the point.** Isolation Forest builds random trees by selecting random features and random split points. Outliers, being rare and different, require fewer splits to isolate. The anomaly score is based on the average path length across all trees -- shorter paths indicate outliers.
+:::
+
+**3. You find a customer with a $50,000 single transaction in an e-commerce dataset where the median is $45. What should you do FIRST?**
+- a) Remove it immediately — it is clearly an outlier
+- b) Winsorize it to the 99th percentile
+- c) Verify whether it is a data error or a legitimate transaction
+
+::: details Answer
+**c) Verify whether it is a data error or a legitimate transaction.** The first step is always to determine if the outlier is real. A $50,000 transaction could be a bulk order, a B2B purchase, or a data entry error (e.g., cents stored as dollars). Removing a real data point biases your analysis; keeping a data error corrupts it. Check the source before deciding.
+:::
+
+**4. What is the key advantage of Mahalanobis distance over computing Z-scores for each feature independently?**
+- a) It is computationally cheaper
+- b) It detects points that are outliers in the combination of features, even if normal in each feature alone
+- c) It works without any data
+
+::: details Answer
+**b) It detects points that are outliers in the combination of features, even if normal in each feature alone.** Mahalanobis distance accounts for correlations between features. A person who is 190cm tall and weighs 50kg might have normal values in each dimension separately, but the combination is extremely unusual given the positive correlation between height and weight. Univariate Z-scores miss this entirely.
+:::
+
+**5. When should you NOT remove outliers?**
+- a) When they are caused by sensor malfunction
+- b) When they represent the phenomenon you are trying to detect (e.g., fraud)
+- c) When they are data entry errors with impossible values
+
+::: details Answer
+**b) When they represent the phenomenon you are trying to detect (e.g., fraud).** In fraud detection, cybersecurity, manufacturing quality control, and scientific discovery, outliers ARE the signal. Removing them defeats the purpose of the analysis. Only remove outliers when they are confirmed data errors or when they distort an analysis where they are irrelevant to the research question.
+:::

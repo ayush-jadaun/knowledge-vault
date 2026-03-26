@@ -445,3 +445,211 @@ flowchart TD
 - UMAP is generally preferred over t-SNE: it is faster, preserves more global structure, and supports transforming new points.
 - Clustering during EDA is exploratory. Use silhouette scores and cluster profiles to validate, but do not over-interpret.
 - Factor analysis is complementary to PCA. Use it when you believe latent factors cause the observed correlations.
+
+## Try It Yourself
+
+**Exercise 1:** You have a dataset with 20 numerical features and 5,000 samples. Build a correlation matrix, identify pairs with |r| > 0.8, and create a clustered heatmap that groups correlated features together. Recommend which features could be dropped due to redundancy.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from scipy.cluster.hierarchy import linkage, dendrogram
+from scipy.spatial.distance import squareform
+
+# Correlation matrix
+corr = df[feature_cols].corr()
+
+# Find strongly correlated pairs
+strong_pairs = []
+for i in range(len(corr)):
+    for j in range(i + 1, len(corr)):
+        r = corr.iloc[i, j]
+        if abs(r) > 0.8:
+            strong_pairs.append((corr.index[i], corr.columns[j], r))
+
+strong_pairs.sort(key=lambda x: abs(x[2]), reverse=True)
+print("Strongly correlated pairs (|r| > 0.8):")
+for f1, f2, r in strong_pairs:
+    print(f"  {f1} <-> {f2}: r={r:+.3f}")
+
+# Clustered heatmap
+dist = 1 - np.abs(corr.values)
+np.fill_diagonal(dist, 0)
+condensed = squareform(dist)
+link = linkage(condensed, method='ward')
+dendro = dendrogram(link, no_plot=True)
+reorder = dendro['leaves']
+
+corr_reordered = corr.iloc[reorder, reorder]
+fig, ax = plt.subplots(figsize=(12, 10))
+mask = np.triu(np.ones_like(corr_reordered, dtype=bool), k=1)
+sns.heatmap(corr_reordered, mask=mask, annot=True, fmt='.2f',
+            cmap='RdBu_r', center=0, ax=ax, linewidths=0.5)
+ax.set_title('Clustered Correlation Matrix')
+plt.tight_layout()
+plt.show()
+
+# Redundancy recommendation
+print("\nRedundancy recommendations:")
+for f1, f2, r in strong_pairs:
+    print(f"  Drop one of: {f1} or {f2} (r={r:+.3f})")
+    print(f"    Keep the one with higher variance or domain importance")
+```
+:::
+
+**Exercise 2:** Perform PCA on a dataset with 15 features. Determine how many components explain 90% of variance, visualize the first two components colored by a known label, and interpret the loadings of the first component to explain what it represents.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+# Standardize (PCA is scale-sensitive)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(df[feature_cols])
+
+# Fit PCA
+pca = PCA()
+X_pca = pca.fit_transform(X_scaled)
+
+# Variance explained
+cumvar = np.cumsum(pca.explained_variance_ratio_)
+n_90 = np.argmax(cumvar >= 0.90) + 1
+print(f"Components for 90% variance: {n_90} (out of {len(feature_cols)})")
+
+# Scree plot
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+axes[0].bar(range(1, len(feature_cols) + 1), pca.explained_variance_ratio_ * 100,
+            color='steelblue', edgecolor='black')
+axes[0].plot(range(1, len(feature_cols) + 1), cumvar * 100, 'ro-')
+axes[0].axhline(90, color='gray', linestyle='--', label='90%')
+axes[0].set_xlabel('Component')
+axes[0].set_ylabel('Variance Explained (%)')
+axes[0].set_title('Scree Plot')
+axes[0].legend()
+
+# 2D projection colored by label
+for label in df['category'].unique():
+    mask = df['category'] == label
+    axes[1].scatter(X_pca[mask, 0], X_pca[mask, 1], alpha=0.4, s=15, label=label)
+axes[1].set_xlabel(f'PC1 ({pca.explained_variance_ratio_[0]*100:.1f}%)')
+axes[1].set_ylabel(f'PC2 ({pca.explained_variance_ratio_[1]*100:.1f}%)')
+axes[1].set_title('PCA 2D Projection')
+axes[1].legend()
+plt.tight_layout()
+plt.show()
+
+# Interpret PC1 loadings
+loadings_pc1 = pd.Series(pca.components_[0], index=feature_cols)
+print(f"\nPC1 loadings (top contributors):")
+for feat in loadings_pc1.abs().nlargest(5).index:
+    print(f"  {feat}: {loadings_pc1[feat]:+.3f}")
+print(f"\nPC1 represents: [interpret based on which features load highest]")
+```
+:::
+
+**Exercise 3:** Use K-Means clustering (k=2 to 8) on a standardized dataset to find the optimal number of clusters. Use the silhouette score to choose k, then profile each cluster by computing the mean of each feature. Visualize the clusters using the first 2 PCA components.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from sklearn.decomposition import PCA
+
+X_scaled = StandardScaler().fit_transform(df[feature_cols])
+
+# Find optimal k using silhouette score
+k_range = range(2, 9)
+silhouettes = []
+for k in k_range:
+    km = KMeans(n_clusters=k, random_state=42, n_init=10)
+    labels = km.fit_predict(X_scaled)
+    sil = silhouette_score(X_scaled, labels)
+    silhouettes.append(sil)
+    print(f"k={k}: silhouette={sil:.4f}")
+
+best_k = list(k_range)[np.argmax(silhouettes)]
+print(f"\nBest k = {best_k} (silhouette = {max(silhouettes):.4f})")
+
+# Fit with best k
+km = KMeans(n_clusters=best_k, random_state=42, n_init=10)
+df['cluster'] = km.fit_predict(X_scaled)
+
+# Profile clusters
+print(f"\nCluster profiles (means):")
+profiles = df.groupby('cluster')[feature_cols].mean()
+print(profiles.round(2).to_string())
+
+# Visualize on PCA
+pca = PCA(n_components=2)
+X_2d = pca.fit_transform(X_scaled)
+
+fig, ax = plt.subplots(figsize=(10, 7))
+for c in range(best_k):
+    mask = df['cluster'] == c
+    ax.scatter(X_2d[mask, 0], X_2d[mask, 1], alpha=0.4, s=15, label=f'Cluster {c}')
+ax.set_xlabel(f'PC1 ({pca.explained_variance_ratio_[0]*100:.1f}%)')
+ax.set_ylabel(f'PC2 ({pca.explained_variance_ratio_[1]*100:.1f}%)')
+ax.set_title(f'K-Means Clusters (k={best_k}) on PCA')
+ax.legend()
+plt.tight_layout()
+plt.show()
+```
+:::
+
+## Quick Quiz
+
+**1. Why must you standardize features before running PCA?**
+- a) PCA requires all values to be positive
+- b) PCA maximizes variance; without scaling, high-magnitude features dominate the components
+- c) Standardization makes the data normally distributed
+
+::: details Answer
+**b) PCA maximizes variance; without scaling, high-magnitude features dominate the components.** A salary column ranging from 30,000-300,000 has far more variance than an age column ranging from 18-70. Without standardization, PCA would assign almost all importance to salary simply because of its larger scale, not because it carries more information.
+:::
+
+**2. What is the most important limitation of t-SNE that does NOT apply to UMAP?**
+- a) t-SNE requires GPU acceleration
+- b) t-SNE cannot project new, unseen data points (no `transform()` method)
+- c) t-SNE only works with numerical data
+
+::: details Answer
+**b) t-SNE cannot project new, unseen data points (no `transform()` method).** t-SNE must refit from scratch when new data arrives, making it impractical for production pipelines. UMAP, by contrast, has a `transform()` method that can project new points using the learned embedding. UMAP is also faster and preserves more global structure.
+:::
+
+**3. A scree plot shows that the first 3 components explain 85% of variance in a 20-feature dataset. What does this tell you?**
+- a) You should drop 17 features
+- b) The data has approximately 3 intrinsic dimensions; most features are redundant or correlated
+- c) The first 3 features are the most important
+
+::: details Answer
+**b) The data has approximately 3 intrinsic dimensions; most features are redundant or correlated.** The scree plot reveals that 20 features can be compressed to 3 components with only 15% information loss. This means most features share information (are correlated). Note: PCA components are not individual features -- they are linear combinations of all features.
+:::
+
+**4. In a clustered correlation heatmap, you see a block of 5 features that are all correlated with r > 0.7 with each other. What should you consider?**
+- a) These features are all incorrect and should be removed
+- b) They likely measure the same underlying construct; keep one or create a composite (PCA component)
+- c) They should all be included as-is for maximum model accuracy
+
+::: details Answer
+**b) They likely measure the same underlying construct; keep one or create a composite (PCA component).** A block of highly correlated features indicates they are measuring the same latent variable. Including all of them adds noise, multicollinearity, and computational cost without adding much information. Keep the most interpretable one, or use PCA to create a single composite feature from the group.
+:::
+
+**5. K-Means gives you 4 clusters with silhouette score 0.65 and 6 clusters with silhouette score 0.42. Which should you choose?**
+- a) 6 clusters, because more clusters always give better results
+- b) 4 clusters, because the higher silhouette score indicates better-separated, more cohesive clusters
+- c) The average of the two: 5 clusters
+
+::: details Answer
+**b) 4 clusters, because the higher silhouette score indicates better-separated, more cohesive clusters.** The silhouette score measures how similar points are to their own cluster compared to neighboring clusters (range: -1 to 1). A score of 0.65 means clusters are well-defined, while 0.42 indicates substantial overlap. More clusters is not always better -- it can split natural groups into meaningless fragments.
+:::

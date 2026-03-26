@@ -441,6 +441,31 @@ Lower perplexity = better model. Perplexity can be interpreted as the effective 
 | GPT-2 (1.5B) | ~18 |
 | GPT-3 (175B) | ~10 |
 
+::: details Worked Example — Perplexity Calculation
+
+**Setup:** A language model evaluated on the sentence "the cat sat" (3 tokens). The model assigns these probabilities:
+
+| Position | Token | $P(w_t | w_{<t})$ | $\log P$ |
+|---|---|---|---|
+| 1 | the | 0.10 | $-2.303$ |
+| 2 | cat | 0.05 | $-2.996$ |
+| 3 | sat | 0.20 | $-1.609$ |
+
+**Step 1:** Average negative log-likelihood:
+$$-\frac{1}{3}\sum \log P = -\frac{1}{3}(-2.303 + (-2.996) + (-1.609)) = \frac{6.908}{3} = 2.303$$
+
+**Step 2:** Exponentiate:
+$$\text{PPL} = e^{2.303} = 10.0$$
+
+**Interpretation:** On average, the model is as uncertain as choosing uniformly among 10 equally likely tokens at each position. A model assigning $P = 0.5$ to every token would have PPL = 2 (like a coin flip). A perfect model with $P = 1.0$ for every token would have PPL = 1.
+
+**Compare two models:**
+- Model A: PPL = 10 on test set (like choosing from 10 options)
+- Model B: PPL = 30 on test set (like choosing from 30 options)
+- Model A is better --- it's less "confused" about the next token.
+
+:::
+
 ## Cross-References
 
 - **Architecture:** [Transformers](/deep-learning/transformers) --- self-attention, positional encoding

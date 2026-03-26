@@ -59,6 +59,32 @@ $$
 
 By induction: $x_t = \sqrt{\bar{\alpha}_t} x_0 + \sqrt{1 - \bar{\alpha}_t} \, \epsilon$.
 
+::: details Worked Example — Forward Noise Addition at Different Timesteps
+
+**Setup:** 1D signal $x_0 = 1.0$ (scalar for simplicity). Linear schedule: $\beta_1 = 0.001$, $\beta_2 = 0.002$, $\beta_3 = 0.003$.
+
+$\alpha_t = 1 - \beta_t$: $\alpha_1 = 0.999$, $\alpha_2 = 0.998$, $\alpha_3 = 0.997$
+
+$\bar{\alpha}_t = \prod_{s=1}^t \alpha_s$: $\bar{\alpha}_1 = 0.999$, $\bar{\alpha}_2 = 0.997$, $\bar{\alpha}_3 = 0.994$
+
+Let $\epsilon = 0.5$ (sampled noise, fixed for illustration).
+
+**Step-by-step noising:**
+
+| $t$ | $\sqrt{\bar{\alpha}_t}$ | $\sqrt{1-\bar{\alpha}_t}$ | $x_t = \sqrt{\bar{\alpha}_t} \cdot 1.0 + \sqrt{1-\bar{\alpha}_t} \cdot 0.5$ |
+|---|---|---|---|
+| 0 | 1.000 | 0.000 | **1.000** (clean) |
+| 1 | 0.9995 | 0.0316 | **1.015** |
+| 2 | 0.9985 | 0.0548 | **1.026** |
+| 3 | 0.9970 | 0.0775 | **1.036** |
+| 100 | ~0.951 | ~0.309 | **1.106** |
+| 500 | ~0.607 | ~0.795 | **1.004** |
+| 1000 | ~0.006 | ~1.000 | **0.506** (mostly noise) |
+
+**Result:** At $t=0$, the signal is pure. At early steps ($t=1,2,3$), noise is barely perceptible. By $t=1000$ with a full schedule, $\sqrt{\bar{\alpha}_{1000}} \approx 0.006$, so only 0.6% of the original signal remains --- it's essentially pure noise. The model must learn to reverse this entire process.
+
+:::
+
 ## Reverse Process
 
 The reverse process is also Gaussian (for small $\beta_t$):
@@ -245,6 +271,27 @@ $$
 
 where $w$ is the guidance scale. Higher $w$ means stronger adherence to the condition (more faithful but less diverse). Typical values: $w = 7.5$ for Stable Diffusion.
 
+::: details Worked Example — Classifier-Free Guidance
+
+**Setup:** At one denoising step, the model produces noise predictions (scalar for simplicity):
+
+- Unconditional prediction: $\epsilon_\theta(x_t, t, \varnothing) = 0.3$ (generic noise)
+- Conditional prediction (prompt "a cat"): $\epsilon_\theta(x_t, t, c) = 0.8$ (cat-specific noise)
+
+**Different guidance scales:**
+
+| $w$ | $\tilde{\epsilon} = 0.3 + w(0.8 - 0.3)$ | Effect |
+|---|---|---|
+| 0 | $0.3 + 0(0.5) = 0.3$ | Ignore condition entirely |
+| 1 | $0.3 + 1(0.5) = 0.8$ | Standard conditional (no amplification) |
+| 3 | $0.3 + 3(0.5) = 1.8$ | Moderately amplified |
+| 7.5 | $0.3 + 7.5(0.5) = 4.05$ | Strongly amplified (typical SD setting) |
+| 15 | $0.3 + 15(0.5) = 7.8$ | Very strongly amplified (oversaturated) |
+
+**Result:** At $w = 7.5$, the guidance amplifies the difference between conditional and unconditional by 7.5x. This pushes the generation strongly toward "cat-like" images. Too-high guidance ($w > 15$) produces oversaturated, artifact-heavy images because the noise prediction is pushed far beyond the training distribution.
+
+:::
+
 ## Stable Diffusion Architecture
 
 Stable Diffusion operates in a compressed latent space rather than pixel space, making it tractable:
@@ -287,6 +334,26 @@ W' = W + \Delta W = W + BA
 $$
 
 where $B \in \mathbb{R}^{d \times r}$, $A \in \mathbb{R}^{r \times k}$, and $r \ll \min(d, k)$.
+
+::: details Worked Example — LoRA Parameter Savings
+
+**Setup:** A linear layer $W \in \mathbb{R}^{4096 \times 4096}$ (typical in LLaMA 7B)
+
+Full fine-tuning: $4096 \times 4096 = 16{,}777{,}216$ parameters to update.
+
+**LoRA with rank $r = 4$:**
+$$\Delta W = BA, \quad B \in \mathbb{R}^{4096 \times 4}, \quad A \in \mathbb{R}^{4 \times 4096}$$
+
+LoRA parameters: $4096 \times 4 + 4 \times 4096 = 16{,}384 + 16{,}384 = 32{,}768$
+
+**Savings:** $32{,}768 / 16{,}777{,}216 = 0.2\%$ of original parameters.
+
+**LoRA with rank $r = 16$:**
+$$\text{params} = 4096 \times 16 \times 2 = 131{,}072 \quad (0.8\%)$$
+
+**Result:** LoRA with $r = 4$ trains only 0.2% of the parameters while typically retaining 95-99% of full fine-tuning performance. For a 7B model with ~200 linear layers, total LoRA params at $r = 4$ would be ~$200 \times 32{,}768 = 6.5M$ (vs 7B for full fine-tuning --- a 1000x reduction).
+
+:::
 
 ### Parameter Savings
 

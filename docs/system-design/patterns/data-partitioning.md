@@ -553,3 +553,23 @@ graph TD
 ---
 
 *The best partition key is one you never have to change. Spend time upfront modeling your access patterns and data growth before committing to a partitioning strategy — rebalancing after the fact is always more expensive than getting it right the first time.*
+
+## Real-World Examples
+
+::: tip Netflix (EVCache)
+Netflix uses **consistent hashing** with virtual nodes for their EVCache (distributed caching layer), distributing 30+ million cache entries across hundreds of memcached nodes. When a node fails, only ~1/N of keys need to be remapped. They use 200 virtual nodes per physical node to ensure even distribution, keeping each node within 5% of ideal load.
+:::
+
+::: tip Uber (H3)
+Uber uses **geographic partitioning** with H3 hexagonal grid cells for driver matching. The H3 system divides the world into hierarchical hexagons, allowing them to find the nearest available driver in O(1) by querying only the local hexagon and its neighbors. This is partitioning by geography with a clever data structure that avoids hot spots in dense urban areas.
+:::
+
+::: tip Discord
+Discord partitions messages by **guild_id (server ID)** using consistent hashing across their Cassandra cluster. This ensures all messages for a conversation are on the same node (fast reads), while distributing load across the cluster. For their largest servers with millions of members, they use additional partitioning by channel_id within the guild to prevent hot partitions.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"Choosing the partition key is the most critical sharding decision because it's extremely hard to change later. My criteria: high cardinality (millions of unique values), even write distribution, and alignment with query patterns. I'd use user_id for a social app (queries are per-user), order_id hash for e-commerce (even distribution), or a compound key like (sensor_id, time_bucket) for IoT data to avoid the hot-partition problem of timestamp-only keys. I'd always use consistent hashing with virtual nodes to minimize data movement when adding nodes — Netflix does this and remaps only 1/N keys per topology change."
+:::

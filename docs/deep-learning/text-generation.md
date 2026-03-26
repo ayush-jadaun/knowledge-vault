@@ -155,6 +155,45 @@ def top_k_sampling(logits, k=50, temperature=1.0):
 
 **Problem:** Fixed $k$ is wrong for every distribution. For a peaked distribution (model is confident), $k=50$ includes many low-probability tokens. For a flat distribution (model is uncertain), $k=50$ might cut off reasonable options.
 
+::: details Worked Example — Temperature Scaling, Top-k, and Top-p with Actual Logits
+
+**Input logits** (vocabulary of 6 tokens):
+$$z = [\underbrace{3.0}_{\text{Paris}}, \underbrace{1.5}_{\text{London}}, \underbrace{1.0}_{\text{the}}, \underbrace{0.5}_{\text{Berlin}}, \underbrace{-1.0}_{\text{cat}}, \underbrace{-2.0}_{\text{xyz}}]$$
+
+**Standard softmax** ($T = 1.0$):
+
+| Token | $e^{z_i}$ | $P(x_i)$ |
+|---|---|---|
+| Paris | 20.09 | **0.659** |
+| London | 4.48 | 0.147 |
+| the | 2.72 | 0.089 |
+| Berlin | 1.65 | 0.054 |
+| cat | 0.37 | 0.012 |
+| xyz | 0.14 | 0.004 |
+
+**Temperature $T = 0.5$** (sharper --- divide logits by 0.5 first):
+- $z/T = [6.0, 3.0, 2.0, 1.0, -2.0, -4.0]$
+- Paris: **0.880**, London: 0.088, the: 0.032, Berlin: 0.012, cat: 0.001, xyz: 0.0
+
+**Temperature $T = 2.0$** (flatter --- divide logits by 2.0 first):
+- $z/T = [1.5, 0.75, 0.5, 0.25, -0.5, -1.0]$
+- Paris: **0.338**, London: 0.160, the: 0.125, Berlin: 0.097, cat: 0.046, xyz: 0.028
+
+**Top-k ($k = 3$):** Keep only Paris, London, the. Renormalize:
+- Paris: $0.659/0.895 = 0.736$, London: 0.164, the: 0.100
+
+**Top-p ($p = 0.9$):** Cumulative from highest:
+- Paris: 0.659 (cumsum = 0.659 < 0.9, keep)
+- London: 0.147 (cumsum = 0.806 < 0.9, keep)
+- the: 0.089 (cumsum = 0.895 < 0.9, keep)
+- Berlin: 0.054 (cumsum = 0.950 > 0.9, stop before this)
+
+Keep: Paris, London, the (3 tokens). But if Paris had $P = 0.92$, top-p would keep only 1 token.
+
+**Result:** Temperature controls the sharpness of the distribution. $T=0.5$ makes the model 88% confident in "Paris" vs 66% at $T=1.0$. Top-p adapts dynamically: for confident predictions, it keeps few tokens; for uncertain ones, it keeps many.
+
+:::
+
 ## Top-p (Nucleus) Sampling
 
 Dynamically select the smallest set of tokens whose cumulative probability exceeds $p$:
@@ -245,6 +284,28 @@ $$
 $$
 
 The KL penalty prevents the model from gaming the reward model (reward hacking).
+
+::: details Worked Example — RLHF Reward Model Training
+
+**Setup:** Prompt: "Explain gravity." Two responses ranked by a human:
+
+- $y_w$ (preferred): "Gravity is a force that pulls objects toward each other..."
+- $y_l$ (rejected): "Gravity is complicated. Look it up."
+
+Reward model scores: $r_\phi(x, y_w) = 2.5$, $r_\phi(x, y_l) = -0.8$
+
+**Bradley-Terry loss:**
+$$\mathcal{L} = -\log\sigma(r_\phi(x, y_w) - r_\phi(x, y_l)) = -\log\sigma(2.5 - (-0.8)) = -\log\sigma(3.3)$$
+$$= -\log(0.964) = 0.037$$
+
+The loss is low (0.037) because the reward model correctly assigns a much higher score to the preferred response.
+
+**If the model were confused** ($r_w = 0.5$, $r_l = 0.3$):
+$$\mathcal{L} = -\log\sigma(0.5 - 0.3) = -\log\sigma(0.2) = -\log(0.550) = 0.598$$
+
+**Result:** The reward model loss is low (0.037) when the score gap is large and correct, high (0.598) when the model barely distinguishes the two. Training pushes the reward model to assign higher scores to human-preferred responses.
+
+:::
 
 ```mermaid
 graph LR

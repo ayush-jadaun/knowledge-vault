@@ -601,4 +601,31 @@ public class TenantAwareCacheManager implements CacheManager {
 | Forgot tenant in cache key | Cache returns wrong tenant's data | Tenant-aware CacheManager |
 | JOIN across tenant boundaries | Data leak in complex queries | Database-level isolation for sensitive data |
 
-Multi-tenancy is not just a database concern — it touches caching, async processing, file storage, background jobs, logging, and monitoring. Every layer of your application must be tenant-aware. The discriminator column approach is the easiest to implement but the hardest to get right because a single missing WHERE clause leaks data. Schema and database isolation are more expensive but structurally prevent cross-tenant access.
+Multi-tenancy is not just a database concern -- it touches caching, async processing, file storage, background jobs, logging, and monitoring. Every layer of your application must be tenant-aware. The discriminator column approach is the easiest to implement but the hardest to get right because a single missing WHERE clause leaks data. Schema and database isolation are more expensive but structurally prevent cross-tenant access.
+
+## Interview Questions
+
+**Q1: What are the three strategies for multi-tenant data isolation and when should you use each?**
+::: details Answer
+(1) **Discriminator column**: All tenants share one database and tables. Each row has a `tenant_id` column. Cheapest, supports 10,000+ tenants, but one missing WHERE clause leaks data. Best for B2C SaaS with many small tenants. (2) **Schema per tenant**: Each tenant gets a separate schema in the same database. Moderate cost, supports ~1,000 tenants, better isolation. Best for B2B SaaS where tenants need some customization. (3) **Database per tenant**: Each tenant gets a separate database. Highest cost, supports ~100 tenants, strongest isolation. Best for enterprise SaaS with compliance requirements (GDPR, SOC2) or tenants needing independent backup/restore.
+:::
+
+**Q2: How do you resolve the current tenant from an incoming request?**
+::: details Answer
+Common strategies: (1) **HTTP header** (`X-Tenant-ID`) -- simple, used for API-to-API calls. (2) **Subdomain** (`acme.app.com` resolves to tenant `acme`) -- natural for user-facing apps. (3) **JWT claim** (`tenant_id` in the access token) -- secure, tied to authentication. (4) **Path prefix** (`/tenants/acme/api/...`) -- explicit but verbose. The resolved tenant ID is stored in a `ThreadLocal` (`TenantContext`) and used throughout the request lifecycle. Always clear the context in a `finally` block and validate that the tenant exists in the registry.
+:::
+
+**Q3: How do Hibernate filters work for row-level tenant isolation?**
+::: details Answer
+Hibernate filters add automatic WHERE clauses to all queries on annotated entities. Define a filter with `@FilterDef(name = "tenantFilter", parameters = @ParamDef(name = "tenantId", type = String.class))` on a `@MappedSuperclass`. Apply it with `@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")`. Activate it on each request by calling `session.enableFilter("tenantFilter").setParameter("tenantId", currentTenant)`. Use an AOP aspect to activate the filter automatically before repository method calls. This ensures every query includes the tenant filter without explicit WHERE clauses.
+:::
+
+**Q4: What are the biggest risks with discriminator-column multi-tenancy?**
+::: details Answer
+(1) **Data leaks**: A single forgotten tenant filter on a query exposes all tenants' data. (2) **Cache poisoning**: Cache keys without tenant prefixes serve one tenant's data to another. (3) **Async context loss**: `ThreadLocal` tenant context is lost in async threads, causing queries to run without tenant filtering. (4) **Noisy neighbor**: One tenant's large queries slow down the database for all tenants. (5) **Backup complexity**: Cannot backup or restore a single tenant's data independently. Mitigate with Hibernate filters, tenant-aware caching, explicit tenant propagation in async decorators, and comprehensive integration tests that verify tenant isolation.
+:::
+
+**Q5: How do you handle database migrations in a schema-per-tenant architecture?**
+::: details Answer
+Maintain two sets of migrations: shared schema migrations (tenant registry, billing, shared config) and tenant schema migrations (tenant-specific tables). On startup, run shared migrations first, then iterate over all tenant schemas and apply tenant migrations to each using Flyway configured with the tenant schema name. For new tenant provisioning, create the schema and run all tenant migrations. Use a `@Scheduled` job or event listener to apply pending migrations to any schemas that missed an update. Test migrations against multiple schemas in CI using Testcontainers.
+:::

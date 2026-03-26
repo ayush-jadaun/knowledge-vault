@@ -545,3 +545,174 @@ Regardless of what your function does, consider testing these categories:
 - [Test Architecture](/testing/test-architecture) — organizing test suites, factories, and fixtures at scale
 - [Property-Based Testing](/testing/property-based-testing) — generating thousands of edge cases automatically
 - [Hexagonal Architecture](/architecture-patterns/hexagonal/) — an architecture pattern designed around testability
+
+---
+
+## Key Takeaway
+
+::: tip
+- Unit tests verify individual functions in isolation using the AAA pattern (Arrange, Act, Assert) and should be fast, independent, and deterministic.
+- Test doubles (stubs, mocks, spies, fakes) let you isolate units from dependencies -- default to stubs for inputs and reserve mocks for verifying important side effects.
+- Design for testability by extracting side effects into injectable dependencies and pushing I/O to the edges of your system so core business logic remains pure and trivial to test.
+:::
+
+## Common Misconceptions
+
+::: warning Misconception: 100% code coverage means your code is well-tested
+Coverage measures which lines were executed, not whether assertions are meaningful. A test that calls a function without asserting anything counts toward coverage but verifies nothing. Focus on critical path coverage and assertion quality over percentage targets.
+:::
+
+::: warning Misconception: Mocks and stubs are the same thing
+Stubs provide canned data to your code (controlling inputs). Mocks verify that your code called specific methods with specific arguments (checking outputs). Using mocks everywhere couples tests to implementation details and causes them to break on refactoring.
+:::
+
+::: warning Misconception: Every function needs its own unit test
+Framework glue code, simple getters/setters, and pass-through functions rarely need dedicated unit tests. Test behavior that contains logic, branching, or business rules. Testing that `Array.push()` works is testing the framework, not your code.
+:::
+
+::: warning Misconception: Unit tests should mirror the code structure exactly
+Tests should describe behaviors, not mirror implementation. If renaming an internal variable or refactoring a helper function breaks your tests, your tests are coupled to implementation rather than behavior.
+:::
+
+## In Production
+
+::: tip Netflix
+Netflix runs over 1 million unit tests per day across their microservices. They use test factories and builders extensively to keep test data creation consistent. Their key rule: every production bug gets a regression test before the fix is merged.
+:::
+
+::: tip Stripe
+Stripe's payment processing code has extremely strict unit testing requirements. They use parameterized tests (table-driven tests) to cover every edge case in currency calculations, rounding, and conversion. One-cent rounding errors at Stripe's scale cost millions.
+:::
+
+::: tip Airbnb
+Airbnb adopted the "test behavior, not implementation" philosophy after discovering that 40% of their test failures during refactors were false positives from implementation-coupled tests. They migrated to testing through public APIs and saw a 60% reduction in test maintenance.
+:::
+
+## Try It Yourself
+
+**Exercise 1: Write a test-doubles kata**
+
+Build a `NotificationService` that sends an email when an order is placed. Write tests using a stub for the email provider (to control responses) and a mock to verify the email was sent with the correct recipient and template.
+
+::: details Solution
+```typescript
+interface EmailProvider {
+  send(to: string, template: string, data: Record<string, unknown>): Promise<boolean>;
+}
+
+class NotificationService {
+  constructor(private emailProvider: EmailProvider) {}
+
+  async notifyOrderPlaced(email: string, orderId: string): Promise<void> {
+    await this.emailProvider.send(email, 'order_placed', { orderId });
+  }
+}
+
+// Test with mock
+describe('NotificationService', () => {
+  it('sends order confirmation email', async () => {
+    const emailProvider: EmailProvider = {
+      send: vi.fn().mockResolvedValue(true),
+    };
+    const service = new NotificationService(emailProvider);
+
+    await service.notifyOrderPlaced('user@test.com', 'ORD-1');
+
+    expect(emailProvider.send).toHaveBeenCalledWith(
+      'user@test.com',
+      'order_placed',
+      { orderId: 'ORD-1' }
+    );
+  });
+});
+```
+:::
+
+**Exercise 2: Refactor for testability**
+
+Given a function that directly calls `Date.now()` and `fetch()`, refactor it to accept injectable dependencies and write unit tests.
+
+::: details Solution
+```typescript
+// Before (hard to test)
+async function createAuditLog(action: string) {
+  const timestamp = Date.now();
+  await fetch('/api/audit', {
+    method: 'POST',
+    body: JSON.stringify({ action, timestamp }),
+  });
+}
+
+// After (testable)
+interface Clock { now(): number; }
+interface HttpClient { post(url: string, body: unknown): Promise<void>; }
+
+async function createAuditLog(
+  action: string,
+  clock: Clock,
+  http: HttpClient
+) {
+  const timestamp = clock.now();
+  await http.post('/api/audit', { action, timestamp });
+}
+
+// Test
+it('records audit log with current timestamp', async () => {
+  const clock: Clock = { now: () => 1700000000000 };
+  const http: HttpClient = { post: vi.fn().mockResolvedValue(undefined) };
+
+  await createAuditLog('user.login', clock, http);
+
+  expect(http.post).toHaveBeenCalledWith('/api/audit', {
+    action: 'user.login',
+    timestamp: 1700000000000,
+  });
+});
+```
+:::
+
+## Quick Quiz
+
+**1. Which of the following is NOT a property of the F.I.R.S.T. principles?**
+- A) Fast
+- B) Independent
+- C) Reversible
+- D) Self-validating
+
+::: details Answer
+**C) Reversible.** The F.I.R.S.T. principles are Fast, Independent, Repeatable, Self-validating, and Timely.
+:::
+
+**2. When should you prefer a mock over a stub?**
+- A) Always, because mocks are more powerful
+- B) When verifying an important side effect like sending an email
+- C) When you need to provide test data to your code
+- D) When testing pure functions
+
+::: details Answer
+**B) When verifying an important side effect.** Mocks verify interactions (what your code did to the outside world). Stubs provide data. Default to stubs; use mocks only for important side effects like sending emails, charging payments, or publishing events.
+:::
+
+**3. What is the key difference between a fake and a stub?**
+- A) Fakes are for unit tests, stubs are for integration tests
+- B) Fakes are working simplified implementations, stubs return canned data
+- C) There is no difference
+- D) Stubs are written in a different language
+
+::: details Answer
+**B) Fakes are working simplified implementations, stubs return canned data.** A fake (like an in-memory database) has real logic but takes shortcuts. A stub returns predetermined responses without any real logic.
+:::
+
+**4. What does the "Arrange" phase of AAA do?**
+- A) Cleans up test resources
+- B) Sets up the test preconditions and inputs
+- C) Executes the function under test
+- D) Verifies the expected outcomes
+
+::: details Answer
+**B) Sets up the test preconditions and inputs.** Arrange establishes the starting state, Act performs the operation, and Assert checks the results.
+:::
+
+---
+
+> **One-Liner Summary:** Unit tests verify isolated behavior using AAA and test doubles, and if your code is hard to test, the problem is your design, not your tests.

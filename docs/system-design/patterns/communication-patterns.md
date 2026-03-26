@@ -587,3 +587,23 @@ graph TD
 ---
 
 *The best communication pattern is the simplest one that meets your requirements. Start with REST for synchronous, a message queue for async, and SSE for push. Graduate to gRPC, Kafka, and WebSocket when you have proven you need them.*
+
+## Real-World Examples
+
+::: tip Spotify
+Spotify uses **gRPC** for all internal service-to-service communication, processing millions of requests per second. They chose gRPC over REST for its binary serialization (5-10x smaller payloads), strong typing (schema enforcement prevents breaking changes), and HTTP/2 multiplexing (multiple requests over a single connection). Public APIs remain REST for browser and third-party compatibility.
+:::
+
+::: tip Slack
+Slack uses a **hybrid of WebSocket and REST**. When a user opens Slack, they establish a WebSocket connection for real-time message delivery (bidirectional, low-latency). Message history, file uploads, and search use REST APIs. If the WebSocket connection drops, messages are buffered server-side and delivered on reconnect — combining the strengths of both patterns.
+:::
+
+::: tip Shopify
+Shopify uses **GraphQL** for their Storefront API, letting merchants' frontends request exactly the data they need. A mobile app can request just product names and prices (lightweight), while a desktop app requests full product details with reviews and variants — all from the same endpoint. This eliminated the over-fetching problem that plagued their REST API and reduced bandwidth by 40%.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"I match communication patterns to requirements. For user-facing reads that need an immediate response, I'd use REST — it's simple, cacheable, and universally supported. For internal service-to-service calls at high throughput, gRPC is 2-10x faster due to binary serialization and HTTP/2 multiplexing. For side effects that don't need an immediate response (sending emails, updating analytics), I'd use async events via Kafka — this decouples services, provides replay capability, and means a downstream failure doesn't break the user experience. For real-time updates, SSE for server-to-client and WebSocket for bidirectional. Most production systems use all four, each where it fits best."
+:::

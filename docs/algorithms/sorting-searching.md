@@ -613,3 +613,115 @@ This is why counting sort and radix sort are faster — they bypass comparisons 
 - [Arrays & Strings](/algorithms/arrays-strings) — two pointers on sorted arrays
 - [Dynamic Programming](/algorithms/dynamic-programming) — LIS uses binary search optimization
 - [Database Query Planning](/system-design/databases/query-planning-optimization) — how databases choose sort algorithms
+
+## Try It Yourself
+
+**Problem 1:** Sort the array `[5, 3, 8, 4, 2]` using merge sort. Show the divide and merge steps.
+
+::: details Solution
+Divide:
+- [5, 3, 8, 4, 2] → [5, 3] and [8, 4, 2]
+- [5, 3] → [5] and [3]
+- [8, 4, 2] → [8] and [4, 2] → [4] and [2]
+
+Merge:
+- Merge [5] and [3] → [3, 5]
+- Merge [4] and [2] → [2, 4]
+- Merge [8] and [2, 4] → [2, 4, 8]
+- Merge [3, 5] and [2, 4, 8] → **[2, 3, 4, 5, 8]**
+:::
+
+**Problem 2:** Use binary search to find target `7` in `[1, 3, 5, 7, 9, 11, 13]`.
+
+::: details Solution
+- lo=0, hi=6, mid=3. nums[3]=7 == target.
+Answer: Found at **index 3** in 1 step.
+:::
+
+**Problem 3:** Search for target `5` in the rotated sorted array `[4, 5, 6, 7, 0, 1, 2]`.
+
+::: details Solution
+Modified binary search:
+- lo=0, hi=6, mid=3. nums[3]=7 != 5.
+- Left half [4,5,6,7] is sorted (nums[0]=4 <= nums[3]=7). Is 4 <= 5 < 7? Yes → search left: hi=2.
+- lo=0, hi=2, mid=1. nums[1]=5 == target.
+Answer: Found at **index 1**.
+:::
+
+**Problem 4:** Find the Kth largest element (K=2) in `[3, 2, 1, 5, 6, 4]` without fully sorting.
+
+::: details Solution
+Use a min-heap of size K=2:
+- Process 3: heap=[3]
+- Process 2: heap=[2,3]
+- Process 1: 1 < heap[0]=2, skip (or push and pop)
+- Process 5: push, pop min → heap=[3,5]
+- Process 6: push, pop min → heap=[5,6]
+- Process 4: 4 < heap[0]=5, skip
+Answer: heap[0] = **5** (2nd largest element)
+:::
+
+**Problem 5:** Given weights `[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]` and D=5 days, find the minimum ship capacity to ship all packages within D days using binary search on the answer.
+
+::: details Solution
+- lo = max(weights) = 10, hi = sum(weights) = 55
+- Binary search: mid=32 → can ship in 2 days (yes), hi=32
+- mid=21 → can ship in 3 days (yes), hi=21
+- mid=15 → can ship in 5 days (yes), hi=15
+- mid=12 → need 6 days > 5 (no), lo=13
+- mid=14 → can ship in 5 days (yes), hi=14
+- mid=13 → need 6 days (no), lo=14
+Answer: Minimum capacity = **15**
+:::
+
+## Quick Quiz
+
+**1. What is the best sorting algorithm for nearly-sorted data?**
+- a) Quick sort
+- b) Merge sort
+- c) Insertion sort
+- d) Heap sort
+
+::: details Answer
+**c) Insertion sort** — Insertion sort has $O(n)$ best-case performance when data is nearly sorted, as elements only need to shift a few positions. All comparison-based $O(n \log n)$ sorts do unnecessary work on nearly-sorted input.
+:::
+
+**2. Why does quicksort have $O(n^2)$ worst-case time complexity?**
+- a) The merge step is inefficient
+- b) The pivot selection consistently picks the minimum or maximum element, creating unbalanced partitions
+- c) It uses too much memory
+- d) It cannot handle duplicate elements
+
+::: details Answer
+**b) The pivot selection consistently picks the minimum or maximum element, creating unbalanced partitions** — When the pivot is always the smallest or largest element (e.g., sorted input with first/last pivot), one partition has $n-1$ elements and the other has 0, giving $T(n) = T(n-1) + O(n) = O(n^2)$.
+:::
+
+**3. What is the theoretical lower bound for comparison-based sorting?**
+- a) $O(n)$
+- b) $O(n \log n)$
+- c) $O(n^2)$
+- d) $O(\log n)$
+
+::: details Answer
+**b) $O(n \log n)$** — The decision tree argument shows that distinguishing between $n!$ possible orderings requires at least $\log_2(n!) = \Theta(n \log n)$ comparisons.
+:::
+
+**4. In binary search, why should you compute `mid` as `lo + (hi - lo) / 2` instead of `(lo + hi) / 2`?**
+- a) It is faster to compute
+- b) It prevents integer overflow when `lo + hi` exceeds the maximum integer value
+- c) It gives a different result
+- d) It works better with floating-point numbers
+
+::: details Answer
+**b) It prevents integer overflow when `lo + hi` exceeds the maximum integer value** — In languages with fixed-size integers (C, C++, Java), `lo + hi` can overflow. Subtracting first avoids this. In Python and JavaScript this is not strictly necessary, but it is a good habit.
+:::
+
+**5. When is counting sort preferred over comparison-based sorts?**
+- a) When the data is floating-point
+- b) When the data consists of integers in a known, small range
+- c) When stability is not required
+- d) When memory is extremely limited
+
+::: details Answer
+**b) When the data consists of integers in a known, small range** — Counting sort runs in $O(n + k)$ where $k$ is the range of values. When $k = O(n)$, it is linear, beating the $O(n \log n)$ lower bound of comparison sorts.
+:::

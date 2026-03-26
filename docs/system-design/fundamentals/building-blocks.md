@@ -360,3 +360,23 @@ For a detailed walkthrough of this evolution, see [Zero to Million Users](/syste
 - **[Proxies](/system-design/fundamentals/proxies)** — How load balancers, CDNs, and API gateways work under the hood
 - **[Scaling Fundamentals](/system-design/fundamentals/scaling-fundamentals)** — How to scale each building block
 - **[System Design Glossary](/system-design/fundamentals/system-design-glossary)** — Definitions for every term in system design
+
+## Real-World Examples
+
+::: tip Uber
+Uber's architecture uses nearly **every building block** on this page. GeoDNS routes riders to the nearest region, a CDN serves the mobile app assets, Nginx load balancers distribute traffic, Redis caches driver locations, MySQL + Schemaless store trip data, Kafka processes millions of events per second, and their notification service handles push/SMS across channels. Each block was added as traffic grew.
+:::
+
+::: tip Airbnb
+Airbnb uses **Elasticsearch** as a critical building block for search. Their search service handles complex queries (location, dates, price range, amenities) across millions of listings in under 100ms. They sync data from their MySQL source of truth to Elasticsearch via a custom pipeline — showing how search engines complement databases rather than replace them.
+:::
+
+::: tip Slack
+Slack's architecture centers on **message queues and caching**. Every message is written to MySQL, broadcast via a message queue to connected WebSocket servers, and cached in Memcached. Their service discovery layer (Consul) lets services find each other dynamically as instances scale up and down. This is a textbook example of building blocks working together.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"I think of system design building blocks like LEGO — every large system uses the same pieces, combined differently. When I design a system, I start with the minimum: DNS, a database, and app servers. Then I add blocks only when I can name the bottleneck: slow reads means add Redis, slow static assets means add a CDN, background tasks blocking requests means add a message queue. The key is knowing not just what each block does, but when to introduce it — adding Kafka for 100 users is over-engineering."
+:::

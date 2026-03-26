@@ -398,3 +398,47 @@ The October 2018 GitHub outage remains one of the most studied incidents in mode
 - [Cloudflare's Regex Outage](/war-room/cloudflare-regex-2019) — Global deployment without staged rollout
 - [Knight Capital's $440M Bug](/war-room/knight-capital-2012) — Another case where automated systems caused more damage than the original failure
 - [Facebook's October 2021 Outage](/war-room/facebook-october-2021) — Infrastructure dependencies that prevented recovery
+
+## What Would You Do?
+
+Test your incident response instincts against the decisions GitHub's engineers actually faced.
+
+::: details Scenario 1: The 43-second partition has just healed. You see two MySQL primaries with diverged data. Do you (A) immediately fail back to the original East primary, (B) pick the West primary since it was more recently promoted, or (C) lock writes on both and go read-only?
+**What GitHub did:** They chose **(C) — lock writes on both and go read-only.** At 23:13 UTC, they made GitHub effectively read-only. Failing back to either primary would have discarded the other side's writes, causing permanent data loss. By locking writes, they stopped the divergence from growing and bought time to plan a proper reconciliation. Every minute of continued split-brain writes would have made recovery harder.
+:::
+
+::: details Scenario 2: You have confirmed split-brain. You can restore service faster by discarding the smaller write stream (a few minutes of data), or you can spend 18+ hours reconciling both streams to lose zero data. Your status page is red. Millions of developers are blocked. Which do you choose?
+**What GitHub did:** They chose **zero data loss**, accepting the 24-hour timeline. Their reasoning: GitHub is a platform where the data IS the product. A single lost commit or pull request could represent days of a developer's work. The slower path guaranteed no data was permanently lost. They decided that data integrity trumps speed of recovery for their platform.
+:::
+
+::: details Scenario 3: It is now 6 months after the incident. You are redesigning Orchestrator's failover policy. Do you (A) disable automated failover entirely, (B) keep automated failover but add a longer detection window, or (C) keep automated failover within a data center but require human approval for cross-DC failover?
+**What GitHub did:** They chose **(C) — human-in-the-loop for cross-DC failover only.** Intra-DC failover remained automated because within a single data center, a network partition usually means genuine hardware failure. Cross-DC failover now requires explicit human approval with replication lag data presented to the decision-maker. This balanced speed (fast intra-DC recovery) with safety (no automated cross-DC split-brain).
+:::
+
+## Prevention Checklist
+
+- [ ] Automated database failover distinguishes between intra-DC and cross-DC scenarios
+- [ ] Cross-datacenter failover requires human approval before promotion
+- [ ] Replication lag is continuously monitored with alerts at multiple thresholds (1s, 5s, 30s, 60s)
+- [ ] A tested runbook exists for split-brain MySQL/PostgreSQL recovery
+- [ ] Failover drills are conducted at least quarterly in a staging environment
+- [ ] Backup restore speed is benchmarked regularly at current data volume
+- [ ] Monitoring can directly detect split-brain conditions (two nodes claiming primary), not just symptoms
+
+## Quick Quiz
+
+::: details Question 1: Why was the 43-second network partition enough to cause a 24-hour outage?
+Because MySQL Orchestrator automatically promoted a West Coast replica to primary during the partition, creating two primaries accepting writes simultaneously. When the network healed 43 seconds later, both sides had writes the other did not have, and MySQL has no built-in way to merge diverged write streams. The automated "fix" (failover) was worse than the original problem.
+:::
+
+::: details Question 2: Why didn't GitHub just "fail back" to the original East primary once the network healed?
+Failing back to the East primary would have discarded all writes that happened on the West primary during and after the partition. Similarly, keeping the West primary would have discarded East writes. Neither side had a complete picture. The only option that preserved all data was restoring from backup and replaying both binlog streams.
+:::
+
+::: details Question 3: What is the key difference between intra-DC and cross-DC automated failover that GitHub's fix addressed?
+Within a single data center, network partitions are rare and usually indicate genuine hardware failure, making automated failover safe. Across data centers, brief connectivity blips are relatively common and do not mean the primary is dead. Automated cross-DC failover can mistake a transient blip for a permanent failure, creating split-brain. GitHub's fix kept intra-DC failover automated but required human approval for cross-DC failover.
+:::
+
+## One-Liner Lesson
+
+Automated failover for stateful systems across data centers turns 43-second blips into 24-hour crises — always require human judgment for irreversible, high-stakes decisions.

@@ -41,6 +41,39 @@ Therefore:
 
 $$\boxed{\text{EPE}(x_0) = \underbrace{(f(x_0) - E[\hat{f}(x_0)])^2}_{\text{Bias}^2} + \underbrace{E[(\hat{f}(x_0) - E[\hat{f}(x_0)])^2]}_{\text{Variance}} + \underbrace{\sigma^2}_{\text{Irreducible noise}}}$$
 
+::: details Worked Example — Bias-Variance Decomposition
+
+**True function: f(x) = 3x. Noise sigma = 1.0. Training on 5 different datasets, evaluating at x0 = 2 (true value = 6).**
+
+Predictions from 5 datasets (each trained on different random samples):
+  f_hat_1(2) = 5.2
+  f_hat_2(2) = 6.8
+  f_hat_3(2) = 5.5
+  f_hat_4(2) = 7.1
+  f_hat_5(2) = 5.4
+
+**Step 1:** Compute E[f_hat(2)]
+  E[f_hat] = (5.2 + 6.8 + 5.5 + 7.1 + 5.4) / 5 = 30.0/5 = 6.0
+
+**Step 2:** Compute Bias^2
+  Bias = f(2) - E[f_hat(2)] = 6.0 - 6.0 = 0.0
+  Bias^2 = 0.0 (unbiased model!)
+
+**Step 3:** Compute Variance
+  Var = mean of (f_hat - E[f_hat])^2
+      = [(5.2-6)^2 + (6.8-6)^2 + (5.5-6)^2 + (7.1-6)^2 + (5.4-6)^2] / 5
+      = [0.64 + 0.64 + 0.25 + 1.21 + 0.36] / 5
+      = 3.10 / 5 = 0.62
+
+**Step 4:** Total expected error
+  EPE = Bias^2 + Variance + sigma^2
+      = 0.0 + 0.62 + 1.0 = 1.62
+
+**Interpret:**
+  "The model is unbiased (correct on average) but has variance 0.62 — it gives different predictions depending on which training data it saw. The total error of 1.62 includes irreducible noise (1.0) that no model can eliminate. A simpler model might have higher bias but lower variance."
+
+:::
+
 ### Intuition
 
 | Component | What It Measures | Caused By |

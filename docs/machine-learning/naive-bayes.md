@@ -21,6 +21,31 @@ We want to find the class $c$ that maximizes the posterior probability:
 
 $$P(c | \mathbf{x}) = \frac{P(\mathbf{x} | c) \cdot P(c)}{P(\mathbf{x})}$$
 
+::: details Worked Example — Bayes' Theorem for Classification
+
+**Spam classification with two words: "free" and "meeting"**
+- P(spam) = 0.4, P(ham) = 0.6
+- P("free" | spam) = 0.8, P("free" | ham) = 0.1
+- P("meeting" | spam) = 0.1, P("meeting" | ham) = 0.7
+
+**Classify an email containing "free":**
+
+**Step 1:** Compute P("free")
+  P("free") = P("free"|spam)*P(spam) + P("free"|ham)*P(ham)
+            = 0.8*0.4 + 0.1*0.6 = 0.32 + 0.06 = 0.38
+
+**Step 2:** Apply Bayes' theorem
+  P(spam|"free") = P("free"|spam)*P(spam) / P("free")
+                 = (0.8 * 0.4) / 0.38 = 0.32 / 0.38 = 0.842
+
+**Step 3:** Classify
+  P(spam|"free") = 0.842 > 0.5 -> predict SPAM
+
+**Interpret:**
+  "Even though only 40% of emails are spam, seeing the word 'free' raises the spam probability to 84.2%. The word 'free' is 8x more likely in spam than ham, which overwhelms the prior."
+
+:::
+
 Since $P(\mathbf{x})$ is constant for all classes:
 
 $$\hat{c} = \arg\max_c P(\mathbf{x} | c) \cdot P(c)$$
@@ -87,6 +112,33 @@ Assumes each feature follows a Gaussian (normal) distribution per class:
 
 $$P(x_j | c) = \frac{1}{\sqrt{2\pi\sigma_{jc}^2}} \exp\left(-\frac{(x_j - \mu_{jc})^2}{2\sigma_{jc}^2}\right)$$
 
+::: details Worked Example — Gaussian Naive Bayes
+
+**Classify a flower with petal_length = 4.5 (2 classes):**
+- Class 0 (setosa): mu=1.5, sigma=0.3
+- Class 1 (versicolor): mu=4.3, sigma=0.5
+- P(class 0) = 0.5, P(class 1) = 0.5
+
+**Step 1:** P(x=4.5 | class 0)
+  = 1/sqrt(2*pi*0.09) * exp(-(4.5-1.5)^2 / (2*0.09))
+  = 1/0.752 * exp(-9/0.18)
+  = 1.330 * exp(-50) = essentially 0
+
+**Step 2:** P(x=4.5 | class 1)
+  = 1/sqrt(2*pi*0.25) * exp(-(4.5-4.3)^2 / (2*0.25))
+  = 1/1.253 * exp(-0.04/0.5)
+  = 0.798 * exp(-0.08) = 0.798 * 0.923 = 0.737
+
+**Step 3:** Compare posteriors
+  P(class 0)*P(x|class 0) = 0.5 * ~0 = ~0
+  P(class 1)*P(x|class 1) = 0.5 * 0.737 = 0.369
+  -> Predict class 1 (versicolor)
+
+**Interpret:**
+  "A petal length of 4.5 is 10 standard deviations away from the setosa mean (1.5) but only 0.4 standard deviations from versicolor (4.3). The Gaussian model gives essentially zero probability under class 0."
+
+:::
+
 **Parameters to estimate:** Mean $\mu_{jc}$ and variance $\sigma_{jc}^2$ for each feature $j$ and class $c$.
 
 ```python
@@ -129,6 +181,38 @@ where:
 - $N_c$ = total count of all features in class $c$
 - $\alpha$ = Laplace smoothing parameter
 - $d$ = number of features
+
+::: details Worked Example — Multinomial NB with Laplace Smoothing
+
+**Vocabulary: {free, meeting, click, report} (d=4), alpha=1**
+
+Training data word counts:
+| Word     | Spam | Ham |
+|----------|------|-----|
+| free     | 10   | 1   |
+| meeting  | 1    | 8   |
+| click    | 7    | 0   |
+| report   | 0    | 6   |
+| **Total** | **18** | **15** |
+
+**Step 1:** Compute P("free" | spam) with Laplace smoothing
+  P("free"|spam) = (10 + 1) / (18 + 1*4) = 11/22 = 0.500
+
+**Step 2:** Compute P("click" | ham) with Laplace smoothing
+  P("click"|ham) = (0 + 1) / (15 + 1*4) = 1/19 = 0.053
+
+Without smoothing: P("click"|ham) = 0/15 = 0. This would zero out the entire product!
+
+**Step 3:** Compute all probabilities for spam
+  P("free"|spam) = 11/22 = 0.500
+  P("meeting"|spam) = 2/22 = 0.091
+  P("click"|spam) = 8/22 = 0.364
+  P("report"|spam) = 1/22 = 0.045
+
+**Interpret:**
+  "Laplace smoothing (alpha=1) adds 1 pseudo-count to every word-class pair. This prevents zero probabilities for unseen words. The word 'click' never appeared in ham training data, but smoothing gives it a small probability of 0.053 instead of 0."
+
+:::
 
 ```python
 # multinomial_nb.py — Multinomial NB for text classification

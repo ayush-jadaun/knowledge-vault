@@ -558,3 +558,57 @@ public class RateLimitMetrics {
 | `Retry-After` | Seconds to wait before retrying | `30` |
 
 Rate limiting protects your API from abuse, ensures fair usage across clients, and prevents a single bad actor from affecting everyone. Start with in-memory Bucket4j for single-instance deployments, move to Redis-backed rate limiting when you scale to multiple instances, and always communicate limits clearly through response headers so clients can self-regulate.
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Using in-memory rate limiting with multiple application instances
+Each instance maintains its own counters. A client hitting two instances effectively gets double the rate limit.
+**Fix:** Use Redis-backed rate limiting (Bucket4j with Redis proxy, or Redis Lua scripts) for distributed counting across all instances.
+:::
+
+::: danger Pitfall 2: Rate limiting by IP behind a reverse proxy
+All requests come from the proxy's IP address, so the rate limiter treats all users as one client.
+**Fix:** Use the `X-Forwarded-For` header to get the real client IP. Better yet, rate limit by authenticated user ID when available, falling back to IP for unauthenticated requests.
+:::
+
+::: danger Pitfall 3: Not returning standard rate limit headers
+Without `X-RateLimit-Remaining` and `Retry-After` headers, clients cannot self-regulate and hammer the API until they get a 429 error.
+**Fix:** Always include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, and `Retry-After` headers in every response (both successful and rate-limited).
+:::
+
+::: danger Pitfall 4: Applying the same rate limit to all endpoints
+Login endpoints need strict limits (prevent brute force) while read endpoints can be more lenient. A one-size-fits-all approach is either too strict or too loose.
+**Fix:** Use per-endpoint rate limiting with a custom `@RateLimit` annotation. Apply strict limits (10 req/15min) to auth endpoints, moderate limits (100 req/min) to write endpoints, and lenient limits (1000 req/min) to read endpoints.
+:::
+
+::: danger Pitfall 5: Not monitoring rate limit rejections
+Rate limiting silently rejects requests without visibility into how often it happens, which clients are affected, and whether limits are set correctly.
+**Fix:** Emit metrics for every rate limit check (`rate_limit.requests{result=allowed|rejected, endpoint=...}`). Alert when rejection rate exceeds a threshold. Review limits periodically based on actual usage patterns.
+:::
+
+## Interview Questions
+
+**Q1: What is the token bucket algorithm and why is it the most popular rate limiting approach?**
+::: details Answer
+The token bucket maintains a bucket with a maximum capacity of tokens. Each request consumes one token. Tokens are refilled at a fixed rate (e.g., 10 tokens per second). When the bucket is empty, requests are rejected. The key advantage over fixed window counters is that it allows bursts (up to bucket capacity) while maintaining a steady long-term rate. For example, with capacity=100 and refill=100/minute, a client can burst 100 requests instantly, then must wait for refill. This matches real usage patterns better than strict per-second limits.
+:::
+
+**Q2: What is the difference between fixed window, sliding window log, and sliding window counter?**
+::: details Answer
+**Fixed window**: Divides time into fixed intervals (e.g., 1-minute windows). Counts requests per window. Simple but has a boundary problem -- 100 requests at 10:00:59 + 100 at 10:01:00 = 200 in 2 seconds. **Sliding window log**: Stores exact timestamps of all requests. Counts requests in the last N seconds from the current moment. Precise but memory-intensive. **Sliding window counter**: Approximates a sliding window by weighting the current and previous window counts based on the position within the current window. For example, 25% into the current window: `rate = previous_count * 0.75 + current_count`. Good balance of accuracy and efficiency.
+:::
+
+**Q3: How do you implement distributed rate limiting with Redis?**
+::: details Answer
+Use Redis atomic operations to maintain shared counters across application instances. The most common approach uses a Lua script executed atomically on Redis: (1) Remove expired entries from a sorted set (sliding window). (2) Count remaining entries. (3) If under the limit, add the current timestamp as a new entry. (4) Set TTL on the key. The Lua script runs atomically, preventing race conditions. Alternatively, use Bucket4j's Redis proxy (`LettuceBasedProxyManager`) which handles the distributed token bucket logic internally. Both approaches ensure consistent rate limiting regardless of which application instance handles the request.
+:::
+
+**Q4: How do you implement tiered rate limits based on API subscription plans?**
+::: details Answer
+Define rate limit tiers as an enum or configuration: `FREE(60/min)`, `BASIC(600/min)`, `PRO(6000/min)`, `ENTERPRISE(60000/min)`. Resolve the user's plan from their API key or JWT claims. Create a `BucketConfiguration` dynamically based on the plan and use the API key as the bucket identifier in Redis. The rate limit filter: (1) Extracts the API key from the request header. (2) Looks up the plan. (3) Creates or retrieves the bucket for that API key with the plan's configuration. (4) Consumes a token and returns appropriate headers including `X-RateLimit-Plan`.
+:::
+
+**Q5: What HTTP status code and headers should a rate-limited response include?**
+::: details Answer
+Return `429 Too Many Requests` with these headers: `X-RateLimit-Limit` (maximum requests in the window, e.g., `100`), `X-RateLimit-Remaining` (requests remaining, e.g., `0`), `X-RateLimit-Reset` (Unix timestamp when the limit resets), and `Retry-After` (seconds until the client should retry, e.g., `30`). The response body should include a JSON error with a machine-readable error code and human-readable message. Include rate limit headers on ALL responses (not just 429s) so clients can monitor their consumption proactively.
+:::

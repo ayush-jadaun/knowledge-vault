@@ -109,6 +109,31 @@ transform = T.Compose([
 ])
 ```
 
+::: details Worked Example — Mixup Augmentation Effect
+
+**Setup:** Two training images from CIFAR-10:
+- Image A: "cat" ($y_A = [0, 0, 0, 1, 0, 0, 0, 0, 0, 0]$, class 3)
+- Image B: "dog" ($y_B = [0, 0, 0, 0, 0, 1, 0, 0, 0, 0]$, class 5)
+
+$\lambda = 0.7$ (sampled from $\text{Beta}(0.2, 0.2)$)
+
+**Step 1:** Mix images (pixel-wise):
+$$\tilde{x} = 0.7 \cdot x_{\text{cat}} + 0.3 \cdot x_{\text{dog}}$$
+
+The mixed image looks like a semi-transparent cat overlaid on a faded dog.
+
+**Step 2:** Mix labels:
+$$\tilde{y} = 0.7 \cdot [0,0,0,1,0,0,0,0,0,0] + 0.3 \cdot [0,0,0,0,0,1,0,0,0,0]$$
+$$= [0, 0, 0, 0.7, 0, 0.3, 0, 0, 0, 0]$$
+
+**Step 3:** Loss with model prediction $\hat{y} = [0.05, 0.02, 0.03, 0.60, 0.05, 0.20, 0.02, 0.01, 0.01, 0.01]$:
+$$\mathcal{L} = 0.7 \cdot \text{CE}(\hat{y}, \text{cat}) + 0.3 \cdot \text{CE}(\hat{y}, \text{dog})$$
+$$= 0.7 \times (-\log 0.60) + 0.3 \times (-\log 0.20) = 0.7(0.511) + 0.3(1.609) = 0.358 + 0.483 = 0.841$$
+
+**Result:** Mixup trains the model on a linear interpolation of two images with soft labels. This smooths the decision boundary between "cat" and "dog", reduces overconfidence, and typically improves accuracy by 0.5-1% while also improving calibration.
+
+:::
+
 ### Augmentation Comparison
 
 | Method | Benefit | Typical Improvement |
@@ -387,6 +412,26 @@ y'_k = (1 - \epsilon) y_k + \frac{\epsilon}{K}
 $$
 
 where $\epsilon = 0.1$ is typical. This prevents the model from becoming overconfident and improves calibration.
+
+::: details Worked Example — Label Smoothing
+
+**Setup:** 5-class problem, true class = 2, $\epsilon = 0.1$
+
+**Hard label (standard):** $y = [0, 0, 1, 0, 0]$
+
+**Smoothed label:** $y'_k = (1 - 0.1) \cdot y_k + 0.1 / 5$
+
+| Class | Hard $y_k$ | Smoothed $y'_k$ |
+|---|---|---|
+| 0 | 0 | $0 + 0.02 = 0.02$ |
+| 1 | 0 | $0 + 0.02 = 0.02$ |
+| **2** | **1** | $0.9 + 0.02 = **0.92**$ |
+| 3 | 0 | $0 + 0.02 = 0.02$ |
+| 4 | 0 | $0 + 0.02 = 0.02$ |
+
+**Effect on loss:** With hard labels, the loss pushes the model to output $P(\text{class 2}) \to 1.0$ (infinite logit). With smoothing, the target is 0.92, so the model doesn't need extreme confidence. This prevents over-confident predictions and typically improves generalization by 0.2-0.5%.
+
+:::
 
 ```python
 criterion = nn.CrossEntropyLoss(label_smoothing=0.1)

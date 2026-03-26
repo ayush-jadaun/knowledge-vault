@@ -5,7 +5,7 @@ description: "Your quest through Archon begins here — choose your path, forge 
 
 # Begin Your Journey
 
-You stand before **1140+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
+You stand before **1150+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
 
 Choose your quest.
 
@@ -140,7 +140,7 @@ Choose your quest.
 
 ### "I want to use Archon via MCP (AI assistant)"
 
-Connect Archon to Claude Code, Cursor, or Claude Desktop — query 1,000+ pages without opening a browser:
+Connect Archon to Claude Code, Cursor, or Claude Desktop — query 1,150+ pages without opening a browser:
 
 ```bash
 # Remote (no install)
@@ -202,7 +202,7 @@ claude mcp add archon -- npx archon-mcp-server
 
 ### "I just want to browse and explore"
 
-- [Knowledge Graph](/graph) — visual map of all 1140+ topics and how they connect
+- [Knowledge Graph](/graph) — visual map of all 1150+ topics and how they connect
 - [Browse by Tag](/tags) — 3,000+ tags, filter by difficulty
 - [Compare Technologies](/compare) — side-by-side comparison (Kafka vs RabbitMQ, Postgres vs MongoDB, etc.)
 - [Cheat Sheets](/cheat-sheets/) — 22 quick reference cards
@@ -232,7 +232,7 @@ claude mcp add archon -- npx archon-mcp-server
 | **Machine Learning** | 30 | Math foundations, linear/logistic regression, decision trees, random forests, XGBoost/LightGBM, SVM, KNN, naive bayes, clustering, PCA, anomaly detection, time series, recommendations, SHAP/LIME — all with from-scratch code + real datasets |
 | **Deep Learning** | 25 | Neural networks from scratch, PyTorch, CNN, RNN/LSTM, Transformers (attention math), VAE, GANs, GNNs, BERT, text generation, YOLO, U-Net, diffusion models, RL, CLIP — full math + PyTorch code |
 | **Frontend Engineering** | 12 | Web performance, browser rendering, SSR/SSG, state management, React internals, WebAssembly, i18n, data visualization |
-| **Mobile Engineering** | 6 | React Native, Flutter, mobile performance, push notifications, offline-first |
+| **Mobile Engineering** | 7 | React Native, Flutter, mobile performance, push notifications, offline-first, mobile testing |
 | **Testing** | 8 | Unit, integration, E2E, contract, property-based, TDD/BDD, test architecture |
 | **Performance** | 35+ | Profiling, optimization, caching, database tuning, edge computing, load testing, benchmarks, compilers |
 | **Spring Boot** | 55 | REST, JPA, Security, JWT, OAuth2, Cloud Gateway, Kafka, Batch, Integration, WebFlux, GraphQL, gRPC, Modulith, Native Image, Virtual Threads, Spring AI |
@@ -244,7 +244,7 @@ claude mcp add archon -- npx archon-mcp-server
 | **Company Architecture** | 5 | How Uber, Figma, Shopify, Discord actually built their systems |
 | **Debugging Playbooks** | 7 | "API slow", "memory leak", "DB CPU 100%", "pods restarting", "502s", "error spike" |
 | **Checklists & Runbooks** | 10 | Pre-launch (90 items), security review, performance review, DB failover, DDoS response |
-| **Learning Paths** | 11 | Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack, Cybersecurity, Resources |
+| **Learning Paths** | 16 | Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack, ML/DL, Cybersecurity, Mobile, Data Scientist, Spring Boot, Behavioral, Resources |
 | **Cheat Sheets** | 23 | Docker, K8s, Git, SQL, TS, Linux, Redis, Terraform, Python, Go, Rust, Bash, Nginx, PromQL, AWS CLI, kubectl, Helm, GraphQL, Regex, SQL Advanced, Docker Compose, LLM APIs, pandas EDA |
 | **Prompt Engineering** | 20+ | 500+ prompts for engineering, product, UI, and architecture |
 | **UI & Design Systems** | 35+ | Typography, color, spacing, accessibility, dark mode, animations |

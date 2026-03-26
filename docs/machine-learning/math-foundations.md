@@ -57,6 +57,28 @@ The **dot product** has deep geometric meaning:
 
 $$\mathbf{x} \cdot \mathbf{y} = \|\mathbf{x}\| \|\mathbf{y}\| \cos\theta$$
 
+::: details Worked Example — Dot Product and Cosine Similarity
+
+**Two feature vectors: x = [3, 4], y = [4, 3]**
+
+**Step 1:** Dot product
+  x . y = 3(4) + 4(3) = 12 + 12 = 24
+
+**Step 2:** Magnitudes
+  ||x|| = sqrt(9 + 16) = sqrt(25) = 5
+  ||y|| = sqrt(16 + 9) = sqrt(25) = 5
+
+**Step 3:** Cosine similarity
+  cos(theta) = 24 / (5 * 5) = 24/25 = 0.96
+
+**Step 4:** Angle
+  theta = arccos(0.96) = 16.3 degrees
+
+**Interpret:**
+  "The vectors are highly similar (cos=0.96, angle=16.3 degrees). They point in nearly the same direction. If these were document vectors, the documents would be about 96% similar in content."
+
+:::
+
 When $\theta = 0$ (same direction), $\cos\theta = 1$ and the dot product is maximized. When $\theta = 90°$ (perpendicular), the dot product is zero. This is why the dot product measures similarity.
 
 ### Matrices
@@ -114,6 +136,35 @@ The inner dimensions must match: $(m \times \mathbf{n}) \times (\mathbf{n} \time
 An eigenvector of matrix $\mathbf{A}$ is a vector that, when multiplied by $\mathbf{A}$, only gets scaled (not rotated):
 
 $$\mathbf{A}\mathbf{v} = \lambda \mathbf{v}$$
+
+::: details Worked Example — Eigenvalues and Eigenvectors
+
+**Matrix A = [[4, 2],[1, 3]]. Find eigenvalues and eigenvectors.**
+
+**Step 1:** Solve det(A - lambda*I) = 0
+  det([[4-lambda, 2],[1, 3-lambda]]) = (4-lambda)(3-lambda) - 2*1 = 0
+  lambda^2 - 7*lambda + 12 - 2 = 0
+  lambda^2 - 7*lambda + 10 = 0
+  (lambda - 5)(lambda - 2) = 0
+  lambda1 = 5, lambda2 = 2
+
+**Step 2:** Find eigenvector for lambda1 = 5
+  (A - 5I)v = 0 -> [[-1, 2],[1, -2]]v = 0
+  -v1 + 2v2 = 0 -> v1 = 2v2
+  Eigenvector: v1 = [2, 1] (normalized: [0.894, 0.447])
+
+**Step 3:** Find eigenvector for lambda2 = 2
+  (A - 2I)v = 0 -> [[2, 2],[1, 1]]v = 0
+  2v1 + 2v2 = 0 -> v1 = -v2
+  Eigenvector: v2 = [-1, 1] (normalized: [-0.707, 0.707])
+
+**Step 4:** Verify A @ v1 = lambda1 * v1
+  A @ [2,1] = [4(2)+2(1), 1(2)+3(1)] = [10, 5] = 5 * [2, 1] -> correct!
+
+**Interpret:**
+  "The matrix A stretches space along [2,1] by factor 5 and along [-1,1] by factor 2. In PCA, the largest eigenvalue (5) corresponds to the direction of most variance — that's the first principal component."
+
+:::
 
 where $\lambda$ is the eigenvalue. Eigendecomposition is the foundation of PCA (principal component analysis).
 
@@ -314,6 +365,30 @@ For a loss function $\mathcal{L}(\boldsymbol{\theta})$, gradient descent updates
 
 $$\boldsymbol{\theta}_{t+1} = \boldsymbol{\theta}_t - \eta \nabla \mathcal{L}(\boldsymbol{\theta}_t)$$
 
+::: details Worked Example — Gradient Descent Step
+
+**Minimize f(x) = (x - 3)^2. Start at x0 = 0, learning rate eta = 0.4.**
+
+**Step 1:** Compute gradient at x0 = 0
+  f'(x) = 2(x - 3)
+  f'(0) = 2(0 - 3) = -6
+
+**Step 2:** Update x
+  x1 = 0 - 0.4 * (-6) = 0 + 2.4 = 2.4
+
+**Step 3:** Next iteration at x1 = 2.4
+  f'(2.4) = 2(2.4 - 3) = -1.2
+  x2 = 2.4 - 0.4 * (-1.2) = 2.4 + 0.48 = 2.88
+
+**Step 4:** Continue
+  f'(2.88) = 2(2.88 - 3) = -0.24
+  x3 = 2.88 + 0.096 = 2.976
+
+**Interpret:**
+  "Starting at x=0, gradient descent moves toward the minimum at x=3. Each step reduces the distance: 3.0 -> 0.6 -> 0.12 -> 0.024. The negative gradient points uphill, so subtracting it moves us downhill."
+
+:::
+
 where $\eta$ is the learning rate. The derivation comes from the first-order Taylor expansion:
 
 $$\mathcal{L}(\boldsymbol{\theta} + \boldsymbol{\delta}) \approx \mathcal{L}(\boldsymbol{\theta}) + \nabla \mathcal{L}(\boldsymbol{\theta})^T \boldsymbol{\delta}$$
@@ -342,6 +417,37 @@ Since $\|\nabla \mathcal{L}\|^2 \geq 0$, the loss decreases (for small enough $\
 Bayes' theorem relates conditional probabilities:
 
 $$P(A \mid B) = \frac{P(B \mid A) \cdot P(A)}{P(B)}$$
+
+::: details Worked Example — Bayes' Theorem (Medical Test)
+
+**A disease affects 1% of the population. A test has 95% sensitivity and 90% specificity.**
+- P(disease) = 0.01
+- P(positive | disease) = 0.95
+- P(positive | healthy) = 0.10 (1 - specificity)
+
+**Step 1:** P(positive) using law of total probability
+  P(+) = P(+|disease)*P(disease) + P(+|healthy)*P(healthy)
+       = 0.95 * 0.01 + 0.10 * 0.99
+       = 0.0095 + 0.099 = 0.1085
+
+**Step 2:** P(disease | positive) using Bayes' theorem
+  P(disease|+) = P(+|disease)*P(disease) / P(+)
+               = (0.95 * 0.01) / 0.1085
+               = 0.0095 / 0.1085 = 0.0876
+
+**Step 3:** Interpret
+  Only 8.76% of positive tests actually have the disease!
+
+**Step 4:** Why so low?
+  Of 10,000 people: 100 have disease, 9900 are healthy
+  True positives: 100 * 0.95 = 95
+  False positives: 9900 * 0.10 = 990
+  P(disease|+) = 95 / (95 + 990) = 95/1085 = 8.76%
+
+**Interpret:**
+  "This is the base rate fallacy. Despite a 95% sensitive test, the low prevalence (1%) means most positive results are false positives. You'd need a second independent test to raise confidence."
+
+:::
 
 **Derivation:** Start from the definition of conditional probability in both directions:
 
@@ -449,6 +555,37 @@ Taking the log (since log is monotonic):
 
 $$\hat{\theta}_{MLE} = \arg\max_\theta \sum_{i=1}^n \log P(x_i \mid \theta)$$
 
+::: details Worked Example — MLE for Coin Flip
+
+**Observed data: 7 heads, 3 tails in 10 flips. Find MLE for p (probability of heads).**
+
+Each flip follows Bernoulli(p): P(H) = p, P(T) = 1-p.
+
+**Step 1:** Write the likelihood
+  L(p) = p^7 * (1-p)^3
+
+**Step 2:** Write the log-likelihood
+  log L(p) = 7*log(p) + 3*log(1-p)
+
+**Step 3:** Take derivative and set to zero
+  d(log L)/dp = 7/p - 3/(1-p) = 0
+  7(1-p) = 3p
+  7 - 7p = 3p
+  7 = 10p
+  p_MLE = 7/10 = 0.70
+
+**Step 4:** Verify with different p values
+  p=0.5: log L = 7*(-0.693) + 3*(-0.693) = -6.93
+  p=0.7: log L = 7*(-0.357) + 3*(-1.204) = -2.499 - 3.612 = -6.11
+  p=0.9: log L = 7*(-0.105) + 3*(-2.303) = -0.735 - 6.909 = -7.64
+
+p=0.7 gives the highest log-likelihood, confirming our answer.
+
+**Interpret:**
+  "The MLE for a coin's bias given 7 heads in 10 flips is simply the observed proportion: 7/10 = 0.7. This is the most intuitive estimator, and MLE provides the mathematical justification."
+
+:::
+
 ```python
 # mle.py — MLE for Gaussian parameters
 import numpy as np
@@ -515,6 +652,26 @@ print(f"Simulated Var(X) = {rolls.var():.4f}")
 The expected prediction error can be decomposed:
 
 $$\mathbb{E}[(y - \hat{f}(x))^2] = \text{Bias}[\hat{f}(x)]^2 + \text{Var}[\hat{f}(x)] + \sigma^2$$
+
+::: details Worked Example — Bias-Variance Tradeoff
+
+**True f(x) = 5. Noise sigma = 0.5. Three models trained on different data:**
+
+| Model Complexity | Predictions over datasets | E[f_hat] | Bias^2 | Var   |
+|-----------------|--------------------------|----------|--------|-------|
+| Too simple (const=3)  | [3, 3, 3, 3, 3]   | 3.0 | (5-3)^2 = 4.0 | 0.0  |
+| Just right      | [4.8, 5.3, 4.7, 5.1, 5.1] | 5.0 | (5-5)^2 = 0.0 | 0.04 |
+| Too complex     | [3.5, 6.5, 4.0, 7.0, 4.0] | 5.0 | (5-5)^2 = 0.0 | 2.10 |
+
+**Expected prediction errors (sigma^2 = 0.25):**
+  Simple:  EPE = 4.0 + 0.0 + 0.25 = 4.25
+  Right:   EPE = 0.0 + 0.04 + 0.25 = 0.29
+  Complex: EPE = 0.0 + 2.10 + 0.25 = 2.35
+
+**Interpret:**
+  "The simple model has zero variance but huge bias (always predicts 3 instead of 5). The complex model is unbiased on average but varies wildly. The just-right model achieves the lowest total error (0.29) with a good bias-variance balance. No model can go below 0.25 (the irreducible noise)."
+
+:::
 
 where:
 - **Bias** = $\mathbb{E}[\hat{f}(x)] - f(x)$ — error from wrong assumptions
@@ -670,6 +827,27 @@ Entropy measures the uncertainty of a random variable:
 
 $$H(X) = -\sum_{i=1}^n p_i \log_2 p_i$$
 
+::: details Worked Example — Shannon Entropy
+
+**Compare entropy of three distributions over {A, B, C}:**
+
+**Distribution 1: Uniform [1/3, 1/3, 1/3]**
+  H = -(1/3)log2(1/3) - (1/3)log2(1/3) - (1/3)log2(1/3)
+    = -3 * (1/3)(-1.585) = 3 * 0.528 = 1.585 bits
+
+**Distribution 2: Skewed [0.8, 0.1, 0.1]**
+  H = -0.8*log2(0.8) - 0.1*log2(0.1) - 0.1*log2(0.1)
+    = -0.8(-0.322) - 0.1(-3.322) - 0.1(-3.322)
+    = 0.258 + 0.332 + 0.332 = 0.922 bits
+
+**Distribution 3: Certain [1.0, 0.0, 0.0]**
+  H = -1.0*log2(1.0) = -1.0*0 = 0 bits
+
+**Interpret:**
+  "Uniform distribution has maximum entropy (1.585 bits) — maximum uncertainty about which class. The skewed distribution has less entropy (0.922) — we can guess 'A' most of the time. A certain distribution has zero entropy — no uncertainty at all. Decision trees seek splits that minimize child entropy."
+
+:::
+
 Maximum entropy: uniform distribution (maximum uncertainty). Minimum entropy: deterministic (zero uncertainty).
 
 ```python
@@ -702,6 +880,28 @@ print(f"Skewed [0.8, 0.1, 0.1]: {entropy([0.8, 0.1, 0.1]):.4f}")
 Measures how one probability distribution differs from another:
 
 $$D_{KL}(P \| Q) = \sum_x P(x) \log \frac{P(x)}{Q(x)}$$
+
+::: details Worked Example — KL Divergence and Cross-Entropy
+
+**True distribution P = [0, 0, 1] (class 3 is correct). Two model predictions:**
+- Good model: Q1 = [0.05, 0.05, 0.90]
+- Bad model:  Q2 = [0.40, 0.30, 0.30]
+
+**Step 1:** Cross-entropy H(P, Q1) (good model)
+  H(P, Q1) = -0*ln(0.05) - 0*ln(0.05) - 1*ln(0.90) = -ln(0.90) = 0.105
+
+**Step 2:** Cross-entropy H(P, Q2) (bad model)
+  H(P, Q2) = -0*ln(0.40) - 0*ln(0.30) - 1*ln(0.30) = -ln(0.30) = 1.204
+
+**Step 3:** KL divergence (since P is one-hot, KL = cross-entropy - entropy of P)
+  H(P) = 0 (deterministic distribution)
+  D_KL(P||Q1) = 0.105 - 0 = 0.105
+  D_KL(P||Q2) = 1.204 - 0 = 1.204
+
+**Interpret:**
+  "The good model's cross-entropy (0.105) is much lower than the bad model's (1.204). Minimizing cross-entropy during training is equivalent to minimizing KL divergence — making the model's predicted distribution closer to the true distribution."
+
+:::
 
 KL divergence is not symmetric: $D_{KL}(P \| Q) \neq D_{KL}(Q \| P)$.
 

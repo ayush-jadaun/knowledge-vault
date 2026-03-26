@@ -700,3 +700,23 @@ Each service uses the database technology best suited to its workload:
 - [Event-Driven APIs](/system-design/api-design/event-driven-apis) — designing event schemas and contracts
 - [Anti-Patterns](/system-design/advanced/anti-patterns) — shared database is anti-pattern #3
 - [Database Selection Guide](/system-design/databases/database-selection-guide) — choosing the right DB per service
+
+## Real-World Examples
+
+::: tip Netflix
+Netflix uses **database-per-service with polyglot persistence** across 200+ microservices. Their Catalog Service uses Cassandra (high-throughput reads for browsing), the Viewing History Service uses Cassandra (massive write volume), the Billing Service uses MySQL (ACID transactions), and their Recommendation Service uses custom data stores optimized for ML model serving. Each team chooses the database that best fits their access patterns.
+:::
+
+::: tip Uber
+Uber migrated from a **shared PostgreSQL database to database-per-service** using the Schemaless architecture. Their Trips Service uses Schemaless (custom append-only datastore), the Marketplace Service uses an in-memory geospatial database for driver matching, and the Payments Service uses MySQL for financial ACID compliance. They use Kafka as the event backbone to keep data synchronized across services.
+:::
+
+::: tip Wix
+Wix uses the **outbox pattern** with Debezium CDC to reliably publish events from their databases. When their Site Service writes a new site to MySQL, Debezium reads the MySQL binlog and publishes the event to Kafka — guaranteeing that every database write produces exactly one event without dual-write problems. This powers their search indexing, analytics, and notification services.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"Database-per-service is essential for true microservice independence, but it creates two hard problems: cross-service writes and cross-service reads. For writes, I'd use the saga pattern — choreography for simple 2-3 step flows, orchestration for complex flows with branching. For reads that previously used JOINs, I'd start with API composition (parallel calls in a BFF layer) and move to CQRS with materialized views when latency requirements demand pre-joined data. The outbox pattern solves reliable event publishing — writing the event and the business data in the same database transaction, then using CDC to publish to Kafka. The key insight is that this complexity is the cost of independent deployment and scaling — it's not always worth it."
+:::

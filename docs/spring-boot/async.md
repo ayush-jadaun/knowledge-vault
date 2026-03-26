@@ -535,3 +535,62 @@ public class ScheduledTasks {
 - **[Caching](./caching)** — Scheduled cache eviction
 - **[Actuator & Monitoring](./actuator)** — Thread pool metrics
 - **[Best Practices](./best-practices)** — Concurrency anti-patterns
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Using @Async without a custom executor
+The default `SimpleAsyncTaskExecutor` creates a new unbounded thread for every task. Under load, this creates thousands of threads and crashes the application with `OutOfMemoryError`.
+**Fix:** Always configure a bounded `ThreadPoolTaskExecutor` with `corePoolSize`, `maxPoolSize`, and `queueCapacity`. Use `CallerRunsPolicy` as the rejection handler.
+:::
+
+::: danger Pitfall 2: Calling @Async methods from within the same class
+Self-invocation (`this.asyncMethod()`) bypasses the Spring proxy, so the method runs synchronously on the caller's thread.
+**Fix:** Inject the bean into itself with `@Lazy @Autowired private MyService self;` and call `self.asyncMethod()`, or extract the async method to a separate bean.
+:::
+
+::: danger Pitfall 3: Silently swallowing exceptions in @Async void methods
+Exceptions in `@Async void` methods are not propagated to the caller and are silently lost by default.
+**Fix:** Implement `AsyncUncaughtExceptionHandler` via `AsyncConfigurer.getAsyncUncaughtExceptionHandler()` to log errors and send alerts. Or return `CompletableFuture` instead of `void` to make errors visible.
+:::
+
+::: danger Pitfall 4: @Scheduled tasks running on all instances in a cluster
+Without distributed locking, scheduled tasks execute on every application instance simultaneously, causing duplicate processing.
+**Fix:** Use ShedLock with `@SchedulerLock` to ensure only one instance runs the task. Configure the lock provider with your database or Redis.
+:::
+
+::: danger Pitfall 5: Using fixedRate when task execution exceeds the interval
+`fixedRate` triggers the next execution at a fixed interval regardless of whether the previous execution completed, causing task overlap.
+**Fix:** Use `fixedDelay` instead, which waits for the specified delay after the previous execution completes. Or add `@SchedulerLock` to prevent overlapping executions.
+:::
+
+::: danger Pitfall 6: Losing MDC/SecurityContext in async threads
+`MDC` context (correlation IDs, user IDs) and `SecurityContext` are stored in `ThreadLocal`, which is not propagated to async task threads.
+**Fix:** Use a `TaskDecorator` on the `ThreadPoolTaskExecutor` that copies the MDC context map and SecurityContext before task execution and clears them after.
+:::
+
+## Interview Questions
+
+**Q1: What is the difference between `@Async` with `void` return vs. `CompletableFuture` return?**
+::: details Answer
+`@Async void` is fire-and-forget: the caller does not know when the task completes or whether it succeeded. Exceptions are silently swallowed unless you configure an `AsyncUncaughtExceptionHandler`. `@Async CompletableFuture<T>` allows the caller to wait for the result, compose multiple async operations, handle errors with `.exceptionally()`, set timeouts with `.orTimeout()`, and combine results with `CompletableFuture.allOf()`. Always prefer returning `CompletableFuture` unless you truly need fire-and-forget semantics.
+:::
+
+**Q2: How do virtual threads (Project Loom) change async programming in Spring Boot?**
+::: details Answer
+Virtual threads are lightweight threads (few KB stack) managed by the JVM, unlike platform threads (1 MB stack) mapped to OS threads. With `spring.threads.virtual.enabled: true` in Spring Boot 3.2+, all request handling uses virtual threads automatically. The key change: blocking I/O (HTTP calls, database queries, file I/O) no longer wastes platform threads because virtual threads unmount from the carrier thread when blocking. This means you can write simple, synchronous code that handles thousands of concurrent connections without the complexity of `@Async`, `CompletableFuture`, or reactive programming. Virtual threads are NOT beneficial for CPU-bound work.
+:::
+
+**Q3: How does `@Scheduled` work and what is the difference between `fixedRate`, `fixedDelay`, and `cron`?**
+::: details Answer
+`@Scheduled` runs methods periodically in a background thread. `fixedRate = 5000` triggers every 5 seconds from the start of the previous execution (can overlap). `fixedDelay = 5000` waits 5 seconds after the previous execution completes (never overlaps). `cron = "0 0 2 * * *"` runs at exactly 2 AM daily using a six-field cron expression (second, minute, hour, day, month, weekday). All values can be externalized with SpEL: `fixedRateString = "${app.job.interval:PT5M}"`. Enable with `@EnableScheduling` and always configure a `TaskScheduler` bean with a thread pool.
+:::
+
+**Q4: How do you prevent `@Scheduled` tasks from running on multiple instances simultaneously?**
+::: details Answer
+Use ShedLock with `@SchedulerLock`: (1) Add `shedlock-spring` and a provider dependency (e.g., `shedlock-provider-jdbc-template`). (2) Create the `shedlock` table in your database. (3) Configure `@EnableSchedulerLock(defaultLockAtMostFor = "10m")`. (4) Annotate scheduled methods with `@SchedulerLock(name = "taskName", lockAtLeastFor = "5m", lockAtMostFor = "30m")`. The first instance to acquire the lock runs the task; other instances skip it. `lockAtLeastFor` prevents rapid re-execution; `lockAtMostFor` ensures the lock is released if the instance crashes.
+:::
+
+**Q5: How do you compose multiple async operations and handle partial failures?**
+::: details Answer
+Use `CompletableFuture.allOf()` to wait for multiple async operations: `CompletableFuture.allOf(future1, future2, future3).join()`. For partial failure handling, add `.exceptionally()` or `.handle()` on each future individually to provide fallback values, so one failure does not cancel the others. Example: `userFuture.exceptionally(ex -> UserProfile.empty())`. Then combine results with `.thenApply()`. For timeout, use `.orTimeout(5, TimeUnit.SECONDS)`. For structured concurrency (Java 21 preview), use `StructuredTaskScope.ShutdownOnFailure` which cancels all subtasks if any one fails.
+:::

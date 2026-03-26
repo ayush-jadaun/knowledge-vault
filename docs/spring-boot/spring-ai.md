@@ -660,3 +660,57 @@ public class AIRouterService {
 - **[Async & Scheduling](./async)** — Async LLM calls and batch processing
 - **[Caching](./caching)** — Caching LLM responses for cost savings
 - **[Docker & Deployment](./docker)** — Deploying Ollama and vector stores
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Not handling LLM rate limits and cost
+Making unlimited LLM API calls without rate limiting or caching leads to unexpected bills and 429 errors from the provider.
+**Fix:** Cache LLM responses for identical prompts using `@Cacheable`. Implement rate limiting on AI endpoints. Set `max-tokens` limits and monitor costs per endpoint.
+:::
+
+::: danger Pitfall 2: Putting sensitive data in prompts
+Including PII, credentials, or proprietary data in prompts sends that data to external LLM providers, creating compliance and security risks.
+**Fix:** Sanitize user input before sending to LLMs. Redact PII. For sensitive use cases, use self-hosted models via Ollama or consider on-premise deployment.
+:::
+
+::: danger Pitfall 3: Not setting token limits on user-facing chat endpoints
+Users can send extremely long messages or trigger long responses, consuming excessive tokens and slowing the system.
+**Fix:** Set `max-tokens` in chat options, validate input length, and implement request-level timeouts. Use streaming for long responses to provide incremental feedback.
+:::
+
+::: danger Pitfall 4: Ignoring hallucinations in RAG implementations
+RAG reduces but does not eliminate hallucinations. The LLM may generate confident answers that are not supported by the retrieved context.
+**Fix:** Instruct the system prompt to answer ONLY from provided context. Set a `similarityThreshold` on vector search to filter low-relevance documents. Include source citations in responses for verification.
+:::
+
+::: danger Pitfall 5: Chunking documents too large or too small for embeddings
+Chunks that are too large lose specificity in vector search. Chunks that are too small lose context and produce fragmented answers.
+**Fix:** Use 500-1000 token chunks with 100-200 token overlap. Tune chunk size based on your data and query patterns. Test retrieval quality with representative queries.
+:::
+
+## Interview Questions
+
+**Q1: What is RAG (Retrieval-Augmented Generation) and how does Spring AI implement it?**
+::: details Answer
+RAG grounds LLM responses in your own data by retrieving relevant context before generation. The pipeline has two phases: (1) **Ingestion**: Documents are split into chunks, embedded into vectors using an embedding model, and stored in a vector database (pgvector, Pinecone, ChromaDB). (2) **Query**: The user's question is embedded, similar chunks are retrieved via vector similarity search, and the retrieved context is included in the LLM prompt. Spring AI provides `VectorStore` for storage, `EmbeddingModel` for embedding, `TokenTextSplitter` for chunking, and `QuestionAnswerAdvisor` for automatic RAG integration with `ChatClient`.
+:::
+
+**Q2: How does function calling work in Spring AI?**
+::: details Answer
+Function calling lets the LLM invoke your Java methods to get real-time data or perform actions. You define functions as Spring beans with `@Description` annotations: `@Bean @Description("Get weather for a city") public Function<WeatherRequest, WeatherResponse> getWeather()`. When using `ChatClient`, pass function names with `.functions("getWeather", "searchProducts")`. The LLM decides when to call a function based on the user's message, generates the function arguments, Spring AI executes the function, and the result is sent back to the LLM to formulate the final response.
+:::
+
+**Q3: How does Spring AI achieve provider portability?**
+::: details Answer
+Spring AI defines provider-agnostic interfaces: `ChatModel` for chat completions, `EmbeddingModel` for embeddings, `VectorStore` for vector storage. Each provider (OpenAI, Anthropic, Ollama, Azure OpenAI, AWS Bedrock) has a Spring Boot starter that auto-configures the implementation. Your application code programs against the interfaces. To switch providers, change the dependency (e.g., `spring-ai-openai-spring-boot-starter` to `spring-ai-anthropic-spring-boot-starter`) and update the API key property. The `ChatClient.Builder` API remains identical across providers.
+:::
+
+**Q4: What is the difference between `ChatClient.call()` and `ChatClient.stream()`?**
+::: details Answer
+`call()` sends the prompt and waits for the complete response before returning. It returns a `ChatResponse` or a mapped entity. Use it for backend processing where you need the full response before proceeding. `stream()` returns a `Flux<String>` that emits response tokens as they are generated. Use it for real-time user interfaces (chat UIs) where you want to display text as it arrives, providing a more responsive experience. Stream responses via Server-Sent Events (SSE) with `produces = MediaType.TEXT_EVENT_STREAM_VALUE`.
+:::
+
+**Q5: How do you implement structured output parsing with Spring AI?**
+::: details Answer
+Spring AI can parse LLM responses into Java objects using `.entity(MyClass.class)` on the `ChatClient` call chain. The LLM is instructed (via system prompt engineering) to output JSON matching the target class structure. Spring AI uses Jackson to deserialize the response. For reliable structured output, use clear `@Schema` annotations on the target record, provide examples in the system prompt, and handle parsing failures with retry logic. This is useful for extracting structured data from unstructured text, generating recommendations as objects, or building AI-powered form filling.
+:::

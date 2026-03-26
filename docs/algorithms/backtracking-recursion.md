@@ -656,3 +656,132 @@ If a problem asks "find the minimum/maximum" or "how many ways" — think [DP](/
 - [Trees](/algorithms/trees) — tree traversals are recursion in action
 - [Graphs](/algorithms/graphs) — DFS is backtracking on graphs
 - [Arrays & Strings](/algorithms/arrays-strings) — many string problems use backtracking for generation
+
+## Try It Yourself
+
+**Problem 1:** Generate all permutations of `[1, 2, 3]`.
+
+::: details Solution
+Using the backtracking template (choose, explore, unchoose):
+- Start with path=[], remaining={1,2,3}
+- Choose 1: path=[1], remaining={2,3}
+  - Choose 2: path=[1,2], remaining={3} → [1,2,3]
+  - Choose 3: path=[1,3], remaining={2} → [1,3,2]
+- Choose 2: path=[2], remaining={1,3}
+  - Choose 1: [2,1,3]
+  - Choose 3: [2,3,1]
+- Choose 3: path=[3], remaining={1,2}
+  - Choose 1: [3,1,2]
+  - Choose 2: [3,2,1]
+Answer: **[[1,2,3], [1,3,2], [2,1,3], [2,3,1], [3,1,2], [3,2,1]]** (6 permutations = 3!)
+:::
+
+**Problem 2:** Generate all subsets of `[1, 2, 3]`.
+
+::: details Solution
+At each element, decide to include or exclude:
+- [], [1], [2], [3], [1,2], [1,3], [2,3], [1,2,3]
+Using the iterative backtracking approach:
+- Start: index=0, path=[] → record []
+- Add 1: path=[1] → record [1]. Add 2: [1,2] → record. Add 3: [1,2,3] → record. Pop 3. Pop 2.
+- Add 3: [1,3] → record. Pop 3. Pop 1.
+- Add 2: [2] → record. Add 3: [2,3] → record. Pop 3. Pop 2.
+- Add 3: [3] → record. Pop 3.
+Answer: **[[], [1], [1,2], [1,2,3], [1,3], [2], [2,3], [3]]** (8 subsets = $2^3$)
+:::
+
+**Problem 3:** Solve the 4-Queens problem: place 4 queens on a 4x4 board so no two attack each other.
+
+::: details Solution
+Place queens row by row, tracking occupied columns and diagonals:
+- Row 0: try col 0 → blocked later. Try col 1 → works.
+- Row 1: try col 3 → works (col 3 free, diags 1-3=-2 and 1+3=4 free).
+- Row 2: try col 0 → works (col 0 free, diags 2-0=2 and 2+0=2 free).
+- Row 3: try col 2 → works (col 2 free, diags 3-2=1 and 3+2=5 free).
+Solution:
+```
+. Q . .
+. . . Q
+Q . . .
+. . Q .
+```
+There are **2 solutions** for 4-Queens.
+:::
+
+**Problem 4:** Find all combinations of `[2, 3, 6, 7]` that sum to `7` (elements can be reused).
+
+::: details Solution
+Using backtracking with pruning (sort first: [2, 3, 6, 7]):
+- Start with 2: remaining=5. Pick 2 again: remaining=3. Pick 2: remaining=1. Pick 2: remaining=-1 → prune. Pick 3: remaining=-2 → prune. Backtrack.
+- Path [2,2]: remaining=3. Pick 3: remaining=0 → **[2,2,3]** found.
+- Path [2]: remaining=5. Pick 3: remaining=2. Pick 3: remaining=-1 → prune. Backtrack.
+- Path [3]: remaining=4. Pick 3: remaining=1. No valid picks → prune. Backtrack.
+- Path [7]: remaining=0 → **[7]** found.
+Answer: **[[2,2,3], [7]]**
+:::
+
+**Problem 5:** Use backtracking to check if the word `"ABCCED"` exists in the grid:
+```
+A B C E
+S F C S
+A D E E
+```
+
+::: details Solution
+Start from each cell matching 'A':
+- Cell (0,0)='A' → (0,1)='B' → (1,1)='F'? No. → (0,0) not adjacent to 'B' except (0,1). Try (0,1)='B' → (0,2)='C' → (1,2)='C' → (2,2)='E' → (2,1)='D' → found!
+Path: (0,0)A → (0,1)B → (0,2)C → (1,2)C → (2,2)E → (2,1)D
+Answer: **true** -- the word exists in the grid.
+:::
+
+## Quick Quiz
+
+**1. What is the time complexity of generating all subsets of a set with $n$ elements?**
+- a) $O(n!)$
+- b) $O(n^2)$
+- c) $O(2^n \cdot n)$
+- d) $O(n \log n)$
+
+::: details Answer
+**c) $O(2^n \cdot n)$** — There are $2^n$ subsets, and each takes $O(n)$ to copy into the result list.
+:::
+
+**2. What is the key difference between backtracking and brute force?**
+- a) Backtracking is always faster
+- b) Backtracking prunes branches that cannot lead to valid solutions, avoiding unnecessary exploration
+- c) Brute force cannot solve constraint satisfaction problems
+- d) Backtracking uses more memory
+
+::: details Answer
+**b) Backtracking prunes branches that cannot lead to valid solutions, avoiding unnecessary exploration** — Backtracking is brute force with early termination. When a partial solution violates constraints, the entire subtree is skipped.
+:::
+
+**3. In the N-Queens problem, how do you check diagonal conflicts in $O(1)$?**
+- a) Check all previously placed queens
+- b) Use sets tracking `row - col` and `row + col` values
+- c) Use a 2D boolean array for the board
+- d) Compare absolute differences of coordinates
+
+::: details Answer
+**b) Use sets tracking `row - col` and `row + col` values** — All cells on the same diagonal share the same `row - col` value (for one diagonal direction) or `row + col` value (for the other). Storing these in sets gives $O(1)$ conflict checking.
+:::
+
+**4. When should you use backtracking instead of dynamic programming?**
+- a) When you need the optimal value only
+- b) When you need to generate all valid solutions or find a specific valid configuration
+- c) When the problem has overlapping subproblems
+- d) When the input size is very large
+
+::: details Answer
+**b) When you need to generate all valid solutions or find a specific valid configuration** — DP finds optimal values efficiently but does not enumerate all solutions. Backtracking systematically explores all possibilities and is the right tool when you need to list or count all valid configurations.
+:::
+
+**5. Why is sorting the input often the first step in backtracking problems?**
+- a) It makes the recursion faster
+- b) It enables pruning (skip remaining candidates when current exceeds target) and duplicate avoidance
+- c) It reduces memory usage
+- d) It is required by the backtracking template
+
+::: details Answer
+**b) It enables pruning (skip remaining candidates when current exceeds target) and duplicate avoidance** — With sorted input, once a candidate exceeds the remaining budget you can `break` (all subsequent candidates are larger). Sorting also groups duplicates together, making it easy to skip duplicate branches.
+:::

@@ -43,6 +43,46 @@ $$J = \sum_{k=1}^{K} \sum_{x_i \in C_k} \|x_i - \mu_k\|^2$$
 
 where $C_k$ is the set of points in cluster $k$ and $\mu_k = \frac{1}{|C_k|} \sum_{x_i \in C_k} x_i$ is the centroid.
 
+::: details Worked Example — K-Means WCSS and One Iteration
+
+**Mini Dataset (K=2):**
+| Point | x1 | x2 |
+|-------|-----|-----|
+| A     | 1   | 1   |
+| B     | 2   | 1   |
+| C     | 1   | 2   |
+| D     | 8   | 8   |
+| E     | 9   | 8   |
+| F     | 8   | 9   |
+
+**Initialize centroids: mu1 = [1, 1] (point A), mu2 = [9, 8] (point E)**
+
+**Step 1: Assignment** — assign each point to nearest centroid
+  A: d(A, mu1)=0.00, d(A, mu2)=sqrt(64+49)=10.63 -> Cluster 1
+  B: d(B, mu1)=1.00, d(B, mu2)=sqrt(49+49)=9.90 -> Cluster 1
+  C: d(C, mu1)=1.00, d(C, mu2)=sqrt(64+36)=10.00 -> Cluster 1
+  D: d(D, mu1)=sqrt(49+49)=9.90, d(D, mu2)=1.00 -> Cluster 2
+  E: d(E, mu1)=10.63, d(E, mu2)=0.00 -> Cluster 2
+  F: d(F, mu1)=10.00, d(F, mu2)=sqrt(1+1)=1.41 -> Cluster 2
+
+  Cluster 1: {A, B, C}, Cluster 2: {D, E, F}
+
+**Step 2: Update** — recompute centroids
+  mu1 = [(1+2+1)/3, (1+1+2)/3] = [1.33, 1.33]
+  mu2 = [(8+9+8)/3, (8+8+9)/3] = [8.33, 8.33]
+
+**Step 3: Compute WCSS**
+  Cluster 1: (1-1.33)^2+(1-1.33)^2 + (2-1.33)^2+(1-1.33)^2 + (1-1.33)^2+(2-1.33)^2
+            = 0.11+0.11 + 0.44+0.11 + 0.11+0.44 = 1.33
+  Cluster 2: (8-8.33)^2+(8-8.33)^2 + (9-8.33)^2+(8-8.33)^2 + (8-8.33)^2+(9-8.33)^2
+            = 0.11+0.11 + 0.44+0.11 + 0.11+0.44 = 1.33
+  WCSS = 1.33 + 1.33 = 2.67
+
+**Interpret:**
+  "K-Means found two natural clusters in one iteration. The WCSS of 2.67 is low, indicating tight clusters. Each point is within ~0.67 units of its centroid."
+
+:::
+
 ### Lloyd's Algorithm Step-by-Step
 
 1. **Initialize** $K$ centroids $\mu_1, \ldots, \mu_K$ (randomly or via K-Means++)
@@ -210,6 +250,32 @@ where:
 
 The overall silhouette score is $\bar{s} = \frac{1}{n} \sum_{i=1}^{n} s(i)$.
 
+::: details Worked Example — Silhouette Score
+
+**Using the K-Means result above. Compute silhouette for point A=[1,1]:**
+
+Cluster 1: {A=[1,1], B=[2,1], C=[1,2]}
+Cluster 2: {D=[8,8], E=[9,8], F=[8,9]}
+
+**Step 1:** a(A) = mean distance to same-cluster points
+  d(A,B) = sqrt((1-2)^2+(1-1)^2) = 1.000
+  d(A,C) = sqrt((1-1)^2+(1-2)^2) = 1.000
+  a(A) = (1.000 + 1.000) / 2 = 1.000
+
+**Step 2:** b(A) = mean distance to nearest other cluster
+  d(A,D) = sqrt(49+49) = 9.899
+  d(A,E) = sqrt(64+49) = 10.630
+  d(A,F) = sqrt(49+64) = 10.630
+  b(A) = (9.899 + 10.630 + 10.630) / 3 = 10.386
+
+**Step 3:** Compute silhouette
+  s(A) = (10.386 - 1.000) / max(1.000, 10.386) = 9.386/10.386 = 0.904
+
+**Interpret:**
+  "s(A) = 0.904, very close to 1.0, meaning point A is well-clustered (much closer to its own cluster than to the other). Values near 0 indicate borderline points, negative values suggest wrong cluster assignment."
+
+:::
+
 - $s(i) \approx 1$: Point is well-clustered
 - $s(i) \approx 0$: Point is on the border between clusters
 - $s(i) < 0$: Point is likely in the wrong cluster
@@ -329,6 +395,34 @@ The "distance between clusters" depends on the linkage method:
 
 $$\Delta = \frac{|A| \cdot |B|}{|A| + |B|} \|\mu_A - \mu_B\|^2$$
 
+::: details Worked Example — Ward's Merge Criterion
+
+**3 candidate cluster merges:**
+- Merge X: A(3 points, mu=[1,1]) with B(3 points, mu=[2,2])
+- Merge Y: C(2 points, mu=[1,1]) with D(4 points, mu=[5,5])
+- Merge Z: E(5 points, mu=[3,3]) with F(5 points, mu=[3.5, 3.5])
+
+**Step 1:** Delta for merge X
+  Delta_X = (3*3)/(3+3) * ||(1-2)^2 + (1-2)^2||
+          = 9/6 * (1+1) = 1.5 * 2 = 3.0
+
+**Step 2:** Delta for merge Y
+  Delta_Y = (2*4)/(2+4) * ||(1-5)^2 + (1-5)^2||
+          = 8/6 * (16+16) = 1.333 * 32 = 42.67
+
+**Step 3:** Delta for merge Z
+  Delta_Z = (5*5)/(5+5) * ||(3-3.5)^2 + (3-3.5)^2||
+          = 25/10 * (0.25+0.25) = 2.5 * 0.5 = 1.25
+
+**Step 4:** Ward's method merges the pair with smallest Delta
+  Delta_Z = 1.25 < Delta_X = 3.0 < Delta_Y = 42.67
+  -> Merge E and F first (they're closest and similar-sized)
+
+**Interpret:**
+  "Ward's method prefers merging clusters that are close together AND similar in size. Merge Y has a huge Delta (42.67) because the centroids are far apart. Merge Z wins because the clusters are very close (0.5 units apart) even though they're larger."
+
+:::
+
 ### Scikit-learn + Dendrogram
 
 ```python
@@ -382,6 +476,32 @@ Since we can't directly maximize the log-likelihood (it involves a sum inside th
 **E-step** — Compute responsibilities (posterior probability that point $i$ belongs to cluster $k$):
 
 $$\gamma_{ik} = \frac{\pi_k \cdot \mathcal{N}(x_i \mid \mu_k, \Sigma_k)}{\sum_{j=1}^{K} \pi_j \cdot \mathcal{N}(x_i \mid \mu_j, \Sigma_j)}$$
+
+::: details Worked Example — GMM E-Step (Responsibilities)
+
+**1D data, K=2 Gaussians. Parameters:**
+- Cluster 1: pi1=0.5, mu1=2, sigma1=1
+- Cluster 2: pi2=0.5, mu2=6, sigma2=1
+
+**Compute responsibilities for x=3.5:**
+
+**Step 1:** N(3.5 | mu1=2, sigma=1) = (1/sqrt(2*pi)) * exp(-(3.5-2)^2/2)
+  = 0.3989 * exp(-1.125) = 0.3989 * 0.3247 = 0.1295
+
+**Step 2:** N(3.5 | mu2=6, sigma=1) = 0.3989 * exp(-(3.5-6)^2/2)
+  = 0.3989 * exp(-3.125) = 0.3989 * 0.0439 = 0.0175
+
+**Step 3:** Compute responsibilities
+  gamma_1 = (0.5 * 0.1295) / (0.5 * 0.1295 + 0.5 * 0.0175)
+           = 0.0648 / (0.0648 + 0.0088) = 0.0648 / 0.0735 = 0.881
+  gamma_2 = 0.0088 / 0.0735 = 0.119
+
+**Step 4:** Verify: 0.881 + 0.119 = 1.000
+
+**Interpret:**
+  "Point x=3.5 has 88.1% responsibility to cluster 1 (centered at 2) and 11.9% to cluster 2 (centered at 6). Unlike K-Means which would assign it 100% to cluster 1, GMM gives soft assignments reflecting uncertainty."
+
+:::
 
 **M-step** — Update parameters using responsibilities:
 

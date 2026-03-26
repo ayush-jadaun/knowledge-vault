@@ -553,3 +553,57 @@ volumes:
 - **[Spring Cloud](./spring-cloud)** — Distributed tracing with Micrometer
 - **[Hibernate Performance Tuning](./hibernate-tuning)** — Database-specific metrics
 - **[Caching](./caching)** — Cache hit/miss metrics
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Exposing all Actuator endpoints in production
+Setting `management.endpoints.web.exposure.include: *` exposes sensitive data like environment variables (which may contain secrets), heap dumps, and thread dumps.
+**Fix:** Explicitly list only needed endpoints: `include: health,info,metrics,prometheus`. Protect all other endpoints with role-based authentication (`hasRole('ADMIN')`).
+:::
+
+::: danger Pitfall 2: Not configuring health check details visibility
+Setting `show-details: always` exposes internal infrastructure details (database host, Redis connection info) to unauthenticated users.
+**Fix:** Use `show-details: when_authorized` and require authentication for health detail access. Use `show-details: never` for public-facing health endpoints used by load balancers.
+:::
+
+::: danger Pitfall 3: Not creating custom health indicators for critical dependencies
+Relying only on default health checks means the application reports UP even when critical external services (payment gateway, email provider) are down.
+**Fix:** Implement `HealthIndicator` beans for each critical external dependency. Include response time and reachability status.
+:::
+
+::: danger Pitfall 4: Creating high-cardinality metric tags
+Using user IDs, request IDs, or other unique values as metric tags creates millions of time series, overwhelming Prometheus and increasing memory usage exponentially.
+**Fix:** Use only low-cardinality tags: HTTP method, status code, endpoint pattern (not actual path), service name. Use logs (not metrics) for high-cardinality data like user IDs.
+:::
+
+::: danger Pitfall 5: Not enabling Kubernetes liveness and readiness probes
+Without probes, Kubernetes cannot detect when your application is stuck (liveness) or not ready to serve traffic (readiness), leading to traffic being sent to unhealthy pods.
+**Fix:** Set `management.endpoint.health.probes.enabled: true` and configure `livenessProbe` and `readinessProbe` in your Kubernetes deployment manifest pointing to `/actuator/health/liveness` and `/actuator/health/readiness`.
+:::
+
+## Interview Questions
+
+**Q1: What is the difference between liveness and readiness probes in Spring Boot Actuator?**
+::: details Answer
+The **liveness probe** (`/actuator/health/liveness`) indicates whether the application is alive and should continue running. If it fails, Kubernetes restarts the pod. It should only check for irrecoverable states (deadlocked threads, exhausted memory). The **readiness probe** (`/actuator/health/readiness`) indicates whether the application is ready to accept traffic. If it fails, Kubernetes removes the pod from the Service endpoints (stops sending traffic) but does not restart it. It checks dependencies like database connectivity and cache availability. A pod can be alive but not ready (e.g., during startup or when a database is temporarily unavailable).
+:::
+
+**Q2: How do you create custom business metrics with Micrometer?**
+::: details Answer
+Inject `MeterRegistry` and use its factory methods: `Counter.builder("orders.placed.total").tag("category", category).register(registry).increment()` for event counts. `Timer.builder("order.processing.duration").register(registry).record(duration)` for latency. `Gauge.builder("orders.active", activeOrders, AtomicInteger::get).register(registry)` for current values. `DistributionSummary.builder("order.value").register(registry).record(amount)` for value distributions. Use `@Timed` and `@Counted` annotations for declarative metrics on methods (requires `TimedAspect` and `CountedAspect` beans).
+:::
+
+**Q3: How do you change log levels at runtime without restarting the application?**
+::: details Answer
+Enable the loggers Actuator endpoint with `management.endpoints.web.exposure.include: loggers`. Send a POST request to `/actuator/loggers/{logger-name}` with `{"configuredLevel": "DEBUG"}` to change the level. Send `{"configuredLevel": null}` to reset to the default. This is invaluable for debugging production issues -- enable DEBUG for a specific package, diagnose the issue, then reset to INFO/WARN. Protect this endpoint with authentication in production.
+:::
+
+**Q4: What Prometheus metrics should you monitor for a Spring Boot application?**
+::: details Answer
+Critical metrics: (1) `http_server_requests_seconds` -- request latency per endpoint; alert on p99 > 1s. (2) `jvm_memory_used_bytes` -- memory usage; alert on > 80% of max. (3) `hikaricp_connections_active` -- active DB connections; alert on > 80% of pool size. (4) `hikaricp_connections_pending` -- threads waiting for connections; alert on > 0 for 30s. (5) `process_cpu_usage` -- CPU usage. (6) Business metrics like `orders.placed.total` (sudden drops indicate problems) and `orders.failed.total` (error rate). (7) `jvm_gc_pause_seconds` -- garbage collection pauses.
+:::
+
+**Q5: How do you secure Actuator endpoints in production?**
+::: details Answer
+Configure Spring Security to allow specific endpoints publicly and restrict the rest: allow `/actuator/health` (for load balancers), `/actuator/health/liveness`, and `/actuator/health/readiness` without authentication. Require `ROLE_MONITORING` for `/actuator/prometheus` (for Prometheus scraping with basic auth). Require `ROLE_ADMIN` for all other endpoints (`/actuator/**`). Alternatively, serve actuator endpoints on a different port (`management.server.port: 9090`) and restrict network access at the firewall/security group level.
+:::

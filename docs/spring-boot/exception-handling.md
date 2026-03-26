@@ -663,3 +663,62 @@ Error handling is critical path code. Test every exception type your API can ret
 - **[Testing](./testing)** — Complete testing strategies including error path testing
 - **[Best Practices](./best-practices)** — Error handling patterns and anti-patterns
 - **[Actuator & Monitoring](./actuator)** — Monitor error rates in production
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Exposing stack traces and internal details in error responses
+Returning raw exception messages, class names, SQL queries, or stack traces in API responses leaks implementation details that attackers can exploit.
+**Fix:** Use a catch-all `@ExceptionHandler(Exception.class)` that logs the full stack trace server-side but returns only a safe, generic message with a `traceId` for correlation.
+:::
+
+::: danger Pitfall 2: Not handling validation errors consistently
+Default Spring validation errors return an unstructured format that changes between exception types (`MethodArgumentNotValidException` vs `ConstraintViolationException`).
+**Fix:** Override `handleMethodArgumentNotValid()` in your `@RestControllerAdvice` and add a handler for `ConstraintViolationException` to return a consistent field-error format.
+:::
+
+::: danger Pitfall 3: Using generic exceptions for business errors
+Throwing `RuntimeException("Product not found")` or `IllegalStateException` loses error context and makes it impossible to return appropriate HTTP status codes.
+**Fix:** Create a custom exception hierarchy with a base `ApplicationException` that carries an error code and HTTP status. Create specific subclasses like `ResourceNotFoundException`, `DuplicateResourceException`, etc.
+:::
+
+::: danger Pitfall 4: Catching exceptions too broadly in the service layer
+Catching `Exception` in every method hides bugs and prevents the `@ControllerAdvice` from handling errors properly.
+**Fix:** Only catch exceptions you can handle meaningfully. Let unexpected exceptions propagate to the global exception handler, which logs them and returns a safe 500 response.
+:::
+
+::: danger Pitfall 5: Not logging errors before returning error responses
+Returning an error to the client without logging it server-side means you lose the ability to diagnose production issues.
+**Fix:** Always log errors in your exception handler -- `log.warn()` for 4xx client errors and `log.error()` with full stack trace for 5xx server errors.
+:::
+
+::: danger Pitfall 6: Forgetting to enable RFC 7807 Problem Details
+Without explicit configuration, Spring Boot returns its legacy error format which is inconsistent and non-standard.
+**Fix:** Set `spring.mvc.problemdetails.enabled: true` in `application.yml` and return `ProblemDetail` objects from your exception handlers for standard RFC 7807 compliance.
+:::
+
+## Interview Questions
+
+**Q1: What is `@ControllerAdvice` and how does it work?**
+::: details Answer
+`@ControllerAdvice` (or `@RestControllerAdvice`) is a specialization of `@Component` that allows you to define global exception handling, model attributes, and data binding across all controllers. Methods annotated with `@ExceptionHandler` inside a `@ControllerAdvice` class catch exceptions thrown from any controller. Spring selects the most specific exception handler -- if both `Exception.class` and `ResourceNotFoundException.class` handlers exist, the more specific one wins. The advice can be scoped to specific packages or controller types using the `basePackages` or `assignableTypes` attributes.
+:::
+
+**Q2: What is RFC 7807 Problem Details and how does Spring Boot support it?**
+::: details Answer
+RFC 7807 (updated by RFC 9457) defines a standard JSON format for HTTP API error responses with fields like `type` (URI identifying the error), `title` (short summary), `status` (HTTP status code), `detail` (specific explanation), and `instance` (URI of the occurrence). Spring Boot 3.x has built-in support via the `ProblemDetail` class. Enable it with `spring.mvc.problemdetails.enabled: true`. You can extend it with custom fields using `problem.setProperty("errorCode", "PRODUCT_NOT_FOUND")`. Extending `ResponseEntityExceptionHandler` gives you automatic Problem Details for standard Spring exceptions.
+:::
+
+**Q3: How do you handle validation errors from `@Valid` and return structured field error responses?**
+::: details Answer
+Override `handleMethodArgumentNotValid()` in your `@RestControllerAdvice` class that extends `ResponseEntityExceptionHandler`. Extract field errors from `MethodArgumentNotValidException.getBindingResult().getFieldErrors()`, map them to a structured format with field name, rejected value, and error message, and return them in a `ProblemDetail` response with status 400. For path variable and query parameter validation (`@Validated` on the controller), handle `ConstraintViolationException` separately with a dedicated `@ExceptionHandler`.
+:::
+
+**Q4: What is the difference between `@ExceptionHandler` at controller level vs. `@ControllerAdvice` level?**
+::: details Answer
+An `@ExceptionHandler` method defined directly in a controller handles exceptions only from that controller. An `@ExceptionHandler` method in a `@ControllerAdvice` class handles exceptions from all controllers globally. If both exist for the same exception type, the controller-level handler takes precedence over the global advice. This allows controllers to override global behavior for specific cases while maintaining a consistent default error response through the advice.
+:::
+
+**Q5: How do you prevent exception handlers from leaking sensitive information?**
+::: details Answer
+Follow three principles: (1) Never include exception messages, stack traces, class names, or SQL queries in client-facing responses -- use generic messages with a `traceId` for correlation. (2) Log the full details server-side with `log.error("Unexpected error [traceId={}]", traceId, exception)` so support can investigate. (3) Differentiate between business exceptions (safe to expose the message) and system exceptions (never expose) by using a custom exception hierarchy where business exceptions carry safe messages and a catch-all handler sanitizes everything else.
+:::

@@ -51,6 +51,43 @@ $$
 | 32 | 3 | 1 | 2 | 16 (halved) |
 | 224 | 7 | 3 | 2 | 112 |
 
+::: details Worked Example — Convolution on a 5x5 Image with a 3x3 Filter
+
+**Input image** ($5 \times 5$, single channel):
+| | | | | |
+|---|---|---|---|---|
+| 1 | 0 | 2 | 1 | 0 |
+| 0 | 1 | 3 | 0 | 1 |
+| 2 | 1 | 0 | 2 | 1 |
+| 1 | 0 | 1 | 0 | 2 |
+| 0 | 1 | 2 | 1 | 0 |
+
+**3x3 Filter** (edge detector):
+| | | |
+|---|---|---|
+| 1 | 0 | -1 |
+| 1 | 0 | -1 |
+| 1 | 0 | -1 |
+
+Stride $S = 1$, Padding $P = 0$
+
+**Step 1:** Output size = $\lfloor(5 - 3 + 0)/1\rfloor + 1 = 3$. Output is $3 \times 3$.
+
+**Step 2:** Compute top-left output $(0,0)$:
+$$\sum = 1(1) + 0(0) + 2(-1) + 0(1) + 1(0) + 3(-1) + 2(1) + 1(0) + 0(-1) = 1 + 0 - 2 + 0 + 0 - 3 + 2 + 0 + 0 = -2$$
+
+**Step 3:** Compute all 9 output values (sliding the filter):
+
+| | | |
+|---|---|---|
+| **-2** | **1** | **-1** |
+| **0** | **0** | **-2** |
+| **-1** | **-1** | **-2** |
+
+**Result:** The filter detects vertical edges (differences between left and right columns). Position $(0,0) = -2$ indicates a strong right-brighter-than-left edge in that region.
+
+:::
+
 ### Parameter Count
 
 A Conv2d layer with $C_{in}$ input channels, $C_{out}$ output channels, and kernel size $k$:
@@ -85,6 +122,33 @@ $$
 $$
 
 where $R_{ij}$ is the pooling region centered at $(i, j)$.
+
+::: details Worked Example — Max Pooling (2x2, stride 2)
+
+**Input** ($4 \times 4$):
+| | | | |
+|---|---|---|---|
+| 1 | 3 | 2 | 4 |
+| 5 | 6 | 1 | 2 |
+| 0 | 2 | 8 | 3 |
+| 1 | 4 | 5 | 7 |
+
+**Step 1:** Divide into 2x2 regions and take the max:
+
+Region $(0,0)$: $\max(1,3,5,6) = 6$
+Region $(0,1)$: $\max(2,4,1,2) = 4$
+Region $(1,0)$: $\max(0,2,1,4) = 4$
+Region $(1,1)$: $\max(8,3,5,7) = 8$
+
+**Output** ($2 \times 2$):
+| | |
+|---|---|
+| **6** | **4** |
+| **4** | **8** |
+
+**Result:** The spatial dimension is halved (4x4 to 2x2) and only the strongest activation in each region survives. This provides a degree of translation invariance --- the "6" output is the same whether the 6 was at any position in the top-left 2x2 region.
+
+:::
 
 ### Average Pooling
 
@@ -450,6 +514,18 @@ For a stack of $n$ layers with kernel size $k$ and stride 1:
 $$
 \text{Receptive field} = n(k - 1) + 1
 $$
+
+::: details Worked Example — Receptive Field Growth
+
+**Setup:** Stack of 3 convolutional layers, each with kernel size $k = 3$, stride 1.
+
+**After 1 layer:** $r = 1(3-1) + 1 = 3$ pixels (each output neuron "sees" a 3x3 patch)
+**After 2 layers:** $r = 2(3-1) + 1 = 5$ pixels
+**After 3 layers:** $r = 3(3-1) + 1 = 7$ pixels
+
+**Compare:** A single 7x7 convolution also has receptive field 7, but uses $7^2 = 49$ parameters per channel pair vs three 3x3 layers using $3 \times 9 = 27$ parameters. This is why VGG uses stacked 3x3 convolutions --- same receptive field, fewer parameters, more nonlinearities.
+
+:::
 
 For a layer with stride $s$ on top of receptive field $r$:
 

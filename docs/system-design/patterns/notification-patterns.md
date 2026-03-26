@@ -557,3 +557,23 @@ class NotificationAggregator:
 ---
 
 *A notification system is a communication contract with your users. Break it — by sending too many, too few, or duplicates — and they will revoke the privilege entirely. Respect preferences, aggregate aggressively, and always provide an easy way to adjust or disable.*
+
+## Real-World Examples
+
+::: tip Facebook/Meta
+Facebook uses a **hybrid fanout model** for notifications. For regular users (under 5,000 friends), they use fanout-on-write — precomputing notifications when an event occurs. For celebrities and pages with millions of followers, they use fanout-on-read to avoid writing millions of notification records for a single post. This hybrid approach handles their scale of billions of notifications per day.
+:::
+
+::: tip LinkedIn
+LinkedIn uses **notification aggregation** aggressively. Instead of sending "Person A viewed your profile," "Person B viewed your profile," "Person C viewed your profile" as three separate notifications, they aggregate into "3 people viewed your profile." Their aggregation engine buffers similar notifications within a 5-minute window and merges them, reducing notification volume by over 80%.
+:::
+
+::: tip Uber
+Uber uses **priority-based notification routing**. A ride arrival notification is critical (push notification with sound, sent immediately), while a promotional discount is low priority (in-app inbox, batched with other promotions). They route each notification through different channels and priority queues, ensuring that time-sensitive notifications are never delayed by marketing messages.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"A notification system has three key challenges: delivery, deduplication, and user respect. For delivery, I'd use a priority queue — security alerts should never wait behind marketing emails. For deduplication, I'd use Redis with idempotency keys (SET NX with TTL) to ensure exactly-once delivery despite retries. For user respect, I'd implement per-user rate limiting per channel (max 5 pushes per hour, 3 emails per day) and quiet hours. The architecture is event-driven: services emit events to a message queue, the notification service checks user preferences, deduplicates, and routes to the right channel. Facebook's hybrid fanout approach — push for normal users, pull for celebrities — is the pattern I'd reference for handling extreme fan-out."
+:::

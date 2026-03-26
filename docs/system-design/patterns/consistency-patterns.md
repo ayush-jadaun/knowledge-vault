@@ -543,3 +543,23 @@ graph TD
 ---
 
 *The right consistency model is not the strongest one — it is the weakest one that still meets your requirements. Every extra guarantee costs performance and availability. Know exactly what your users need and pay for nothing more.*
+
+## Real-World Examples
+
+::: tip Facebook/Meta
+Facebook uses **causal consistency** for their social graph. When you post a comment on a photo, the system guarantees no one sees your comment without seeing the original photo — even across data centers. They implemented this with logical timestamps that track causal dependencies, avoiding the cost of full linearizability while preventing confusing user experiences.
+:::
+
+::: tip DynamoDB (Amazon)
+DynamoDB offers **tunable consistency per-request**. Shopping cart reads use eventual consistency (fast, cheap, stale data is tolerable). Order confirmation reads use strong consistency (must see the write that just happened). This per-request tuning lets Amazon optimize cost and latency for each use case without changing the underlying database.
+:::
+
+::: tip Google Spanner
+Google Spanner achieves **external consistency** (stronger than linearizability) across globally distributed data centers using GPS-synchronized TrueTime clocks. This allows serializable transactions across continents with single-digit millisecond accuracy. The trade-off is higher write latency (10-15ms cross-region consensus), but Google considers this acceptable for their advertising and financial workloads.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"The right consistency model is the weakest one that still meets requirements — stronger consistency always costs latency and availability. For a bank transfer, I'd use strong consistency because showing a wrong balance is unacceptable. For a social media like count, eventual consistency is fine — nobody notices if a like appears 2 seconds late. I'd implement read-your-writes for user profile updates by routing the writing user's reads to the primary for a short window after their write. Cassandra's tunable consistency (W+R>N for strong reads) is a great example of making this trade-off per-query rather than per-system."
+:::

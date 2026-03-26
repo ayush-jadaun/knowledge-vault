@@ -146,6 +146,50 @@ $$
 
 Subword tokens are prefixed with `##` (e.g., "playing" becomes ["play", "##ing"]).
 
+::: details Worked Example — BPE Merge Steps
+
+**Input corpus:** {"low": 5, "lowest": 2, "new": 4, "newest": 6}
+
+**Initial vocabulary** (character-level with end-of-word marker):
+- "l o w </w>" : 5
+- "l o w e s t </w>" : 2
+- "n e w </w>" : 4
+- "n e w e s t </w>" : 6
+
+**Step 1:** Count all adjacent pairs:
+- (e, s): 2 + 6 = 8
+- (s, t): 2 + 6 = 8
+- (n, e): 4 + 6 = 10
+- (e, w): 4 + 6 = 10
+- (l, o): 5 + 2 = 7
+- (o, w): 5 + 2 = 7
+- (w, </w>): 5 + 4 = 9
+- ...
+
+Most frequent pair: tie between (n, e) and (e, w) at 10. Pick (e, s) or break ties. Let's say (n, e) wins.
+
+**Merge "n" + "e" -> "ne":**
+- "l o w </w>" : 5
+- "l o w e s t </w>" : 2
+- "ne w </w>" : 4
+- "ne w e s t </w>" : 6
+
+**Step 2:** Recount. Now (e, s) = 2 + 6 = 8, (ne, w) = 4 + 6 = 10. Merge "ne" + "w" -> "new":
+- "l o w </w>" : 5
+- "l o w e s t </w>" : 2
+- "new </w>" : 4
+- "new e s t </w>" : 6
+
+**Step 3:** (e, s) = 8, (l, o) = 7, (new, </w>) = 4, etc. Merge "e" + "s" -> "es":
+- "new es t </w>" : 6
+- "l o w es t </w>" : 2
+
+After more merges: "est", "low", "newest", "lowest" become single tokens.
+
+**Result:** BPE learned that "est" and "new" are frequent subwords. The word "newest" tokenizes as ["new", "est"] --- meaningful morphological units discovered automatically from frequency alone.
+
+:::
+
 ### SentencePiece
 
 Language-agnostic tokenizer that treats the input as a raw byte stream (no pre-tokenization). Used by T5, LLaMA, and most multilingual models.
@@ -190,6 +234,42 @@ $$
 $$
 
 This turns the problem from $V$-class classification to $k+1$ binary classifications.
+
+::: details Worked Example — Word2Vec Skip-gram Probability
+
+**Setup:** Vocabulary of 5 words. Center word "cat" (index 2), context word "sat" (index 3).
+
+Center embeddings ($v$, 2-dim):
+- $v_{\text{cat}} = [0.5, 0.8]$
+
+Context embeddings ($v'$, 2-dim):
+- $v'_{\text{the}} = [0.1, 0.3]$
+- $v'_{\text{dog}} = [0.6, 0.7]$
+- $v'_{\text{cat}} = [0.4, 0.5]$
+- $v'_{\text{sat}} = [0.9, 0.2]$
+- $v'_{\text{on}} = [0.2, 0.1]$
+
+**Step 1:** Compute dot products $v'_w \cdot v_{\text{cat}}$ for all words:
+- the: $0.1(0.5) + 0.3(0.8) = 0.29$
+- dog: $0.6(0.5) + 0.7(0.8) = 0.86$
+- cat: $0.4(0.5) + 0.5(0.8) = 0.60$
+- sat: $0.9(0.5) + 0.2(0.8) = 0.61$
+- on: $0.2(0.5) + 0.1(0.8) = 0.18$
+
+**Step 2:** Softmax:
+$$\exp \text{ values} = [1.336, 2.363, 1.822, 1.840, 1.197]$$
+$$\text{sum} = 8.558$$
+
+$$P(\text{sat}|\text{cat}) = \frac{1.840}{8.558} = 0.215$$
+
+**Step 3:** With negative sampling ($k = 2$, negatives: "the", "on"):
+$$\mathcal{L} = \log\sigma(0.61) + \log\sigma(-0.29) + \log\sigma(-0.18)$$
+$$= \log(0.648) + \log(0.428) + \log(0.455)$$
+$$= -0.435 + (-0.849) + (-0.787) = -2.071$$
+
+**Result:** The skip-gram probability $P(\text{sat}|\text{cat}) = 0.215$. Training will increase the dot product $v'_{\text{sat}} \cdot v_{\text{cat}}$ (making "cat" and "sat" closer in embedding space) while decreasing dot products with negative samples.
+
+:::
 
 ### Word2Vec Implementation
 
@@ -471,6 +551,31 @@ $$
 $$
 \text{TF}(t, d) = \frac{\text{count}(t, d)}{|d|}, \quad \text{IDF}(t, D) = \log \frac{|D|}{|\{d \in D : t \in d\}|}
 $$
+
+::: details Worked Example — TF-IDF Calculation
+
+**Setup:** 3 documents, computing TF-IDF for the word "cat":
+- Doc 1: "the cat sat on the mat" (6 words, "cat" appears 1 time)
+- Doc 2: "the cat cat played" (4 words, "cat" appears 2 times)
+- Doc 3: "the dog ran fast" (4 words, "cat" appears 0 times)
+
+**Step 1 --- Term Frequency:**
+$$TF(\text{cat}, d_1) = 1/6 = 0.167, \quad TF(\text{cat}, d_2) = 2/4 = 0.500, \quad TF(\text{cat}, d_3) = 0/4 = 0$$
+
+**Step 2 --- Inverse Document Frequency:**
+"cat" appears in 2 out of 3 documents:
+$$IDF(\text{cat}) = \log\frac{3}{2} = \log(1.5) = 0.405$$
+
+**Step 3 --- TF-IDF:**
+$$\text{TF-IDF}(\text{cat}, d_1) = 0.167 \times 0.405 = 0.068$$
+$$\text{TF-IDF}(\text{cat}, d_2) = 0.500 \times 0.405 = 0.203$$
+$$\text{TF-IDF}(\text{cat}, d_3) = 0 \times 0.405 = 0$$
+
+**Compare with "the":** appears in all 3 docs, so $IDF = \log(3/3) = 0$ and TF-IDF = 0 for all docs.
+
+**Result:** "cat" has a moderate TF-IDF in Doc 2 (0.203) because it's frequent there but not universal. "the" has TF-IDF = 0 everywhere because it appears in every document --- IDF kills universally common words. This is why TF-IDF is effective: it highlights distinctive terms.
+
+:::
 
 ```python
 from sklearn.feature_extraction.text import TfidfVectorizer

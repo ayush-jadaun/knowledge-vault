@@ -897,3 +897,113 @@ graph TD
 - [Bit Manipulation](/algorithms/bit-manipulation) — `n & (-n)` powers Fenwick trees
 - [Dynamic Programming](/algorithms/dynamic-programming) — segment trees accelerate certain DP transitions
 - [Heaps & Priority Queues](/algorithms/heaps-priority-queues) — alternative for some range query patterns
+
+## Try It Yourself
+
+**Problem 1:** Given array `[1, 3, 5, 7, 9, 11]`, build a segment tree and compute the range sum query for indices 1 to 4.
+
+::: details Solution
+The segment tree stores range sums:
+- Root: [0-5] sum=36
+- Left: [0-2] sum=9, Right: [3-5] sum=27
+- [0-1] sum=4, [2-2] sum=5, [3-4] sum=16, [5-5] sum=11
+- [0-0]=1, [1-1]=3, [3-3]=7, [4-4]=9
+
+Query sum(1, 4) = nums[1] + nums[2] + nums[3] + nums[4] = 3 + 5 + 7 + 9 = **24**.
+The segment tree computes this in $O(\log n)$ by combining relevant nodes.
+:::
+
+**Problem 2:** Using a Fenwick tree (BIT), compute the prefix sum of `[3, 2, -1, 6, 5, 4, -3, 3, 7, 2, 3]` up to index 6 (0-indexed).
+
+::: details Solution
+Prefix sum up to index 6 = 3 + 2 + (-1) + 6 + 5 + 4 + (-3) = **16**.
+In a Fenwick tree, this is computed by starting at index 7 (1-indexed) and repeatedly removing the lowest set bit:
+- query(7): tree[7] + tree[6] + tree[4] (since 7=`111`, 6=`110`, 4=`100`)
+Each step takes $O(1)$, total $O(\log n)$.
+:::
+
+**Problem 3:** Given 6 nodes and edges (0,1), (1,2), (3,4), (4,5), use Union-Find to determine the number of connected components.
+
+::: details Solution
+Initialize: 6 components, each node is its own parent.
+- Union(0,1): merge → 5 components
+- Union(1,2): find(1)=0, find(2)=2 → merge → 4 components
+- Union(3,4): merge → 3 components
+- Union(4,5): find(4)=3, find(5)=5 → merge → 2 components
+Answer: **2 connected components**: {0, 1, 2} and {3, 4, 5}.
+:::
+
+**Problem 4:** Find the next greater element for each value in `[4, 5, 2, 10, 8]` using a monotonic stack.
+
+::: details Solution
+Process left to right, maintaining a stack of indices with decreasing values:
+- i=0 (4): stack empty, push 0. stack=[0]
+- i=1 (5): 5 > 4, pop 0 → result[0]=5. Push 1. stack=[1]
+- i=2 (2): 2 < 5, push 2. stack=[1, 2]
+- i=3 (10): 10 > 2, pop 2 → result[2]=10. 10 > 5, pop 1 → result[1]=10. Push 3. stack=[3]
+- i=4 (8): 8 < 10, push 4. stack=[3, 4]
+- End: remaining stack elements get -1. result[3]=-1, result[4]=-1.
+Answer: **[5, 10, 10, -1, -1]**
+:::
+
+**Problem 5:** Design an LRU Cache with capacity 2 and process these operations: put(1,"A"), put(2,"B"), get(1), put(3,"C"), get(2).
+
+::: details Solution
+- put(1,"A"): cache = {1:"A"}. List: [1]
+- put(2,"B"): cache = {1:"A", 2:"B"}. List: [2, 1]
+- get(1): returns "A". Move 1 to front. List: [1, 2]
+- put(3,"C"): cache full. Evict least recent (2). cache = {1:"A", 3:"C"}. List: [3, 1]
+- get(2): returns **-1** (not found, was evicted)
+:::
+
+## Quick Quiz
+
+**1. When should you use a Fenwick tree instead of a segment tree?**
+- a) When you need range min/max queries
+- b) When you only need prefix sums and point updates, and want simpler code with less memory
+- c) When you need lazy propagation
+- d) When the array has negative numbers
+
+::: details Answer
+**b) When you only need prefix sums and point updates, and want simpler code with less memory** — Fenwick trees use ~15 lines of code and $n+1$ space vs ~60 lines and $4n$ space for segment trees. However, they cannot handle min/max queries or range updates natively.
+:::
+
+**2. What is the amortized time complexity of Union-Find with path compression and union by rank?**
+- a) $O(1)$
+- b) $O(\log n)$
+- c) $O(\alpha(n))$ (inverse Ackermann -- effectively constant)
+- d) $O(\sqrt{n})$
+
+::: details Answer
+**c) $O(\alpha(n))$** — The inverse Ackermann function is so slow-growing that $\alpha(n) \leq 4$ for any practical value of $n$ (up to $2^{2^{2^{2^{16}}}}$), making each operation effectively constant time.
+:::
+
+**3. What advantage do skip lists have over balanced BSTs in concurrent systems?**
+- a) Skip lists are deterministic
+- b) Skip lists are simpler to implement and support lock-free concurrent operations more naturally
+- c) Skip lists use less memory
+- d) Skip lists have better worst-case guarantees
+
+::: details Answer
+**b) Skip lists are simpler to implement and support lock-free concurrent operations more naturally** — Skip lists can be made lock-free by only modifying forward pointers at each level, which is simpler than rebalancing a BST. Redis uses skip lists for this reason.
+:::
+
+**4. In a monotonic stack solving "next greater element," why is the overall time complexity $O(n)$ despite the inner while loop?**
+- a) The while loop runs at most once per iteration
+- b) Each element is pushed and popped at most once, so total operations across all iterations is $O(n)$
+- c) The stack never grows larger than $O(\log n)$
+- d) The while loop only runs for the last element
+
+::: details Answer
+**b) Each element is pushed and popped at most once, so total operations across all iterations is $O(n)$** — Although the inner while loop may pop multiple elements in one iteration, each of the $n$ elements can be pushed at most once and popped at most once across the entire algorithm, giving $O(n)$ total.
+:::
+
+**5. What two data structures does an LRU Cache combine, and why?**
+- a) Array and stack, for fast iteration and LIFO access
+- b) Hash map and doubly linked list, for $O(1)$ lookup and $O(1)$ eviction/reordering
+- c) Binary search tree and queue, for sorted access and FIFO eviction
+- d) Heap and hash set, for priority access and deduplication
+
+::: details Answer
+**b) Hash map and doubly linked list, for $O(1)$ lookup and $O(1)$ eviction/reordering** — The hash map provides $O(1)$ key lookup to find the node. The doubly linked list allows $O(1)$ removal from any position and insertion at the front, enabling efficient reordering on access and eviction of the least recently used item from the tail.
+:::

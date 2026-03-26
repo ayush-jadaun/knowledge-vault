@@ -586,3 +586,62 @@ JWTs are Base64-encoded, not encrypted. Anyone can decode the payload. Never inc
 - **[OAuth2 & OIDC](./oauth2-oidc)** — OAuth2 as an alternative to custom JWT
 - **[Caching](./caching)** — Redis for token blacklisting
 - **[Testing](./testing)** — Testing authenticated endpoints
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Using a weak or hardcoded JWT secret
+Using a short secret or committing it to source control allows anyone to forge valid tokens and impersonate any user.
+**Fix:** Generate a secret of at least 256 bits (`openssl rand -base64 32`). Store it in environment variables or a secret manager (Vault, AWS Secrets Manager). Never commit secrets to Git.
+:::
+
+::: danger Pitfall 2: Setting access token expiration too long
+Long-lived access tokens (hours or days) mean that a compromised token grants extended access with no way to revoke it.
+**Fix:** Keep access tokens short-lived (15 minutes). Use refresh tokens (7 days) stored in the database for session extension. Implement refresh token rotation to detect theft.
+:::
+
+::: danger Pitfall 3: Storing sensitive data in JWT claims
+JWTs are Base64-encoded, not encrypted. Anyone can decode the payload and read all claims.
+**Fix:** Store only non-sensitive identifiers in JWTs: user ID, email, roles. Never include passwords, API keys, SSN, or other PII. If you need encrypted tokens, use JWE (JSON Web Encryption).
+:::
+
+::: danger Pitfall 4: Not validating the issuer and audience claims
+Without issuer validation, tokens from other applications or attackers using the same algorithm could be accepted as valid.
+**Fix:** Always set and verify the `iss` (issuer) claim. Use `requireIssuer()` in the JJWT parser. Consider adding `aud` (audience) validation for multi-service environments.
+:::
+
+::: danger Pitfall 5: Not handling token expiration gracefully on the client side
+When the access token expires, the client gets a 401 error. Without proper handling, the user is unexpectedly logged out.
+**Fix:** Implement a client-side token refresh flow: intercept 401 responses, call the `/auth/refresh` endpoint with the refresh token, retry the original request with the new access token.
+:::
+
+::: danger Pitfall 6: Throwing exceptions in the JWT filter that kill the request
+Throwing exceptions in `OncePerRequestFilter.doFilterInternal()` when the JWT is invalid or missing prevents anonymous access to public endpoints.
+**Fix:** Catch JWT exceptions in the filter, log them at DEBUG level, and let the request continue without setting authentication. The authorization filter will return 401 if the endpoint requires authentication.
+:::
+
+## Interview Questions
+
+**Q1: What are the three parts of a JWT and what does each contain?**
+::: details Answer
+A JWT consists of three Base64-encoded parts separated by dots: `header.payload.signature`. The **header** contains the token type (`JWT`) and signing algorithm (`HS256`, `RS256`). The **payload** contains claims -- standard claims like `sub` (subject), `iss` (issuer), `exp` (expiration), `iat` (issued at), `jti` (unique ID), plus custom claims like `userId`, `roles`, and `email`. The **signature** is created by signing the encoded header and payload with a secret key, ensuring the token has not been tampered with. The server verifies the signature on every request.
+:::
+
+**Q2: What is the difference between access tokens and refresh tokens?**
+::: details Answer
+Access tokens are short-lived (typically 15 minutes), sent with every API request in the `Authorization: Bearer` header, and contain user claims for authorization. Refresh tokens are long-lived (typically 7 days), stored securely, and used only to obtain new access tokens when the current one expires. Refresh tokens should be stored in the database (not as JWTs) to enable revocation. When a refresh token is used, it should be rotated (old one invalidated, new one issued) to detect token theft.
+:::
+
+**Q3: How does a JWT authentication filter integrate with Spring Security?**
+::: details Answer
+A custom `OncePerRequestFilter` is added before `UsernamePasswordAuthenticationFilter` in the security filter chain. On each request, it: (1) Extracts the token from the `Authorization: Bearer` header. (2) Parses and validates the token (signature, expiration, issuer). (3) Extracts the username from the `sub` claim. (4) Loads `UserDetails` from the database. (5) Creates a `UsernamePasswordAuthenticationToken` with the user's authorities. (6) Sets it in `SecurityContextHolder.getContext().setAuthentication()`. Subsequent filters and controllers can then access the authenticated user.
+:::
+
+**Q4: How do you implement token revocation for JWTs?**
+::: details Answer
+JWTs are stateless by design, so you cannot invalidate an individual token. Common revocation strategies: (1) **Short expiration** -- make access tokens expire quickly (15 min) so compromised tokens have limited impact. (2) **Token blacklist** -- store revoked JTI (token IDs) in Redis with TTL matching the token's remaining lifetime. Check the blacklist in the JWT filter. (3) **Refresh token revocation** -- store refresh tokens in the database; delete them on logout to prevent new access tokens from being issued. (4) **User version** -- include a version number in the token; increment it on password change to invalidate all existing tokens.
+:::
+
+**Q5: Why should you use asymmetric keys (RS256) instead of symmetric keys (HS256) in a microservices architecture?**
+::: details Answer
+With HS256 (symmetric), all services share the same secret key for both signing and verification. If any service is compromised, an attacker can forge tokens for all services. With RS256 (asymmetric), only the authentication service holds the private key for signing. All other services use the public key (available via JWKS endpoint) for verification only. A compromised downstream service cannot forge tokens. RS256 also enables key rotation without coordinating secret distribution across all services.
+:::

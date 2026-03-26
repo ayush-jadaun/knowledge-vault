@@ -147,6 +147,44 @@ $$
 \mathcal{L}_{\text{Dice}} = 1 - \frac{2\sum_i p_i g_i + \epsilon}{\sum_i p_i + \sum_i g_i + \epsilon}
 $$
 
+::: details Worked Example — Dice Coefficient Calculation
+
+**Setup:** Binary segmentation (tumor vs background). 4x4 pixel region.
+
+**Prediction** $P$ (after sigmoid, probabilities):
+| | | | |
+|---|---|---|---|
+| 0.9 | 0.8 | 0.1 | 0.0 |
+| 0.7 | 0.6 | 0.2 | 0.1 |
+| 0.1 | 0.3 | 0.1 | 0.0 |
+| 0.0 | 0.1 | 0.0 | 0.0 |
+
+**Ground truth** $G$ (binary):
+| | | | |
+|---|---|---|---|
+| 1 | 1 | 0 | 0 |
+| 1 | 1 | 1 | 0 |
+| 0 | 0 | 0 | 0 |
+| 0 | 0 | 0 | 0 |
+
+**Step 1:** Compute soft intersection: $\sum p_i g_i$
+$$= 0.9(1) + 0.8(1) + 0.1(0) + 0(0) + 0.7(1) + 0.6(1) + 0.2(1) + 0.1(0) + \ldots$$
+$$= 0.9 + 0.8 + 0.7 + 0.6 + 0.2 = 3.2$$
+
+**Step 2:** Compute $\sum p_i$ and $\sum g_i$:
+$$\sum p_i = 0.9 + 0.8 + 0.1 + 0 + 0.7 + 0.6 + 0.2 + 0.1 + 0.1 + 0.3 + 0.1 + 0 + 0 + 0.1 + 0 + 0 = 4.0$$
+$$\sum g_i = 5 \text{ (five 1s in ground truth)}$$
+
+**Step 3:** Dice coefficient:
+$$\text{Dice} = \frac{2 \times 3.2}{4.0 + 5.0} = \frac{6.4}{9.0} = 0.711$$
+
+**Step 4:** Dice loss:
+$$\mathcal{L}_{\text{Dice}} = 1 - 0.711 = 0.289$$
+
+**Result:** Dice = 0.711 means 71.1% overlap between prediction and ground truth. The model correctly identifies most of the tumor region (top-left 2x2) but misses the pixel at $(1,2)$ (predicted 0.2 vs ground truth 1) and has a false positive at $(2,1)$ (predicted 0.3 vs ground truth 0). Dice loss is preferred over BCE for segmentation because it handles class imbalance well --- even if 95% of pixels are background, Dice focuses on the overlap of the foreground class.
+
+:::
+
 ```python
 class DiceLoss(nn.Module):
     def __init__(self, smooth=1e-6):

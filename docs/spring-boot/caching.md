@@ -522,3 +522,62 @@ Do not cache: real-time data (stock prices), highly personalized data (user dash
 - **[Actuator & Monitoring](./actuator)** — Cache metrics
 - **[Async & Scheduling](./async)** — Scheduled cache warming
 - **[Best Practices](./best-practices)** — Caching anti-patterns
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Caching null values or error responses
+Caching a null result or an error means subsequent requests continue to get the wrong answer even after the underlying issue is fixed.
+**Fix:** Use `@Cacheable(unless = "#result == null")` to prevent caching null values. Never cache exception responses.
+:::
+
+::: danger Pitfall 2: Not invalidating cache on updates
+Updating data in the database without evicting the corresponding cache entry serves stale data to all subsequent reads.
+**Fix:** Use `@CacheEvict` on update and delete methods. Use `@CachePut` when you want to update the cache with the new value. Combine with `@Caching` for multi-cache eviction.
+:::
+
+::: danger Pitfall 3: Using in-memory caching (Caffeine) across multiple instances
+Each application instance has its own Caffeine cache. After an update on instance A, instance B still serves stale cached data until TTL expires.
+**Fix:** Use Redis for distributed caching across multiple instances. Or use multi-layer caching: Caffeine (L1, short TTL) + Redis (L2, longer TTL) for both speed and consistency.
+:::
+
+::: danger Pitfall 4: Setting cache TTL too long
+Long TTLs reduce database load but increase the window for serving stale data. For frequently changing data, this creates visible inconsistencies.
+**Fix:** Match TTL to data volatility: 5 minutes for search results, 30 minutes for product catalogs, 24 hours for static reference data. Use event-based eviction (`@CacheEvict`) in addition to TTL.
+:::
+
+::: danger Pitfall 5: Thundering herd problem on cache expiration
+When a popular cache entry expires, all concurrent requests simultaneously hit the database to reload it, potentially overloading the database.
+**Fix:** Use Caffeine's `refreshAfterWrite` for proactive background refresh, or implement distributed locking with Redis to ensure only one thread reloads the cache while others wait.
+:::
+
+::: danger Pitfall 6: Not monitoring cache hit/miss rates
+Operating caches without visibility into hit rates means you cannot tell if caching is actually helping or if the cache is too small or TTL too short.
+**Fix:** Enable `recordStats()` on Caffeine caches and expose metrics via Micrometer/Prometheus. Alert when hit rate drops below 80%.
+:::
+
+## Interview Questions
+
+**Q1: What is the difference between `@Cacheable`, `@CachePut`, and `@CacheEvict`?**
+::: details Answer
+`@Cacheable` checks the cache before method execution. On a cache hit, it returns the cached value without executing the method. On a miss, it executes the method and caches the result. `@CachePut` always executes the method and updates the cache with the result -- use it on update operations to keep the cache fresh. `@CacheEvict` removes entries from the cache -- use it on delete operations or when data changes. `@CacheEvict(allEntries = true)` clears the entire cache. `@Caching` combines multiple cache operations on a single method.
+:::
+
+**Q2: What is the cache-aside pattern and how does Spring's `@Cacheable` implement it?**
+::: details Answer
+The cache-aside (lazy-loading) pattern works as follows: (1) Application checks the cache for the requested data. (2) On a cache hit, return the cached data. (3) On a cache miss, load data from the database, store it in the cache, and return it. Spring's `@Cacheable` annotation implements this pattern automatically. The cache key is derived from the method parameters (or a custom SpEL expression), and the cache name is specified in the annotation. The pattern is simple but requires cache invalidation on writes to prevent stale data.
+:::
+
+**Q3: When should you use Caffeine vs. Redis for caching?**
+::: details Answer
+**Caffeine** (in-process): Sub-microsecond latency, no network overhead, automatic eviction with Window TinyLFU (near-optimal hit rates). Use for single-instance applications, hot data that fits in memory, and latency-critical paths. **Redis** (distributed): Shared across all application instances, survives application restarts, supports complex data structures. Use for multi-instance deployments, session storage, rate limiting, and data that must be consistent across instances. **Multi-layer** (Caffeine L1 + Redis L2): Combines the speed of in-process caching with the consistency of distributed caching.
+:::
+
+**Q4: How do you prevent cache stampede (thundering herd)?**
+::: details Answer
+Cache stampede occurs when a popular cache entry expires and many concurrent requests simultaneously load the data from the database. Solutions: (1) **Distributed lock**: Use Redis `SETNX` to ensure only one thread loads the data while others wait. (2) **Caffeine's `refreshAfterWrite`**: Proactively refreshes entries in the background before they expire, so the old value is served while the new one loads. (3) **Probabilistic early expiration**: Each request has a small random chance of refreshing the cache before actual expiration, spreading the load. (4) **Request coalescing**: Multiple concurrent requests for the same key are collapsed into a single database query.
+:::
+
+**Q5: How do you handle cache warming at application startup?**
+::: details Answer
+Cache warming pre-populates the cache with frequently accessed data before the application starts serving traffic. Approaches: (1) Use `@PostConstruct` or `ApplicationRunner` to load hot data into the cache at startup. (2) Use `@Scheduled` with `initialDelay = 0` to warm the cache immediately and refresh periodically. (3) For distributed caches, use a dedicated cache-warming service that runs independently. (4) For Caffeine, use `CacheLoader` with `LoadingCache` to define how entries are loaded on first access. Warming prevents the initial cold-cache penalty where the first users experience slow responses.
+:::

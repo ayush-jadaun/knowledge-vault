@@ -437,3 +437,185 @@ print(f"StandardScaler (with centering): would convert to dense — memory explo
 - Tree-based models (Random Forest, GBM, XGBoost) do not need scaling. Save yourself the complexity.
 - Always fit the scaler on training data only. Applying fit_transform to the full dataset before splitting leaks test information.
 - Do not scale binary, one-hot, or ordinal features. They are already on meaningful scales.
+
+## Try It Yourself
+
+**Exercise 1:** You have a dataset with 5 features: `salary` (30K-500K, right-skewed with outliers), `age` (18-70, roughly normal), `satisfaction_score` (0-100, left-skewed), `login_count` (0-200, Poisson), and `is_premium` (0 or 1, binary). Build a preprocessing pipeline that applies the right scaler to each feature type. Do NOT scale the binary feature.
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import RobustScaler, StandardScaler, PowerTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+
+# Feature classification
+skewed_with_outliers = ['salary']       # RobustScaler (outliers) + PowerTransformer (skew)
+roughly_normal = ['age', 'login_count'] # StandardScaler
+skewed_no_outliers = ['satisfaction_score']  # PowerTransformer
+binary = ['is_premium']                 # No scaling needed
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('robust', RobustScaler(), skewed_with_outliers),
+        ('standard', StandardScaler(), roughly_normal),
+        ('power', PowerTransformer(method='yeo-johnson'), skewed_no_outliers),
+        ('passthrough', 'passthrough', binary),
+    ]
+)
+
+pipeline = Pipeline([
+    ('preprocess', preprocessor),
+    ('model', LogisticRegression(max_iter=1000)),
+])
+
+all_cols = skewed_with_outliers + roughly_normal + skewed_no_outliers + binary
+scores = cross_val_score(pipeline, df[all_cols], y, cv=5, scoring='accuracy')
+print(f"Pipeline accuracy: {scores.mean():.4f} (+/- {scores.std():.4f})")
+
+# Verify scaling
+pipeline.fit(df[all_cols], y)
+transformed = pipeline.named_steps['preprocess'].transform(df[all_cols])
+print(f"\nTransformed shape: {transformed.shape}")
+print(f"Binary column (last) still 0/1: min={transformed[:, -1].min()}, max={transformed[:, -1].max()}")
+```
+:::
+
+**Exercise 2:** Demonstrate the data leakage mistake with scaling. Split a dataset into train/test, then show the WRONG way (fit_transform on all data before split) and the RIGHT way (fit on train only, transform both). Compare the test set statistics to show how leakage manifests.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+
+X = df[['salary', 'age', 'satisfaction']].values
+y = df['target'].values
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# WRONG: fit on ALL data (leaks test statistics into training)
+scaler_wrong = StandardScaler()
+X_all_scaled = scaler_wrong.fit_transform(X)
+X_train_wrong = X_all_scaled[:len(X_train)]
+X_test_wrong = X_all_scaled[len(X_train):]
+
+# RIGHT: fit on train ONLY
+scaler_right = StandardScaler()
+X_train_right = scaler_right.fit_transform(X_train)
+X_test_right = scaler_right.transform(X_test)
+
+# Compare test set statistics
+print("WRONG (leakage) — test set stats:")
+print(f"  Mean: {X_test_wrong.mean(axis=0).round(4)}")
+print(f"  Std:  {X_test_wrong.std(axis=0).round(4)}")
+
+print("\nRIGHT (no leakage) — test set stats:")
+print(f"  Mean: {X_test_right.mean(axis=0).round(4)}")
+print(f"  Std:  {X_test_right.std(axis=0).round(4)}")
+
+print("\nNotice: The WRONG test set has near-zero means (it was part of the fit).")
+print("The RIGHT test set has non-zero means (it was only transformed).")
+print("This means the wrong approach used test data to compute the mean/std,")
+print("giving the model illegal knowledge about the test distribution.")
+```
+:::
+
+**Exercise 3:** A KNN model performs poorly on raw data where `salary` ranges from 30K-300K and `age` ranges from 18-70. Show that salary dominates distance calculations. Apply StandardScaler, MinMaxScaler, and RobustScaler separately, then compare KNN accuracy with each. Explain why scaling matters for distance-based models.
+
+::: details Solution
+```python
+import numpy as np
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import Pipeline
+
+# Show that salary dominates distance
+point_a = np.array([50000, 30])
+point_b = np.array([50000, 60])
+point_c = np.array([100000, 30])
+
+dist_age = np.linalg.norm(point_a - point_b)    # same salary, different age
+dist_salary = np.linalg.norm(point_a - point_c)  # same age, different salary
+
+print("Distance calculations (raw features):")
+print(f"  Age difference (30 vs 60, same salary):    {dist_age:.0f}")
+print(f"  Salary difference (50K vs 100K, same age): {dist_salary:.0f}")
+print(f"  Salary dominates by {dist_salary/dist_age:.0f}x!")
+print(f"  KNN effectively IGNORES age differences\n")
+
+# Compare scalers
+X = df[['salary', 'age']].values
+y = df['target'].values
+
+scalers = {
+    'No Scaling': None,
+    'StandardScaler': StandardScaler(),
+    'MinMaxScaler': MinMaxScaler(),
+    'RobustScaler': RobustScaler(),
+}
+
+for name, scaler in scalers.items():
+    if scaler:
+        pipeline = Pipeline([('scaler', scaler), ('knn', KNeighborsClassifier(n_neighbors=5))])
+    else:
+        pipeline = KNeighborsClassifier(n_neighbors=5)
+    scores = cross_val_score(pipeline, X, y, cv=5, scoring='accuracy')
+    print(f"{name:20s}: accuracy = {scores.mean():.4f} (+/- {scores.std():.4f})")
+
+print("\nScaling matters because KNN uses Euclidean distance.")
+print("Without scaling, features with larger ranges dominate the distance metric.")
+```
+:::
+
+## Quick Quiz
+
+**1. Why does RobustScaler use median and IQR instead of mean and standard deviation?**
+- a) It is computationally faster
+- b) Median and IQR are not affected by outliers, so extreme values do not distort the scaling
+- c) It produces values between 0 and 1
+
+::: details Answer
+**b) Median and IQR are not affected by outliers, so extreme values do not distort the scaling.** A single extreme outlier (e.g., salary = $10M) can inflate the mean and standard deviation, compressing all normal values into a tiny range when using StandardScaler. RobustScaler uses the median (robust center) and IQR (robust spread), which barely change regardless of outliers.
+:::
+
+**2. Which models do NOT need feature scaling?**
+- a) Logistic Regression and SVM
+- b) Decision trees, Random Forest, and Gradient Boosting
+- c) KNN and Neural Networks
+
+::: details Answer
+**b) Decision trees, Random Forest, and Gradient Boosting.** Tree-based models split data based on threshold comparisons (is x > 42?). These comparisons are invariant to scaling -- whether salary is in dollars or millions of dollars, the optimal split point adjusts accordingly. Scaling adds unnecessary preprocessing complexity with zero benefit.
+:::
+
+**3. What is the critical mistake in this code: `scaler = StandardScaler(); X_scaled = scaler.fit_transform(X); X_train, X_test = train_test_split(X_scaled)`?**
+- a) StandardScaler is the wrong scaler choice
+- b) The scaler is fitted on all data including the test set, leaking test statistics into training
+- c) train_test_split should be called with stratify=y
+
+::: details Answer
+**b) The scaler is fitted on all data including the test set, leaking test statistics into training.** The correct order is: (1) split into train/test first, (2) fit the scaler on the training set only, (3) transform both train and test using the training set's parameters. Fitting on all data means the training set "knows" about the test set's mean and variance.
+:::
+
+**4. You have a sparse TF-IDF matrix with 10,000 features. Which scaler should you use?**
+- a) StandardScaler with default settings
+- b) MaxAbsScaler, because it preserves sparsity (zeros remain zeros)
+- c) MinMaxScaler with range [0, 1]
+
+::: details Answer
+**b) MaxAbsScaler, because it preserves sparsity (zeros remain zeros).** StandardScaler subtracts the mean, which converts every zero to a non-zero value, destroying the sparse matrix structure and potentially causing memory explosion. MaxAbsScaler divides by the maximum absolute value without centering, so zeros stay as zeros and sparsity is preserved.
+:::
+
+**5. Should you scale binary (0/1) features before feeding them to a logistic regression?**
+- a) Yes, always scale all features uniformly
+- b) No, binary features are already on a meaningful [0, 1] scale and scaling distorts their interpretation
+- c) Only if there are more than 2 binary features
+
+::: details Answer
+**b) No, binary features are already on a meaningful [0, 1] scale and scaling distorts their interpretation.** Standardizing a binary column with 30% ones gives values like -0.65 and 1.53, which obscure the natural 0/1 meaning. Binary features have bounded variance by definition. Best practice: use a ColumnTransformer to scale continuous features while passing binary features through unchanged.
+:::

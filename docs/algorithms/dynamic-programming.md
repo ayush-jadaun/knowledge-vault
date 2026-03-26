@@ -616,3 +616,111 @@ for i in range(1, m + 1):
 - [Graphs](/algorithms/graphs) — shortest path algorithms are DP in disguise
 - [Arrays & Strings](/algorithms/arrays-strings) — many string DP problems build on array techniques
 - [Sorting & Searching](/algorithms/sorting-searching) — binary search in LIS optimization
+
+## Try It Yourself
+
+**Problem 1:** How many distinct ways can you climb a staircase of 5 steps, taking 1 or 2 steps at a time?
+
+::: details Solution
+Use the climbing stairs recurrence: $dp[i] = dp[i-1] + dp[i-2]$.
+- dp[1] = 1, dp[2] = 2
+- dp[3] = dp[2] + dp[1] = 3
+- dp[4] = dp[3] + dp[2] = 5
+- dp[5] = dp[4] + dp[3] = **8**
+:::
+
+**Problem 2:** Given coins `[1, 3, 4]` and amount `6`, find the minimum number of coins needed.
+
+::: details Solution
+Build the DP table: $dp[a] = \min(dp[a-1]+1, dp[a-3]+1, dp[a-4]+1)$.
+- dp[0]=0, dp[1]=1, dp[2]=2, dp[3]=1, dp[4]=1
+- dp[5] = min(dp[4]+1, dp[2]+1, dp[1]+1) = min(2, 3, 2) = 2
+- dp[6] = min(dp[5]+1, dp[3]+1, dp[2]+1) = min(3, 2, 3) = **2**
+Answer: 2 coins (3 + 3)
+:::
+
+**Problem 3:** Find the Longest Common Subsequence of `"ABCDE"` and `"ACE"`.
+
+::: details Solution
+Build the 2D DP table where $dp[i][j]$ = LCS of first $i$ chars of s1 and first $j$ chars of s2:
+- A matches A → dp[1][1] = 1
+- C matches C → dp[3][2] = 2
+- E matches E → dp[5][3] = 3
+Answer: **3** (the LCS is "ACE")
+:::
+
+**Problem 4:** Given the array `[10, 9, 2, 5, 3, 7, 101, 18]`, find the length of the Longest Increasing Subsequence.
+
+::: details Solution
+Using the patience sorting / binary search approach, maintain `tails`:
+- 10 → tails=[10]
+- 9 → replace 10 → tails=[9]
+- 2 → replace 9 → tails=[2]
+- 5 → append → tails=[2,5]
+- 3 → replace 5 → tails=[2,3]
+- 7 → append → tails=[2,3,7]
+- 101 → append → tails=[2,3,7,101]
+- 18 → replace 101 → tails=[2,3,7,18]
+Answer: **4** (e.g., [2, 3, 7, 101] or [2, 3, 7, 18])
+:::
+
+**Problem 5:** Compute the edit distance between `"kitten"` and `"sitting"`.
+
+::: details Solution
+Build the DP table:
+- k→s (replace), i=i, t=t, t→t, e→i (replace), n→n, +g (insert)
+Step by step: kitten → sitten (replace k with s) → sittin (replace e with i) → sitting (insert g)
+Answer: **3** operations
+:::
+
+## Quick Quiz
+
+**1. What two properties must a problem have to be solvable with dynamic programming?**
+- a) Greedy choice property and optimal substructure
+- b) Optimal substructure and overlapping subproblems
+- c) Divide and conquer with no overlapping subproblems
+- d) Polynomial time and constant space
+
+::: details Answer
+**b) Optimal substructure and overlapping subproblems** — Optimal substructure means the optimal solution contains optimal solutions to subproblems. Overlapping subproblems means the same subproblems are solved multiple times, making caching beneficial.
+:::
+
+**2. What is the key difference between top-down (memoization) and bottom-up (tabulation) DP?**
+- a) Top-down is always faster
+- b) Top-down uses recursion with caching; bottom-up fills a table iteratively
+- c) Bottom-up cannot be space-optimized
+- d) Top-down solves all subproblems; bottom-up only solves needed ones
+
+::: details Answer
+**b) Top-down uses recursion with caching; bottom-up fills a table iteratively** — Top-down starts from the main problem and recurses downward. Bottom-up builds from the smallest subproblems upward. Top-down may skip unneeded subproblems but risks stack overflow.
+:::
+
+**3. What is the time complexity of the 0/1 Knapsack problem with $n$ items and capacity $W$?**
+- a) $O(n \log W)$
+- b) $O(nW)$
+- c) $O(2^n)$
+- d) $O(n^2)$
+
+::: details Answer
+**b) $O(nW)$** — The DP table has $n \times W$ entries, each computed in $O(1)$. Note this is pseudo-polynomial: polynomial in the value of $W$, not in the number of bits to represent it.
+:::
+
+**4. In the space-optimized 0/1 Knapsack, why must you iterate the capacity in reverse?**
+- a) To sort the items by weight
+- b) To prevent using the same item more than once in the same row
+- c) To improve cache performance
+- d) To reduce the number of iterations
+
+::: details Answer
+**b) To prevent using the same item more than once in the same row** — Forward iteration would use the already-updated values from the current row, effectively allowing item reuse (which is the unbounded knapsack). Reverse iteration ensures you only reference values from the previous row.
+:::
+
+**5. Which DP pattern best describes the Edit Distance problem?**
+- a) 1D linear sequence
+- b) 2D two-sequence comparison
+- c) Interval DP
+- d) Bitmask DP
+
+::: details Answer
+**b) 2D two-sequence comparison** — Edit distance compares two strings character by character, with state `dp[i][j]` representing the edit distance between the first $i$ characters of one string and the first $j$ characters of the other.
+:::

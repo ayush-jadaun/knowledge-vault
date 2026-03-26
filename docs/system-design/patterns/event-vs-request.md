@@ -439,3 +439,23 @@ graph TD
 ---
 
 *The question is not "event-driven or request-driven" — it is "event-driven where and request-driven where." Use events for side effects and decoupling. Use requests for queries and immediate responses. The art is finding the boundary.*
+
+## Real-World Examples
+
+::: tip Amazon
+Amazon's order processing is **event-driven**. When a customer places an order, the Order Service emits an "OrderPlaced" event. Payment, Inventory, Shipping, Notifications, and Analytics services each independently consume this event. This lets each team own their service and scale independently — Amazon deploys code every 11.7 seconds across hundreds of teams, which would be impossible with synchronous chains.
+:::
+
+::: tip Uber
+Uber uses a **hybrid approach**. Ride matching is request-driven — when a rider requests a ride, the system needs an immediate answer about driver availability. But downstream operations (trip analytics, driver payments, receipt generation, surge pricing recalculation) are all event-driven through Kafka. This keeps the user-facing flow fast while decoupling complex background processing.
+:::
+
+::: tip Segment
+Segment processes **billions of events per day** using an event-driven architecture. Customer data events ("User Signed Up," "Page Viewed") flow through their event pipeline and are fanned out to 300+ integration partners (analytics, marketing, advertising tools). Adding a new integration requires zero changes to the event producer — the new integration simply subscribes to the relevant event topics.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"I use request-driven for queries that need immediate answers and event-driven for side effects and fan-out. When a user creates an order, I need to validate and respond synchronously — that's request-driven. But sending confirmation emails, updating analytics, reserving inventory, and notifying the warehouse are all side effects that can happen asynchronously via events. The key benefit of events is extensibility: adding a new consumer (loyalty points, fraud detection) requires zero changes to the order service. The trade-off is eventual consistency — I'd handle this with optimistic UI (show 'processing' immediately) and status polling or WebSocket push for completion. Amazon's architecture proves this scales — they deploy every 11.7 seconds because services are decoupled through events."
+:::

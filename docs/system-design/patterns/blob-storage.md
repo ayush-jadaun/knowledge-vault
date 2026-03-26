@@ -594,3 +594,23 @@ graph TD
 ---
 
 *Object storage is the most cost-effective way to store unstructured data at any scale. Design your blob storage around presigned URLs (keep files off your servers), lifecycle policies (pay for the tier you need), and CDN integration (serve from the edge). These three patterns alone handle 90% of blob storage use cases.*
+
+## Real-World Examples
+
+::: tip Dropbox
+Dropbox started on **AWS S3** but migrated to their own custom blob storage system ("Magic Pocket") when they reached exabyte scale. The move saved them nearly $75 million over two years. They kept S3's API interface but built custom erasure coding and placement algorithms optimized for their access patterns — showing that S3 is the right starting point, but custom storage makes sense at extreme scale.
+:::
+
+::: tip Netflix
+Netflix stores **petabytes of video content** in S3, organized by encoding profile and resolution. Each movie exists in 1,200+ different encodings to optimize playback across devices and network conditions. They use lifecycle policies to keep popular titles in S3 Standard and move older, rarely-watched content to Glacier — saving millions per month on storage costs.
+:::
+
+::: tip Pinterest
+Pinterest uses **presigned URLs** for all image uploads. When a user pins an image, the mobile app gets a presigned S3 URL from the API, uploads directly to S3 (bypassing their servers entirely), then notifies the API of completion. This pattern handles 1 billion+ image uploads without any image data flowing through their application servers, dramatically reducing compute costs and latency.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"For blob storage, I'd always use presigned URLs to keep files off my application servers — the client uploads directly to S3, which eliminates my servers as a bandwidth bottleneck. I'd store only the object key in the database, never the file itself. For serving, I'd put a CDN in front of S3 — CloudFront serves cached images from the nearest edge location in 10ms versus 200ms from the origin. For cost optimization, lifecycle policies are essential: transition objects from Standard to Infrequent Access after 30 days, then to Glacier after 90 days. This typically saves 50-70% on storage costs with zero application changes."
+:::

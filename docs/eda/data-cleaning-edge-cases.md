@@ -752,3 +752,203 @@ pre_cleaning_check(df, "Titanic")
 | [Data Quality Validation](/eda/data-quality-validation) | Pandera, Great Expectations |
 | [Data Cleaning — Text](/eda/data-cleaning-text) | Regex, fuzzy matching, dedup |
 | [Missing Data](/eda/missing-data) | MCAR/MAR/MNAR imputation |
+
+## Try It Yourself
+
+**Exercise 1:** You receive a CSV file where the `price` column contains values like `"$1,234.56"`, `"free"`, `1500`, `"varies"`, `None`, `"TBD"`, and `"  33 "`. Write a robust parser that converts ALL of these to proper numeric values (with "free"=0, "varies"/"TBD"=NaN), and report how many values were successfully parsed.
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+
+def parse_price_robust(series):
+    """Convert a messy price column to clean numeric values."""
+    result = pd.Series(np.nan, index=series.index, dtype='float64')
+    parse_success = 0
+    parse_fail = 0
+
+    for idx, val in series.items():
+        if pd.isna(val):
+            continue
+
+        val_str = str(val).strip().lower()
+
+        # Known null values
+        if val_str in ('', 'none', 'null', 'n/a', 'na', 'tbd', 'varies',
+                        'unknown', '-', '--'):
+            continue
+
+        # Special values
+        if val_str == 'free':
+            result[idx] = 0.0
+            parse_success += 1
+            continue
+
+        # Remove currency symbols and formatting
+        cleaned = val_str.replace('$', '').replace(',', '').replace(' ', '')
+        cleaned = cleaned.replace('\u00a3', '').replace('\u20ac', '')
+
+        try:
+            result[idx] = float(cleaned)
+            parse_success += 1
+        except ValueError:
+            parse_fail += 1
+
+    total = series.notna().sum()
+    print(f"Parse results: {parse_success}/{total} success, {parse_fail} failed, "
+          f"{series.isna().sum()} original NaN")
+    return result
+
+df['price_clean'] = parse_price_robust(df['price'])
+print(f"\nBefore: dtype={df['price'].dtype}, non-null={df['price'].notna().sum()}")
+print(f"After:  dtype={df['price_clean'].dtype}, non-null={df['price_clean'].notna().sum()}")
+print(f"\nSample mapping:")
+print(df[['price', 'price_clean']].drop_duplicates().head(10))
+```
+:::
+
+**Exercise 2:** Two DataFrames need to be merged on a `name` column. But the names have inconsistent casing ("John Smith" vs "john smith"), whitespace issues (" Alice " vs "Alice"), and zero-width Unicode characters. Write a preprocessing function that cleans both DataFrames' keys before merging, and verify the merge produces the expected number of rows.
+
+::: details Solution
+```python
+import pandas as pd
+import unicodedata
+
+def clean_merge_key(series):
+    """Clean a string column for reliable merging."""
+    cleaned = series.copy().astype(str)
+
+    # Step 1: Unicode normalize (NFC — compose characters)
+    cleaned = cleaned.apply(lambda x: unicodedata.normalize('NFC', x))
+
+    # Step 2: Remove zero-width characters
+    cleaned = cleaned.str.replace(r'[\u200b\u200c\u200d\ufeff\u00ad]', '', regex=True)
+
+    # Step 3: Normalize whitespace (strip + collapse internal spaces)
+    cleaned = cleaned.str.strip()
+    cleaned = cleaned.str.replace(r'\s+', ' ', regex=True)
+
+    # Step 4: Lowercase
+    cleaned = cleaned.str.lower()
+
+    # Step 5: Remove non-breaking spaces
+    cleaned = cleaned.str.replace('\u00a0', ' ')
+
+    return cleaned
+
+# Clean both DataFrames' keys
+df1['name_clean'] = clean_merge_key(df1['name'])
+df2['name_clean'] = clean_merge_key(df2['name'])
+
+# Check unique values before and after
+print(f"df1 names: {df1['name'].nunique()} raw -> {df1['name_clean'].nunique()} cleaned")
+print(f"df2 names: {df2['name'].nunique()} raw -> {df2['name_clean'].nunique()} cleaned")
+
+# Merge on cleaned key
+merged = df1.merge(df2, on='name_clean', how='inner', suffixes=('_left', '_right'))
+print(f"\nMerge result: {len(merged)} rows")
+print(f"Expected: ~{min(df1['name_clean'].nunique(), df2['name_clean'].nunique())} matches")
+
+# Show examples of matches that would have failed without cleaning
+examples = merged[merged['name_left'] != merged['name_right']][['name_left', 'name_right', 'name_clean']].head()
+if len(examples) > 0:
+    print(f"\nMatches rescued by cleaning:")
+    print(examples)
+```
+:::
+
+**Exercise 3:** You discover that `0.1 + 0.2 != 0.3` in your data processing pipeline. A groupby on a float column produces 5 groups when there should be 3. A merge on float keys loses 30% of rows. Write code demonstrating all three floating-point traps and their fixes.
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+
+print("=== FLOATING POINT TRAPS AND FIXES ===\n")
+
+# Trap 1: Equality comparison
+a = 0.1 + 0.2
+b = 0.3
+print(f"Trap 1: 0.1 + 0.2 == 0.3 -> {a == b}")
+print(f"  Actual: 0.1 + 0.2 = {a:.20f}")
+print(f"  Fix: np.isclose(0.1 + 0.2, 0.3) -> {np.isclose(a, b)}\n")
+
+# Trap 2: Groupby on floats
+df_group = pd.DataFrame({
+    'price': [0.1 + 0.2, 0.3, 0.30, 0.300, 0.3 + 1e-16],
+    'item': ['A', 'B', 'C', 'D', 'E'],
+})
+print(f"Trap 2: Groupby on float column")
+print(f"  Unique 'prices': {df_group['price'].nunique()} (should be 1)")
+
+# Fix: round before groupby
+df_group['price_rounded'] = df_group['price'].round(10)
+print(f"  After rounding: {df_group['price_rounded'].nunique()} unique values\n")
+
+# Trap 3: Merge on float keys
+df_left = pd.DataFrame({'key': [0.1 + 0.2, 0.7 + 0.1], 'val_a': [1, 2]})
+df_right = pd.DataFrame({'key': [0.3, 0.8], 'val_b': [10, 20]})
+merged_bad = df_left.merge(df_right, on='key')
+print(f"Trap 3: Merge on float keys")
+print(f"  Before fix: {len(merged_bad)} rows matched (expected 2)")
+
+# Fix: round both keys
+df_left['key'] = df_left['key'].round(10)
+df_right['key'] = df_right['key'].round(10)
+merged_good = df_left.merge(df_right, on='key')
+print(f"  After fix: {len(merged_good)} rows matched")
+
+# Best practice: use integers or Decimal for money
+print(f"\n  Best practice for money: store as integer cents")
+print(f"  price_cents = int(price * 100)")
+print(f"  Or use decimal.Decimal('19.99') for exact arithmetic")
+```
+:::
+
+## Quick Quiz
+
+**1. In pandas, which of these is NOT detected by `df.isna()`?**
+- a) `None`
+- b) `np.nan`
+- c) An empty string `""`
+
+::: details Answer
+**c) An empty string `""`.** Pandas treats `None`, `np.nan`, `pd.NA`, and `float('nan')` as null values that `isna()` catches. But an empty string `""` is a valid string value, not null. Similarly, the strings `"null"`, `"None"`, and `"N/A"` are just regular strings. You must explicitly map these to `np.nan` with a custom null cleaning function.
+:::
+
+**2. Why should you NEVER store money as floating-point numbers?**
+- a) Floating point is too slow for financial calculations
+- b) IEEE 754 floating point cannot represent all decimal fractions exactly (0.1 + 0.2 != 0.3), causing rounding errors that accumulate
+- c) Floating point numbers are limited to 6 digits
+
+::: details Answer
+**b) IEEE 754 floating point cannot represent all decimal fractions exactly (0.1 + 0.2 != 0.3), causing rounding errors that accumulate.** The number 0.1 has an infinite binary representation, so it is rounded. Across millions of transactions, these tiny errors accumulate into real money. Use integer cents (1999 instead of 19.99) or `decimal.Decimal` for exact arithmetic.
+:::
+
+**3. A CSV column has dtype `object` but you expected it to be numeric. What is the most likely cause?**
+- a) The file is corrupted
+- b) The column contains mixed types -- some values are numeric but at least one is a non-numeric string (like "N/A", "$1,234", or "unknown")
+- c) The CSV was saved in the wrong format
+
+::: details Answer
+**b) The column contains mixed types -- some values are numeric but at least one is a non-numeric string (like "N/A", "$1,234", or "unknown").** Pandas infers column types. If even one value is non-numeric, the entire column becomes `object` dtype. Common culprits: currency symbols, commas in numbers, placeholder strings like "N/A", and trailing whitespace.
+:::
+
+**4. Two strings look identical on screen: "cafe" and "cafe". But `str1 == str2` returns False. What is the most likely cause?**
+- a) The comparison operator is broken
+- b) One uses a composed Unicode character (e.g., "e" + combining acute accent) while the other uses a precomposed character; or there is an invisible zero-width character
+- c) The strings have different encodings
+
+::: details Answer
+**b) One uses a composed Unicode character (e.g., "e" + combining acute accent) while the other uses a precomposed character; or there is an invisible zero-width character.** "cafe\u0301" (e + combining accent) and "caf\u00e9" (precomposed e-with-accent) look identical but have different bytes. Fix with `unicodedata.normalize('NFC', text)`. Zero-width characters (`\u200b`) are invisible but make strings unequal.
+:::
+
+**5. After merging two DataFrames on a key column, the result has 3x more rows than expected. What happened?**
+- a) The merge function has a bug
+- b) One or both DataFrames have duplicate keys, causing a many-to-many join that multiplies rows
+- c) The DataFrames have different numbers of columns
+
+::: details Answer
+**b) One or both DataFrames have duplicate keys, causing a many-to-many join that multiplies rows.** If the left table has 2 rows with key="A" and the right table has 3 rows with key="A", the merge produces 2 x 3 = 6 rows for key "A". Always check `df['key'].duplicated().sum()` before merging, and ensure at least one side has unique keys unless you explicitly want a many-to-many join.
+:::

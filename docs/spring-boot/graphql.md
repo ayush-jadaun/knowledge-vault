@@ -704,3 +704,57 @@ class UserControllerTest {
 | API evolution | Versioned endpoints | Schema evolution with deprecation |
 
 GraphQL is not a universal replacement for REST. Use it when clients genuinely need flexibility in what data they fetch. For simple CRUD with a single consumer, REST is simpler and better supported by infrastructure tooling. For complex, multi-client APIs where over-fetching and under-fetching are real problems, GraphQL delivers significant value.
+
+## Common Pitfalls
+
+::: danger Pitfall 1: N+1 queries from nested field resolvers
+Each nested field resolver (e.g., resolving `author` for each of 100 posts) triggers a separate database query, creating massive N+1 performance problems.
+**Fix:** Use `@BatchMapping` to batch-load related entities. Spring for GraphQL handles DataLoader registration automatically with `@BatchMapping`, collapsing N queries into one.
+:::
+
+::: danger Pitfall 2: Not limiting query depth and complexity
+Without limits, clients can craft deeply nested queries that consume excessive server resources and potentially cause denial of service.
+**Fix:** Add `MaxQueryDepthInstrumentation(10)` and `MaxQueryComplexityInstrumentation(200)` to prevent abusive queries. Configure these as `GraphQlSourceBuilderCustomizer` beans.
+:::
+
+::: danger Pitfall 3: Exposing sensitive fields without authorization
+GraphQL's flexible query model means clients can request any field defined in the schema, including fields that should be restricted by role.
+**Fix:** Use `@PreAuthorize` on `@QueryMapping` and `@MutationMapping` methods. For field-level authorization, implement custom directives or field-level security in schema mappings.
+:::
+
+::: danger Pitfall 4: Not handling errors consistently
+Unhandled exceptions return internal error messages to clients, leaking implementation details.
+**Fix:** Implement `DataFetcherExceptionResolverAdapter` to map exceptions to structured `GraphQLError` objects with appropriate error types (`NOT_FOUND`, `BAD_REQUEST`, `FORBIDDEN`) and extension fields for error codes.
+:::
+
+::: danger Pitfall 5: Using GraphQL for simple CRUD when REST would suffice
+GraphQL adds complexity (schema management, DataLoader, query optimization) that is not justified for simple APIs with a single client.
+**Fix:** Use REST for simple CRUD APIs with one or two consumers. Choose GraphQL when you have multiple clients (web, mobile, third-party) with different data needs, deeply nested data models, or over-fetching/under-fetching problems.
+:::
+
+## Interview Questions
+
+**Q1: What is the N+1 problem in GraphQL and how does `@BatchMapping` solve it?**
+::: details Answer
+In GraphQL, resolving nested fields can trigger individual database queries per parent entity. For example, fetching 20 users with their posts triggers 1 query for users + 20 queries for posts = 21 queries. `@BatchMapping` solves this by receiving all parent entities as a `List` and returning a `Map` of parent-to-child relationships. Instead of 20 individual queries, you make one query with `WHERE user_id IN (...)` and map the results. Spring for GraphQL handles DataLoader registration automatically, batching all pending loads within a request.
+:::
+
+**Q2: What is the difference between `@QueryMapping`, `@SchemaMapping`, and `@BatchMapping`?**
+::: details Answer
+`@QueryMapping` maps a method to a root `Query` field in the schema (e.g., `user(id: ID!)` maps to a method annotated with `@QueryMapping`). `@SchemaMapping` maps a method to a field on a specific type (e.g., `User.posts` maps with `@SchemaMapping(typeName = "User", field = "posts")`). It is called per parent entity, which can cause N+1 issues. `@BatchMapping` is like `@SchemaMapping` but receives all parent entities at once as a `List`, enabling batch loading. Use `@BatchMapping` for any nested field that requires a database or API call.
+:::
+
+**Q3: How do GraphQL subscriptions work in Spring for GraphQL?**
+::: details Answer
+Subscriptions provide real-time data over WebSocket. Methods annotated with `@SubscriptionMapping` return a `Flux<T>` (reactive stream). Spring for GraphQL uses WebSocket transport with the GraphQL-over-WebSocket protocol. The client subscribes to a query, and the server pushes new data as it becomes available. Internally, you use `Sinks.Many` (Reactor) to publish events. Configure with `spring.graphql.websocket.path` and `keep-alive.interval`. Subscriptions are ideal for live notifications, real-time feeds, and collaborative editing.
+:::
+
+**Q4: How does Spring for GraphQL handle error responses?**
+::: details Answer
+Spring for GraphQL uses `DataFetcherExceptionResolver` to convert exceptions into `GraphQLError` objects. Implement `DataFetcherExceptionResolverAdapter` and override `resolveToSingleError()`. Map each exception type to a `GraphQLError` with `GraphqlErrorBuilder.newError(env).message(...).errorType(ErrorType.NOT_FOUND).extensions(Map.of("code", "USER_NOT_FOUND")).build()`. Unknown exceptions should return a generic "Internal server error" message (never expose stack traces). Errors are returned in the `errors` array alongside partial `data` in the response.
+:::
+
+**Q5: When should you choose GraphQL over REST?**
+::: details Answer
+Choose GraphQL when: (1) Multiple clients (web, mobile, third-party) need different data shapes from the same backend. (2) The data model has deep relationships that cause over-fetching or under-fetching with REST. (3) You want clients to specify exactly what data they need in a single request. Choose REST when: (1) You have a single client with fixed views. (2) The API is simple CRUD with flat resources. (3) You need HTTP caching (GraphQL uses POST, bypassing HTTP caches). (4) The team lacks GraphQL experience. Many organizations use both -- GraphQL for client-facing APIs and REST for internal service-to-service communication.
+:::

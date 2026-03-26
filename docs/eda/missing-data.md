@@ -542,3 +542,171 @@ print(plan.to_string(index=False))
 | [Outlier Analysis](/eda/outlier-analysis) | IQR, Z-score, isolation forest, when outliers are the interesting data |
 | [Data Quality Validation](/eda/data-quality-validation) | Pandera, Great Expectations |
 | [Data Cleaning — Edge Cases](/eda/data-cleaning-edge-cases) | NaN vs None vs "null" |
+
+## Try It Yourself
+
+**Exercise 1:** You have a healthcare dataset with 5,000 patient records and columns `[age, blood_pressure, cholesterol, bmi, diagnosis]`. The `cholesterol` column is 22% missing. You suspect older patients are less likely to have cholesterol recorded. Write code to test whether the missingness is MCAR or MAR, and choose an appropriate imputation strategy.
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+from scipy.stats import ttest_ind, chi2_contingency
+
+# Create missingness indicator
+df['chol_missing'] = df['cholesterol'].isnull().astype(int)
+
+# Test 1: Compare age between missing vs observed cholesterol
+age_missing = df.loc[df['chol_missing'] == 1, 'age']
+age_observed = df.loc[df['chol_missing'] == 0, 'age']
+t_stat, p_val = ttest_ind(age_missing, age_observed)
+print(f"Age difference (missing vs observed): t={t_stat:.2f}, p={p_val:.4f}")
+
+# Test 2: Chi-squared test — missingness vs diagnosis
+ct = pd.crosstab(df['diagnosis'], df['chol_missing'])
+chi2, p_chi, _, _ = chi2_contingency(ct)
+print(f"Missingness vs diagnosis: chi2={chi2:.2f}, p={p_chi:.4f}")
+
+# If p < 0.05 for either test, missingness depends on observed data -> MAR
+# Use conditional imputation (KNN or MICE)
+if p_val < 0.05 or p_chi < 0.05:
+    print("Likely MAR — use KNN or MICE imputation")
+    from sklearn.impute import KNNImputer
+    imputer = KNNImputer(n_neighbors=5)
+    df[['age', 'blood_pressure', 'cholesterol', 'bmi']] = imputer.fit_transform(
+        df[['age', 'blood_pressure', 'cholesterol', 'bmi']]
+    )
+else:
+    print("Cannot reject MCAR — median imputation is acceptable")
+    df['cholesterol'].fillna(df['cholesterol'].median(), inplace=True)
+```
+:::
+
+**Exercise 2:** Given a survey dataset with 10,000 responses and columns `[income, education, satisfaction, region]`, where `income` is 35% missing and you suspect high earners refuse to answer (MNAR), design a strategy that accounts for this bias. Include a missingness indicator feature.
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+
+# Step 1: Create missingness indicator (captures MNAR signal)
+df['income_missing'] = df['income'].isnull().astype(int)
+
+# Step 2: Check if observed income distribution is skewed
+# Compare education levels of missing vs observed
+print("Education distribution where income is missing:")
+print(df[df['income_missing'] == 1]['education'].value_counts(normalize=True))
+print("\nEducation distribution where income is observed:")
+print(df[df['income_missing'] == 0]['education'].value_counts(normalize=True))
+
+# Step 3: MICE imputation using all available variables
+# This handles MAR component; the indicator captures residual MNAR signal
+imputer = IterativeImputer(max_iter=10, random_state=42)
+df['income_imputed'] = imputer.fit_transform(
+    df[['income', 'education', 'satisfaction']]
+)[:, 0]
+
+# Step 4: Sensitivity analysis — compare results with and without imputation
+print(f"\nObserved income mean: ${df['income'].mean():,.0f}")
+print(f"Imputed income mean: ${df['income_imputed'].mean():,.0f}")
+print(f"If MNAR (high earners hide), true mean is likely HIGHER than both")
+
+# Step 5: Keep both the imputed value AND the missingness indicator
+# as features for downstream modeling
+print(f"\nFinal features: income_imputed + income_missing (binary)")
+```
+:::
+
+**Exercise 3:** You receive a time series dataset with daily sales for 2 years (730 rows). Columns are `[date, sales, promotions, weather_score, day_of_week]`. The `weather_score` column has a 3-week gap (21 consecutive missing days) in winter. How would you handle this differently from random scattered missingness?
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+
+# Detect the gap pattern
+df['weather_missing'] = df['weather_score'].isnull()
+consecutive = df['weather_missing'].astype(int).groupby(
+    (~df['weather_missing']).cumsum()
+).cumsum()
+max_gap = consecutive.max()
+print(f"Longest consecutive gap: {max_gap} days")
+
+# For consecutive gaps in time series, use time-aware interpolation
+# NOT mean/median (which ignores temporal structure)
+
+# Method 1: Linear interpolation (preserves trend)
+df['weather_linear'] = df['weather_score'].interpolate(method='linear')
+
+# Method 2: Seasonal interpolation (better for weather)
+# Use same day-of-year from surrounding years
+df['day_of_year'] = df['date'].dt.dayofyear
+seasonal_avg = df.dropna(subset=['weather_score']).groupby('day_of_year')['weather_score'].mean()
+df['weather_seasonal'] = df.apply(
+    lambda row: seasonal_avg.get(row['day_of_year'], np.nan)
+    if pd.isna(row['weather_score']) else row['weather_score'],
+    axis=1
+)
+
+# Method 3: Forward fill with decay (recent weather is most relevant)
+df['weather_ffill'] = df['weather_score'].ffill(limit=7)  # only fill up to 7 days
+
+# Compare approaches
+print(f"\nMissing after linear interpolation: {df['weather_linear'].isnull().sum()}")
+print(f"Missing after seasonal fill: {df['weather_seasonal'].isnull().sum()}")
+print(f"Missing after forward fill (7-day limit): {df['weather_ffill'].isnull().sum()}")
+
+# Best practice: use seasonal interpolation for weather
+# and add a 'weather_was_imputed' flag for the model
+df['weather_imputed_flag'] = df['weather_score'].isnull().astype(int)
+```
+:::
+
+## Quick Quiz
+
+**1. What does MCAR stand for, and what does it imply?**
+- a) Missing Completely At Random — missingness is unrelated to any data
+- b) Missing Conditionally At Random — missingness depends on observed variables
+- c) Missing Categorically At Random — only categorical columns are affected
+
+::: details Answer
+**a) Missing Completely At Random** — The probability of a value being missing is the same for all observations and is unrelated to any data (observed or unobserved). This is the safest scenario because simple imputation or listwise deletion introduces no bias.
+:::
+
+**2. You impute missing income values using the column mean. What is the main statistical problem with this approach?**
+- a) It changes the data type from float to int
+- b) It artificially reduces the variance and narrows confidence intervals
+- c) It always introduces right skew
+
+::: details Answer
+**b) It artificially reduces the variance and narrows confidence intervals.** Mean imputation replaces missing values with a single number, pulling every imputed value to the center of the distribution. This deflates the standard deviation and makes statistical tests overconfident (too many false positives). For inference, use multiple imputation to preserve uncertainty.
+:::
+
+**3. When should you use MICE (Multiple Imputation by Chained Equations) instead of simple median imputation?**
+- a) When less than 1% of data is missing
+- b) When missingness is MAR and columns are correlated with each other
+- c) When the dataset has fewer than 100 rows
+
+::: details Answer
+**b) When missingness is MAR (Missing At Random) and columns are correlated with each other.** MICE uses relationships between columns to generate plausible imputed values conditioned on observed data. Simple median imputation ignores these correlations and is only appropriate for MCAR with low missingness percentages (under 5%).
+:::
+
+**4. A column is 65% missing. What should you do?**
+- a) Always drop the column — it has too little data
+- b) Use KNN imputation to fill in all missing values
+- c) Check if the missingness itself is informative; if so, keep it as a binary `has_value` feature
+
+::: details Answer
+**c) Check if the missingness itself is informative; if so, keep it as a binary `has_value` feature.** When a column is over 60% missing, the imputed values would be mostly fabricated. However, the *fact* that a value is missing can be a strong signal (e.g., "patient did not take this test" may predict the outcome). Create a binary indicator and consider dropping the original column.
+:::
+
+**5. You run Little's MCAR test on your dataset and get p = 0.002. What do you conclude?**
+- a) The data is MCAR and safe to drop rows
+- b) The data is likely NOT MCAR — missingness depends on some variable
+- c) You need to switch to MNAR imputation immediately
+
+::: details Answer
+**b) The data is likely NOT MCAR — missingness depends on some variable.** A small p-value (p < 0.05) rejects the null hypothesis of MCAR, meaning the missingness pattern is systematically related to observed data. This points to MAR or MNAR. You should investigate which variables predict missingness and use conditional imputation methods like KNN or MICE. Note: this does not tell you whether it is MAR or MNAR — that distinction requires domain knowledge.
+:::

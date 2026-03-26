@@ -431,3 +431,181 @@ print("\nNote: Linear models benefit more from transformations than tree-based m
 - Quantile transform forces any distribution to normal but destroys distributional information. Use as last resort.
 - Rank transform is the most robust to outliers but reduces all distances to ordinal information.
 - Linear models and distance-based methods benefit most from transformations. Tree-based models are largely unaffected.
+
+## Try It Yourself
+
+**Exercise 1:** You have a column `income` with skewness = 3.2, minimum = $0, and maximum = $2,000,000. The column contains zeros (people with no income). Choose the right transformation, apply it, and verify that skewness drops below 0.5. Explain why plain `log()` would fail here.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+from scipy import stats
+
+print(f"Original skewness: {df['income'].skew():.2f}")
+print(f"Zeros in data: {(df['income'] == 0).sum()}")
+
+# log() fails because log(0) = -infinity
+# np.log(df['income']) would produce -inf for zero-income rows
+
+# Solution 1: log1p (log(1 + x)) — handles zeros
+log1p_income = np.log1p(df['income'])
+print(f"log1p skewness: {log1p_income.skew():.2f}")
+
+# Solution 2: Yeo-Johnson — handles zeros AND negatives
+from sklearn.preprocessing import PowerTransformer
+pt = PowerTransformer(method='yeo-johnson')
+yj_income = pt.fit_transform(df[['income']]).flatten()
+print(f"Yeo-Johnson skewness: {pd.Series(yj_income).skew():.2f}")
+print(f"Yeo-Johnson lambda: {pt.lambdas_[0]:.3f}")
+
+# Solution 3: Box-Cox requires strictly positive, so shift first
+shifted = df['income'] + 1  # make all values > 0
+bc_income, bc_lambda = stats.boxcox(shifted)
+print(f"Box-Cox (shifted) skewness: {pd.Series(bc_income).skew():.2f}")
+
+# Verify: which achieved |skewness| < 0.5?
+for name, data in [('log1p', log1p_income), ('Yeo-Johnson', yj_income), ('Box-Cox', bc_income)]:
+    skew = pd.Series(data).skew()
+    status = "PASS" if abs(skew) < 0.5 else "FAIL"
+    print(f"  {name}: skewness={skew:.3f} [{status}]")
+```
+:::
+
+**Exercise 2:** A dataset has a column `stock_returns` with values ranging from -0.45 to +0.38 (positive and negative). The distribution is heavy-tailed (kurtosis = 8.5). Apply Yeo-Johnson, quantile transform, and rank-based inverse normal transform. Compare which one best normalizes the distribution while preserving the most information.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+from scipy import stats
+from sklearn.preprocessing import PowerTransformer, QuantileTransformer
+from scipy.stats import rankdata, norm
+
+data = df['stock_returns'].values
+
+# Original stats
+print(f"Original: skew={pd.Series(data).skew():.3f}, kurt={pd.Series(data).kurtosis():.3f}")
+
+# 1. Yeo-Johnson (preserves relative ordering, interpretable lambda)
+pt = PowerTransformer(method='yeo-johnson')
+yj = pt.fit_transform(data.reshape(-1, 1)).flatten()
+print(f"Yeo-Johnson: skew={pd.Series(yj).skew():.3f}, kurt={pd.Series(yj).kurtosis():.3f}")
+
+# 2. Quantile transform (forces normal, destroys distribution info)
+qt = QuantileTransformer(output_distribution='normal', random_state=42)
+qt_data = qt.fit_transform(data.reshape(-1, 1)).flatten()
+print(f"Quantile: skew={pd.Series(qt_data).skew():.3f}, kurt={pd.Series(qt_data).kurtosis():.3f}")
+
+# 3. Rank-based inverse normal transform (robust, semi-interpretable)
+ranks = rankdata(data)
+rint = norm.ppf(ranks / (len(data) + 1))
+print(f"Rank-INV: skew={pd.Series(rint).skew():.3f}, kurt={pd.Series(rint).kurtosis():.3f}")
+
+# Information preservation: correlation with original
+for name, transformed in [('Yeo-Johnson', yj), ('Quantile', qt_data), ('Rank-INV', rint)]:
+    r, _ = stats.pearsonr(data, transformed)
+    r_s, _ = stats.spearmanr(data, transformed)
+    print(f"  {name}: Pearson r={r:.4f}, Spearman r={r_s:.4f} with original")
+
+print("\nRecommendation: Yeo-Johnson preserves the most information (highest Pearson r)")
+print("Quantile and Rank-INV have perfect Spearman r (preserve ordering)")
+print("Use Yeo-Johnson for modeling; Quantile only as last resort")
+```
+:::
+
+**Exercise 3:** You are building a Ridge regression model with 5 features: 3 are right-skewed (salary, claims, tenure) and 2 are already normal (age, score). Apply appropriate transformations ONLY to the skewed features, leave the normal ones alone, and compare model R-squared before and after transformation.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import PowerTransformer, StandardScaler
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+
+skewed_cols = ['salary', 'claims', 'tenure']
+normal_cols = ['age', 'score']
+all_features = skewed_cols + normal_cols
+
+# Before transformation
+X_raw = df[all_features]
+baseline = cross_val_score(
+    Pipeline([('scaler', StandardScaler()), ('ridge', Ridge())]),
+    X_raw, y, cv=5, scoring='r2'
+).mean()
+print(f"Baseline Ridge R² (raw features): {baseline:.4f}")
+
+# Selective transformation pipeline
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('transform_skewed', PowerTransformer(method='yeo-johnson'), skewed_cols),
+        ('scale_normal', StandardScaler(), normal_cols),
+    ]
+)
+
+pipeline = Pipeline([
+    ('preprocess', preprocessor),
+    ('ridge', Ridge()),
+])
+
+transformed_score = cross_val_score(pipeline, X_raw, y, cv=5, scoring='r2').mean()
+print(f"Transformed Ridge R²: {transformed_score:.4f}")
+print(f"Improvement: {(transformed_score - baseline) / abs(baseline) * 100:.1f}%")
+
+# Verify skewness reduction
+pt = PowerTransformer(method='yeo-johnson')
+transformed = pd.DataFrame(pt.fit_transform(df[skewed_cols]), columns=skewed_cols)
+for col in skewed_cols:
+    print(f"  {col}: skew {df[col].skew():.2f} -> {transformed[col].skew():.2f}")
+```
+:::
+
+## Quick Quiz
+
+**1. When should you use log1p(x) instead of log(x)?**
+- a) When x contains values greater than 1,000,000
+- b) When x contains zero values, because log(0) is undefined
+- c) When x is left-skewed
+
+::: details Answer
+**b) When x contains zero values, because log(0) is undefined.** `log1p(x)` computes `log(1 + x)`, which is defined for x = 0 (gives 0). It also has better numerical precision for small values. For strictly positive data, `log(x)` is fine, but `log1p` is the safe default when zeros are possible.
+:::
+
+**2. What does Box-Cox lambda = 0 correspond to?**
+- a) No transformation (identity)
+- b) Log transformation
+- c) Square root transformation
+
+::: details Answer
+**b) Log transformation.** Box-Cox is a family of power transformations parameterized by lambda. Special cases: lambda=1 is identity (no transform), lambda=0.5 is square root, lambda=0 is log, and lambda=-1 is reciprocal. Box-Cox automatically finds the optimal lambda that makes the data closest to normal.
+:::
+
+**3. Why is quantile transformation considered a "last resort"?**
+- a) It is too slow to compute
+- b) It forces any distribution to look normal, potentially hiding real structure like bimodality or genuine outliers
+- c) It only works on integer data
+
+::: details Answer
+**b) It forces any distribution to look normal, potentially hiding real structure like bimodality or genuine outliers.** Quantile transformation maps data to a target distribution by matching quantiles. A bimodal distribution becomes unimodal. Real outliers become ordinary points. This destroys distributional information that might be the most important signal in your data.
+:::
+
+**4. Do tree-based models (Random Forest, XGBoost) benefit from transforming skewed features?**
+- a) Yes, they always perform better with normalized features
+- b) No, trees split on thresholds and are invariant to monotonic transformations
+- c) Only if the features are log-normally distributed
+
+::: details Answer
+**b) No, trees split on thresholds and are invariant to monotonic transformations.** Decision trees, Random Forests, and gradient boosting only care about the rank order of values (which split point separates classes best). Log(x) preserves the same ordering as x, so the tree makes identical splits. Save transformation effort for linear models, SVMs, KNN, and neural networks.
+:::
+
+**5. A feature has skewness = -2.1 (left-skewed). Which transformation should you try first?**
+- a) log(x) to compress the right tail
+- b) Reflect the data (max - x), then apply log to the reflected values, or use Yeo-Johnson directly
+- c) Square the values to increase skew
+
+::: details Answer
+**b) Reflect the data (max - x), then apply log to the reflected values, or use Yeo-Johnson directly.** Log transforms compress right tails, not left tails. For left-skewed data, you can reflect it (making it right-skewed) and then log-transform. Or simply use Yeo-Johnson, which automatically handles both left and right skew by finding the optimal lambda. Yeo-Johnson is the simplest approach for left-skewed data.
+:::

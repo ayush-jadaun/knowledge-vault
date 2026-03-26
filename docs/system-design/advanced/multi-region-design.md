@@ -657,3 +657,23 @@ See our [Cost of Scale](/system-design/advanced/cost-of-scale) page for detailed
 - [Traffic Routing](/infrastructure/multi-region/traffic-routing) — infra-level routing configuration
 - [Failover Strategies](/infrastructure/multi-region/failover-strategies) — automated failover implementation
 - [Cost of Scale](/system-design/advanced/cost-of-scale) — multi-region cost analysis
+
+## Real-World Examples
+
+::: tip Netflix
+Netflix runs **active-active across 3 AWS regions** (us-east-1, us-west-2, eu-west-1). Every region can handle 100% of global traffic if the other two fail. They use EVCache with consistent hashing for per-region caching, Cassandra with cross-region replication for persistence, and Zuul for regional routing. Their annual Chaos Engineering exercises (Chaos Kong) simulate entire region failures to validate failover.
+:::
+
+::: tip Uber
+Uber uses a **cell-based multi-region architecture**. Each city is assigned to a primary data center, and driver/rider data is partitioned geographically. A trip in Paris is served by their EU region with sub-50ms latency. If a region fails, affected cities fail over to the backup region. This geographic partitioning avoids the write conflict problem of active-active because each city's data has a single writer.
+:::
+
+::: tip DynamoDB Global Tables
+Amazon's DynamoDB Global Tables provides **multi-writer replication** across any AWS regions using last-writer-wins (LWW) conflict resolution. Each region accepts reads and writes locally with single-digit millisecond latency. Writes are asynchronously replicated to other regions within 1-2 seconds. Companies like Lyft and Samsung use Global Tables for session stores and user profiles where LWW is acceptable.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"I'd start with active-passive for multi-region because it gives disaster recovery without multi-writer conflict complexity — one region handles all writes, others serve reads locally. The RTO is 5-30 minutes, which is acceptable for most applications. I'd move to active-active only when I need zero-downtime failover or global write latency under 50ms, and I'd choose my conflict resolution strategy upfront: LWW for user preferences, CRDTs for counters and sets, or region-pinning to avoid conflicts entirely. The cost is 2-3x single region for active-active, so it needs to be justified. Netflix validates their multi-region setup by running Chaos Kong exercises that kill entire regions — untested failover plans fail when you need them."
+:::

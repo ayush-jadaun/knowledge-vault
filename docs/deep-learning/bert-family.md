@@ -58,6 +58,34 @@ Of the 15% selected for masking:
 
 This prevents the model from learning that `[MASK]` is special (since `[MASK]` never appears at fine-tuning time).
 
+::: details Worked Example — MLM Loss for Masked Tokens
+
+**Setup:** Sentence: "The cat [MASK] on the mat". Vocabulary size = 6: {the, cat, sat, on, mat, dog}. True token: "sat" (index 2).
+
+Model output logits for the `[MASK]` position:
+
+| Token | Index | Logit $z_i$ | $\exp(z_i)$ | $P(w_i)$ |
+|---|---|---|---|---|
+| the | 0 | 1.0 | 2.718 | 0.065 |
+| cat | 1 | 0.5 | 1.649 | 0.039 |
+| **sat** | **2** | **4.0** | **54.598** | **0.797** -- predicted correctly |
+| on | 3 | 2.0 | 7.389 | 0.108 |
+| mat | 4 | 0.0 | 1.000 | 0.015 |
+| dog | 5 | 1.5 | 4.482 | 0.065 |
+
+Sum of exponentials: $71.836$
+
+**MLM loss for this token:**
+$$\mathcal{L} = -\log P(\text{sat}) = -\log(0.797) = 0.227$$
+
+**If the model were confused** (logit for "sat" = 1.0 instead of 4.0):
+$$P(\text{sat}) = \frac{2.718}{2.718 + 1.649 + 2.718 + 7.389 + 1.0 + 4.482} = \frac{2.718}{19.956} = 0.136$$
+$$\mathcal{L} = -\log(0.136) = 1.995$$
+
+**Result:** Loss is 0.227 when the model correctly predicts "sat" with 79.7% probability, but 1.995 when confused (13.6%). BERT's MLM training minimizes this loss across all masked positions, forcing the model to learn contextual word representations --- here understanding that "[subject] [MASK] on" likely needs a verb of sitting/standing.
+
+:::
+
 ### Next Sentence Prediction (NSP)
 
 Given two sentences, predict whether B actually follows A:

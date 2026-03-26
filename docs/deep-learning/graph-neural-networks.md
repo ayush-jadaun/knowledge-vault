@@ -97,6 +97,45 @@ $$
 
 This is mean aggregation with symmetric normalization.
 
+::: details Worked Example — Message Passing on a 4-Node Graph
+
+**Setup:** 4-node graph with edges: 0--1, 0--2, 1--2, 2--3. Each node has a 2D feature.
+
+```
+Node 0 --- Node 1
+  \        /
+   Node 2 --- Node 3
+```
+
+**Node features** $H^{(0)}$:
+
+| Node | $h_1$ | $h_2$ | Degree |
+|---|---|---|---|
+| 0 | 1.0 | 0.0 | 2 |
+| 1 | 0.0 | 1.0 | 2 |
+| 2 | 0.5 | 0.5 | 3 |
+| 3 | 1.0 | 1.0 | 1 |
+
+Weight matrix $W = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}$ (identity for simplicity)
+
+**Step 1:** Add self-loops. $\tilde{A} = A + I$. New degrees: $\tilde{d}_0 = 3, \tilde{d}_1 = 3, \tilde{d}_2 = 4, \tilde{d}_3 = 2$
+
+**Step 2:** Compute $h_v^{(1)}$ for node 0 (neighbors: 1, 2, plus self):
+$$h_0^{(1)} = \sigma\left(W \sum_{u \in \{0,1,2\}} \frac{h_u}{\sqrt{\tilde{d}_u \cdot \tilde{d}_0}}\right)$$
+
+$$= \sigma\left(\frac{[1,0]}{\sqrt{3 \cdot 3}} + \frac{[0,1]}{\sqrt{3 \cdot 3}} + \frac{[0.5,0.5]}{\sqrt{4 \cdot 3}}\right)$$
+
+$$= \sigma\left(\frac{[1,0]}{3} + \frac{[0,1]}{3} + \frac{[0.5,0.5]}{3.46}\right) = \sigma([0.333 + 0 + 0.144,\; 0 + 0.333 + 0.144])$$
+
+$$= \sigma([0.478, 0.478]) = \text{ReLU}([0.478, 0.478]) = [0.478, 0.478]$$
+
+**Step 3:** For node 3 (neighbors: 2, plus self):
+$$h_3^{(1)} = \sigma\left(\frac{[0.5,0.5]}{\sqrt{4 \cdot 2}} + \frac{[1,1]}{\sqrt{2 \cdot 2}}\right) = \sigma\left(\frac{[0.5,0.5]}{2.83} + \frac{[1,1]}{2}\right) = \sigma([0.677, 0.677]) = [0.677, 0.677]$$
+
+**Result:** After one GCN layer, node 0 (originally $[1,0]$) became $[0.478, 0.478]$ --- it absorbed features from its neighbors 1 ($[0,1]$) and 2 ($[0.5,0.5]$), averaging toward the local neighborhood. Node 3 has high values because both it and its neighbor (node 2) had positive features. The symmetric normalization prevents high-degree nodes from dominating.
+
+:::
+
 ### GCN Implementation
 
 ```python

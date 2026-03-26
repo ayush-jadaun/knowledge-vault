@@ -445,3 +445,23 @@ Route a small percentage of traffic to the new version. Monitor error rates and 
 - **[CDN Deep Dive](/system-design/caching/cdn-deep-dive)** — CDN as a globally distributed proxy
 - **[API Gateway Pattern](/architecture-patterns/microservices/api-gateway-pattern)** — API gateway as an intelligent proxy
 - **[L4 vs L7](/system-design/load-balancing/l4-vs-l7)** — Deep dive into proxy layers
+
+## Real-World Examples
+
+::: tip Cloudflare
+Cloudflare operates one of the world's largest **reverse proxy networks**, spanning 300+ cities globally. Every request to a Cloudflare-protected site passes through their proxy, which handles TLS termination, DDoS protection, WAF filtering, and caching — all before the request reaches the origin server. They process over 50 million HTTP requests per second at peak.
+:::
+
+::: tip Netflix (Zuul)
+Netflix built **Zuul**, a custom L7 proxy / API gateway that handles all inbound traffic. Zuul performs dynamic routing, load balancing, authentication, and canary deployments. It processes billions of requests daily, and Netflix uses it to do progressive deployments by routing 1% of traffic to new service versions through the proxy layer.
+:::
+
+::: tip Envoy (Lyft/Istio)
+Lyft created **Envoy** as a high-performance L7 proxy that runs as a sidecar alongside every service in their mesh. Envoy handles service-to-service encryption (mTLS), circuit breaking, retries, and observability — all transparently. It became the foundation of the Istio service mesh and is now used by Google, Airbnb, Stripe, and hundreds of other companies.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"Proxies are the invisible infrastructure behind every production system. I'd use a reverse proxy like Nginx for TLS termination, static file serving, and load balancing — this offloads CPU-intensive encryption from backend servers and centralizes certificate management. For microservices, I'd add an API gateway (like Kong or Envoy) for authentication, rate limiting, and routing. The key trade-off is that each proxy layer adds 0.5-2ms of latency, but the benefits — security, observability, and operational flexibility — far outweigh this cost."
+:::

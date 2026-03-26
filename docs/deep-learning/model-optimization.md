@@ -106,6 +106,46 @@ $$
 x = s \cdot (q - z)
 $$
 
+::: details Worked Example — INT8 Quantization of a Small Weight Matrix
+
+**Input:** FP32 weight matrix:
+$$W = \begin{bmatrix} 0.35 & -1.20 & 0.80 \\ -0.50 & 1.50 & 0.05 \end{bmatrix}$$
+
+INT8 range: $q_{\min} = -128$, $q_{\max} = 127$
+
+**Step 1:** Find min/max of weights:
+$$x_{\min} = -1.20, \quad x_{\max} = 1.50$$
+
+**Step 2:** Compute scale and zero-point:
+$$s = \frac{1.50 - (-1.20)}{127 - (-128)} = \frac{2.70}{255} = 0.01059$$
+$$z = \text{round}\left(\frac{-(-1.20)}{0.01059}\right) = \text{round}(113.3) = 113$$
+
+**Step 3:** Quantize each weight $q = \text{round}(x/s) + z$:
+
+| $W_{ij}$ | $\text{round}(W_{ij}/0.01059)$ | $+ z = 113$ | Quantized |
+|---|---|---|---|
+| 0.35 | 33 | 146 → clamp to **127** | 127 |
+| -1.20 | -113 | 0 | **0** |
+| 0.80 | 76 | 189 → clamp to **127** | 127 |
+| -0.50 | -47 | 66 | **66** |
+| 1.50 | 142 | 255 → clamp to **127** | 127 |
+| 0.05 | 5 | 118 | **118** |
+
+**Step 4:** Dequantize to verify accuracy: $x' = s \cdot (q - z)$
+
+| Quantized $q$ | $q - 113$ | $\times 0.01059$ | Dequantized | Original | Error |
+|---|---|---|---|---|---|
+| 127 | 14 | 0.148 | 0.148 | 0.35 | 0.202 |
+| 0 | -113 | -1.197 | -1.197 | -1.20 | 0.003 |
+| 127 | 14 | 0.148 | 0.148 | 0.80 | 0.652 |
+| 66 | -47 | -0.498 | -0.498 | -0.50 | 0.002 |
+| 127 | 14 | 0.148 | 0.148 | 1.50 | 1.352 |
+| 118 | 5 | 0.053 | 0.053 | 0.05 | 0.003 |
+
+**Result:** Values near the extremes (0.35, 0.80, 1.50) all got clamped to 127, causing large errors. This happens because INT8 has limited range. In practice, outlier-aware methods like AWQ handle this by scaling important weights before quantization to protect them from clipping.
+
+:::
+
 ### Precision Comparison
 
 | Precision | Bits | Range | Model Size (7B params) |
@@ -247,6 +287,22 @@ $$
 - $\alpha$: weight (typically 0.1-0.5)
 
 **Why temperature?** Softmax with high $T$ produces softer probabilities that reveal relationships between classes. A teacher might say "this 7 looks a bit like a 1 and a 9" --- this "dark knowledge" helps the student learn.
+
+::: details Worked Example — Knowledge Distillation Temperature Effect
+
+**Setup:** Teacher logits for a digit "7": $z_t = [0.1, 1.2, 0.3, 0.5, 0.2, 0.1, 0.4, 8.0, 0.3, 1.5]$ (classes 0-9)
+
+**$T = 1$ (standard softmax):**
+- $P(\text{class 7}) = 0.975$, $P(\text{class 9}) = 0.015$, $P(\text{class 1}) = 0.010$
+- Hard target: almost all probability mass on 7
+
+**$T = 5$ (soft softmax, divide logits by 5 first):**
+- Scaled logits: $[0.02, 0.24, 0.06, 0.10, 0.04, 0.02, 0.08, 1.60, 0.06, 0.30]$
+- $P(\text{class 7}) = 0.332$, $P(\text{class 9}) = 0.091$, $P(\text{class 1}) = 0.085$
+
+**Result at $T = 5$:** The softened distribution reveals that the teacher thinks this "7" is somewhat similar to a "9" (9.1%) and a "1" (8.5%) --- both visually similar digits. A "0" gets only 6.8%. This "dark knowledge" teaches the student about inter-class relationships, not just the correct label. The $T^2$ scaling in the loss compensates for the reduced gradient magnitudes.
+
+:::
 
 ```python
 import torch

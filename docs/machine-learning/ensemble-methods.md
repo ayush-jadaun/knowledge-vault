@@ -31,6 +31,29 @@ $$\epsilon_{\text{ens}} = \frac{1}{M}\sum_{m=1}^{M} \epsilon_m$$
 
 $$\text{Var}(\epsilon_{\text{ens}}) = \frac{1}{M^2}\sum_{m=1}^{M}\text{Var}(\epsilon_m) = \frac{\sigma^2}{M}$$
 
+::: details Worked Example — Ensemble Variance Reduction
+
+**5 independent models, each with error variance sigma^2 = 0.20:**
+
+**Step 1:** Single model variance
+  Var(epsilon_1) = 0.20
+
+**Step 2:** Ensemble of M=5 (average prediction)
+  Var(epsilon_ens) = sigma^2 / M = 0.20 / 5 = 0.04
+
+**Step 3:** Ensemble of M=20
+  Var(epsilon_ens) = 0.20 / 20 = 0.01
+
+**Step 4:** With correlated models (rho=0.5, M=5)
+  Var = rho*sigma^2 + (1-rho)/M * sigma^2
+     = 0.5*0.20 + (0.5/5)*0.20
+     = 0.10 + 0.02 = 0.12
+
+**Interpret:**
+  "With 5 independent models, variance drops from 0.20 to 0.04 (5x reduction). But if models are correlated (rho=0.5), variance only drops to 0.12 (1.7x). As M goes to infinity, the variance floor is rho*sigma^2 = 0.10 — you can never get below this with correlated models. Diversity is critical."
+
+:::
+
 The variance drops by a factor of $M$. But this assumes **independence** — which is never perfectly true.
 
 ### With Correlated Models
@@ -58,6 +81,30 @@ As $M \to \infty$: $\text{Var} \to \rho\sigma^2$.
 Each bootstrap sample contains approximately 63.2% of unique training points (the rest are duplicates). The remaining 36.8% are "out-of-bag" (OOB) samples:
 
 $$P(\text{point not in bootstrap}) = \left(1 - \frac{1}{n}\right)^n \approx e^{-1} \approx 0.368$$
+
+::: details Worked Example — Bootstrap OOB Probability
+
+**Dataset with n=5 samples. What fraction is OOB for each tree?**
+
+**Step 1:** Probability a specific point is NOT picked in one draw
+  P(miss) = 1 - 1/5 = 4/5 = 0.8
+
+**Step 2:** Probability NOT picked in any of n=5 draws (with replacement)
+  P(OOB) = (4/5)^5 = 0.8^5 = 0.32768
+
+**Step 3:** For larger n
+  n=10:   P(OOB) = (9/10)^10 = 0.349
+  n=100:  P(OOB) = (99/100)^100 = 0.366
+  n=1000: P(OOB) = (999/1000)^1000 = 0.368
+
+**Step 4:** Unique samples in bootstrap
+  Expected unique = n * (1 - P(OOB))
+  For n=1000: 1000 * (1 - 0.368) = 632 unique samples
+
+**Interpret:**
+  "About 36.8% of data is left out of each bootstrap sample (OOB). These OOB samples serve as free validation data. For n=1000, each tree trains on ~632 unique samples and is validated on ~368."
+
+:::
 
 Different models see different subsets, creating diversity.
 

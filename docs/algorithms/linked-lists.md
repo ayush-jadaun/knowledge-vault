@@ -687,3 +687,111 @@ In production, arrays almost always beat linked lists due to cache locality. Mod
 - [Arrays & Strings](/algorithms/arrays-strings) — the contiguous counterpart
 - [Heaps & Priority Queues](/algorithms/heaps-priority-queues) — for merge K lists
 - [Hash Tables](/algorithms/hash-tables) — combined with linked lists for chaining and LRU caches
+
+## Try It Yourself
+
+**Problem 1:** Given the linked list `1 -> 2 -> 3 -> 4 -> 5`, reverse it to produce `5 -> 4 -> 3 -> 2 -> 1`.
+
+::: details Solution
+Use three pointers: `prev`, `current`, `next`.
+- Initialize `prev = null`, `current = 1`
+- Step 1: save `next = 2`, point `1.next = null`, advance `prev = 1`, `current = 2`
+- Step 2: save `next = 3`, point `2.next = 1`, advance `prev = 2`, `current = 3`
+- Continue until `current = null`. Return `prev` which is node 5.
+Time: $O(n)$, Space: $O(1)$.
+:::
+
+**Problem 2:** Detect if the linked list `1 -> 2 -> 3 -> 4 -> 5 -> 3` (where 5 points back to 3) has a cycle, and find where the cycle starts.
+
+::: details Solution
+Use Floyd's algorithm (fast and slow pointers):
+- Phase 1: slow moves 1 step, fast moves 2 steps. They meet inside the cycle.
+- Phase 2: Reset slow to head. Move both slow and fast 1 step at a time. They meet at the cycle start.
+The cycle starts at **node 3**.
+:::
+
+**Problem 3:** Find the middle node of `1 -> 2 -> 3 -> 4 -> 5`.
+
+::: details Solution
+Use fast and slow pointers. Slow moves 1 step, fast moves 2 steps.
+- Start: slow=1, fast=1
+- Step 1: slow=2, fast=3
+- Step 2: slow=3, fast=5
+- `fast.next` is null, stop. Middle node is **3**.
+:::
+
+**Problem 4:** Merge two sorted lists: `1 -> 3 -> 5` and `2 -> 4 -> 6` into one sorted list.
+
+::: details Solution
+Use a dummy head and compare nodes from both lists:
+- Compare 1 vs 2: take 1, advance list 1
+- Compare 3 vs 2: take 2, advance list 2
+- Compare 3 vs 4: take 3, advance list 1
+- Compare 5 vs 4: take 4, advance list 2
+- Compare 5 vs 6: take 5, advance list 1
+- Append remaining: 6
+Result: `1 -> 2 -> 3 -> 4 -> 5 -> 6`. Time: $O(n + m)$.
+:::
+
+**Problem 5:** Remove the 2nd node from the end of `1 -> 2 -> 3 -> 4 -> 5`.
+
+::: details Solution
+Use two pointers with a gap of 2:
+- Advance `fast` 2 steps: fast=3
+- Move both together: slow=1,fast=3 → slow=2,fast=4 → slow=3,fast=5
+- `fast.next` is null, so `slow.next` is the node to remove (node 4)
+- Set `slow.next = slow.next.next`
+Result: `1 -> 2 -> 3 -> 5`.
+:::
+
+## Quick Quiz
+
+**1. What is the time complexity of accessing the $k$-th element in a singly linked list?**
+- a) $O(1)$
+- b) $O(k)$
+- c) $O(n)$
+- d) $O(\log n)$
+
+::: details Answer
+**c) $O(n)$** — Linked lists do not support random access. You must traverse from the head, taking up to $O(n)$ steps in the worst case.
+:::
+
+**2. Why is the "dummy head" technique useful in linked list problems?**
+- a) It makes the list doubly linked
+- b) It eliminates special-case handling when the head might be modified
+- c) It reduces time complexity
+- d) It prevents memory leaks
+
+::: details Answer
+**b) It eliminates special-case handling when the head might be modified** — Operations like deletion or insertion at the head require special logic without a dummy node. The dummy node ensures there is always a node before the first real element.
+:::
+
+**3. In Floyd's cycle detection algorithm, what happens if there is no cycle?**
+- a) The slow pointer reaches null
+- b) The fast pointer reaches null (or `fast.next` is null)
+- c) Both pointers reach null simultaneously
+- d) The algorithm runs forever
+
+::: details Answer
+**b) The fast pointer reaches null (or `fast.next` is null)** — The fast pointer moves ahead of slow and will reach the end of the list first if there is no cycle.
+:::
+
+**4. What is the time complexity of merging K sorted linked lists using a min-heap?**
+- a) $O(NK)$
+- b) $O(N \log K)$
+- c) $O(N \log N)$
+- d) $O(K \log N)$
+
+::: details Answer
+**b) $O(N \log K)$** — where $N$ is the total number of nodes and $K$ is the number of lists. Each of the $N$ nodes is pushed and popped from a heap of size $K$, each operation taking $O(\log K)$.
+:::
+
+**5. Why do linked lists generally perform worse than arrays in practice despite having $O(1)$ insertion?**
+- a) They use more memory
+- b) Poor cache locality -- nodes are scattered across memory causing cache misses
+- c) They cannot store large elements
+- d) They require garbage collection
+
+::: details Answer
+**b) Poor cache locality -- nodes are scattered across memory causing cache misses** — Arrays store elements contiguously in memory, which modern CPUs can prefetch efficiently. Linked list nodes are scattered on the heap, causing a cache miss on almost every pointer dereference.
+:::

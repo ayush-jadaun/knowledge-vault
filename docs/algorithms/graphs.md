@@ -750,3 +750,113 @@ def kruskal(n: int, edges: list[tuple[int, int, int]]) -> list[tuple[int, int, i
 - [Dynamic Programming](/algorithms/dynamic-programming) — shortest path problems as DP
 - [Consistent Hashing](/system-design/distributed-systems/consistent-hashing) — graph/ring-based distribution
 - [Backtracking & Recursion](/algorithms/backtracking-recursion) — DFS-based exhaustive search
+
+## Try It Yourself
+
+**Problem 1:** Given a graph with edges `[(0,1), (0,2), (1,2), (2,3)]` and 4 nodes, find the shortest path from node 0 to node 3 (unweighted).
+
+::: details Solution
+Use BFS starting from node 0:
+- Level 0: visit 0, enqueue neighbors 1, 2
+- Level 1: visit 1 (neighbor 2 already visited), visit 2 (enqueue 3)
+- Level 2: visit 3
+Shortest path distance: **2** (path: 0 -> 2 -> 3)
+:::
+
+**Problem 2:** Determine if the directed graph with edges `[(0,1), (1,2), (2,0)]` and 3 nodes contains a cycle.
+
+::: details Solution
+Use DFS with three-color marking (WHITE, GRAY, BLACK):
+- Start DFS at 0: color 0 GRAY
+- Visit 1: color 1 GRAY
+- Visit 2: color 2 GRAY
+- From 2, neighbor 0 is GRAY (still in the call stack) → **back edge detected**
+Answer: **Yes**, the graph contains a cycle (0 -> 1 -> 2 -> 0).
+:::
+
+**Problem 3:** Perform topological sort on a DAG with edges: A->C, B->C, B->D, C->E, D->E.
+
+::: details Solution
+Using Kahn's algorithm (BFS-based):
+- In-degrees: A=0, B=0, C=2, D=1, E=2
+- Start with queue: [A, B]
+- Process A: reduce C's in-degree to 1. Process B: reduce C to 0, D to 0. Queue: [C, D]
+- Process C: reduce E to 1. Process D: reduce E to 0. Queue: [E]
+- Process E.
+One valid topological order: **[A, B, C, D, E]** (or [B, A, C, D, E] or [A, B, D, C, E], etc.)
+:::
+
+**Problem 4:** Given a weighted graph with edges `(A,B,4), (A,C,1), (C,B,2), (B,D,1), (C,D,5)`, find the shortest path from A to D using Dijkstra.
+
+::: details Solution
+- Initialize: dist = {A:0, B:inf, C:inf, D:inf}, PQ = [(0,A)]
+- Process A: update B=4, C=1. PQ = [(1,C), (4,B)]
+- Process C: update B = min(4, 1+2) = 3, D = min(inf, 1+5) = 6. PQ = [(3,B), (4,B), (6,D)]
+- Process B (dist=3): update D = min(6, 3+1) = 4. PQ = [(4,B), (4,D), (6,D)]
+- Process D (dist=4): done.
+Shortest path A to D: **4** (path: A -> C -> B -> D)
+:::
+
+**Problem 5:** Given 5 nodes and edges `[(0,1), (0,2), (1,3), (2,3), (3,4)]`, use Union-Find to count the number of connected components.
+
+::: details Solution
+Initialize: each node is its own component (5 components).
+- Union(0,1): merge → 4 components
+- Union(0,2): merge → 3 components
+- Union(1,3): merge → 2 components
+- Union(2,3): find(2)=0, find(3)=0 → already connected, skip
+- Union(3,4): merge → 1 component
+Answer: **1 connected component**
+:::
+
+## Quick Quiz
+
+**1. What is the time complexity of BFS on a graph represented as an adjacency list?**
+- a) $O(V)$
+- b) $O(E)$
+- c) $O(V + E)$
+- d) $O(V \cdot E)$
+
+::: details Answer
+**c) $O(V + E)$** — BFS visits every vertex once ($O(V)$) and examines every edge once ($O(E)$) in an adjacency list representation.
+:::
+
+**2. Which shortest-path algorithm should you use if the graph has negative edge weights (but no negative cycles)?**
+- a) BFS
+- b) Dijkstra
+- c) Bellman-Ford
+- d) Floyd-Warshall (if single-source only is needed)
+
+::: details Answer
+**c) Bellman-Ford** — Dijkstra fails with negative weights because it assumes finalized distances cannot be improved. Bellman-Ford relaxes all edges $V-1$ times and handles negative weights correctly.
+:::
+
+**3. What does topological sort require about the graph?**
+- a) The graph must be undirected
+- b) The graph must be a DAG (Directed Acyclic Graph)
+- c) The graph must be weighted
+- d) The graph must be connected
+
+::: details Answer
+**b) The graph must be a DAG (Directed Acyclic Graph)** — Topological sort produces a linear ordering where for every edge $(u,v)$, $u$ comes before $v$. This is only possible when there are no cycles.
+:::
+
+**4. What is the amortized time complexity of Union-Find operations with both path compression and union by rank?**
+- a) $O(1)$
+- b) $O(\log n)$
+- c) $O(\alpha(n))$ (inverse Ackermann, effectively constant)
+- d) $O(n)$
+
+::: details Answer
+**c) $O(\alpha(n))$** — The inverse Ackermann function grows so slowly that $\alpha(n) \leq 4$ for all practical input sizes, making operations effectively constant time.
+:::
+
+**5. When is an adjacency matrix preferred over an adjacency list?**
+- a) When the graph is sparse
+- b) When the graph is dense and you need $O(1)$ edge lookup
+- c) When you need to iterate over neighbors quickly
+- d) When memory is limited
+
+::: details Answer
+**b) When the graph is dense and you need $O(1)$ edge lookup** — An adjacency matrix uses $O(V^2)$ space, which is efficient for dense graphs where $E \approx V^2$. It provides $O(1)$ edge existence checks, whereas an adjacency list requires scanning the neighbor list.
+:::

@@ -45,6 +45,32 @@ def compute_iou(box1, box2):
     return intersection / (union + 1e-6)
 ```
 
+::: details Worked Example — IoU Calculation for Two Boxes
+
+**Input:** Two bounding boxes in $[x_1, y_1, x_2, y_2]$ format:
+- Predicted: $A = [50, 50, 200, 200]$ (150x150 pixels)
+- Ground truth: $B = [100, 80, 250, 220]$ (150x140 pixels)
+
+**Step 1:** Compute intersection rectangle:
+$$x_1^{\cap} = \max(50, 100) = 100, \quad y_1^{\cap} = \max(50, 80) = 80$$
+$$x_2^{\cap} = \min(200, 250) = 200, \quad y_2^{\cap} = \min(200, 220) = 200$$
+
+Intersection area: $(200 - 100) \times (200 - 80) = 100 \times 120 = 12{,}000$ pixels
+
+**Step 2:** Compute individual areas:
+$$|A| = (200-50)(200-50) = 150 \times 150 = 22{,}500$$
+$$|B| = (250-100)(220-80) = 150 \times 140 = 21{,}000$$
+
+**Step 3:** Compute union:
+$$|A \cup B| = 22{,}500 + 21{,}000 - 12{,}000 = 31{,}500$$
+
+**Step 4:** IoU:
+$$\text{IoU} = \frac{12{,}000}{31{,}500} = 0.381$$
+
+**Result:** IoU = 0.381. This would fail the PASCAL VOC threshold (0.5) --- the prediction is not a good enough match. The boxes overlap, but the predicted box is shifted too far left and up from the ground truth.
+
+:::
+
 ### IoU Thresholds
 
 | IoU | Interpretation |
@@ -232,6 +258,46 @@ mAP = \frac{1}{C} \sum_{c=1}^{C} AP_c
 $$
 
 COCO mAP averages over IoU thresholds from 0.5 to 0.95 (step 0.05).
+
+::: details Worked Example — mAP Computation (Simplified)
+
+**Setup:** 2 classes (cat, dog). 5 detections sorted by confidence:
+
+| Detection | Class | Confidence | IoU with GT | TP/FP |
+|---|---|---|---|---|
+| D1 | cat | 0.95 | 0.82 | TP |
+| D2 | cat | 0.90 | 0.10 | FP |
+| D3 | dog | 0.85 | 0.71 | TP |
+| D4 | cat | 0.70 | 0.65 | TP |
+| D5 | dog | 0.60 | 0.30 | FP |
+
+Ground truth: 2 cats, 2 dogs. IoU threshold = 0.5.
+
+**Cat class** (2 GT objects, detections: D1-TP, D2-FP, D4-TP):
+
+| Step | Precision | Recall |
+|---|---|---|
+| After D1 (TP) | 1/1 = 1.000 | 1/2 = 0.500 |
+| After D2 (FP) | 1/2 = 0.500 | 1/2 = 0.500 |
+| After D4 (TP) | 2/3 = 0.667 | 2/2 = 1.000 |
+
+$AP_{\text{cat}} = \text{area under P-R curve} \approx 1.0 \times 0.5 + 0.667 \times 0.5 = 0.833$
+
+**Dog class** (2 GT objects, detections: D3-TP, D5-FP):
+
+| Step | Precision | Recall |
+|---|---|---|
+| After D3 (TP) | 1/1 = 1.000 | 1/2 = 0.500 |
+| After D5 (FP) | 1/2 = 0.500 | 1/2 = 0.500 |
+
+$AP_{\text{dog}} = 1.0 \times 0.5 = 0.500$ (recall never reaches 1.0 --- one dog was never detected)
+
+**mAP:**
+$$mAP = \frac{AP_{\text{cat}} + AP_{\text{dog}}}{2} = \frac{0.833 + 0.500}{2} = 0.667$$
+
+**Result:** mAP = 0.667. The model finds cats well (83.3% AP) but misses one dog entirely, dragging the average down. COCO would also average this across 10 IoU thresholds.
+
+:::
 
 ```python
 def compute_ap(precision, recall):

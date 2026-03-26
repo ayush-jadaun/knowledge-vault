@@ -42,6 +42,49 @@ AdaBoost (Adaptive Boosting) was the first successful boosting algorithm. It re-
    - Normalize weights
 3. Final prediction: $H(x) = \text{sign}\left(\sum_{t=1}^T \alpha_t h_t(x)\right)$
 
+::: details Worked Example — AdaBoost Weight Updates
+
+**Mini Dataset (6 samples, labels in {-1, +1}):**
+| Sample | y   | h1(x) | Correct? |
+|--------|------|-------|----------|
+| 1      | +1  | +1    | Yes      |
+| 2      | +1  | +1    | Yes      |
+| 3      | -1  | -1    | Yes      |
+| 4      | -1  | +1    | No       |
+| 5      | +1  | -1    | No       |
+| 6      | -1  | -1    | Yes      |
+
+**Step 1:** Initialize weights: w_i = 1/6 for all i
+
+**Step 2:** Compute weighted error (samples 4 and 5 are wrong)
+  epsilon_1 = w4 + w5 = 1/6 + 1/6 = 2/6 = 0.333
+
+**Step 3:** Compute classifier weight
+  alpha_1 = 0.5 * ln((1 - 0.333) / 0.333)
+          = 0.5 * ln(0.667 / 0.333)
+          = 0.5 * ln(2.0)
+          = 0.5 * 0.693 = 0.347
+
+**Step 4:** Update sample weights
+  Correct predictions (y_i * h1(x_i) = +1): multiply by exp(-0.347) = 0.707
+  Wrong predictions (y_i * h1(x_i) = -1): multiply by exp(0.347) = 1.414
+
+  w1 = (1/6)(0.707) = 0.118
+  w2 = (1/6)(0.707) = 0.118
+  w3 = (1/6)(0.707) = 0.118
+  w4 = (1/6)(1.414) = 0.236  (misclassified -> weight doubled)
+  w5 = (1/6)(1.414) = 0.236  (misclassified -> weight doubled)
+  w6 = (1/6)(0.707) = 0.118
+
+**Step 5:** Normalize (sum = 0.944)
+  w1=w2=w3=w6 = 0.118/0.944 = 0.125
+  w4=w5 = 0.236/0.944 = 0.250
+
+**Interpret:**
+  "Misclassified samples (4 and 5) now have double the weight (0.250 vs 0.125). The next weak learner will focus more on getting these hard examples right."
+
+:::
+
 ```python
 # adaboost_scratch.py — AdaBoost from scratch
 import numpy as np
@@ -129,6 +172,35 @@ For squared error loss $L(y, F) = \frac{1}{2}(y - F)^2$:
 $$-\frac{\partial L}{\partial F} = y - F(x)$$
 
 The negative gradient is just the residual. So each new tree fits the residuals of the previous ensemble.
+
+::: details Worked Example — Gradient Boosting Residuals (3 Iterations)
+
+**Dataset: predict house prices. Learning rate eta = 0.5.**
+
+| House | y (true) | F0 (mean) | Residual 1 | h1 pred | F1       | Residual 2 | h2 pred | F2       |
+|-------|----------|-----------|------------|---------|----------|------------|---------|----------|
+| A     | 200      | 300       | -100       | -100    | 250      | -50        | -50     | 275      |
+| B     | 300      | 300       | 0          | 0       | 300      | 0          | 0       | 300      |
+| C     | 400      | 300       | 100        | 100     | 350      | 50         | 50      | 325      |
+
+**Step 1:** Initialize F0 = mean(y) = (200+300+400)/3 = 300
+
+**Step 2:** Iteration 1 — compute residuals and fit tree h1
+  Residuals = y - F0 = [-100, 0, 100]
+  Tree h1 perfectly fits residuals: h1 = [-100, 0, 100]
+  F1 = F0 + eta * h1 = [300+0.5*(-100), 300+0, 300+0.5*100] = [250, 300, 350]
+
+**Step 3:** Iteration 2 — compute new residuals
+  Residuals = y - F1 = [200-250, 300-300, 400-350] = [-50, 0, 50]
+  Tree h2 fits: [-50, 0, 50]
+  F2 = F1 + eta * h2 = [250-25, 300, 350+25] = [225, 300, 375]
+
+**Step 4:** After many iterations, F converges to y
+
+**Interpret:**
+  "Each iteration halves the remaining error (because eta=0.5). After 2 rounds: House A error went from 100 to 75 to ~56. The learning rate prevents overfitting by taking small steps. Without it (eta=1), we'd overfit in one step."
+
+:::
 
 ### GBM Derivation
 
@@ -263,6 +335,45 @@ $$w_j^* = -\frac{\sum_{i \in I_j} g_i}{\sum_{i \in I_j} h_i + \lambda}$$
 The optimal split gain is:
 
 $$\text{Gain} = \frac{1}{2}\left[\frac{(\sum_{i \in I_L} g_i)^2}{\sum_{i \in I_L} h_i + \lambda} + \frac{(\sum_{i \in I_R} g_i)^2}{\sum_{i \in I_R} h_i + \lambda} - \frac{(\sum_{i \in I} g_i)^2}{\sum_{i \in I} h_i + \lambda}\right] - \gamma$$
+
+::: details Worked Example — XGBoost Split Gain
+
+**6 samples with MSE loss (g_i = -(y_i - y_hat), h_i = 1 for all), lambda=1, gamma=0.5:**
+
+| Sample | y   | y_hat | g_i (gradient) | h_i (hessian) |
+|--------|-----|-------|----------------|---------------|
+| 1      | 3   | 2.5   | -0.5           | 1             |
+| 2      | 5   | 2.5   | -2.5           | 1             |
+| 3      | 4   | 2.5   | -1.5           | 1             |
+| 4      | 1   | 2.5   | 1.5            | 1             |
+| 5      | 2   | 2.5   | 0.5            | 1             |
+| 6      | 0   | 2.5   | 2.5            | 1             |
+
+**Split: samples {1,2,3} go left, {4,5,6} go right.**
+
+**Step 1:** Compute sums
+  Left:  sum(g_L) = -0.5 + (-2.5) + (-1.5) = -4.5, sum(h_L) = 3
+  Right: sum(g_R) = 1.5 + 0.5 + 2.5 = 4.5, sum(h_R) = 3
+  All:   sum(g) = -4.5 + 4.5 = 0.0, sum(h) = 6
+
+**Step 2:** Compute each term
+  Left score  = (-4.5)^2 / (3 + 1) = 20.25 / 4 = 5.0625
+  Right score = (4.5)^2 / (3 + 1) = 20.25 / 4 = 5.0625
+  Parent score = (0.0)^2 / (6 + 1) = 0 / 7 = 0.0
+
+**Step 3:** Compute gain
+  Gain = 0.5 * (5.0625 + 5.0625 - 0.0) - 0.5
+       = 0.5 * 10.125 - 0.5
+       = 5.0625 - 0.5 = 4.5625
+
+**Step 4:** Optimal leaf weights
+  w_L = -(-4.5)/(3+1) = 4.5/4 = 1.125
+  w_R = -(4.5)/(3+1) = -4.5/4 = -1.125
+
+**Interpret:**
+  "The gain of 4.56 exceeds gamma=0.5, so this split is worthwhile. Left leaf predicts +1.125 (high values), right leaf predicts -1.125 (low values)."
+
+:::
 
 ```python
 # xgboost_detailed.py — XGBoost with detailed configuration

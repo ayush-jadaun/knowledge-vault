@@ -416,3 +416,48 @@ The 8-minute detour through the failed kill switch was the most expensive delay.
 - [Facebook's October 2021 Outage](/war-room/facebook-october-2021) — Another case of internal tools depending on production infrastructure
 - [Knight Capital's $440M Bug](/war-room/knight-capital-2012) — Another case where missing safety mechanisms turned a small error into a catastrophe
 - [Chaos Engineering](/devops/incident-response/chaos-engineering) — Testing failure modes including CPU exhaustion
+
+## What Would You Do?
+
+Test your incident response instincts against the decisions Cloudflare's engineers actually faced.
+
+::: details Scenario 1: It is 13:42 UTC. Every edge server worldwide is at 100% CPU. Your monitoring dashboard is intermittently accessible because it runs through your own CDN. Your first hypothesis is a massive DDoS attack. How do you confirm or rule this out?
+**What Cloudflare did:** They ruled out DDoS within 6 minutes by observing that the CPU spike was simultaneous across ALL regions on ALL continents. A DDoS attack targets specific IPs, domains, or regions — it would not cause uniform 100% CPU everywhere at the same instant. The global, instantaneous nature of the spike was the diagnostic signal that pointed to an internal cause, not external attack.
+:::
+
+::: details Scenario 2: You have identified the WAF regex as the culprit at 13:52. You have a global WAF kill switch. Do you (A) use the kill switch to disable all WAF processing immediately, or (B) target a rollback of just the specific problematic rule?
+**What Cloudflare did:** They tried **(A) first — the global WAF kill switch at 14:00.** But it failed. The kill switch relied on the same edge servers that were at 100% CPU, and they had no capacity to process the kill command. This was an 8-minute detour. They then pivoted to **(B) — a targeted rollback of the specific rule at 14:02**, which was a smaller change that even overloaded servers could process. The lesson: kill switches must work when everything else is broken.
+:::
+
+::: details Scenario 3: Post-incident, you must decide the future of WAF rule deployment. Speed is critical — new threats need protection within minutes. But the current "deploy to all DCs at once" model caused a global outage. What deployment model do you choose?
+**What Cloudflare did:** They implemented a **staged rollout pipeline**: canary to 1 DC, then 5% of DCs, then 25%, then 100% — with automated CPU and error rate checks at each stage. A 60-second canary phase would have caught this incident before it went global. They also migrated their regex engine to a non-backtracking implementation (Rust-based) that guarantees linear-time evaluation, making this class of bug structurally impossible.
+:::
+
+## Prevention Checklist
+
+- [ ] All regex patterns in hot-path code are audited for catastrophic backtracking (nested quantifiers like `.*.*`, `(a+)+`)
+- [ ] Hot-path regex uses a linear-time engine (re2, Rust regex crate, Go regexp) instead of a backtracking NFA engine
+- [ ] Configuration changes deploy through staged rollouts with automated rollback, not globally at once
+- [ ] Per-request CPU budgets prevent a single request from monopolizing server resources
+- [ ] Kill switches are architecturally independent of the systems they protect
+- [ ] Monitoring and deployment dashboards have out-of-band access that does not depend on production infrastructure
+- [ ] Regex performance testing is part of the CI/CD pipeline for any regex evaluated on the hot path
+- [ ] A static analysis linter flags dangerous regex patterns before they reach production
+
+## Quick Quiz
+
+::: details Question 1: What is "catastrophic backtracking" and why did it cause 100% CPU on every server?
+Catastrophic backtracking occurs when a regex engine using NFA (backtracking) must explore an exponentially growing number of possible match paths. The pattern `.*(?:.*=.*)` caused O(2^n) match attempts for input strings without an `=` sign. Since HTTP response bodies are thousands of characters long, the regex engine would never complete — consuming 100% CPU indefinitely on every request passing through the WAF.
+:::
+
+::: details Question 2: Why did Cloudflare's WAF kill switch fail during the incident?
+The kill switch relied on the same edge servers that were already at 100% CPU from regex evaluation. The servers had no spare CPU capacity to process the incoming kill switch command. This is a deadlock: the thing that was broken (WAF processing) needed the thing it was breaking (CPU availability) to receive the command to stop.
+:::
+
+::: details Question 3: Why was the WAF rule treated differently from code deployments, and why was that dangerous?
+WAF rules were deployed as "configuration," not code, so they bypassed the staged rollout pipeline that code deployments used. They deployed globally to all 194+ data centers at once with no canary phase. But a WAF regex evaluated on every HTTP response is functionally code in the hottest path of the system. Configuration that affects behavior in the critical path should be deployed with the same rigor as code.
+:::
+
+## One-Liner Lesson
+
+A single regex with nested quantifiers can take down 10% of the internet in 27 minutes — treat configuration changes in the hot path with the same rigor as code deployments.

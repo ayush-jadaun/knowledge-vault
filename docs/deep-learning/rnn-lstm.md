@@ -52,6 +52,33 @@ graph LR
 
 The same weights $W_{hh}$, $W_{xh}$ are shared across all time steps.
 
+::: details Worked Example — RNN Forward Pass Through 3 Timesteps
+
+**Setup:** Input size $d = 2$, hidden size $n = 2$, 3 timesteps
+
+$$W_{xh} = \begin{bmatrix} 0.5 & 0.3 \\ 0.2 & -0.4 \end{bmatrix}, \quad W_{hh} = \begin{bmatrix} 0.1 & 0.6 \\ -0.3 & 0.2 \end{bmatrix}, \quad b_h = [0, 0]$$
+
+Inputs: $x_1 = [1, 0]$, $x_2 = [0, 1]$, $x_3 = [1, 1]$, $h_0 = [0, 0]$
+
+**Timestep 1:** $h_1 = \tanh(W_{xh} x_1 + W_{hh} h_0 + b_h)$
+$$W_{xh} x_1 = [0.5(1)+0.3(0),\; 0.2(1)+(-0.4)(0)] = [0.5,\; 0.2]$$
+$$W_{hh} h_0 = [0, 0]$$
+$$h_1 = \tanh([0.5, 0.2]) = [0.462, 0.197]$$
+
+**Timestep 2:** $h_2 = \tanh(W_{xh} x_2 + W_{hh} h_1)$
+$$W_{xh} x_2 = [0.3,\; -0.4]$$
+$$W_{hh} h_1 = [0.1(0.462)+0.6(0.197),\; -0.3(0.462)+0.2(0.197)] = [0.164,\; -0.099]$$
+$$h_2 = \tanh([0.464,\; -0.499]) = [0.434,\; -0.462]$$
+
+**Timestep 3:** $h_3 = \tanh(W_{xh} x_3 + W_{hh} h_2)$
+$$W_{xh} x_3 = [0.8,\; -0.2]$$
+$$W_{hh} h_2 = [0.1(0.434)+0.6(-0.462),\; -0.3(0.434)+0.2(-0.462)] = [-0.234,\; -0.222]$$
+$$h_3 = \tanh([0.566,\; -0.422]) = [0.513,\; -0.398]$$
+
+**Result:** The hidden state evolves: $[0, 0] \to [0.462, 0.197] \to [0.434, -0.462] \to [0.513, -0.398]$. Each step blends the new input with memory from previous steps via $W_{hh}$. The final hidden state $h_3$ encodes a summary of the entire sequence.
+
+:::
+
 ### From-Scratch RNN
 
 ```python
@@ -182,6 +209,44 @@ $$
 
 Since $f_t \in (0, 1)$ is a sigmoid output, the gradient can persist if the forget gate stays close to 1. The network learns when to remember (high $f_t$) and when to forget (low $f_t$). This is an additive path --- no repeated multiplication by weight matrices.
 
+::: details Worked Example — LSTM Gate Values Step by Step
+
+**Setup:** Scalar simplification (hidden size 1). $c_0 = 0$, $h_0 = 0$, input sequence $x = [1.0, 0.5, -0.5]$
+
+Assume all gate computations use a single weight and bias (simplified):
+- Forget gate: $f_t = \sigma(0.5 \cdot x_t + 0.3 \cdot h_{t-1} + 1.0)$ (bias=1 for remember-by-default)
+- Input gate: $i_t = \sigma(0.4 \cdot x_t + 0.2 \cdot h_{t-1} + 0.0)$
+- Candidate: $\tilde{c}_t = \tanh(0.6 \cdot x_t + 0.1 \cdot h_{t-1})$
+- Output gate: $o_t = \sigma(0.3 \cdot x_t + 0.4 \cdot h_{t-1} + 0.0)$
+
+**Timestep 1** ($x_1 = 1.0$, $h_0 = 0$, $c_0 = 0$):
+- $f_1 = \sigma(0.5 + 0 + 1.0) = \sigma(1.5) = 0.818$ (mostly remember)
+- $i_1 = \sigma(0.4 + 0) = \sigma(0.4) = 0.599$ (partially write)
+- $\tilde{c}_1 = \tanh(0.6) = 0.537$
+- $c_1 = 0.818 \times 0 + 0.599 \times 0.537 = 0.322$
+- $o_1 = \sigma(0.3) = 0.574$
+- $h_1 = 0.574 \times \tanh(0.322) = 0.574 \times 0.311 = 0.178$
+
+**Timestep 2** ($x_2 = 0.5$, $h_1 = 0.178$, $c_1 = 0.322$):
+- $f_2 = \sigma(0.25 + 0.053 + 1.0) = \sigma(1.303) = 0.786$
+- $i_2 = \sigma(0.2 + 0.036) = \sigma(0.236) = 0.559$
+- $\tilde{c}_2 = \tanh(0.3 + 0.018) = \tanh(0.318) = 0.307$
+- $c_2 = 0.786 \times 0.322 + 0.559 \times 0.307 = 0.253 + 0.172 = 0.425$
+- $o_2 = \sigma(0.15 + 0.071) = \sigma(0.221) = 0.555$
+- $h_2 = 0.555 \times \tanh(0.425) = 0.555 \times 0.401 = 0.223$
+
+**Timestep 3** ($x_3 = -0.5$, $h_2 = 0.223$, $c_2 = 0.425$):
+- $f_3 = \sigma(-0.25 + 0.067 + 1.0) = \sigma(0.817) = 0.694$
+- $i_3 = \sigma(-0.2 + 0.045) = \sigma(-0.155) = 0.461$
+- $\tilde{c}_3 = \tanh(-0.3 + 0.022) = \tanh(-0.278) = -0.271$
+- $c_3 = 0.694 \times 0.425 + 0.461 \times (-0.271) = 0.295 - 0.125 = 0.170$
+- $o_3 = \sigma(-0.15 + 0.089) = \sigma(-0.061) = 0.485$
+- $h_3 = 0.485 \times \tanh(0.170) = 0.485 \times 0.169 = 0.082$
+
+**Result:** The cell state evolved $0 \to 0.322 \to 0.425 \to 0.170$. The forget gate (0.694--0.818) kept most of the cell state each step (remember-by-default bias of 1.0 is working). The negative input at $t=3$ caused the candidate to be negative, partially erasing the stored information. The output gate controls how much of the cell state is exposed.
+
+:::
+
 ### LSTM Gate Visualization
 
 ```mermaid
@@ -287,6 +352,24 @@ $$
 $$
 h_t = (1 - z_t) \odot h_{t-1} + z_t \odot \tilde{h}_t
 $$
+
+::: details Worked Example — GRU Gate Values
+
+**Setup:** Scalar GRU, $h_0 = 0.5$, input $x_1 = 1.0$
+
+Simplified weights: $r_t = \sigma(0.5 x_t - 0.3 h_{t-1})$, $z_t = \sigma(0.4 x_t + 0.2 h_{t-1})$, $\tilde{h}_t = \tanh(0.6 x_t + 0.3 (r_t \cdot h_{t-1}))$
+
+**Step 1 --- Reset gate:** $r_1 = \sigma(0.5(1) - 0.3(0.5)) = \sigma(0.35) = 0.587$
+
+**Step 2 --- Update gate:** $z_1 = \sigma(0.4(1) + 0.2(0.5)) = \sigma(0.5) = 0.622$
+
+**Step 3 --- Candidate:** $\tilde{h}_1 = \tanh(0.6(1) + 0.3(0.587 \times 0.5)) = \tanh(0.688) = 0.597$
+
+**Step 4 --- Hidden state:** $h_1 = (1 - 0.622)(0.5) + 0.622(0.597) = 0.189 + 0.371 = 0.560$
+
+**Result:** The update gate $z = 0.622$ blends 62% new information with 38% old state. The reset gate $r = 0.587$ partially "resets" the old hidden state before computing the candidate, allowing the GRU to selectively forget. The hidden state moved from 0.5 to 0.560, incorporating the new input.
+
+:::
 
 ### LSTM vs GRU
 

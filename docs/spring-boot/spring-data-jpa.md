@@ -661,3 +661,62 @@ public interface ProductRepository extends
 - **[Database Migrations](./database-migrations)** — Flyway and Liquibase for schema management
 - **[Testing](./testing)** — @DataJpaTest for repository testing
 - **[REST API Development](./rest-api)** — Exposing JPA data through REST endpoints
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Using FetchType.EAGER on @ManyToOne relationships
+The JPA default for `@ManyToOne` is `EAGER`, which loads the related entity every time the owning entity is fetched, causing N+1 queries and killing performance.
+**Fix:** Always set `fetch = FetchType.LAZY` on `@ManyToOne` and `@OneToOne` relationships. Use `@EntityGraph` or `JOIN FETCH` when you actually need the related data.
+:::
+
+::: danger Pitfall 2: Using Lombok's @EqualsAndHashCode on all fields
+Using `@EqualsAndHashCode` on all entity fields breaks `Set` and `Map` behavior with detached entities and proxies, because field values change after persist.
+**Fix:** Use `@EqualsAndHashCode(of = "id")` for the primary key or a natural business key. Be aware that `id` is null before persist.
+:::
+
+::: danger Pitfall 3: Forgetting @Transactional on @Modifying queries
+`@Modifying` queries (UPDATE/DELETE) require a transactional context. Without `@Transactional`, Spring Data throws an exception at runtime.
+**Fix:** Call `@Modifying` methods from a `@Transactional` service method. Add `clearAutomatically = true` if subsequent reads in the same transaction need to see the changes.
+:::
+
+::: danger Pitfall 4: N+1 queries from lazy loading in loops
+Iterating over a list of entities and accessing a lazy relationship on each one triggers a separate query per entity.
+**Fix:** Use `JOIN FETCH` in JPQL, `@EntityGraph` on repository methods, or set `hibernate.default_batch_fetch_size` to batch lazy loads.
+:::
+
+::: danger Pitfall 5: Not using projections for read-only queries
+Loading entire entities with all columns when you only need a few fields wastes memory and bandwidth.
+**Fix:** Use interface projections or DTO projections (`SELECT new com.example.dto.ProductSummary(...)`) to fetch only the columns you need.
+:::
+
+::: danger Pitfall 6: Missing database indexes on queried columns
+Derived query methods like `findByEmailAndStatus()` generate SQL with WHERE clauses, but without matching database indexes, queries perform full table scans.
+**Fix:** Add `@Index` annotations on your `@Table` or create indexes in your Flyway/Liquibase migrations for all columns used in WHERE, ORDER BY, and JOIN clauses.
+:::
+
+## Interview Questions
+
+**Q1: What is the difference between `JpaRepository`, `CrudRepository`, and `Repository`?**
+::: details Answer
+`Repository` is a marker interface with no methods. `CrudRepository` extends it with basic CRUD operations (`save`, `findById`, `findAll`, `delete`, `count`). `ListCrudRepository` adds `List` return types. `JpaRepository` extends both `ListCrudRepository` and `ListPagingAndSortingRepository`, adding JPA-specific methods like `flush()`, `saveAndFlush()`, `deleteInBatch()`, and `findAll(Example)`. For most Spring Boot applications, extend `JpaRepository` to get the full feature set.
+:::
+
+**Q2: How do derived query methods work in Spring Data JPA?**
+::: details Answer
+Spring Data parses method names and generates JPQL queries at startup. The method name follows a pattern: `findBy` + property name + condition keyword. For example, `findByEmailAndStatusOrderByCreatedAtDesc(String email, Status status)` generates `SELECT e FROM Entity e WHERE e.email = ?1 AND e.status = ?2 ORDER BY e.createdAt DESC`. Keywords include `And`, `Or`, `Between`, `LessThan`, `Like`, `Containing`, `In`, `IsNull`, `OrderBy`, etc. If the method name becomes too complex, use `@Query` with JPQL instead.
+:::
+
+**Q3: What are JPA Specifications and when should you use them?**
+::: details Answer
+Specifications implement the Specification pattern from Domain-Driven Design. They encapsulate query predicates as reusable, composable objects using the JPA Criteria API. Each specification returns a `Predicate` and can be combined with `.and()`, `.or()`, and `.where()`. Use them when query criteria are dynamic -- for example, search filters where users may provide any combination of category, price range, rating, and availability. The repository must extend `JpaSpecificationExecutor<T>`.
+:::
+
+**Q4: What is the difference between `@Query` with JPQL and native SQL?**
+::: details Answer
+JPQL operates on entity classes and field names (e.g., `SELECT p FROM Product p WHERE p.name = :name`), is database-agnostic, and supports JOIN FETCH for eager loading. Native SQL operates on table and column names (e.g., `SELECT * FROM products WHERE name = :name`), is database-specific, and supports database features not available in JPQL (e.g., window functions, CTEs, full-text search). Use JPQL by default for portability; use native SQL when you need database-specific features or for complex queries that JPQL cannot express.
+:::
+
+**Q5: How does JPA auditing work with `@CreatedDate`, `@LastModifiedDate`, `@CreatedBy`, and `@LastModifiedBy`?**
+::: details Answer
+JPA auditing automatically populates timestamp and user fields on entity creation and modification. Enable it with `@EnableJpaAuditing` on a `@Configuration` class. Add `@EntityListeners(AuditingEntityListener.class)` to your entity (or a `@MappedSuperclass`). Annotate fields with `@CreatedDate`, `@LastModifiedDate` for timestamps, and `@CreatedBy`, `@LastModifiedBy` for user tracking. The `@CreatedBy`/`@LastModifiedBy` fields require an `AuditorAware<T>` bean that returns the current user, typically from `SecurityContextHolder`.
+:::

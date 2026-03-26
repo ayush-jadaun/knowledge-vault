@@ -552,3 +552,173 @@ test('findActiveUsers returns only non-deactivated users', async () => {
 - [E2E Testing](/testing/e2e-testing) — full system testing through the UI or API
 - [Test Architecture](/testing/test-architecture) — factories, fixtures, and CI pipeline design for integration tests
 - [Pipeline Patterns](/infrastructure/ci-cd/pipeline-patterns) — structuring CI pipelines with test stages
+
+---
+
+## Key Takeaway
+
+::: tip
+- Integration tests verify your code works correctly at real boundaries (databases, APIs, caches, queues) -- if you need the real dependency to gain confidence, it is an integration test.
+- Testcontainers is the modern standard: spin up real databases and services as Docker containers per test suite, giving you production-realistic testing with per-suite isolation.
+- Use transaction rollback for per-test database isolation (fast and clean) and keep integration tests separated from unit tests in both directory structure and CI pipeline stages.
+:::
+
+## Common Misconceptions
+
+::: warning Misconception: In-memory databases (H2, SQLite) are good substitutes for real databases
+In-memory fakes use different SQL dialects, have different constraint behavior, and produce false confidence. Your H2 tests may pass while your PostgreSQL production queries fail on syntax, type coercion, or locking behavior. Use Testcontainers with the real database engine.
+:::
+
+::: warning Misconception: Integration tests should test the ORM or framework
+Testing that Prisma can insert and select a row is testing the ORM, not your code. Integration tests should verify your repository logic, complex queries, constraints, and edge cases -- the things your code adds on top of the ORM.
+:::
+
+::: warning Misconception: Sharing a test database between test suites is fine
+Shared test databases cause flaky tests because suites interfere with each other's data. One suite inserts a user with a specific email, another suite's unique constraint test fails. Always use per-suite isolation via Testcontainers or per-test isolation via transaction rollback.
+:::
+
+::: warning Misconception: Integration tests are just slow unit tests
+Integration tests serve a fundamentally different purpose. Unit tests verify logic correctness in isolation. Integration tests verify that your code communicates correctly with real external systems. They catch different classes of bugs: wrong SQL, missing migrations, serialization mismatches, and constraint violations.
+:::
+
+## In Production
+
+::: tip Uber
+Uber uses Testcontainers extensively across their Go microservices. Every service's CI pipeline starts real PostgreSQL and Redis containers for integration tests. They share containers across test suites within the same CI job using module-scoped fixtures, reducing container startup overhead by 80%.
+:::
+
+::: tip Netflix
+Netflix's integration testing strategy uses a "test harness" pattern where each microservice has a companion test harness that boots all its dependencies (databases, caches, downstream service mocks) in containers. The harness is versioned alongside the service code so infrastructure changes are tested automatically.
+:::
+
+::: tip Stripe
+Stripe uses transaction rollback isolation for their payment processing integration tests. Each test runs inside a database transaction that rolls back after completion, ensuring tests never leak state. For tests that require committed data (triggers, materialized views), they use truncation with carefully ordered table cleanup.
+:::
+
+## Try It Yourself
+
+**Exercise 1: Write a Testcontainers integration test**
+
+Create an integration test for a `UserRepository` that verifies: (a) creating a user persists it, (b) duplicate emails are rejected, and (c) finding a nonexistent user returns null. Use Testcontainers to spin up a real PostgreSQL instance.
+
+::: details Solution
+```typescript
+import { PostgreSqlContainer } from '@testcontainers/postgresql';
+import { Pool } from 'pg';
+
+describe('UserRepository (integration)', () => {
+  let container, pool, repo;
+
+  beforeAll(async () => {
+    container = await new PostgreSqlContainer('postgres:16-alpine').start();
+    pool = new Pool({ connectionString: container.getConnectionUri() });
+    await pool.query(`
+      CREATE TABLE users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL
+      )
+    `);
+    repo = new UserRepository(pool);
+  }, 60_000);
+
+  afterAll(async () => {
+    await pool.end();
+    await container.stop();
+  });
+
+  it('persists and retrieves a user', async () => {
+    const user = await repo.create({ email: 'alice@test.com', name: 'Alice' });
+    const found = await repo.findById(user.id);
+    expect(found.email).toBe('alice@test.com');
+  });
+
+  it('rejects duplicate emails', async () => {
+    await repo.create({ email: 'dup@test.com', name: 'First' });
+    await expect(repo.create({ email: 'dup@test.com', name: 'Second' }))
+      .rejects.toThrow(/unique/i);
+  });
+
+  it('returns null for nonexistent user', async () => {
+    const found = await repo.findById('00000000-0000-0000-0000-000000000000');
+    expect(found).toBeNull();
+  });
+});
+```
+:::
+
+**Exercise 2: Transaction rollback isolation**
+
+Write a pytest fixture that wraps each test in a transaction and rolls it back after the test completes, ensuring tests never interfere with each other.
+
+::: details Solution
+```python
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
+@pytest.fixture(scope="module")
+def engine(postgres_container):
+    return create_engine(postgres_container.get_connection_url())
+
+@pytest.fixture
+def session(engine):
+    """Each test gets a transaction that rolls back."""
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = Session(bind=connection)
+
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
+
+def test_create_user(session):
+    session.execute(text("INSERT INTO users (email) VALUES ('a@b.com')"))
+    session.flush()
+    result = session.execute(text("SELECT email FROM users")).fetchone()
+    assert result[0] == 'a@b.com'
+
+def test_user_table_is_empty(session):
+    """This passes because the previous test's transaction was rolled back."""
+    result = session.execute(text("SELECT COUNT(*) FROM users")).fetchone()
+    assert result[0] == 0
+```
+:::
+
+## Quick Quiz
+
+**1. When should you use an integration test instead of a unit test?**
+- A) When the function has more than 10 lines of code
+- B) When you need the real dependency to gain confidence in the boundary
+- C) When unit tests are too fast
+- D) Always -- integration tests are strictly better
+
+::: details Answer
+**B) When you need the real dependency to gain confidence in the boundary.** If you can test it with a stub and trust the result, use a unit test. Integration tests are for verifying real SQL, real serialization, real constraint behavior.
+:::
+
+**2. What is the main advantage of Testcontainers over a shared test database?**
+- A) Testcontainers are faster
+- B) Testcontainers provide isolated, reproducible environments per test suite
+- C) Testcontainers do not require Docker
+- D) Testcontainers use in-memory databases
+
+::: details Answer
+**B) Testcontainers provide isolated, reproducible environments per test suite.** Each suite gets its own container with its own database, eliminating cross-suite interference and data leaks.
+:::
+
+**3. What limitation does the transaction rollback pattern have?**
+- A) It is too slow for CI
+- B) It cannot test behavior that depends on committed data (triggers, materialized views)
+- C) It only works with PostgreSQL
+- D) It requires manual cleanup code
+
+::: details Answer
+**B) It cannot test behavior that depends on committed data.** Triggers that fire on commit, materialized view refreshes, and advisory locks require committed data. For those cases, use database truncation.
+:::
+
+---
+
+> **One-Liner Summary:** Integration tests verify your code talks correctly to real databases, APIs, and queues -- use Testcontainers for isolation and transaction rollback for speed.

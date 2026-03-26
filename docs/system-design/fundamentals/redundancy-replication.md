@@ -489,3 +489,23 @@ For many applications, this cost is justified by the availability improvement. G
 - **[Raft Full Walkthrough](/system-design/consensus/raft-full-walkthrough)** — The consensus algorithm that prevents split-brain
 - **[CAP Theorem](/system-design/distributed-systems/cap-theorem)** — Why you cannot have perfect consistency and availability
 - **[Failure Detectors](/system-design/distributed-systems/failure-detectors)** — How distributed systems detect node failures
+
+## Real-World Examples
+
+::: tip AWS RDS Multi-AZ
+AWS RDS provides **active-passive failover** out of the box. The primary database is in one Availability Zone, and a synchronous standby replica runs in a different AZ. When the primary fails, RDS automatically promotes the standby within 60-120 seconds. This is the most common redundancy pattern for production databases and costs only 2x a single instance.
+:::
+
+::: tip CockroachDB
+CockroachDB uses **active-active replication** with Raft consensus across all nodes. Every piece of data is replicated to at least 3 nodes, and any node can accept reads and writes. If a node or even an entire data center goes down, the surviving nodes continue serving without any failover delay — achieving 99.99%+ availability by design.
+:::
+
+::: tip GitHub
+GitHub experienced a major incident in 2018 due to a **split-brain** scenario. A network partition caused their MySQL orchestrator to promote a replica to primary while the original primary was still running. This resulted in 24 hours of data inconsistency. They resolved it by replaying transactions and now use additional safeguards including fencing (STONITH) to prevent split-brain.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"Redundancy is how you buy availability nines. For databases, I'd start with active-passive (Multi-AZ) because it's simple and handles 99% of failure scenarios — one standby with synchronous replication gives you zero data loss and automatic failover in under 2 minutes. I'd only move to active-active when I need zero-downtime failover or multi-region writes, because active-active introduces write conflicts and split-brain risk. The most important thing is to actually test the failover — untested failover plans fail when you need them most."
+:::

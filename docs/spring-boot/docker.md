@@ -468,3 +468,57 @@ spring:
 - **[Spring Cloud](./spring-cloud)** — Microservices in Docker/K8s
 - **[Database Migrations](./database-migrations)** — Flyway in containers
 - **[Best Practices](./best-practices)** — Production deployment patterns
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Running containers as root
+The default Docker user is root. If the application is compromised, the attacker has root access to the container and potentially the host.
+**Fix:** Add `RUN adduser -S appuser` and `USER appuser` in your Dockerfile. For JIB, set `<user>1000</user>` in the configuration.
+:::
+
+::: danger Pitfall 2: Not using layered JARs for Docker image caching
+Copying the entire fat JAR as a single layer means any code change rebuilds the entire 200+ MB image, wasting build time and bandwidth.
+**Fix:** Use Spring Boot's layered JAR extraction (`java -Djarmode=layertools -jar app.jar extract`) and copy each layer separately. Dependencies change rarely, application code changes frequently.
+:::
+
+::: danger Pitfall 3: Setting JVM memory flags incorrectly for containers
+Using `-Xmx` with a fixed value that does not match the container memory limit causes either OOMKilled (too high) or wasted resources (too low).
+**Fix:** Use `-XX:MaxRAMPercentage=75.0` which automatically sets heap size relative to the container's memory limit. Always enable `-XX:+UseContainerSupport`.
+:::
+
+::: danger Pitfall 4: Not configuring health checks in Docker/Kubernetes
+Without health checks, Docker restarts containers only on crashes, not on hangs or deadlocks. Kubernetes sends traffic to pods that are not ready.
+**Fix:** Add `HEALTHCHECK` in Dockerfile pointing to `/actuator/health`. In Kubernetes, configure `livenessProbe`, `readinessProbe`, and `startupProbe` with appropriate timeouts and failure thresholds.
+:::
+
+::: danger Pitfall 5: Not configuring graceful shutdown
+Without graceful shutdown, in-flight requests are terminated when the container is stopped, causing errors for connected clients.
+**Fix:** Set `server.shutdown: graceful` and `spring.lifecycle.timeout-per-shutdown-phase: 30s`. In Kubernetes, add a `preStop` hook with `sleep 10` to allow the load balancer to drain connections.
+:::
+
+## Interview Questions
+
+**Q1: What is a multi-stage Dockerfile and why use it for Spring Boot?**
+::: details Answer
+A multi-stage Dockerfile uses multiple `FROM` instructions to separate build and runtime stages. The first stage uses a JDK image to compile the application (`mvn package`). The second stage uses a smaller JRE image and copies only the built artifacts. This reduces the final image size from ~500 MB (JDK + Maven + source) to ~150 MB (JRE + JAR). It also excludes build tools and source code from the production image, reducing the attack surface.
+:::
+
+**Q2: What is the difference between JIB, Buildpacks, and a Dockerfile for containerizing Spring Boot?**
+::: details Answer
+**Dockerfile**: Full control, requires Docker daemon, manual layer optimization. **JIB** (Google): No Dockerfile or Docker daemon needed; builds directly from Maven/Gradle, automatically optimizes layers, produces deterministic images. Best for CI/CD without Docker-in-Docker. **Cloud Native Buildpacks**: No Dockerfile needed, uses `mvn spring-boot:build-image`, auto-detects JVM version and applies security patches. Slower builds but follows platform conventions. Choose JIB for speed and CI simplicity, Buildpacks for managed platform conventions, Dockerfile for full customization.
+:::
+
+**Q3: How do you configure Kubernetes liveness, readiness, and startup probes for Spring Boot?**
+::: details Answer
+**Startup probe**: Checks `/actuator/health/liveness` with a generous `failureThreshold` (e.g., 30) and `periodSeconds: 5`. Prevents Kubernetes from killing slow-starting apps. Active only during startup. **Liveness probe**: Checks `/actuator/health/liveness` periodically (e.g., every 10s). Restarts the pod if it fails 3 times. Should only detect irrecoverable failures. **Readiness probe**: Checks `/actuator/health/readiness` frequently (e.g., every 5s). Removes the pod from service endpoints when it fails. Re-adds when it recovers. Set `initialDelaySeconds` appropriately for JVM startup time.
+:::
+
+**Q4: What is the recommended JVM tuning for Spring Boot in containers?**
+::: details Answer
+Key flags: `-XX:+UseContainerSupport` (enabled by default in modern JVMs) makes the JVM aware of container memory/CPU limits. `-XX:MaxRAMPercentage=75.0` sets heap to 75% of container memory (leave 25% for non-heap, native memory, and OS). `-XX:InitialRAMPercentage=50.0` starts with 50% to reduce GC pressure at startup. `-XX:+UseG1GC` for general-purpose workloads. `-Djava.security.egd=file:/dev/urandom` speeds up startup by using a non-blocking entropy source. Avoid fixed `-Xmx` values that do not adapt to different container sizes.
+:::
+
+**Q5: How does GraalVM native image compare to JVM mode for containerized Spring Boot?**
+::: details Answer
+**JVM mode**: 2-5 second startup, 150-300 MB memory, higher peak throughput (JIT optimization), full reflection support, build time ~30 seconds. **Native image**: 50-200 ms startup, 30-80 MB memory, lower peak throughput (no JIT), restricted reflection (needs configuration), build time 5-10 minutes. Use native image for serverless/scale-to-zero workloads, CLI tools, and functions where startup time matters. Use JVM mode for long-running services where peak throughput and full library compatibility matter. Container memory savings with native images can significantly reduce infrastructure costs at scale.
+:::

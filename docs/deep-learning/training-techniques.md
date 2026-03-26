@@ -45,6 +45,38 @@ $$
 
 where $\gamma$ (scale) and $\beta$ (shift) are learnable parameters. The $\epsilon$ (typically $10^{-5}$) prevents division by zero.
 
+::: details Worked Example — Batch Normalization Calculation
+
+**Input:** Mini-batch of $m = 4$ values from one feature/channel: $\mathcal{B} = \{1.0, 3.0, 5.0, 7.0\}$
+
+Learnable parameters: $\gamma = 1.2$, $\beta = 0.5$, $\epsilon = 10^{-5}$
+
+**Step 1 --- Mean:**
+$$\mu_\mathcal{B} = \frac{1 + 3 + 5 + 7}{4} = 4.0$$
+
+**Step 2 --- Variance:**
+$$\sigma_\mathcal{B}^2 = \frac{(1-4)^2 + (3-4)^2 + (5-4)^2 + (7-4)^2}{4} = \frac{9+1+1+9}{4} = 5.0$$
+
+**Step 3 --- Normalize:**
+| $x_i$ | $\hat{x}_i = \frac{x_i - 4}{\sqrt{5 + 10^{-5}}}$ |
+|---|---|
+| 1.0 | $-3 / 2.236 = -1.342$ |
+| 3.0 | $-1 / 2.236 = -0.447$ |
+| 5.0 | $1 / 2.236 = 0.447$ |
+| 7.0 | $3 / 2.236 = 1.342$ |
+
+**Step 4 --- Scale and shift:**
+| $\hat{x}_i$ | $y_i = 1.2 \cdot \hat{x}_i + 0.5$ |
+|---|---|
+| -1.342 | $-1.110$ |
+| -0.447 | $-0.037$ |
+| 0.447 | $1.037$ |
+| 1.342 | $2.110$ |
+
+**Result:** The raw values $[1, 3, 5, 7]$ are normalized to zero mean and unit variance, then re-scaled by learned $\gamma, \beta$. The network can learn to undo BatchNorm ($\gamma = \sigma, \beta = \mu$) if needed, but the gradient landscape is smoother.
+
+:::
+
 ### Why It Works
 
 1. **Reduces internal covariate shift:** Each layer receives inputs with stable statistics, so it doesn't need to constantly readjust to shifting distributions.
@@ -131,6 +163,25 @@ h_i^{\text{dropped}} = \begin{cases} 0 & \text{with probability } p \\ \frac{h_i
 $$
 
 The $\frac{1}{1-p}$ scaling (inverted dropout) ensures the expected value is unchanged: $\mathbb{E}[h_i^{\text{dropped}}] = h_i$.
+
+::: details Worked Example — Dropout with Inverted Scaling
+
+**Input:** Hidden activations $h = [0.8, 1.2, 0.5, 2.0]$, dropout rate $p = 0.5$
+
+**Step 1:** Generate random mask (sample: keep neurons 0, 2; drop neurons 1, 3)
+$$\text{mask} = [1, 0, 1, 0]$$
+
+**Step 2:** Apply mask and scale by $\frac{1}{1-p} = \frac{1}{0.5} = 2$
+$$h^{\text{dropped}} = [0.8 \times 2, \; 0, \; 0.5 \times 2, \; 0] = [1.6, \; 0, \; 1.0, \; 0]$$
+
+**Verify expected value:**
+- $\mathbb{E}[h_0^{\text{dropped}}] = 0.5 \times \frac{0.8}{0.5} + 0.5 \times 0 = 0.8$ (equals original $h_0$)
+
+**During inference:** No dropout, use raw $h = [0.8, 1.2, 0.5, 2.0]$ directly (no scaling needed because inverted dropout already compensated during training).
+
+**Result:** The scaling factor of 2 ensures that the sum of activations at training time has the same expected value as at inference time, so the next layer receives consistent input magnitudes.
+
+:::
 
 During inference, dropout is disabled and all neurons are active (no scaling needed because of inverted dropout).
 
@@ -235,6 +286,22 @@ $$
 
 where $\gamma$ (e.g., 0.1) is the decay factor and $s$ is the step size in epochs.
 
+::: details Worked Example — Step Decay Learning Rate
+
+**Setup:** $\eta_0 = 0.01$, $\gamma = 0.1$, step size $s = 30$ epochs
+
+| Epoch | $\lfloor t/s \rfloor$ | $\eta_t = 0.01 \times 0.1^{\lfloor t/30 \rfloor}$ |
+|---|---|---|
+| 1 | 0 | $0.01 \times 1 = 0.01$ |
+| 29 | 0 | $0.01$ |
+| 30 | 1 | $0.01 \times 0.1 = 0.001$ |
+| 59 | 1 | $0.001$ |
+| 60 | 2 | $0.01 \times 0.01 = 0.0001$ |
+
+**Result:** The LR drops by 10x at epochs 30 and 60. This is the "multi-step" schedule commonly used in ResNet papers.
+
+:::
+
 ### Cosine Annealing
 
 $$
@@ -242,6 +309,24 @@ $$
 $$
 
 Smoothly decays the learning rate from $\eta_{max}$ to $\eta_{min}$ over $T$ steps. No sharp drops. Used in most modern training recipes.
+
+::: details Worked Example — Cosine Annealing Schedule
+
+**Setup:** $\eta_{\max} = 0.01$, $\eta_{\min} = 0.0001$, $T = 100$ epochs
+
+$$\eta_t = 0.0001 + \frac{1}{2}(0.01 - 0.0001)\left(1 + \cos\left(\frac{t}{100}\pi\right)\right)$$
+
+| Epoch $t$ | $\cos(t\pi/100)$ | $\eta_t$ |
+|---|---|---|
+| 0 | $\cos(0) = 1.0$ | $0.0001 + 0.00495 \times 2.0 = 0.0100$ |
+| 25 | $\cos(\pi/4) = 0.707$ | $0.0001 + 0.00495 \times 1.707 = 0.0086$ |
+| 50 | $\cos(\pi/2) = 0$ | $0.0001 + 0.00495 \times 1.0 = 0.0051$ |
+| 75 | $\cos(3\pi/4) = -0.707$ | $0.0001 + 0.00495 \times 0.293 = 0.0016$ |
+| 100 | $\cos(\pi) = -1$ | $0.0001 + 0.00495 \times 0 = 0.0001$ |
+
+**Result:** The LR starts at 0.01 and smoothly decays to 0.0001 following a cosine curve. Unlike step decay, there are no abrupt drops. Most of the decay happens in the second half --- at epoch 50, the LR is still 51% of initial.
+
+:::
 
 ### Cosine Annealing with Warm Restarts
 

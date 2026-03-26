@@ -512,3 +512,23 @@ function detectAnomalies(costs: DailyCost[], threshold: number = 2): Anomaly[] {
 - [GCP Cost Optimization](/infrastructure/gcp/cost-optimization) — GCP-specific optimization
 - [FinOps](/infrastructure/finops) — full FinOps practice guide
 - [Capacity Planning](/devops/sre/capacity-planning) — predicting infrastructure needs
+
+## Real-World Examples
+
+::: tip Dropbox
+Dropbox saved **nearly $75 million over two years** by migrating from AWS S3 to their own storage infrastructure ("Magic Pocket") in 2016. At their scale (exabytes of data), the economics shifted — owning hardware became cheaper than renting cloud storage. However, they still use AWS for non-storage services, proving that optimization is selective, not all-or-nothing.
+:::
+
+::: tip Airbnb
+Airbnb reduced their cloud costs by **over $100 million annually** through systematic right-sizing and reserved instance purchases. Their FinOps team built internal dashboards showing cost-per-booking for each service, enabling engineering teams to make informed trade-offs. They found that 40% of their EC2 instances were over-provisioned — running at under 10% CPU utilization.
+:::
+
+::: tip Figma
+Figma uses **spot instances** for their real-time collaboration rendering pipeline. When a user opens a design, rendering tasks run on spot instances (60-90% cheaper). If a spot instance is interrupted, the task is automatically retried on another instance. The user experiences a brief delay in rendering but never loses data, because state is stored in their database — showing how spot instances work for stateless, interruptible workloads.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"Cost is a first-class system design constraint. My approach: at early stage, optimize for development speed (use managed services even if they cost more per unit). At 100K+ users, database is the biggest cost — I'd use read replicas and caching before scaling the primary. At 1M+ users, bandwidth and compute dominate — I'd use CloudFront (cheaper than direct EC2 egress), spot instances for stateless workers (60-90% savings), and reserved instances for baseline capacity (30-60% savings). The most impactful optimization is usually the simplest: right-sizing. Airbnb found 40% of their instances were over-provisioned. I'd always tag every resource for cost attribution and set budget alerts — a misconfigured auto-scaler can cost thousands overnight."
+:::

@@ -55,6 +55,42 @@ where $\text{sim}(I, T) = \frac{f_I(I) \cdot f_T(T)}{\|f_I(I)\| \|f_T(T)\|}$ and
 
 **Interpretation:** For each image, the matching text should have the highest similarity (and vice versa) among all $N$ options in the batch. This is InfoNCE loss.
 
+::: details Worked Example — CLIP Cosine Similarity Between Image/Text Embeddings
+
+**Setup:** Batch of $N = 3$ image-text pairs. Embeddings are 3-dimensional (tiny for illustration). Temperature $\tau = 0.07$.
+
+Image embeddings (already L2-normalized):
+$$I_1 = [0.577, 0.577, 0.577], \quad I_2 = [0.816, 0.408, 0.408], \quad I_3 = [0.0, 0.707, 0.707]$$
+
+Text embeddings (L2-normalized):
+$$T_1 = [0.577, 0.577, 0.577], \quad T_2 = [0.707, 0.707, 0.0], \quad T_3 = [0.0, 0.707, 0.707]$$
+
+**Step 1:** Compute cosine similarity matrix $S = I \cdot T^T$ (since already normalized, dot product = cosine sim):
+
+| | $T_1$ | $T_2$ | $T_3$ |
+|---|---|---|---|
+| $I_1$ | **1.000** | 0.816 | 0.816 |
+| $I_2$ | 0.816 | **0.865** | 0.577 |
+| $I_3$ | 0.816 | 0.500 | **1.000** |
+
+**Step 2:** Scale by $1/\tau = 1/0.07 \approx 14.3$:
+
+| | $T_1$ | $T_2$ | $T_3$ |
+|---|---|---|---|
+| $I_1$ | **14.29** | 11.66 | 11.66 |
+| $I_2$ | 11.66 | **12.36** | 8.24 |
+| $I_3$ | 11.66 | 7.14 | **14.29** |
+
+**Step 3:** Softmax row 0 (image-to-text for $I_1$):
+$$e^{14.29} = 1{,}603{,}585, \quad e^{11.66} = 115{,}584 \times 2 = 231{,}168$$
+$$P(T_1|I_1) = \frac{1{,}603{,}585}{1{,}603{,}585 + 231{,}168} = 0.874$$
+
+**Loss for $I_1$:** $-\log(0.874) = 0.135$
+
+**Result:** The matching pair $(I_1, T_1)$ has the highest cosine similarity (1.0) and gets probability 0.874 after temperature-scaled softmax. The low temperature (0.07) amplifies small differences between similarities, making the contrastive signal sharper. If all similarities were equal, each would get $P = 1/3 = 0.333$.
+
+:::
+
 ### Why Contrastive Learning Works
 
 1. **Scale:** Trained on 400M image-text pairs from the internet

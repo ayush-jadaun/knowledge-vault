@@ -636,3 +636,57 @@ If you are already on Kubernetes, you may not need Eureka (use Kubernetes Servic
 - **[Actuator & Monitoring](./actuator)** — Health checks and Prometheus metrics
 - **[Spring Kafka](./kafka)** — Event-driven communication between services
 - **[Testing](./testing)** — Testing with WireMock for service mocks
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Not configuring fail-fast on Config Client
+Without `spring.config.fail-fast: true`, services start with default/empty configuration when the Config Server is unavailable, leading to subtle runtime failures.
+**Fix:** Set `spring.cloud.config.fail-fast: true` with retry configuration (`max-attempts: 5`, `initial-interval: 1000ms`). Services should fail loudly at startup rather than run with wrong config.
+:::
+
+::: danger Pitfall 2: Disabling Eureka self-preservation in production
+Eureka self-preservation mode prevents mass de-registration during network partitions. Disabling it in production causes healthy services to be removed during temporary connectivity issues.
+**Fix:** Keep `eureka.server.enable-self-preservation: true` in production. Only disable it in development for faster deregistration during testing.
+:::
+
+::: danger Pitfall 3: Not setting timeouts on inter-service calls
+Without explicit timeouts, one slow downstream service can exhaust thread pools across the entire call chain, causing cascading failures.
+**Fix:** Set timeouts on RestClient/WebClient calls, configure Resilience4j `TimeLimiter`, and set `readTimeout` and `connectTimeout` on HTTP clients. A 3-5 second timeout is a reasonable default.
+:::
+
+::: danger Pitfall 4: Using Spring Cloud infrastructure when Kubernetes already provides it
+Running Eureka for service discovery and Config Server for configuration when Kubernetes already provides Service DNS and ConfigMaps/Secrets adds unnecessary complexity.
+**Fix:** On Kubernetes, use native service discovery (Kubernetes Service DNS), ConfigMaps/Secrets for configuration, and an Ingress controller or Istio for gateway functionality. Spring Cloud infrastructure is for VM-based deployments.
+:::
+
+::: danger Pitfall 5: Not implementing circuit breakers on inter-service calls
+Calling downstream services without circuit breakers means a single failing service causes cascading failures across all dependent services.
+**Fix:** Add Resilience4j circuit breakers to every inter-service call. Configure appropriate failure thresholds, wait durations, and fallback methods that return cached or default data.
+:::
+
+## Interview Questions
+
+**Q1: What problems does service discovery solve and how does Eureka work?**
+::: details Answer
+Service discovery solves the problem of locating service instances in a dynamic environment where IP addresses change (auto-scaling, container orchestration). Eureka consists of a server (registry) and clients (services). Each service registers itself with the Eureka server on startup, sending heartbeats every 30 seconds. Clients fetch the registry and cache it locally for resilience. When making an inter-service call, the client-side load balancer (Spring Cloud LoadBalancer) resolves the service name to an available instance from the cached registry. If Eureka is unavailable, clients use the cached registry.
+:::
+
+**Q2: Explain the circuit breaker pattern and its three states.**
+::: details Answer
+The circuit breaker monitors calls to a downstream service and prevents repeated calls to a failing service. **Closed state**: all calls pass through; failures are counted. When the failure rate exceeds a threshold (e.g., 50%), the circuit transitions to **Open state**: all calls are immediately rejected with a fallback response, preventing resource exhaustion. After a configured wait duration, it enters **Half-Open state**: a limited number of test calls are allowed through. If they succeed, the circuit closes; if they fail, it reopens. Resilience4j implements this with configurable sliding windows (count-based or time-based), failure rate thresholds, and slow call rate thresholds.
+:::
+
+**Q3: What is the difference between Spring Cloud Gateway and an API Gateway like Kong or AWS API Gateway?**
+::: details Answer
+Spring Cloud Gateway is a Java-based, reactive gateway built on Spring WebFlux that runs as part of your application stack. It provides routing, rate limiting, circuit breaking, and request/response transformation with full Spring ecosystem integration. External gateways like Kong or AWS API Gateway are infrastructure-level products that run independently, offering features like developer portals, API key management, OAuth integration, and analytics dashboards. Use Spring Cloud Gateway when you want gateway logic in Java with Spring integration. Use external gateways when you need infrastructure-level API management, multi-language support, or managed service convenience.
+:::
+
+**Q4: How does distributed tracing work with Micrometer and Zipkin?**
+::: details Answer
+Distributed tracing correlates requests across multiple services. Micrometer Tracing (formerly Spring Cloud Sleuth) automatically generates a unique `traceId` for each incoming request and propagates it via HTTP headers to downstream services. Each service operation creates a `span` with the shared `traceId`. Spans are exported to Zipkin (or Jaeger) for visualization. In logs, the pattern `[service-name, traceId, spanId]` enables correlation. This allows you to trace a single user request across gateway, order service, payment service, and notification service, seeing the full call chain with timing data.
+:::
+
+**Q5: When should you use Spring Cloud Config Server vs. Kubernetes ConfigMaps?**
+::: details Answer
+Use Spring Cloud Config Server when: (1) You run on VMs without Kubernetes. (2) You need config versioning in Git with audit trails. (3) You need runtime config refresh with `@RefreshScope` and `/actuator/refresh`. (4) You need config encryption for sensitive values. Use Kubernetes ConfigMaps/Secrets when: (1) You are already on Kubernetes. (2) You want to use Kubernetes-native tooling (kubectl, Helm, ArgoCD). (3) You prefer infrastructure-level config management. (4) You do not need runtime refresh (pod restart is acceptable). Many teams use both -- ConfigMaps for infrastructure config and Config Server for application-specific, frequently-changed config.
+:::

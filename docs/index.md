@@ -159,14 +159,14 @@ features:
 
   - icon: 🗺️
     title: Learning Paths & Cheat Sheets
-    details: Your quest map. 11 guided paths through the vault — Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack, Cybersecurity, EDA. Plus 23 cheat sheets for when you need answers, not explanations.
+    details: Your quest map. 16 guided paths through the vault — Backend, DevOps, Frontend, Security, Interview, Data, AI/ML, Platform, Full-Stack, ML/DL, Cybersecurity, Mobile, Data Scientist, Spring Boot, EDA. Plus 23 cheat sheets for when you need answers, not explanations.
     link: /learning-paths/
     linkText: Choose your path
 ---
 
 <div class="home-stats">
   <div class="stat-item">
-    <div class="stat-number">1140+</div>
+    <div class="stat-number">1150+</div>
     <div class="stat-label">Sacred texts</div>
   </div>
   <div class="stat-item">

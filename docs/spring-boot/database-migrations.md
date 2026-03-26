@@ -504,3 +504,62 @@ class FlywayMigrationTest {
 - **[Hibernate Performance Tuning](./hibernate-tuning)** — Indexes and query optimization
 - **[Docker & Deployment](./docker)** — Running migrations in containers
 - **[Testing](./testing)** — Testing with Testcontainers
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Using Hibernate ddl-auto in production
+Setting `ddl-auto` to `create`, `create-drop`, or `update` in production can drop tables, create incorrect schemas, or apply irreversible changes without tracking.
+**Fix:** Always use `ddl-auto: validate` in production (verifies schema matches entities) and manage all schema changes through Flyway or Liquibase migrations.
+:::
+
+::: danger Pitfall 2: Editing already-applied migration files
+Modifying a migration that has been applied to any environment causes checksum validation failures and blocks application startup.
+**Fix:** Never edit applied migrations. Create a new migration for any changes. If you must fix a checksum mismatch in development, use `flyway:repair` but never in production.
+:::
+
+::: danger Pitfall 3: Running CREATE INDEX without CONCURRENTLY
+Standard `CREATE INDEX` locks the table for writes. On large tables with production traffic, this can block writes for minutes.
+**Fix:** Use `CREATE INDEX CONCURRENTLY` in PostgreSQL. Note this cannot run inside a transaction, so add `-- flyway:executeInTransaction=false` to the migration file.
+:::
+
+::: danger Pitfall 4: Making breaking schema changes in a single migration
+Renaming a column or dropping a column while old application versions are still running causes immediate failures.
+**Fix:** Use the expand-contract pattern: (1) Add new column. (2) Deploy code that writes to both. (3) Backfill data. (4) Deploy code that reads from new column. (5) Drop old column in a later migration.
+:::
+
+::: danger Pitfall 5: Not testing migrations against a real database
+Running migrations only against H2 in tests misses PostgreSQL-specific syntax, data type differences, and constraint behaviors.
+**Fix:** Use Testcontainers with a real PostgreSQL (or your production database) image in integration tests to verify all migrations apply cleanly.
+:::
+
+::: danger Pitfall 6: Setting clean-disabled to false in production
+`flyway.clean-disabled: false` allows `flyway:clean` to drop ALL objects in the schema. One accidental command or CI misconfiguration destroys the entire database.
+**Fix:** Always set `flyway.clean-disabled: true` in production environments. Use environment-specific configuration to ensure this is never overridden.
+:::
+
+## Interview Questions
+
+**Q1: What is the difference between Flyway and Hibernate ddl-auto?**
+::: details Answer
+Hibernate `ddl-auto` automatically generates DDL from entity mappings at startup. It is useful for prototyping but dangerous for production because it cannot rename columns, migrate data, or handle complex schema evolution. Flyway (or Liquibase) applies versioned, hand-written SQL migration scripts tracked in a metadata table. Each migration runs exactly once, checksums are verified, and the migration history provides a complete audit trail. Use `ddl-auto: validate` with Flyway to ensure entities match the migrated schema.
+:::
+
+**Q2: How do you handle zero-downtime database migrations?**
+::: details Answer
+Use the expand-contract pattern. In the expand phase, add new columns or tables (backward-compatible changes). Deploy the new application version that writes to both old and new structures. Backfill existing data. In the contract phase, after all instances use the new structure, drop the old columns. Key rules: never rename columns directly, never drop columns that running code depends on, use `CREATE INDEX CONCURRENTLY` to avoid table locks, and add NOT NULL constraints only after backfilling data.
+:::
+
+**Q3: What is the difference between versioned (V) and repeatable (R) migrations in Flyway?**
+::: details Answer
+Versioned migrations (prefix `V`) run exactly once, in version order, and their checksums are tracked. They are used for schema changes like creating tables, adding columns, and data migrations. Repeatable migrations (prefix `R`) run every time their checksum changes. They are used for objects that can be recreated: views, functions, stored procedures, and seed data (using `ON CONFLICT DO UPDATE`). Repeatable migrations always run after all versioned migrations.
+:::
+
+**Q4: How do you handle database migrations in a multi-tenant SaaS application?**
+::: details Answer
+The approach depends on the tenancy strategy. For discriminator-column tenancy, a single set of migrations runs on the shared schema. For schema-per-tenant, iterate over all tenant schemas and apply tenant-specific migrations to each using Flyway's schema configuration. For database-per-tenant, each tenant database runs its own Flyway instance. In all cases, shared infrastructure migrations (the tenant registry, billing tables) run on a shared schema before tenant-specific migrations.
+:::
+
+**Q5: What are Java-based migrations in Flyway and when should you use them?**
+::: details Answer
+Java-based migrations extend `BaseJavaMigration` and implement the `migrate(Context)` method with raw JDBC. They are named like `V5__split_user_names.java` and placed in the `db.migration` package. Use them when a migration requires application logic (parsing, transforming data, calling external APIs), conditional execution based on existing data, complex data transformations that are painful in raw SQL, or batch processing with memory management (`flush`/`clear` patterns). For simple schema changes, SQL migrations are simpler and preferred.
+:::

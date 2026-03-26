@@ -645,3 +645,109 @@ $$
 - [Hash Tables](/algorithms/hash-tables) — hashing and bloom filters share bit-level mechanics
 - [Advanced Data Structures](/algorithms/advanced-data-structures) — Fenwick trees use `n & (-n)` for index arithmetic
 - [Math Patterns in System Design](/algorithms/system-design-math) — powers of 2, capacity estimation
+
+## Try It Yourself
+
+**Problem 1:** Determine if 64 is a power of 2 using bit manipulation.
+
+::: details Solution
+Use the formula: `n > 0 && (n & (n-1)) == 0`.
+- 64 in binary: `01000000`
+- 63 in binary: `00111111`
+- 64 & 63 = `00000000` = 0
+Since 64 > 0 and the result is 0, **64 is a power of 2**.
+:::
+
+**Problem 2:** Given the array `[4, 1, 2, 1, 2]`, find the element that appears only once using XOR.
+
+::: details Solution
+XOR all elements: 4 ^ 1 ^ 2 ^ 1 ^ 2.
+- 1 ^ 1 = 0 (duplicates cancel)
+- 2 ^ 2 = 0 (duplicates cancel)
+- 4 ^ 0 ^ 0 = 4
+Answer: **4**. Time: $O(n)$, Space: $O(1)$.
+:::
+
+**Problem 3:** Count the number of set bits (1s) in the binary representation of 29.
+
+::: details Solution
+29 in binary: `11101`. Use Brian Kernighan's algorithm:
+- 29 & 28 = `11101` & `11100` = `11100` (28). count=1
+- 28 & 27 = `11100` & `11011` = `11000` (24). count=2
+- 24 & 23 = `11000` & `10111` = `10000` (16). count=3
+- 16 & 15 = `10000` & `01111` = `00000` (0). count=4
+Answer: **4** set bits.
+:::
+
+**Problem 4:** Using bitmask, represent the subset {0, 2, 4} of the set {0, 1, 2, 3, 4}. What is the bitmask value?
+
+::: details Solution
+Set bit 0, bit 2, and bit 4:
+- Bit 0: 1 << 0 = `00001` = 1
+- Bit 2: 1 << 2 = `00100` = 4
+- Bit 4: 1 << 4 = `10000` = 16
+- Bitmask = 1 | 4 | 16 = `10101` = **21**
+To check if element 3 is in the subset: `21 & (1 << 3) = 21 & 8 = 0` → No.
+:::
+
+**Problem 5:** Swap the values `a = 5` and `b = 9` using only XOR operations, without a temporary variable.
+
+::: details Solution
+- a = 5 (`0101`), b = 9 (`1001`)
+- Step 1: a = a ^ b = `0101` ^ `1001` = `1100` (12)
+- Step 2: b = b ^ a = `1001` ^ `1100` = `0101` (5) → b is now original a
+- Step 3: a = a ^ b = `1100` ^ `0101` = `1001` (9) → a is now original b
+Result: a = **9**, b = **5**.
+:::
+
+## Quick Quiz
+
+**1. What does the expression `n & (n - 1)` do?**
+- a) Checks if $n$ is even
+- b) Clears the lowest set bit of $n$
+- c) Sets the lowest bit of $n$
+- d) Counts the number of set bits
+
+::: details Answer
+**b) Clears the lowest set bit of $n$** — Subtracting 1 flips all bits from the lowest set bit downward. ANDing with the original clears that lowest set bit. This is the basis of Brian Kernighan's popcount algorithm.
+:::
+
+**2. What is the result of `n & (-n)`?**
+- a) The highest set bit of $n$
+- b) The lowest set bit of $n$ (isolated)
+- c) The complement of $n$
+- d) Zero
+
+::: details Answer
+**b) The lowest set bit of $n$ (isolated)** — In two's complement, $-n = \sim n + 1$. ANDing $n$ with $-n$ isolates the rightmost set bit. This is used in Fenwick trees for index arithmetic.
+:::
+
+**3. What key property of XOR makes the "single number" problem solvable in $O(1)$ space?**
+- a) XOR is commutative
+- b) $a \oplus a = 0$ (self-cancellation) and $a \oplus 0 = a$ (identity)
+- c) XOR is faster than addition
+- d) XOR distributes over AND
+
+::: details Answer
+**b) $a \oplus a = 0$ (self-cancellation) and $a \oplus 0 = a$ (identity)** — XORing all elements cancels out every duplicate pair, leaving only the unique element.
+:::
+
+**4. For bitmask DP problems like the Traveling Salesman Problem, what limits the practical input size?**
+- a) The number of edges
+- b) The number of states is $2^n \cdot n$, which grows exponentially with $n$
+- c) The weight of the edges
+- d) The memory bandwidth
+
+::: details Answer
+**b) The number of states is $2^n \cdot n$, which grows exponentially with $n$** — The bitmask has $2^n$ possible values and each is combined with $n$ possible current positions, giving $O(2^n \cdot n)$ states. This is only feasible for $n \leq 20$ or so.
+:::
+
+**5. How are Unix file permissions represented using bit manipulation?**
+- a) As a string of characters
+- b) Using 3 groups of 3 bits each (owner, group, other) where each group encodes read, write, execute
+- c) As a hash map
+- d) Using a linked list of permissions
+
+::: details Answer
+**b) Using 3 groups of 3 bits each (owner, group, other) where each group encodes read, write, execute** — For example, `rwxr-xr--` = `111 101 100` = octal `754`. Each permission is a single bit: read (4), write (2), execute (1).
+:::

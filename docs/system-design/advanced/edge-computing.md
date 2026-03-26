@@ -608,3 +608,23 @@ flowchart TD
 - [TLS Handshake](/system-design/networking/tls-handshake) — why TLS termination at edge matters
 - [Caching Strategies](/system-design/caching/caching-strategies) — edge caching as part of multi-layer strategy
 - [Global Load Balancing](/system-design/load-balancing/global-load-balancing) — routing users to nearest edge
+
+## Real-World Examples
+
+::: tip Cloudflare (Workers)
+Cloudflare Workers powers **over 10 million applications** at the edge across 300+ cities. Companies like Shopify, Discord, and Canva use Workers for authentication, routing, and personalization. Workers' V8 isolate model achieves near-zero cold starts (under 5ms), compared to Lambda's 100ms-10s. Discord uses Workers for their API routing layer, validating tokens and rate-limiting at the edge before requests reach their origin servers.
+:::
+
+::: tip Vercel (Next.js Edge)
+Vercel uses **Edge Middleware** to run Next.js middleware functions at the edge for millions of websites. Companies like Notion, Loom, and HashiCorp use Edge Middleware for geolocation-based routing, A/B testing, and bot detection — all executing at the nearest edge location with sub-10ms overhead. The middleware runs before the page request reaches the origin, eliminating round trips for common operations.
+:::
+
+::: tip Fly.io
+Fly.io runs **full application containers at the edge** for companies like Supabase and Stytch. Unlike function-based edge platforms, Fly runs full Docker containers in 30+ regions, enabling edge deployment of applications that need persistent connections (WebSockets, databases). Supabase uses Fly to run PostgreSQL replicas at the edge, giving developers sub-50ms database reads globally.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"Edge computing shines for operations that don't need origin data — authentication (JWT validation saves 100-200ms per request for global users), A/B testing (route users without origin round-trip), and personalization (inject currency/language based on geolocation). The biggest win is latency: a user in Tokyo hitting an edge node gets a 10ms response versus 170ms to us-east-1. For data at the edge, I'd use Workers KV for configuration (eventually consistent), Durable Objects for stateful operations (strongly consistent within a region), or Turso for SQLite replicas at the edge. The limitation is CPU time (10-50ms) and no TCP connections — so heavy computation and traditional database queries still need the origin."
+:::

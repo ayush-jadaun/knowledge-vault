@@ -49,6 +49,33 @@ $$y''_t = y'_t - y'_{t-1} \quad \text{(second difference)}$$
 
 $$\rho_k = \frac{\text{Cov}(y_t, y_{t-k})}{\text{Var}(y_t)} = \frac{\sum_{t=k+1}^{n}(y_t - \bar{y})(y_{t-k} - \bar{y})}{\sum_{t=1}^{n}(y_t - \bar{y})^2}$$
 
+::: details Worked Example — Autocorrelation at Lag 1
+
+**Time series: y = [2, 4, 6, 3, 5, 7]**
+
+**Step 1:** Compute mean
+  y_bar = (2+4+6+3+5+7)/6 = 27/6 = 4.5
+
+**Step 2:** Compute Var(y) (denominator)
+  = (2-4.5)^2 + (4-4.5)^2 + (6-4.5)^2 + (3-4.5)^2 + (5-4.5)^2 + (7-4.5)^2
+  = 6.25 + 0.25 + 2.25 + 2.25 + 0.25 + 6.25 = 17.5
+
+**Step 3:** Compute Cov(y_t, y_{t-1}) for lag k=1 (numerator)
+  t=2: (4-4.5)(2-4.5) = (-0.5)(-2.5) = 1.25
+  t=3: (6-4.5)(4-4.5) = (1.5)(-0.5) = -0.75
+  t=4: (3-4.5)(6-4.5) = (-1.5)(1.5) = -2.25
+  t=5: (5-4.5)(3-4.5) = (0.5)(-1.5) = -0.75
+  t=6: (7-4.5)(5-4.5) = (2.5)(0.5) = 1.25
+  Sum = 1.25 - 0.75 - 2.25 - 0.75 + 1.25 = -1.25
+
+**Step 4:** Compute autocorrelation
+  rho_1 = -1.25 / 17.5 = -0.071
+
+**Interpret:**
+  "The lag-1 autocorrelation is -0.071, very close to zero. This suggests consecutive values have almost no linear relationship — the series alternates somewhat randomly. A strong positive rho_1 (near 1) would indicate a smooth trend."
+
+:::
+
 **PACF (Partial ACF)**: Correlation between $y_t$ and $y_{t-k}$ after removing the effect of intermediate lags.
 
 ```python
@@ -107,6 +134,26 @@ plt.show()
 **AR(p)**: Autoregressive — prediction depends on $p$ previous values:
 
 $$y_t = c + \phi_1 y_{t-1} + \phi_2 y_{t-2} + \cdots + \phi_p y_{t-p} + \epsilon_t$$
+
+::: details Worked Example — AR(2) Prediction
+
+**AR(2) model: y_t = 10 + 0.6*y_{t-1} + 0.2*y_{t-2} + epsilon**
+
+**Given: y_5 = 50, y_4 = 45**
+
+**Step 1:** Predict y_6 (ignoring noise epsilon)
+  y_6 = 10 + 0.6(50) + 0.2(45) = 10 + 30 + 9 = 49
+
+**Step 2:** Predict y_7 (using y_6=49 and y_5=50)
+  y_7 = 10 + 0.6(49) + 0.2(50) = 10 + 29.4 + 10 = 49.4
+
+**Step 3:** Long-run mean (stationary mean)
+  E[y] = c / (1 - phi1 - phi2) = 10 / (1 - 0.6 - 0.2) = 10/0.2 = 50
+
+**Interpret:**
+  "The AR(2) model predicts values near 49-50, which is close to the long-run mean of 50. The coefficients phi1=0.6 and phi2=0.2 sum to 0.8 (< 1), confirming stationarity."
+
+:::
 
 **I(d)**: Integrated — number of differences needed for stationarity
 

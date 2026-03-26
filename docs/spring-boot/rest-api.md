@@ -744,3 +744,62 @@ Spring Security uses filters. Application logic typically uses interceptors.
 - **[Spring Data JPA](./spring-data-jpa)** — The repository layer that powers your controllers
 - **[Testing](./testing)** — Test controllers with MockMvc and @WebMvcTest
 - **[Spring Security](./security)** — Secure your endpoints with authentication and authorization
+
+## Common Pitfalls
+
+::: danger Pitfall 1: Exposing JPA entities directly in REST responses
+Returning JPA entities from controllers leaks internal fields (password hashes, internal flags), couples your API contract to the database schema, and triggers lazy loading exceptions.
+**Fix:** Always use separate request and response DTOs (Java records). Map entities to DTOs in the service layer.
+:::
+
+::: danger Pitfall 2: Not validating request bodies
+Accepting unvalidated input leads to invalid data in the database, NullPointerExceptions, and security vulnerabilities like injection attacks.
+**Fix:** Use `@Valid` on `@RequestBody` parameters with Jakarta Bean Validation annotations (`@NotBlank`, `@Size`, `@Email`, etc.) on your request DTOs.
+:::
+
+::: danger Pitfall 3: Returning 200 OK for resource creation
+Returning `200 OK` when creating a resource is technically valid but violates REST conventions. Clients expect `201 Created` with a `Location` header.
+**Fix:** Use `ResponseEntity.created(location).body(response)` for POST endpoints that create resources. Always include the `Location` header pointing to the new resource.
+:::
+
+::: danger Pitfall 4: Not limiting page size on paginated endpoints
+Allowing clients to request `?size=100000` can cause OOM errors and slow database queries.
+**Fix:** Set a maximum page size globally with `PageableHandlerMethodArgumentResolver.setMaxPageSize(100)` and validate `size` parameters.
+:::
+
+::: danger Pitfall 5: Inconsistent error response format
+Mixing different error response structures across endpoints forces clients to write different error-handling logic for each endpoint.
+**Fix:** Use a `@RestControllerAdvice` with `@ExceptionHandler` methods to return consistent RFC 7807 Problem Details for all error types.
+:::
+
+::: danger Pitfall 6: Using PUT for partial updates
+`PUT` semantics mean full resource replacement. Using it for partial updates confuses API consumers and can null out fields not included in the request.
+**Fix:** Use `PATCH` for partial updates (only non-null fields are updated) and `PUT` for full replacement where the entire resource body is required.
+:::
+
+## Interview Questions
+
+**Q1: What is the difference between `@Controller` and `@RestController`?**
+::: details Answer
+`@RestController` is a convenience annotation that combines `@Controller` and `@ResponseBody`. With `@Controller`, methods return view names (for server-side rendering) unless annotated with `@ResponseBody`. With `@RestController`, every method's return value is automatically serialized to the response body (JSON by default via Jackson). Use `@RestController` for REST APIs and `@Controller` for server-rendered HTML applications.
+:::
+
+**Q2: How does Spring Boot handle content negotiation?**
+::: details Answer
+Spring Boot uses the `Accept` header to determine the response format. By default, Jackson serializes to JSON (`application/json`). You can add XML support by including `jackson-dataformat-xml` on the classpath. Custom formats (CSV, PDF) require implementing `HttpMessageConverter`. You can also configure content negotiation via query parameters (`?format=xml`) or URL path extensions using `WebMvcConfigurer.configureContentNegotiation()`.
+:::
+
+**Q3: How does pagination work with Spring Data and `@RestController`?**
+::: details Answer
+When a controller method accepts a `Pageable` parameter, Spring resolves it from query parameters (`?page=0&size=20&sort=name,asc`). Spring Data repositories accept `Pageable` and return `Page<T>`, which includes content, total elements, total pages, and navigation metadata. Configure defaults with `@PageableDefault` on the method parameter, and set global limits with `PageableHandlerMethodArgumentResolver` to prevent clients from requesting excessively large pages.
+:::
+
+**Q4: What is the purpose of `ResponseEntity` and when should you use it?**
+::: details Answer
+`ResponseEntity` gives full control over the HTTP response: status code, headers, and body. Use it when you need to (1) return non-200 status codes like `201 Created` or `204 No Content`, (2) set custom headers like `Location`, `ETag`, or `Cache-Control`, (3) implement conditional GET with `304 Not Modified`, or (4) return different status codes based on business logic. For simple 200 responses, you can skip `ResponseEntity` and return the object directly.
+:::
+
+**Q5: How do you implement API versioning in Spring Boot?**
+::: details Answer
+The four main strategies are: (1) **URI path versioning** (`/api/v1/products`, `/api/v2/products`) -- most common, clear, cacheable. (2) **Request header** (`X-API-Version: 1`) -- clean URLs but hidden. (3) **Accept header** (`Accept: application/vnd.myapp.v1+json`) -- most RESTful but complex. (4) **Query parameter** (`/api/products?version=1`) -- simple but not RESTful. URI path versioning is the industry standard for most Spring Boot APIs. Each version gets its own controller class or uses conditional logic within a single controller.
+:::

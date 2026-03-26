@@ -70,6 +70,30 @@ The choice of distance metric fundamentally affects KNN's behavior.
 
 $$d_p(\mathbf{x}, \mathbf{z}) = \left(\sum_{j=1}^d |x_j - z_j|^p\right)^{1/p}$$
 
+::: details Worked Example — Distance Metrics
+
+**Two points: x = [1, 3, 0], z = [4, 1, 2]**
+
+**Step 1:** Manhattan distance (p=1)
+  d1 = |1-4| + |3-1| + |0-2| = 3 + 2 + 2 = 7
+
+**Step 2:** Euclidean distance (p=2)
+  d2 = sqrt((1-4)^2 + (3-1)^2 + (0-2)^2)
+     = sqrt(9 + 4 + 4) = sqrt(17) = 4.123
+
+**Step 3:** Chebyshev distance (p=inf)
+  d_inf = max(|1-4|, |3-1|, |0-2|) = max(3, 2, 2) = 3
+
+**Step 4:** Compare
+  Manhattan = 7 (sum of absolute differences)
+  Euclidean = 4.123 (straight-line distance)
+  Chebyshev = 3 (largest single-dimension difference)
+
+**Interpret:**
+  "Manhattan treats all dimensions equally (total city-block distance). Euclidean gives the straight-line distance. Chebyshev only cares about the worst-case dimension. For KNN, the choice affects which points are 'nearest'."
+
+:::
+
 | Distance | $p$ | Name | Properties |
 |----------|-----|------|-----------|
 | Manhattan | $p=1$ | $L_1$ norm | Better for sparse, high-dimensional data |
@@ -287,6 +311,29 @@ for algo in algorithms:
 Standard KNN treats all $K$ neighbors equally. Weighted KNN gives closer neighbors more influence:
 
 $$\hat{y} = \frac{\sum_{i \in N_K} w_i \cdot y_i}{\sum_{i \in N_K} w_i}$$
+
+::: details Worked Example — Weighted KNN Regression
+
+**Predict house price for query point. K=3 nearest neighbors:**
+
+| Neighbor | Distance | Price (y) | Weight (1/d) |
+|----------|----------|-----------|-------------|
+| A        | 0.5      | $200k     | 1/0.5 = 2.0 |
+| B        | 1.0      | $300k     | 1/1.0 = 1.0 |
+| C        | 2.0      | $250k     | 1/2.0 = 0.5 |
+
+**Step 1:** Uniform KNN (all weights = 1)
+  y_hat = (200 + 300 + 250) / 3 = 750/3 = 250.0k
+
+**Step 2:** Distance-weighted KNN
+  y_hat = (2.0*200 + 1.0*300 + 0.5*250) / (2.0 + 1.0 + 0.5)
+        = (400 + 300 + 125) / 3.5
+        = 825 / 3.5 = 235.7k
+
+**Interpret:**
+  "The nearest neighbor (A at $200k) has 4x the influence of the farthest (C at $250k). Weighted KNN predicts $235.7k, pulled toward the closest neighbor. Uniform KNN predicts $250k, treating all neighbors equally."
+
+:::
 
 Common weight functions:
 - **Uniform:** $w_i = 1$ (standard KNN)

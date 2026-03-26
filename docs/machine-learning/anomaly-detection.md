@@ -54,6 +54,33 @@ $$c(n) = 2H(n-1) - \frac{2(n-1)}{n}$$
 
 where $H(i) = \ln(i) + \gamma$ (Euler-Mascheroni constant $\gamma \approx 0.5772$).
 
+::: details Worked Example — Isolation Forest Anomaly Score
+
+**Dataset: n=256 samples. Compare two points:**
+- Point A (anomaly): average path length E[h(A)] = 3.2
+- Point B (normal): average path length E[h(B)] = 8.5
+
+**Step 1:** Compute c(n) for n=256
+  H(255) = ln(255) + 0.5772 = 5.541 + 0.577 = 6.118
+  c(256) = 2 * 6.118 - 2(255)/256 = 12.236 - 1.992 = 10.244
+
+**Step 2:** Compute anomaly score for Point A
+  s(A) = 2^(-3.2/10.244) = 2^(-0.312) = 0.806
+
+**Step 3:** Compute anomaly score for Point B
+  s(B) = 2^(-8.5/10.244) = 2^(-0.830) = 0.563
+
+**Step 4:** Compare with thresholds
+  s ~ 1.0: definite anomaly
+  s ~ 0.5: normal
+  s(A) = 0.806 (closer to 1 -> anomalous)
+  s(B) = 0.563 (closer to 0.5 -> normal)
+
+**Interpret:**
+  "Point A has a short average path (3.2 splits to isolate) and a high anomaly score (0.806) — it's easily separated, likely an outlier. Point B needs 8.5 splits on average and scores 0.563 — it's deep in the normal cluster. The threshold is typically set based on the contamination parameter."
+
+:::
+
 **Interpretation:**
 
 | Score | Meaning |

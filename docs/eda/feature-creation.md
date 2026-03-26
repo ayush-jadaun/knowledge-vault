@@ -421,4 +421,204 @@ print(results_df.round(4).to_string())
 - Aggregation features add group context — how does this row compare to its peers?
 - Polynomial features help linear models but are redundant for tree-based models.
 - Featuretools automates the tedious parts but still needs human judgment to select useful results.
-- Always benchmark raw vs. engineered features. More features is not always better — it can cause overfitting.
+- Always benchmark raw vs. engineered features. More features is not always better -- it can cause overfitting.
+
+## Try It Yourself
+
+**Exercise 1:** Given an e-commerce dataset with columns `[price, quantity, discount_pct, shipping_cost, customer_age_days, n_previous_orders]`, create 8 meaningful interaction and ratio features. Then use a GradientBoosting model to compare R-squared with and without engineered features.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.linear_model import Ridge
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+
+raw_features = ['price', 'quantity', 'discount_pct', 'shipping_cost',
+                'customer_age_days', 'n_previous_orders']
+X_raw = df[raw_features].copy()
+y = df['revenue']
+
+# Create 8 interaction/ratio features
+X_eng = X_raw.copy()
+# Revenue-related
+X_eng['total_price'] = df['price'] * df['quantity']
+X_eng['discounted_total'] = df['price'] * df['quantity'] * (1 - df['discount_pct'])
+X_eng['shipping_per_item'] = df['shipping_cost'] / (df['quantity'] + 1)
+X_eng['discount_dollars'] = df['price'] * df['discount_pct']
+# Customer-related
+X_eng['order_frequency'] = df['n_previous_orders'] / (df['customer_age_days'] / 30 + 1)
+X_eng['is_repeat_customer'] = (df['n_previous_orders'] > 2).astype(int)
+# Log transforms for skewed features
+X_eng['log_price'] = np.log1p(df['price'])
+X_eng['log_customer_age'] = np.log1p(df['customer_age_days'])
+
+# Benchmark
+results = {}
+for name, X in [('Raw Only', X_raw), ('With Engineering', X_eng)]:
+    ridge_r2 = cross_val_score(Ridge(), StandardScaler().fit_transform(X), y,
+                                cv=5, scoring='r2').mean()
+    gbm_r2 = cross_val_score(GradientBoostingRegressor(n_estimators=100, random_state=42),
+                              X, y, cv=5, scoring='r2').mean()
+    results[name] = {'Ridge R2': ridge_r2, 'GBM R2': gbm_r2, 'n_features': X.shape[1]}
+
+print(pd.DataFrame(results).T.round(4).to_string())
+print(f"\nEngineered features added: {X_eng.shape[1] - X_raw.shape[1]}")
+```
+:::
+
+**Exercise 2:** You have customer transaction data with `[customer_id, product_category, purchase_amount, purchase_date]`. Create aggregation features: per-customer mean/std/count of purchase amounts, and per-category mean price. Then compute "deviation from category mean" for each transaction. Merge these back as features.
+
+::: details Solution
+```python
+import pandas as pd
+import numpy as np
+
+# Per-customer aggregations
+customer_aggs = df.groupby('customer_id').agg(
+    cust_avg_amount=('purchase_amount', 'mean'),
+    cust_std_amount=('purchase_amount', 'std'),
+    cust_total_orders=('purchase_amount', 'count'),
+    cust_total_spent=('purchase_amount', 'sum'),
+).reset_index()
+
+# Fill std NaN (customers with 1 order)
+customer_aggs['cust_std_amount'] = customer_aggs['cust_std_amount'].fillna(0)
+
+# Per-category aggregations
+category_aggs = df.groupby('product_category').agg(
+    cat_avg_price=('purchase_amount', 'mean'),
+    cat_median_price=('purchase_amount', 'median'),
+    cat_std_price=('purchase_amount', 'std'),
+    cat_count=('purchase_amount', 'count'),
+).reset_index()
+
+# Merge back
+df_enriched = df.merge(customer_aggs, on='customer_id', how='left')
+df_enriched = df_enriched.merge(category_aggs, on='product_category', how='left')
+
+# Deviation features
+df_enriched['amount_vs_cust_avg'] = df_enriched['purchase_amount'] - df_enriched['cust_avg_amount']
+df_enriched['amount_vs_cat_avg'] = df_enriched['purchase_amount'] - df_enriched['cat_avg_price']
+df_enriched['amount_cat_zscore'] = (
+    (df_enriched['purchase_amount'] - df_enriched['cat_avg_price']) /
+    (df_enriched['cat_std_price'] + 1e-8)
+)
+
+# Summary
+new_features = [c for c in df_enriched.columns if c.startswith(('cust_', 'cat_', 'amount_vs', 'amount_cat'))]
+print(f"Created {len(new_features)} aggregation features:")
+for f in new_features:
+    print(f"  {f}: mean={df_enriched[f].mean():.2f}, std={df_enriched[f].std():.2f}")
+```
+:::
+
+**Exercise 3:** Use automated feature generation to create all pairwise multiplication and division features for 6 numeric columns. Then use feature importance from a GradientBoosting model to select the top 10 features (including both raw and engineered). Compare model performance with all features vs. top 10 only.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+from itertools import combinations
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.model_selection import cross_val_score
+
+raw_cols = ['price', 'quantity', 'discount_pct', 'shipping_cost',
+            'page_views', 'time_on_site_min']
+X_raw = df[raw_cols].copy()
+y = df['revenue']
+
+# Generate all pairwise features
+X_auto = X_raw.copy()
+for c1, c2 in combinations(raw_cols, 2):
+    X_auto[f'{c1}_x_{c2}'] = df[c1] * df[c2]
+    if (df[c2] != 0).all():
+        X_auto[f'{c1}_div_{c2}'] = df[c1] / (df[c2] + 1e-8)
+
+print(f"Raw features: {len(raw_cols)}")
+print(f"Total features (with auto-generated): {X_auto.shape[1]}")
+
+# Get feature importance
+X_auto = X_auto.replace([np.inf, -np.inf], 0).fillna(0)
+gbm = GradientBoostingRegressor(n_estimators=200, max_depth=4, random_state=42)
+gbm.fit(X_auto, y)
+
+importances = pd.Series(gbm.feature_importances_, index=X_auto.columns)
+top_10 = importances.nlargest(10).index.tolist()
+
+print(f"\nTop 10 features by importance:")
+for f in top_10:
+    is_eng = f not in raw_cols
+    print(f"  {f}: {importances[f]:.4f} {'(engineered)' if is_eng else '(raw)'}")
+
+# Compare: all features vs top 10
+r2_all = cross_val_score(
+    GradientBoostingRegressor(n_estimators=100, random_state=42),
+    X_auto, y, cv=5, scoring='r2'
+).mean()
+
+r2_top10 = cross_val_score(
+    GradientBoostingRegressor(n_estimators=100, random_state=42),
+    X_auto[top_10], y, cv=5, scoring='r2'
+).mean()
+
+r2_raw = cross_val_score(
+    GradientBoostingRegressor(n_estimators=100, random_state=42),
+    X_raw, y, cv=5, scoring='r2'
+).mean()
+
+print(f"\nR-squared comparison:")
+print(f"  Raw only ({len(raw_cols)} features): {r2_raw:.4f}")
+print(f"  Top 10 selected:                     {r2_top10:.4f}")
+print(f"  All features ({X_auto.shape[1]}):    {r2_all:.4f}")
+```
+:::
+
+## Quick Quiz
+
+**1. What is the single most valuable type of engineered feature?**
+- a) Polynomial features (x^2, x^3)
+- b) Interaction terms (A * B) that capture how one variable's effect depends on another
+- c) One-hot encoded categories
+
+::: details Answer
+**b) Interaction terms (A * B) that capture how one variable's effect depends on another.** Interactions represent real-world relationships: revenue = price * quantity, engagement = page_views * time_on_site. Linear models cannot learn these without explicit interaction features. Even tree-based models benefit when the interaction is directly provided rather than requiring multiple splits to approximate.
+:::
+
+**2. Why do polynomial features help linear regression but NOT Random Forest?**
+- a) Random Forest is too slow for extra features
+- b) Linear models can only learn linear relationships; polynomials enable curves. Trees already capture nonlinearities through splits.
+- c) Polynomial features are always redundant
+
+::: details Answer
+**b) Linear models can only learn linear relationships; polynomials enable curves. Trees already capture nonlinearities through splits.** A linear model with feature x can only fit y = ax + b. Adding x^2 allows it to fit y = ax^2 + bx + c (a parabola). Tree models inherently capture any nonlinear relationship through recursive splitting, so polynomial features add nothing new.
+:::
+
+**3. What is an aggregation feature, and when is it useful?**
+- a) A feature created by summing all columns together
+- b) A group-level statistic (like per-customer mean spending) merged back to each row, adding context about the group
+- c) A feature that counts the number of non-null values
+
+::: details Answer
+**b) A group-level statistic (like per-customer mean spending) merged back to each row, adding context about the group.** Aggregation features answer questions like "How does this purchase compare to this customer's typical behavior?" or "Is this product priced above or below its category average?" They add group context that raw features cannot provide.
+:::
+
+**4. You create 500 engineered features from 10 raw features. Your model's cross-validation score improves, but test set performance drops. What happened?**
+- a) The engineered features are wrong
+- b) Overfitting -- too many features relative to the number of samples caused the model to memorize noise in the training data
+- c) The test set is too small
+
+::: details Answer
+**b) Overfitting -- too many features relative to the number of samples caused the model to memorize noise in the training data.** With 500 features, the model has enormous flexibility to fit random patterns in the training data that do not generalize. Solutions: use regularization (Ridge/Lasso), select only the most important features, or use a model that handles high dimensionality well (like tree models with max_depth constraints).
+:::
+
+**5. Should you apply feature engineering before or after train/test split?**
+- a) Before, so all features are computed on the full dataset
+- b) After -- fit feature engineering parameters (like group means for aggregation features) on training data only, then transform both train and test
+- c) It does not matter
+
+::: details Answer
+**b) After -- fit feature engineering parameters (like group means for aggregation features) on training data only, then transform both train and test.** If you compute category averages on the full dataset before splitting, the training set contains information from the test set (data leakage). The correct approach: compute aggregation statistics on training data only, then use those statistics to create features for both train and test sets.
+:::

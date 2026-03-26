@@ -522,3 +522,210 @@ flowchart TD
 - For large datasets (n > 10,000), use hexbin plots or 2D KDE instead of scatter plots.
 - Distance correlation detects any dependence, not just linear or monotonic, but at O(n²) cost.
 - Report confidence intervals alongside point estimates. A correlation of 0.3 with CI [0.05, 0.55] tells a different story than 0.3 with CI [0.25, 0.35].
+
+## Try It Yourself
+
+**Exercise 1:** You have a dataset with `study_hours` and `exam_score` for 200 students. Compute Pearson, Spearman, and Kendall correlations, create a scatter plot with regression line, and produce a residual plot. Interpret whether the relationship is linear based on the residual pattern.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+
+x = df['study_hours'].values
+y = df['exam_score'].values
+
+# Three correlations
+r_p, p_p = stats.pearsonr(x, y)
+r_s, p_s = stats.spearmanr(x, y)
+r_k, p_k = stats.kendalltau(x, y)
+
+print(f"Pearson  r = {r_p:.4f} (p={p_p:.2e})")
+print(f"Spearman p = {r_s:.4f} (p={p_s:.2e})")
+print(f"Kendall  t = {r_k:.4f} (p={p_k:.2e})")
+
+# Fit linear model
+slope, intercept = np.polyfit(x, y, 1)
+y_pred = slope * x + intercept
+residuals = y - y_pred
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# Scatter + regression line
+axes[0].scatter(x, y, alpha=0.5, s=20, color='steelblue')
+x_sorted = np.sort(x)
+axes[0].plot(x_sorted, slope * x_sorted + intercept, color='crimson', linewidth=2)
+axes[0].set_xlabel('Study Hours')
+axes[0].set_ylabel('Exam Score')
+axes[0].set_title(f'Scatter (r={r_p:.3f})')
+
+# Residual plot
+axes[1].scatter(y_pred, residuals, alpha=0.5, s=20, color='steelblue')
+axes[1].axhline(0, color='crimson', linewidth=1)
+axes[1].set_xlabel('Predicted Exam Score')
+axes[1].set_ylabel('Residual')
+axes[1].set_title('Residual Plot')
+
+plt.tight_layout()
+plt.show()
+
+# Interpretation
+print(f"\nIf residuals show random scatter -> linear model is adequate")
+print(f"If residuals show a U-shape -> relationship is nonlinear, try polynomial")
+print(f"If residuals show a fan shape -> heteroscedasticity, try log transform")
+```
+:::
+
+**Exercise 2:** Two variables have Pearson r = 0.05 (not significant, p=0.42) with n=500. But you suspect a nonlinear relationship. Write code to compute distance correlation and test whether the variables are truly independent. Visualize the relationship with a scatter plot and binned means.
+
+::: details Solution
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+
+x = df['feature_a'].values
+y = df['feature_b'].values
+
+# Pearson (near zero)
+r_p, p_p = stats.pearsonr(x, y)
+print(f"Pearson r = {r_p:.4f} (p={p_p:.3f}) -- no linear relationship")
+
+# Distance correlation
+def distance_correlation(x, y):
+    n = len(x)
+    a = np.abs(x[:, None] - x[None, :])
+    b = np.abs(y[:, None] - y[None, :])
+    A = a - a.mean(axis=0) - a.mean(axis=1)[:, None] + a.mean()
+    B = b - b.mean(axis=0) - b.mean(axis=1)[:, None] + b.mean()
+    dcov2 = (A * B).mean()
+    dvar_x = (A * A).mean()
+    dvar_y = (B * B).mean()
+    if dvar_x * dvar_y == 0:
+        return 0
+    return np.sqrt(dcov2 / np.sqrt(dvar_x * dvar_y))
+
+dc = distance_correlation(x, y)
+print(f"Distance correlation = {dc:.4f}")
+
+if dc > 0.15:
+    print("Nonlinear dependence detected despite Pearson ~ 0!")
+else:
+    print("Variables appear truly independent")
+
+# Visualize: scatter + binned means
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+axes[0].scatter(x, y, alpha=0.3, s=10, color='steelblue')
+axes[0].set_title(f'Scatter (Pearson={r_p:.3f}, DistCorr={dc:.3f})')
+
+# Binned means reveal the functional form
+df_temp = pd.DataFrame({'x': x, 'y': y})
+df_temp['x_bin'] = pd.qcut(x, 20, duplicates='drop')
+binned = df_temp.groupby('x_bin')['y'].agg(['mean', 'std', 'count'])
+bin_centers = [interval.mid for interval in binned.index]
+axes[1].errorbar(bin_centers, binned['mean'],
+                 yerr=binned['std'] / np.sqrt(binned['count']),
+                 fmt='o-', color='crimson', capsize=3)
+axes[1].set_title('Binned Means (reveals nonlinear pattern)')
+axes[1].set_xlabel('Feature A (binned)')
+axes[1].set_ylabel('Mean Feature B')
+
+plt.tight_layout()
+plt.show()
+```
+:::
+
+**Exercise 3:** You compute a Pearson correlation of r=0.72 between advertising spend and revenue across 50 data points. But there are 3 outlier points with spend > $1M. Remove the outliers and recompute. Also compute Spearman correlation on both the full and cleaned data. Discuss which result you trust more.
+
+::: details Solution
+```python
+import numpy as np
+from scipy import stats
+
+x = df['ad_spend'].values
+y = df['revenue'].values
+
+# Full data correlations
+r_p_full, _ = stats.pearsonr(x, y)
+r_s_full, _ = stats.spearmanr(x, y)
+print(f"FULL DATA (n={len(x)}):")
+print(f"  Pearson  r = {r_p_full:.4f}")
+print(f"  Spearman r = {r_s_full:.4f}")
+
+# Remove outliers (spend > 1M)
+mask = x <= 1_000_000
+x_clean = x[mask]
+y_clean = y[mask]
+
+r_p_clean, _ = stats.pearsonr(x_clean, y_clean)
+r_s_clean, _ = stats.spearmanr(x_clean, y_clean)
+print(f"\nCLEANED DATA (n={len(x_clean)}, removed {(~mask).sum()} outliers):")
+print(f"  Pearson  r = {r_p_clean:.4f}")
+print(f"  Spearman r = {r_s_clean:.4f}")
+
+# Comparison
+print(f"\n--- Analysis ---")
+print(f"Pearson  change: {r_p_full:.3f} -> {r_p_clean:.3f} (delta={r_p_clean - r_p_full:+.3f})")
+print(f"Spearman change: {r_s_full:.3f} -> {r_s_clean:.3f} (delta={r_s_clean - r_s_full:+.3f})")
+
+if abs(r_p_full - r_p_clean) > 0.15:
+    print("\nPearson is HIGHLY sensitive to these outliers -> do NOT trust r=0.72")
+    print("Spearman is more stable -> trust Spearman for the true correlation strength")
+else:
+    print("\nBoth are stable -> the relationship is robust to outliers")
+
+print("\nBest practice: Report both, note the outlier sensitivity,")
+print("and use Spearman as the primary measure when outliers are present.")
+```
+:::
+
+## Quick Quiz
+
+**1. Pearson r = 0.85 between ice cream sales and drowning deaths. What is the most likely explanation?**
+- a) Ice cream causes drowning
+- b) Drowning causes people to buy ice cream
+- c) A confounding variable (temperature/season) drives both
+
+::: details Answer
+**c) A confounding variable (temperature/season) drives both.** Hot weather increases both ice cream consumption and swimming activity (which increases drowning risk). This is a classic example of confounding. The correlation between ice cream and drowning is real but spurious -- the causal driver is temperature. Always ask: "What third variable could explain this association?"
+:::
+
+**2. When should you use Spearman correlation instead of Pearson?**
+- a) Only when the data is perfectly normal
+- b) When the relationship is monotonic but not necessarily linear, or when outliers are present
+- c) Only when both variables are ordinal
+
+::: details Answer
+**b) When the relationship is monotonic but not necessarily linear, or when outliers are present.** Spearman correlation works on ranks rather than raw values, making it robust to outliers and appropriate for any monotonic relationship (including logarithmic, exponential, etc.). It also works for ordinal data, but that is not its only use case.
+:::
+
+**3. A scatter plot of 100,000 points looks like a solid blob. What visualization should you use instead?**
+- a) A larger scatter plot with smaller dots
+- b) A hexbin plot or 2D KDE to show density
+- c) A bar chart of the two variables
+
+::: details Answer
+**b) A hexbin plot or 2D KDE to show density.** At n > 10,000, individual scatter points overlap so heavily that all structure is hidden (overplotting). Hexbin plots bin points into hexagonal cells and color by count, revealing density patterns. 2D KDE provides a smooth density estimate. Both techniques expose the relationship that raw scatter plots obscure.
+:::
+
+**4. What does an R-squared (r^2) of 0.09 mean in practical terms?**
+- a) The model explains 9% of the variance in Y
+- b) The correlation is 0.09
+- c) 9% of the data points are outliers
+
+::: details Answer
+**a) The model explains 9% of the variance in Y.** R-squared is the square of the correlation coefficient. An r of 0.3 gives r^2 = 0.09, meaning the linear relationship with X accounts for only 9% of the variability in Y. The remaining 91% is explained by other factors or random variation. In large datasets, even r = 0.3 can be statistically significant while being practically weak.
+:::
+
+**5. A residual plot shows a clear U-shaped pattern. What does this mean and what should you do?**
+- a) The data has outliers that need removal
+- b) The linear model is missing a nonlinear relationship; try a polynomial or log transform
+- c) The correlation is too weak to model
+
+::: details Answer
+**b) The linear model is missing a nonlinear relationship; try a polynomial or log transform.** A U-shaped residual pattern means the linear fit systematically underestimates at the extremes and overestimates in the middle, indicating the true relationship is curved. Solutions include: (1) adding a quadratic term (x^2), (2) log-transforming x or y, or (3) using a nonlinear model. The residual plot is more informative than the correlation coefficient for diagnosing this.
+:::

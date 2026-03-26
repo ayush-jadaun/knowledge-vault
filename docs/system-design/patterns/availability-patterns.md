@@ -632,3 +632,23 @@ spec:
 ---
 
 *High availability is not a feature you add at the end. It is a property that emerges from patterns applied consistently across every layer of your architecture. Start with health checks and load balancing, add circuit breakers and bulkheads as you grow, and validate everything with chaos engineering.*
+
+## Real-World Examples
+
+::: tip Netflix (Chaos Monkey)
+Netflix invented **Chaos Monkey** in 2011, which randomly kills production EC2 instances to verify their systems handle failures gracefully. They expanded this to the full **Simian Army** including Chaos Gorilla (kills entire AZs) and Chaos Kong (kills entire regions). This approach validated that their availability patterns actually work under real failure conditions, helping them achieve 99.99% availability.
+:::
+
+::: tip Amazon
+Amazon uses **bulkhead isolation** through their cell-based architecture. Each "cell" is an independent unit with its own compute, storage, and database. If one cell fails, only the customers assigned to that cell are affected — other cells continue operating normally. This limits the blast radius of any failure to ~1/N of total customers.
+:::
+
+::: tip Slack
+Slack uses **graceful degradation** extensively. When their real-time messaging infrastructure is under pressure, they disable non-critical features like typing indicators, presence updates, and message previews. Users can still send and read messages — the core function — while peripheral features are temporarily unavailable. This keeps the service usable during incidents.
+:::
+
+## Interview Tip
+
+::: tip What to say
+"Availability is about making failures invisible, not preventing them. My approach has three layers: first, redundancy at every level — multiple app servers, Multi-AZ database, replicated cache. Second, resilience patterns — circuit breakers prevent cascading failures, retries with exponential backoff handle transient issues, and graceful degradation keeps core features working when non-critical services fail. Third, validation — chaos engineering to prove it actually works. The math matters too: serial dependencies multiply failure probability, so I prefer async communication to limit synchronous chains. Netflix proves this works — they kill production servers daily and maintain 99.99% availability."
+:::
