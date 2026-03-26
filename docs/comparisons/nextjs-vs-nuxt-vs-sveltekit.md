@@ -401,3 +401,63 @@ If migrating a large Next.js app, consider running both frameworks side by side 
 **Choose SvelteKit** if you want the smallest client-side JavaScript footprint and the most intuitive data loading model. SvelteKit's `load` functions are simple, its form actions are elegant, and the resulting sites are fast. The ecosystem is smaller but growing rapidly.
 
 **Choose Remix** if you care deeply about web standards, progressive enhancement, and vendor independence. Remix's mental model of "use the platform" means your app works without JavaScript, forms use standard HTTP, and caching uses standard HTTP headers. Its merger with React Router v7 makes it a natural choice for React Router users.
+
+## Which Would You Choose?
+
+**Scenario 1:** You are building an e-commerce site for a Shopify merchant. SEO is critical, you need ISR for product pages, and the team knows React.
+
+::: details Recommendation: Remix (or Next.js)
+Remix is backed by Shopify and powers Hydrogen, their headless commerce framework. If you are specifically building on Shopify, Remix + Hydrogen is the purpose-built choice. If you are on a different commerce platform and want ISR for product page caching, Next.js with `revalidate` gives you the most mature implementation.
+:::
+
+**Scenario 2:** Your 3-person team includes one backend developer who knows Python, one designer who knows HTML/CSS, and one junior developer. You need to ship a documentation + blog site in 6 weeks.
+
+::: details Recommendation: SvelteKit
+SvelteKit requires the least boilerplate, produces the smallest JavaScript output (critical for content sites), and Svelte's template syntax is the most approachable for someone coming from HTML/CSS. The `load` function pattern is simpler than React Server Components or Vue's `useFetch`. For a content-heavy site, SvelteKit + Markdown is hard to beat.
+:::
+
+**Scenario 3:** Your company has a large Vue codebase. You need to add SSR, authentication, and internationalization. The team has 10 Vue developers.
+
+::: details Recommendation: Nuxt
+This is not even a close call. Nuxt is the only meta-framework for Vue, and it has official modules for auth (`nuxt-auth-utils`), i18n (`@nuxtjs/i18n`), and dozens of other integrations. Migrating 10 Vue developers to React or Svelte would cost months of retraining for no architectural benefit.
+:::
+
+::: warning Common Misconceptions
+- **"Next.js only works on Vercel"** — Next.js can be self-hosted with Docker, deployed to any Node.js server, or used with adapters like OpenNext for Cloudflare. Vercel-specific optimizations exist, but the framework is not locked in.
+- **"SvelteKit is not production-ready"** — SvelteKit reached 1.0 in December 2022 and powers production sites at Apple, The New York Times, and Ikea. It is stable and battle-tested.
+- **"Remix is dying because Shopify acquired it"** — Shopify's acquisition brought more resources and full-time engineers to Remix. The merger with React Router v7 expanded its reach, not diminished it.
+- **"You must pick one meta-framework forever"** — Meta-frameworks can coexist behind a reverse proxy. Many companies run different frameworks for different parts of their product (marketing on Nuxt, app on Next.js).
+:::
+
+::: tip Real Migration Stories
+**Vercel's own docs: Gatsby to Next.js** — Vercel migrated their documentation site from Gatsby (a static-site generator) to Next.js to leverage ISR and React Server Components. The migration allowed them to serve thousands of documentation pages with instant rebuilds instead of full static rebuilds.
+
+**Svelte Society: From Next.js to SvelteKit** — Several Svelte community projects migrated from Next.js to SvelteKit to practice what they preach. They reported 40-60% less client-side JavaScript and a simpler mental model for data loading, though they acknowledged losing some React ecosystem libraries.
+:::
+
+::: details Quiz
+
+**1. What is the fundamental difference between how Next.js and Nuxt handle server-side data loading?**
+
+Next.js uses React Server Components that run on the server by default and can directly `await` data. Nuxt uses `useFetch`/`useAsyncData` composables that fetch data on the server and transfer a JSON payload to the client to avoid re-fetching during hydration.
+
+**2. Which meta-framework ships the least JavaScript to the client for a typical content page?**
+
+SvelteKit, because Svelte compiles away the framework runtime. A typical SvelteKit content page ships 25-45 KB of JavaScript compared to 85-120 KB for Next.js.
+
+**3. What does Remix's "progressive enhancement" mean in practice?**
+
+Remix apps work without JavaScript in the browser. Forms submit via standard HTTP POST, pages render on the server, and navigation works without client-side JS. JavaScript enhances the experience (instant transitions, optimistic UI) but is not required.
+
+**4. Why might a large enterprise choose Next.js despite the Vercel optimization bias?**
+
+Largest ecosystem of integrations, most tutorials and community support, React Server Components for granular JS reduction, and the biggest pool of developers who already know Next.js. The Vercel bias is manageable with self-hosting or OpenNext.
+
+**5. What is Nuxt's Nitro server engine, and why does it matter?**
+
+Nitro is a universal server engine that abstracts away deployment targets. A single Nuxt app can deploy to Node.js, Vercel, Netlify, Cloudflare Workers, Deno Deploy, or static hosting with zero code changes — just pick a different Nitro preset.
+:::
+
+## One-Liner Summary
+
+Next.js dominates with the largest React ecosystem, Nuxt is the batteries-included Vue choice, SvelteKit ships the least JS, and Remix champions web standards — pick the one that matches your UI library and deployment philosophy.

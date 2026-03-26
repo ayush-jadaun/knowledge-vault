@@ -247,6 +247,52 @@ Discord's hot partition problem was a consequence of partition key design. In Ca
 
 5. **Consider non-JVM alternatives for latency-critical systems.** If your system has strict tail latency requirements and you are running a JVM-based data store, evaluate alternatives that do not have garbage collection (ScyllaDB, Redis, ClickHouse, etc.).
 
+## What Would You Do?
+
+Test your database migration instincts against the decisions Discord's engineers actually faced.
+
+::: details Scenario 1: It is 2017 and your MongoDB cluster is struggling under Discord's load. Read latencies are unpredictable, and operational burden is high. You need a new database. Do you (A) invest in sharding and tuning MongoDB, (B) migrate to Cassandra for its linear scalability and time-series friendly data model, or (C) build a custom database purpose-built for message storage?
+**What Discord did:** They chose **(B) — Cassandra.** MongoDB's fundamental storage engine limitations (memory-mapped files, document-level locking) made tuning insufficient at Discord's scale. Cassandra's linear scalability, tunable consistency, and proven track record at similar scale (Netflix, Apple) made it the right choice for that era. Building a custom database (C) would have been high-risk and slow. The lesson: choose your database for your current and near-future scale, not your dream scale. Migrate when you hit real limitations, not theoretical ones.
+:::
+
+::: details Scenario 2: Your Cassandra cluster is experiencing p99 latency spikes of 800ms caused by JVM garbage collection pauses on hot partitions. Your users notice every spike. Do you (A) tune JVM garbage collection parameters, (B) redesign your partition key strategy to eliminate hot partitions, or (C) migrate to a non-JVM database that eliminates GC entirely?
+**What Discord did:** They chose **(C) — migrate to ScyllaDB**, a C++ rewrite of Cassandra that is wire-compatible but eliminates garbage collection entirely. GC tuning (A) can reduce pause frequency but cannot eliminate pauses entirely — and as data grows, the problem gets worse. Partition redesign (B) helps but does not solve the fundamental JVM GC issue for a latency-sensitive application. ScyllaDB's shard-per-core architecture with no GC dropped p99 read latency from 40-125ms to 15ms.
+:::
+
+::: details Scenario 3: You are planning the migration from Cassandra to ScyllaDB. You have trillions of messages in production. Do you (A) do a big-bang cutover on a maintenance window, (B) use a dual-write approach with gradual cutover and verification, or (C) use ScyllaDB's wire compatibility to do a rolling node replacement within the existing cluster?
+**What Discord did:** They built a data service middleware that handled routing transparently, streaming data from Cassandra to ScyllaDB while routing reads and writes to the appropriate backend based on migration state per channel. The wire compatibility of ScyllaDB dramatically reduced risk — same schema, same queries, same drivers. The migration was primarily an infrastructure operation rather than an application rewrite. The lesson: when possible, choose wire-compatible replacements to minimize the surface area of change.
+:::
+
+::: tip Key Lessons
+- **Database choice evolves with scale.** Discord used three databases in seven years. Each was the right choice at the time. The right database is the one that fits your current and near-future scale.
+- **JVM garbage collection is a real problem at scale.** For latency-sensitive systems, GC pauses are not theoretical — they cause visible user-facing latency spikes that worsen as data grows.
+- **Wire-compatible replacements reduce migration risk.** Choosing ScyllaDB (Cassandra-compatible) meant the migration was an infrastructure swap, not an application rewrite.
+- **Partition design is the most important wide-column store decision.** Unbalanced partition distribution causes hot nodes, high tail latency, and operational pain.
+- **Monitor p99, not just p50.** Discord's Cassandra cluster looked healthy at p50. The problems were all at p99 — the tail latency affecting a noticeable percentage of requests.
+:::
+
+::: details Quiz
+
+**Q1: Why did Discord switch from MongoDB to Cassandra in 2017?**
+MongoDB's MMAPv1 storage engine mapped the entire dataset into memory, causing performance degradation as data exceeded available RAM. Document-level locking caused latency spikes under high write concurrency. Compaction caused periodic latency spikes that violated Discord's strict latency requirements.
+
+**Q2: What is the "hot partition problem" that Discord experienced with Cassandra?**
+Very large, active channels (like gaming guilds with millions of messages) caused certain partitions to receive a disproportionate share of reads and writes. These hot partitions triggered JVM garbage collection pauses that caused p99 latency spikes of 200-800ms — directly noticeable to users.
+
+**Q3: What specific performance improvement did the ScyllaDB migration achieve?**
+P99 read latency dropped from 40-125ms to 15ms. P99 write latency dropped from 5-70ms to 5ms. Node count was reduced from 177 Cassandra nodes to 72 ScyllaDB nodes (59% fewer). GC pauses were eliminated entirely.
+
+**Q4: How do Discord's Snowflake IDs help with message storage and retrieval?**
+Snowflake IDs encode a timestamp in the ID itself, making messages naturally time-ordered without a separate timestamp column. This means ORDER BY message_id is equivalent to chronological ordering, and no secondary index is needed for time-based queries.
+
+**Q5: How did Discord perform zero-downtime migrations between databases?**
+They used a dual-write/dual-read approach: write to both old and new databases, migrate historical data in the background, read from the new database with shadow reads from the old for verification, then cut over fully once confident in data integrity. This pattern was used for both the MongoDB-to-Cassandra and Cassandra-to-ScyllaDB migrations.
+:::
+
+## One-Liner Summary
+
+Discord migrated trillions of messages across three databases in seven years — from MongoDB to Cassandra to ScyllaDB — because each database was right for its era, and JVM garbage collection pauses are the enemy of real-time communication.
+
 ---
 
 *Sources: [Discord Blog — How Discord Stores Billions of Messages](https://discord.com/blog/how-discord-stores-billions-of-messages) (January 2017); [Discord Blog — How Discord Stores Trillions of Messages](https://discord.com/blog/how-discord-stores-trillions-of-messages) (March 2023); Discord engineering talks at QCon and other conferences.*

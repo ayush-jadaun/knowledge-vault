@@ -491,3 +491,63 @@ Express middleware is not compatible with Hono or Elysia. You will need to find 
 **Choose Hono** if you need to deploy across multiple runtimes (edge, serverless, Node, Bun, Deno) or if bundle size matters (serverless cold starts, edge workers). Hono is the universal framework — write once, deploy anywhere. Its middleware ecosystem is growing fast.
 
 **Choose Elysia** if you are building on Bun and want maximum performance with end-to-end type safety. Elysia's Eden Treaty gives you tRPC-like type safety for REST APIs without code generation. The tradeoff is Bun lock-in and a smaller ecosystem.
+
+## Which Would You Choose?
+
+**Scenario 1:** You are building a REST API that must deploy to Cloudflare Workers, AWS Lambda, and a traditional Node.js server depending on the client's infrastructure.
+
+::: details Recommendation: Hono
+Hono is the only framework designed for runtime portability. Write your API once, deploy it to Workers (14 KB bundle, instant cold starts), Lambda, Deno, Bun, or Node.js. No other framework supports this many deployment targets with a single codebase.
+:::
+
+**Scenario 2:** Your team of 20 backend engineers maintains a large Express monolith with 200+ routes, 50 custom middleware functions, and extensive Passport.js auth. Performance is becoming a bottleneck.
+
+::: details Recommendation: Fastify
+Fastify's `@fastify/express` compatibility layer lets you run existing Express middleware while gradually migrating routes to Fastify's plugin system. You get 3x performance improvement incrementally without a big-bang rewrite. No other framework offers this migration path.
+:::
+
+**Scenario 3:** You are a solo developer prototyping an API in a weekend hackathon. You need to ship something that works in 2 hours. Everyone on your team knows JavaScript basics.
+
+::: details Recommendation: Express
+Express has the lowest barrier to entry. Every tutorial on the internet uses Express, every npm package has an Express example, and every developer you will ever hire knows it. For a prototype that may be thrown away, Express's ecosystem advantage outweighs any performance concern.
+:::
+
+::: warning Common Misconceptions
+- **"Express is too slow for production"** — Express handles 22K req/s, which is more than enough for 99% of applications. Your database queries take 15ms; the framework overhead of 2ms vs 0.5ms is noise. Express is slow relative to Fastify, not slow in absolute terms.
+- **"Hono is only for edge/serverless"** — Hono runs perfectly on Node.js and Bun as a traditional long-running server. Its edge portability is a bonus, not a requirement.
+- **"Elysia requires Bun for everything"** — While Elysia is optimized for Bun, your application code (business logic, database queries) is standard TypeScript that can be adapted to other runtimes if needed.
+- **"Fastify is hard to learn"** — Fastify's core API is straightforward. The complexity comes from the plugin encapsulation model, which is a feature (enforced modularity), not a bug.
+:::
+
+::: tip Real Migration Stories
+**Fastify team: From Express to Fastify at NearForm** — NearForm, the consultancy behind Fastify, migrated several client projects from Express to Fastify. They reported 2-3x throughput improvements and found that JSON Schema validation eliminated entire categories of bugs that manual validation missed.
+
+**Discord: Custom framework** — Discord famously moved from Express/Node.js to Elixir for their real-time gateway, demonstrating that sometimes the migration is not between Node.js frameworks but away from Node.js entirely when you have extreme concurrency requirements (millions of concurrent WebSocket connections).
+:::
+
+::: details Quiz
+
+**1. Why is Fastify faster than Express for JSON responses?**
+
+Fastify uses `fast-json-stringify`, which pre-compiles JSON Schema into an optimized serialization function. Express uses the generic `JSON.stringify`, which must inspect the object structure on every call.
+
+**2. What does Hono's "runtime portability" mean in practice?**
+
+A single Hono application can run on Node.js, Bun, Deno, Cloudflare Workers, AWS Lambda, Vercel Edge, and Fastly Compute without code changes. Hono uses the Web Standards `Request`/`Response` objects, which are supported on all these runtimes.
+
+**3. What is Elysia's Eden Treaty, and what problem does it solve?**
+
+Eden Treaty is a type-safe client generator for Elysia APIs. It gives you tRPC-like end-to-end type safety (autocompletion, type checking) between your Elysia backend and your frontend without code generation or schema files.
+
+**4. Why does Express middleware not work with Hono or Elysia?**
+
+Express middleware uses the `(req, res, next)` pattern with Node.js-specific `IncomingMessage` and `ServerResponse` objects. Hono uses Web Standards `Request`/`Response`, and Elysia uses Bun's native HTTP objects. The interfaces are fundamentally different.
+
+**5. In what scenario would Express's massive ecosystem outweigh Fastify's performance advantage?**
+
+When you need a specific npm package that only provides Express middleware (e.g., a niche auth strategy, a proprietary SDK integration). Fastify's `@fastify/express` compatibility layer can help, but native Express middleware availability is still the largest ecosystem.
+:::
+
+## One-Liner Summary
+
+Express has the biggest ecosystem but slowest speed, Fastify is the natural Express successor for Node.js performance, Hono deploys anywhere in 14 KB, and Elysia squeezes max throughput from Bun.

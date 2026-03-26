@@ -555,3 +555,124 @@ observer.observe({ type: 'layout-shift', buffered: true });
 - [Bundle Optimization](/frontend-engineering/bundle-optimization) — Reduce JavaScript that blocks the main thread
 - [UI & Design Systems > Animations](/ui-design-systems/animations/) — Animation patterns built on compositor-friendly properties
 - [Performance Profiling > Browser Profiling](/performance/profiling/browser-profiling) — Advanced Chrome DevTools techniques
+
+---
+
+::: tip Key Takeaway
+- The browser rendering pipeline flows through DOM construction, CSSOM, render tree, layout, paint, and compositing — changes at earlier stages trigger more downstream work and are more expensive.
+- Only four CSS properties (`transform`, `opacity`, `filter`, `backdrop-filter`) can be animated purely on the compositor thread without triggering layout or paint.
+- Layout thrashing (interleaving DOM reads and writes) is the single worst performance anti-pattern in DOM manipulation and can be avoided by batching reads and writes.
+:::
+
+::: warning Common Misconceptions
+- **"`display: none` and `visibility: hidden` are the same."** `display: none` removes the element from the render tree entirely (no space, no paint). `visibility: hidden` keeps it in the render tree and layout — it still occupies space but is not painted.
+- **"`will-change` is a free performance boost."** Every `will-change: transform` promotes the element to its own GPU layer, consuming VRAM. Applying it to hundreds of elements can cause massive memory usage and actually degrade performance.
+- **"CSS selectors don't affect performance."** Deeply nested descendant selectors like `.app .content .list .item .title span` force the browser to walk up the DOM tree for every element. Flat, single-class selectors (BEM-style) are dramatically faster to match.
+- **"JavaScript always blocks rendering."** Only synchronous `<script>` tags block DOM parsing. Scripts with `async` or `defer` download in parallel and do not block the parser.
+- **"`requestAnimationFrame` makes animations smooth."** rAF schedules work before the next paint, but if your rAF callback takes 20ms on a 16.67ms frame budget, you still get jank. rAF gives you the right timing — you still need to keep the work within budget.
+:::
+
+## When NOT to Focus on Rendering Optimization
+
+- **Server-rendered static content sites** — If your pages are mostly text and images with minimal interactivity, the rendering pipeline is not your bottleneck. Focus on TTFB and image optimization instead.
+- **Low-traffic internal tools** — Spending time eliminating every forced reflow in an admin panel used by 10 people is poor ROI. Optimize for maintainability.
+- **Over-promoting to compositor layers** — Do not blanket-apply `will-change` or `translateZ(0)` to "make everything fast." Only promote elements you are actively animating and remove the hint after the animation ends.
+- **Micro-optimizing CSS selector specificity** — Unless you have 10,000+ DOM elements with 5,000+ CSS rules, the difference between a flat selector and a 3-level nested selector is sub-millisecond. Optimize readability first.
+
+::: tip In Production
+- **Google Chrome** developed the `content-visibility: auto` CSS property and reported 7x rendering performance improvement on the Chrome blog page, which has long article lists.
+- **Airbnb** rewrote their listing page animations to use only compositor-friendly properties (`transform`, `opacity`), eliminating jank on scroll-driven gallery transitions.
+- **Netflix** uses `will-change` strategically on their title card hover animations and removes it after the transition completes to avoid GPU memory bloat across thousands of titles.
+- **LinkedIn** identified layout thrashing as the root cause of 300ms+ interaction delays in their feed, fixed it by batching DOM reads/writes, and reduced INP by 40%.
+- **Figma** renders their entire canvas using WebGL (bypassing the browser's paint stage entirely), achieving 60fps on complex designs with thousands of elements.
+:::
+
+::: details Quiz
+
+**1. What are the six stages of the browser rendering pipeline in order?**
+
+::: details Answer
+DOM Construction, CSSOM Construction, Render Tree, Layout (Reflow), Paint, and Compositing.
+:::
+
+**2. Why is the CSSOM render-blocking while the DOM is not?**
+
+::: details Answer
+The browser cannot render content with incomplete styles because it would cause a flash of unstyled content (FOUC) followed by a layout shift. The DOM, however, is built incrementally as HTML streams in, allowing progressive rendering.
+:::
+
+**3. What is layout thrashing and how do you fix it?**
+
+::: details Answer
+Layout thrashing occurs when you alternate between reading layout properties (like `offsetHeight`) and writing styles (like `style.width`) in a loop. Each read forces a synchronous reflow because the previous write invalidated the layout. Fix it by batching all reads first, then all writes, or using `requestAnimationFrame` for the write phase.
+:::
+
+**4. What is the frame budget at 60fps, and what happens if it is exceeded?**
+
+::: details Answer
+At 60fps, each frame has a budget of 16.67ms (1000ms / 60). If any phase (JavaScript, style calculation, layout, paint, composite) exceeds this budget, the frame is dropped and the user sees jank (visual stutter). On 120Hz displays, the budget shrinks to 8.33ms.
+:::
+
+**5. What is the difference between `content-visibility: auto` and CSS containment?**
+
+::: details Answer
+CSS containment (`contain: layout style paint`) tells the browser that an element's internals do not affect the rest of the page, enabling optimization. `content-visibility: auto` goes further — it tells the browser to completely skip layout, paint, and compositing for elements that are off-screen, which can reduce initial rendering time by 90%+ on long pages.
+:::
+
+:::
+
+::: details Exercise
+**Layout Thrashing Detection and Fix**
+
+Create an HTML page with 200 list items. Write two versions of code that resizes each item based on its content height:
+
+1. **Version A (Bad):** Read `offsetHeight` and set `style.width` inside the same loop (layout thrashing).
+2. **Version B (Good):** Batch all reads into an array, then apply all writes in a separate loop.
+
+Use the Chrome DevTools Performance tab to record both versions and compare:
+- Total layout time
+- Number of forced reflows (purple "Layout" bars)
+- Total scripting time
+
+::: details Solution
+```html
+<ul id="list"></ul>
+<script>
+// Generate 200 items
+const list = document.getElementById('list');
+for (let i = 0; i < 200; i++) {
+  const li = document.createElement('li');
+  li.textContent = 'Item '.repeat(Math.floor(Math.random() * 10) + 1) + i;
+  li.className = 'item';
+  list.appendChild(li);
+}
+
+const items = document.querySelectorAll('.item');
+
+// VERSION A: Layout thrashing (slow)
+function thrashingVersion() {
+  for (const item of items) {
+    const height = item.offsetHeight; // READ forces reflow
+    item.style.width = height * 3 + 'px'; // WRITE invalidates layout
+  }
+}
+
+// VERSION B: Batched (fast)
+function batchedVersion() {
+  const heights = [];
+  for (const item of items) {
+    heights.push(item.offsetHeight); // All reads first
+  }
+  items.forEach((item, i) => {
+    item.style.width = heights[i] * 3 + 'px'; // All writes second
+  });
+}
+</script>
+```
+
+Expected results: Version A triggers ~200 forced reflows (one per loop iteration). Version B triggers 1 reflow for all reads and 1 reflow for all writes. Total layout time difference is typically 10-50x.
+:::
+
+:::
+
+> **One-Liner Summary:** The browser rendering pipeline is a six-stage assembly line where changes at earlier stages cascade through everything downstream — understand it, and you will know exactly why your UI is slow.

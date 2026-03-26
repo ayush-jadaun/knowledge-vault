@@ -250,6 +250,52 @@ The highest expression of Netflix's resilience philosophy is running active-acti
 
 5. **Embrace progressive failure injection.** Start with killing single instances. Graduate to injecting latency. Then simulate AZ failure. Then region failure. Each step should only happen after the previous step consistently succeeds.
 
+## What Would You Do?
+
+Test your resilience engineering instincts against the decisions Netflix's engineers actually faced.
+
+::: details Scenario 1: It is 2008. Your Oracle database just corrupted and DVD shipments are halted for 3 days. Your data center infrastructure has grown organically and is full of single points of failure. Do you (A) invest in making your existing data center infrastructure more resilient with redundant databases and failover, (B) migrate to a cloud provider (AWS is still young and unproven at scale), or (C) build a second data center for disaster recovery?
+**What Netflix did:** They chose **(B) — migrate to AWS**, which was considered radical at the time. The reasoning was fundamental: managing physical infrastructure was consuming engineering resources that could be better spent on the product, vertical scaling had reached its limit, and single-vendor database dependency was a liability. The migration took 8 years (2008-2016), but it transformed Netflix from a fragile monolith to a distributed system running 700+ microservices across multiple AWS regions. The lesson: sometimes the right response to a crisis is not to fix the current architecture but to replace it entirely.
+:::
+
+::: details Scenario 2: You have migrated to AWS and built a microservices architecture. You believe your services are resilient, but you have no evidence. Your team proposes a tool that randomly terminates production EC2 instances during business hours to test resilience. Management is nervous — intentionally breaking production sounds insane. Do you (A) test only in staging, (B) deploy the tool in production but only during maintenance windows, or (C) run it in production during business hours?
+**What Netflix did:** They chose **(C) — Chaos Monkey runs in production during business hours.** The reasoning is counterintuitive but sound: if you only discover failures during rare, unexpected outages at 3 AM, you learn in the worst possible conditions. Testing during business hours means the team is alert, ready, and can fix resilience gaps immediately. Staging environments do not have the same traffic, data, or infrastructure topology as production, so they do not reveal real resilience gaps. The cultural shift — embracing that failure is expected, not exceptional — was harder than building the tools.
+:::
+
+::: details Scenario 3: Chaos Monkey (kill one instance) works well. Your team proposes Chaos Kong — a tool that simulates the failure of an entire AWS region. This could theoretically cause a real outage for millions of users if your systems are not truly resilient. Do you (A) refuse the risk — the downside is too high, (B) run it but only after months of preparation and with a manual kill switch, or (C) schedule it as a routine exercise?
+**What Netflix did:** They built up to Chaos Kong incrementally. First Chaos Monkey (one instance), then Chaos Gorilla (one availability zone), then Chaos Kong (one region). Each step built confidence and tooling for the next. Chaos Kong exercises are run with careful preparation, monitoring, and the ability to abort. The result: Netflix can shift all traffic from one AWS region to another in minutes, and survived multiple AWS outages that took down other major companies. The lesson: start with the smallest possible scope and progressively increase as confidence grows.
+:::
+
+::: tip Key Lessons
+- **Design for failure, not against it.** You cannot prevent all failures at scale. The only viable strategy is to assume failure will happen and design your system to survive it.
+- **Your systems become more reliable when you break them regularly.** If engineers know any server could die at any time, they design services to handle it gracefully.
+- **Production is the only truthful test environment.** Staging does not have the same traffic, data, or infrastructure. Only production testing reveals true resilience gaps.
+- **Cultural change is harder than technical change.** Building Chaos Monkey took weeks. Changing engineering culture to embrace deliberate failure injection took years.
+- **Start small and progressively increase scope.** Kill one instance before you kill an availability zone. Kill an availability zone before you kill a region.
+:::
+
+::: details Quiz
+
+**Q1: What event in 2008 triggered Netflix's decision to migrate to AWS and eventually create chaos engineering?**
+A major Oracle database corruption that took down DVD shipping operations for 3 days. The incident exposed fundamental fragilities in Netflix's data center infrastructure — vertical scaling limits, single-vendor database dependency, and organic growth without failure resilience design.
+
+**Q2: What is the core philosophy behind Chaos Monkey?**
+Systems become more reliable when you break them regularly. If engineers know any server could be killed at any time, they design services to handle server failure gracefully. The question is not "will this fail?" but "when this fails, what happens?"
+
+**Q3: What is the difference between Chaos Monkey, Chaos Gorilla, and Chaos Kong?**
+Chaos Monkey terminates individual EC2 instances. Chaos Gorilla simulates the failure of an entire AWS Availability Zone. Chaos Kong simulates the failure of an entire AWS Region. Each represents a progressively larger blast radius for failure testing.
+
+**Q4: Why does Netflix run chaos experiments during business hours instead of maintenance windows?**
+If you only discover failures during 3 AM outages, you learn in the worst possible conditions with a tired, stressed team. Running experiments during business hours means the team is alert, ready, and can fix resilience gaps immediately. It also forces engineers to internalize that failure is expected, not exceptional.
+
+**Q5: How did Netflix's chaos engineering investment prove its value during the 2012 AWS Christmas Eve outage?**
+While many AWS customers experienced significant downtime during the us-east-1 ELB outage on December 24, 2012, Netflix was largely unaffected. Their architecture had been designed and tested to handle exactly this type of failure through their chaos engineering practices.
+:::
+
+## One-Liner Summary
+
+A 3-day database outage in 2008 convinced Netflix to move to AWS and start deliberately breaking production systems — creating a discipline (chaos engineering) that proved its value when they survived AWS outages that took down everyone else.
+
 ---
 
 *Sources: [Netflix Tech Blog — The Netflix Simian Army](https://netflixtechblog.com/the-netflix-simian-army-16e57fbab116) (July 2011); [Netflix Tech Blog — Chaos Monkey Released Into The Wild](https://netflixtechblog.com/netflix-chaos-monkey-upgraded-1d679429c) (2012); [Chaos Engineering: System Resiliency in Practice](https://www.oreilly.com/library/view/chaos-engineering/9781491988459/) (O'Reilly, 2017); [Adrian Cockcroft — Migrating to Cloud Native](https://www.youtube.com/watch?v=aHz-sHqN5k8) (2015); [Netflix Tech Blog — Lessons Netflix Learned from the AWS Outage](https://netflixtechblog.com/lessons-netflix-learned-from-the-aws-outage-deefe5fd0c04) (April 2011).*

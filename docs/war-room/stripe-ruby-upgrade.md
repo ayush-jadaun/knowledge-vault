@@ -218,6 +218,52 @@ Even with millions of tests and static type checking, some issues only surface u
 
 6. **Track migration progress visually.** Create dashboards showing how much of the codebase has been migrated, how many test failures remain on the new version, and what percentage of production traffic is running on the new version. Visibility drives momentum.
 
+## What Would You Do?
+
+Test your large-scale migration instincts against the decisions Stripe's engineers actually faced.
+
+::: details Scenario 1: You are responsible for upgrading millions of lines of Ruby code from Ruby 2.7 to Ruby 3.0 in a payment processing system that handles billions of dollars. A subtle behavioral change (like floating-point rounding differences) could cause incorrect payment amounts. Do you (A) plan a big-bang upgrade on a maintenance weekend with extensive pre-testing, (B) build a dual-boot system that runs both Ruby versions simultaneously and migrate incrementally, or (C) rewrite critical payment paths in a type-safe language first, then upgrade?
+**What Stripe did:** They chose **(B) — dual-boot architecture.** The same codebase ran against both Ruby 2.7 and Ruby 3.0 in CI. Failures in the new version were tracked and fixed incrementally without blocking feature development on the current version. A big-bang upgrade (A) is too risky for a payment system — you cannot afford to discover behavioral differences in production. Rewriting in another language (C) is a multi-year project of its own. The dual-boot approach provided continuous verification with zero disruption to business.
+:::
+
+::: details Scenario 2: Your Ruby codebase has millions of lines of dynamically typed code. You have no way to verify at build time whether a Ruby version upgrade changes the behavior of method calls. Do you (A) write more tests to increase code coverage, (B) add runtime instrumentation to log all method signatures in production, or (C) invest in building a static type checker for Ruby?
+**What Stripe did:** They chose **(C) — they built Sorbet**, a static type checker for Ruby that they later open-sourced. Sorbet gave them the ability to detect type mismatches at build time, identify dead code, verify API contracts, and catch behavioral differences between Ruby versions at the type level. They adopted it incrementally with graduated strictness levels. The combination of static type checking and runtime testing provided far higher confidence than either alone.
+:::
+
+::: details Scenario 3: The test suite passes on Ruby 3.0. You are ready for production deployment. Do you (A) switch all production traffic to Ruby 3.0 at once since tests pass, (B) use shadow mode followed by canary deployment with automatic rollback, or (C) run Ruby 3.0 only for non-payment endpoints first?
+**What Stripe did:** They chose **(B) — a staged production rollout.** Shadow mode first (compare responses without serving them), then 1% canary, then gradual expansion (5%, 10%, 25%, 50%, 100%) with automatic rollback on error rate or latency spikes. The staged rollout caught several issues that did not surface in testing — unusual character encodings, extreme numeric values, rare API parameter combinations. These only manifested under real production traffic patterns.
+:::
+
+::: tip Key Lessons
+- **Large migrations must be incremental.** Big-bang migrations of millions of lines are not feasible for systems that must remain operational. Dual-boot lets you migrate gradually without blocking feature development.
+- **Invest in tooling before migrating.** Stripe built Sorbet, automated codemods, and dual-boot infrastructure before starting the actual migration. The upfront investment paid massive dividends.
+- **Static types make migrations tractable.** Without Sorbet, verification was limited to testing. With Sorbet, many incompatibilities were caught at build time rather than runtime.
+- **Automated codemods handle the mechanical, humans handle the semantic.** Mechanical syntax changes should be automated. Human review should focus on cases where automation might change behavior.
+- **Production validation catches what tests miss.** Even with millions of tests and static type checking, some issues only surface under real production conditions.
+:::
+
+::: details Quiz
+
+**Q1: Why couldn't Stripe simply upgrade all their Ruby code from version 2 to version 3 in one step?**
+Stripe processes billions of dollars in payments. A subtle behavioral change in the Ruby runtime (like floating-point rounding, keyword argument handling, or string encoding differences) could cause incorrect payment amounts, failed transactions, or compliance violations. The codebase had millions of lines worked on by thousands of engineers with hundreds of daily deploys.
+
+**Q2: What was the most disruptive language change between Ruby 2.7 and Ruby 3.0?**
+The handling of keyword arguments. In Ruby 2, a hash passed as the last argument could be implicitly converted to keyword arguments. Ruby 3 made this an error. Across millions of lines of code, finding and fixing every instance of implicit hash-to-keyword conversion was a massive effort.
+
+**Q3: What is Sorbet and why did Stripe build it?**
+Sorbet is a static type checker for Ruby that Stripe developed and open-sourced. Without static types, the only way to verify a Ruby version upgrade was to run the code. Sorbet enabled detection of type mismatches at build time, identification of dead code, verification of API contracts, and catching behavioral differences between Ruby versions statically.
+
+**Q4: How did Stripe handle metaprogrammed Ruby code that Sorbet could not statically analyze?**
+For dynamically generated methods (method_missing, define_method, eval), Stripe used runtime instrumentation that logged method signatures during production execution, comprehensive test coverage, and manual review of metaprogramming-heavy modules.
+
+**Q5: What issues did Stripe's staged production rollout catch that testing missed?**
+Certain edge cases in production traffic — unusual character encodings, extreme numeric values, and rare API parameter combinations — only manifested under real-world conditions. The canary deployment with automatic rollback meant these issues caused brief, contained impact rather than company-wide incidents.
+:::
+
+## One-Liner Summary
+
+Stripe migrated millions of lines of payment-processing Ruby code across major versions by building a static type checker (Sorbet), running dual-boot CI, and deploying with shadow mode — because when your code moves real money, you change the engine while the plane is flying.
+
 ---
 
 *Sources: [Sorbet — A Fast, Powerful Type Checker for Ruby](https://sorbet.org/) (open-sourced 2019); [Stripe Engineering Blog — Migrating millions of lines of code to TypeScript](https://stripe.com/blog/migrating-to-typescript) (for analogous migration methodology); Stripe engineering talks at RubyConf and Strange Loop on Sorbet adoption and Ruby migration strategies; [Shopify Engineering — Upgrading Shopify to Ruby 3](https://shopify.engineering/upgrading-shopify-to-ruby-3) (for comparison methodology).*

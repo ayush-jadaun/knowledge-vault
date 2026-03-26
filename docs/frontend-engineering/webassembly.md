@@ -534,4 +534,156 @@ The Component Model is the most transformative proposal. It enables a universal 
 
 ---
 
+::: tip Key Takeaway
+- WebAssembly is not a replacement for JavaScript — it is a complement for compute-intensive tasks (image processing, cryptography, physics) where JavaScript cannot match native speed.
+- WASM's performance advantage comes from predictable types, no GC pauses, streaming compilation, and near-native execution — not from being a "better JavaScript."
+- The JS-WASM boundary has overhead per call, so you should batch data into linear memory and let WASM process entire buffers rather than calling per-element.
+:::
+
+::: warning Common Misconceptions
+- **"WASM is always faster than JavaScript."** For DOM manipulation, string processing, JSON parsing, and async I/O, JavaScript is faster or equivalent. V8's JSON.parse is highly optimized native code, and WASM cannot access the DOM directly — every DOM call crosses the JS-WASM boundary.
+- **"WASM replaces JavaScript in the browser."** WASM cannot access Web APIs, the DOM, or the event loop directly. It must call through JavaScript for all browser interactions. JavaScript remains the orchestration layer; WASM handles compute.
+- **"Any language can compile to WASM."** Languages with garbage collectors (Java, C#, Python) produce very large WASM modules because they must include their runtime and GC. Rust and C/C++ produce the smallest, fastest modules because they have no runtime overhead. The WASM GC proposal is changing this.
+- **"Standard Go compiles to small WASM modules."** Standard Go's WASM output includes the entire Go runtime (2-10MB+). Use TinyGo for browser WASM — it produces 10-500KB modules, though it does not support all Go features.
+- **"WASM is only for the browser."** WASM is expanding to server-side runtimes (Cloudflare Workers, Fastly Compute), plugin systems (Envoy, Shopify, Figma), edge computing, and blockchain smart contracts. WASI provides a standard system interface for non-browser environments.
+:::
+
+## When NOT to Use WebAssembly
+
+- **DOM-heavy applications** — Every DOM manipulation from WASM must cross the JS-WASM boundary. A React/Vue/Svelte app in JavaScript will be faster for UI rendering than the same app compiled to WASM.
+- **String-heavy processing** — WASM has no string type. Strings must be serialized to/from linear memory with TextEncoder/TextDecoder. JavaScript's native string operations are heavily optimized and faster for text processing.
+- **Simple CRUD applications** — If your app is forms, tables, and API calls, WASM adds complexity (build toolchain, debugging difficulty) without performance benefit.
+- **Small utility functions** — The JS-WASM boundary call overhead dominates for functions that take microseconds. A 5us function with 2us boundary overhead loses 40% of its time to the boundary.
+- **When JavaScript is already fast enough** — V8's JIT compiler optimizes hot JavaScript code to near-native speed. If your JavaScript function runs in 5ms and you only need it to run in <16ms (frame budget), WASM optimization is unnecessary.
+
+::: tip In Production
+- **Figma** compiles their C++ rendering engine to WASM, enabling browser-based design with the same performance as their native desktop app. This is the most cited WASM success story.
+- **Google** built Squoosh (squoosh.app) using WASM, compiling image codecs (MozJPEG, AVIF, WebP) from C/C++ to run in the browser for client-side image compression.
+- **Cloudflare** supports WASM modules in their Workers edge runtime, enabling developers to run Rust or C++ code at the edge with microsecond cold starts.
+- **Shopify** uses WASM for their checkout extension system, allowing third-party developers to write custom checkout logic in a sandboxed environment that cannot access the host system.
+- **1Password** uses WASM for their browser extension's cryptographic operations (Argon2 password hashing, SRP authentication), achieving 5-20x speedup over JavaScript implementations.
+:::
+
+::: details Quiz
+
+**1. What are WASM's four basic value types?**
+
+::: details Answer
+`i32` (32-bit integer), `i64` (64-bit integer), `f32` (32-bit IEEE 754 float), and `f64` (64-bit IEEE 754 float). Newer proposals add `v128` (SIMD), `funcref`, and `externref`. There are no strings, objects, or arrays — complex data must be managed in linear memory.
+:::
+
+**2. Why is streaming compilation (`instantiateStreaming`) preferred over regular `instantiate`?**
+
+::: details Answer
+`WebAssembly.instantiateStreaming` compiles the WASM module as bytes arrive over the network, overlapping download and compilation. Regular `instantiate` requires downloading the entire module first, then compiling. Streaming compilation is faster because it starts processing immediately and can pipeline the work.
+:::
+
+**3. What is linear memory and why do you need to be careful when it grows?**
+
+::: details Answer
+Linear memory is a contiguous, byte-addressable block of memory that WASM modules operate on (similar to a C heap). When it grows via `memory.grow()`, the underlying `ArrayBuffer` is detached and replaced with a new, larger one. Any existing `Uint8Array` views become invalid and must be re-created from `memory.buffer`.
+:::
+
+**4. Why is WASM suited for edge computing?**
+
+::: details Answer
+WASM modules have near-instant cold starts (0.1-1ms vs 100-500ms for containers) because they are pre-compiled, have no runtime initialization, and use minimal memory. This makes them ideal for edge runtimes (Cloudflare Workers, Fastly Compute) where functions must start fast, execute quickly, and consume minimal resources across thousands of concurrent instances.
+:::
+
+**5. What is the WASM Component Model and why is it significant?**
+
+::: details Answer
+The Component Model allows composing WASM modules like packages with strongly-typed interfaces, regardless of source language. A Rust module can call a Python module can call a Go module — all through well-defined interfaces, with no serialization overhead. It enables a universal plugin system and language-agnostic software composition, which is WASM's most transformative proposal.
+:::
+
+:::
+
+::: details Exercise
+**Build a WASM Image Processor**
+
+Using Rust and wasm-bindgen (or AssemblyScript if you prefer TypeScript-like syntax):
+
+1. Create a WASM module that accepts image pixel data (RGBA buffer) from JavaScript
+2. Implement three image filters: grayscale, invert, and sepia
+3. Use shared linear memory to pass the pixel buffer (avoid copying)
+4. Benchmark against a pure JavaScript implementation with a 1920x1080 image
+5. Measure the JS-WASM boundary overhead by comparing per-pixel calls vs buffer-based calls
+
+::: details Solution
+```rust
+// src/lib.rs
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn grayscale(pixels: &mut [u8]) {
+    for chunk in pixels.chunks_exact_mut(4) {
+        let gray = (0.299 * chunk[0] as f32
+            + 0.587 * chunk[1] as f32
+            + 0.114 * chunk[2] as f32) as u8;
+        chunk[0] = gray;
+        chunk[1] = gray;
+        chunk[2] = gray;
+        // chunk[3] (alpha) unchanged
+    }
+}
+
+#[wasm_bindgen]
+pub fn invert(pixels: &mut [u8]) {
+    for chunk in pixels.chunks_exact_mut(4) {
+        chunk[0] = 255 - chunk[0];
+        chunk[1] = 255 - chunk[1];
+        chunk[2] = 255 - chunk[2];
+    }
+}
+
+#[wasm_bindgen]
+pub fn sepia(pixels: &mut [u8]) {
+    for chunk in pixels.chunks_exact_mut(4) {
+        let r = chunk[0] as f32;
+        let g = chunk[1] as f32;
+        let b = chunk[2] as f32;
+        chunk[0] = (0.393 * r + 0.769 * g + 0.189 * b).min(255.0) as u8;
+        chunk[1] = (0.349 * r + 0.686 * g + 0.168 * b).min(255.0) as u8;
+        chunk[2] = (0.272 * r + 0.534 * g + 0.131 * b).min(255.0) as u8;
+    }
+}
+```
+
+```javascript
+// Benchmark
+import init, { grayscale } from './pkg/image_filters.js';
+
+await init();
+
+const canvas = document.createElement('canvas');
+canvas.width = 1920;
+canvas.height = 1080;
+const ctx = canvas.getContext('2d');
+const imageData = ctx.getImageData(0, 0, 1920, 1080);
+
+// WASM (buffer-based): ~2-5ms for 1920x1080
+console.time('wasm-grayscale');
+grayscale(imageData.data);
+console.timeEnd('wasm-grayscale');
+
+// JavaScript equivalent: ~15-30ms for 1920x1080
+console.time('js-grayscale');
+for (let i = 0; i < imageData.data.length; i += 4) {
+  const gray = 0.299 * imageData.data[i]
+    + 0.587 * imageData.data[i + 1]
+    + 0.114 * imageData.data[i + 2];
+  imageData.data[i] = gray;
+  imageData.data[i + 1] = gray;
+  imageData.data[i + 2] = gray;
+}
+console.timeEnd('js-grayscale');
+```
+
+Expected results: WASM is 3-8x faster for pixel processing due to tight loop optimization, typed memory access, and no GC pressure.
+:::
+
+:::
+
+> **One-Liner Summary:** WebAssembly brings near-native compute performance to the browser and beyond — use it when JavaScript's speed is genuinely insufficient, not as a default choice for every problem.
+
 *Last updated: 2026-03-20*

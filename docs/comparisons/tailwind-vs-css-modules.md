@@ -528,3 +528,63 @@ Migrating to Tailwind is difficult to reverse because style information moves fr
 **Choose Styled Components** only if you have an existing codebase using it and the migration cost is not justified, or if you have a genuinely compelling need for highly dynamic, props-driven styles that CSS variables cannot express. For new projects in 2026, the runtime performance cost and SSR complexity make CSS-in-JS hard to recommend. The React team and the broader community have moved away from runtime CSS-in-JS.
 
 **Choose Vanilla CSS** if your team is disciplined about naming conventions, your project is framework-agnostic, or you want zero tooling dependencies. Modern CSS (nesting, `:has()`, container queries, `@layer`, `@scope`) has closed most of the gaps that CSS tooling was created to address. The risk is naming collisions at scale — use BEM, `@scope`, or `@layer` to mitigate.
+
+## Which Would You Choose?
+
+**Scenario 1:** You are building an admin dashboard with 200+ components. Consistency across the team is critical, and you want tight constraints on spacing, color, and typography.
+
+::: details Recommendation: Tailwind CSS
+Tailwind's configuration enforces design tokens — the spacing scale, color palette, and typography are constrained by default. A developer cannot use arbitrary padding values without explicitly reaching for arbitrary values (`[padding:13px]`). This constraint system produces consistent UIs across large teams without a design system library.
+:::
+
+**Scenario 2:** You are building a component library that will be published as an npm package. Consumers use React, Vue, and Svelte. You cannot force any CSS framework on them.
+
+::: details Recommendation: CSS Modules (or Vanilla CSS)
+CSS Modules produce standard CSS with no runtime dependencies and no framework lock-in. Consumers of your component library do not need Tailwind, Styled Components, or any CSS tooling — they get scoped CSS that works everywhere. This is the most portable styling approach for shared libraries.
+:::
+
+**Scenario 3:** Your React app has heavy dynamic styling — buttons change color based on 5 variant props, cards animate based on scroll position, and themes switch in real-time based on user preferences.
+
+::: details Recommendation: CSS Modules + CSS Variables (or Tailwind with CSS variables)
+Use CSS variables for dynamic values (colors that change with theme, animation states) and CSS Modules for static scoped styles. This gives you dynamic styling without runtime CSS-in-JS overhead. Tailwind with `style` attributes for CSS variables also works well. Avoid Styled Components for new projects due to runtime performance costs.
+:::
+
+::: warning Common Misconceptions
+- **"Tailwind is just inline styles"** — Tailwind utilities are CSS classes, not inline styles. They support pseudo-classes (`:hover`, `:focus`), responsive breakpoints (`md:`, `lg:`), and media queries (`dark:`, `print:`) — none of which inline styles can do.
+- **"CSS-in-JS is dead"** — Runtime CSS-in-JS (Styled Components, Emotion) has fallen out of favor, but zero-runtime CSS-in-JS (Vanilla Extract, Panda CSS, StyleX) is actively growing. The concern is runtime overhead, not the CSS-in-JS concept itself.
+- **"You cannot build a design system with Tailwind"** — shadcn/ui, Headless UI, and Radix UI all use Tailwind for styling. Tailwind's config file IS your design system — it defines spacing, colors, typography, and breakpoints.
+- **"CSS Modules are outdated"** — CSS Modules are used by Next.js, Vite, and every major build tool out of the box. They provide scoping with zero runtime cost and no vendor lock-in. "Simple and boring" is not the same as "outdated."
+:::
+
+::: tip Real Migration Stories
+**GitHub: CSS to Tailwind (Primer)** — GitHub's Primer design system adopted utility-class patterns inspired by Tailwind for their CSS framework. They found that utility classes reduced CSS bundle size because common patterns (flexbox, spacing, colors) were shared across components instead of duplicated.
+
+**Airbnb: CSS-in-JS to Static CSS** — Airbnb publicly shared their concerns about runtime CSS-in-JS performance, contributing to the broader industry shift away from Styled Components toward zero-runtime alternatives. Their experience highlighted that dynamic style injection causes measurable performance issues at scale.
+:::
+
+::: details Quiz
+
+**1. Why does Tailwind produce smaller CSS than CSS Modules for large applications?**
+
+Tailwind utility classes are shared across components — `flex`, `p-4`, and `text-sm` are emitted once regardless of how many components use them. CSS Modules duplicate similar styles across every component's scoped stylesheet.
+
+**2. What is the runtime performance cost of Styled Components?**
+
+Styled Components adds ~15 KB of JavaScript runtime, parses CSS template literals at runtime, generates unique class names, and injects `<style>` tags into the DOM. Dynamic styles create new CSS classes on every React re-render, causing CSSOM manipulation and potential layout shifts.
+
+**3. How do CSS Modules prevent naming collisions?**
+
+The build tool (Vite, Webpack) transforms each class name in a `.module.css` file into a unique hash. `.card` becomes `._card_1a2b3c`. The component imports a mapping object, so `styles.card` resolves to the hashed name. Two components with `.card` classes produce different hashed names.
+
+**4. What modern CSS features reduce the need for CSS-in-JS or utility frameworks?**
+
+CSS nesting (write nested selectors like Sass), `:has()` (parent selector), container queries (`@container`), cascade layers (`@layer` for specificity management), and `@scope` (native CSS scoping) address problems that previously required tooling.
+
+**5. Why did the React team recommend against runtime CSS-in-JS?**
+
+Runtime CSS-in-JS libraries inject styles during rendering, which conflicts with React Server Components (which run on the server where DOM manipulation is not available) and causes performance issues during SSR hydration (Flash of Unstyled Content). Zero-runtime or build-time CSS solutions are preferred.
+:::
+
+## One-Liner Summary
+
+Tailwind is the fastest way to build consistent UIs with the smallest CSS output, CSS Modules offer scoped standard CSS with zero runtime, Styled Components is legacy for most new projects, and vanilla CSS with modern features is increasingly viable.

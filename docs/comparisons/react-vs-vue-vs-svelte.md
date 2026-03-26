@@ -458,3 +458,70 @@ Migrating between frameworks is expensive. A 100-component app will take 2-4 mon
 **Choose Svelte** if you want the smallest bundles, the least boilerplate, and the most intuitive reactivity model. Svelte 5's runes make state management feel like plain JavaScript. The tradeoff is a smaller ecosystem and fewer job postings, but the gap is closing. SvelteKit is production-ready and excellent for content-driven sites.
 
 **The honest truth**: all three are excellent for building production applications in 2026. The differences in performance, bundle size, and DX are smaller than the differences in how well you architect your application. Pick the one your team knows best, or the one that makes your team happiest — developer happiness has a larger impact on code quality than any framework benchmark.
+
+## Which Would You Choose?
+
+**Scenario 1:** You are the CTO of a 50-person fintech company. Your team of 15 frontend engineers all know React. You need to ship a new trading dashboard in 3 months.
+
+::: details Recommendation: React
+Stay with React. Retraining 15 engineers on a new framework during a 3-month deadline is reckless. Your team's existing expertise, component libraries, and institutional knowledge far outweigh any marginal DX gain from switching. Use Next.js with React Server Components to keep the dashboard fast.
+:::
+
+**Scenario 2:** You are a solo founder building an SEO-critical content site (blog + docs + marketing). Bundle size and page speed are your competitive advantage.
+
+::: details Recommendation: Svelte (SvelteKit)
+SvelteKit ships the least JavaScript to the browser, which directly impacts Core Web Vitals and SEO rankings. For a content-heavy site where interactivity is minimal, Svelte's compiler-based approach means your pages load noticeably faster on mobile devices and slow networks.
+:::
+
+**Scenario 3:** You are leading a new team of 4 junior developers with mixed backgrounds (some know HTML/CSS, one knows Python, one is fresh from a bootcamp). You need a framework everyone can learn quickly.
+
+::: details Recommendation: Vue
+Vue's template syntax feels natural to anyone who knows HTML, the Options API provides clear structure for beginners, and the Composition API is available when the team is ready for advanced patterns. Vue's documentation is widely regarded as the most beginner-friendly in the frontend ecosystem.
+:::
+
+**Scenario 4:** You are building a cross-platform product — a web app and a mobile app that need to share business logic and UI patterns.
+
+::: details Recommendation: React
+React Native gives you a mature path to native mobile apps while sharing component patterns, state management knowledge, and even some business logic with your React web app. Neither Vue nor Svelte has an equivalent mobile story at this maturity level.
+:::
+
+::: warning Common Misconceptions
+- **"Svelte is too young for production"** — Svelte has been in production at companies like Apple, Spotify, and The New York Times since 2019. SvelteKit reached 1.0 in December 2022 and is battle-tested.
+- **"Vue is only popular in China"** — Vue has massive adoption across Europe, Japan, and Latin America. Companies like GitLab, Nintendo, and BMW use Vue in production globally.
+- **"React is slow because of the virtual DOM"** — The virtual DOM is not inherently slow. React 19's compiler eliminates most unnecessary re-renders automatically. Poorly written React is slow; well-written React is fast.
+- **"You need to pick one and never switch"** — Incremental migration is possible. You can run React and Svelte side by side using micro-frontends, or migrate route by route with a reverse proxy. The choice is not permanent.
+- **"Smaller bundle = faster app"** — Bundle size matters for initial load, but runtime performance depends on update efficiency, state management, and application architecture. A 40 KB React app can feel faster than a 5 KB Svelte app if the React app has better code splitting and caching.
+:::
+
+::: tip Real Migration Stories
+**GitLab: jQuery to Vue** — GitLab migrated their massive Rails + jQuery frontend to Vue incrementally over 2+ years (2016-2018). They chose Vue because its template syntax was approachable for their backend-heavy team, and they could migrate component by component without a big-bang rewrite. Today GitLab is one of the largest Vue applications in production.
+
+**Shopify Hydrogen: React to Remix (still React)** — Shopify originally built Hydrogen (their headless commerce framework) on React with a custom server framework. They migrated to Remix in 2023 because Remix's web-standards approach aligned better with their goals for progressive enhancement and edge deployment. The lesson: sometimes the migration is not between frameworks but between meta-frameworks within the same ecosystem.
+:::
+
+::: details Quiz
+
+**1. Which framework uses a compiler to eliminate the need for a virtual DOM?**
+
+Svelte. It compiles components into imperative JavaScript that directly manipulates the DOM, with no runtime diffing or reconciliation.
+
+**2. What problem does Vue's Proxy-based reactivity system solve compared to React's approach?**
+
+Vue's Proxy system automatically tracks which reactive properties each component reads during rendering, so only components that depend on changed data re-render. React re-renders the entire component subtree by default (though React 19's compiler mitigates this).
+
+**3. In what scenario might Svelte produce a LARGER bundle than React?**
+
+For very large applications with 150-200+ components, Svelte's generated per-component code can exceed React's bundle size because React's runtime is shared across all components while Svelte generates unique code for each component.
+
+**4. Which framework introduced the Composition API, and what was it inspired by?**
+
+Vue 3 introduced the Composition API, inspired by React Hooks. It provides a function-based way to organize component logic by concern rather than by option type.
+
+**5. Why might you choose React over Svelte even if Svelte has better benchmarks?**
+
+Ecosystem size (more libraries, more tutorials, more Stack Overflow answers), job market (65% of frontend roles vs 5%), React Native for mobile apps, and existing team expertise. Benchmarks measure synthetic performance; production success depends on ecosystem and team factors.
+:::
+
+## One-Liner Summary
+
+React wins on ecosystem and jobs, Vue wins on approachability and balance, Svelte wins on bundle size and DX — but all three build great production apps in 2026.

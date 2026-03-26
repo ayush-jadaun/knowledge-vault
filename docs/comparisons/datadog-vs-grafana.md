@@ -475,3 +475,63 @@ Budget 2-4 weeks for a migration between observability platforms. The hardest pa
 ::: tip Bottom Line
 For most teams, **Grafana Cloud** offers the best balance of cost, features, and flexibility. Choose **Datadog** when you need every signal in one platform and have the budget. Start with **New Relic** if you want to ship observability today for $0. Pick **Dynatrace** for enterprise Java/.NET environments where auto-instrumentation is worth the premium.
 :::
+
+## Which Would You Choose?
+
+**Scenario 1:** You are a 5-person startup with a Kubernetes cluster. You have zero observability today. Budget is less than $100/month, and nobody on the team wants to operate monitoring infrastructure.
+
+::: details Recommendation: New Relic (free tier)
+New Relic's 100 GB/month free tier gives you metrics, logs, traces, and a full APM dashboard for $0. NRQL is SQL-like and approachable. For a small team that needs observability today without operational overhead, New Relic's free tier is unbeatable. Grafana Cloud is the runner-up at ~$50/month.
+:::
+
+**Scenario 2:** Your 200-person engineering org needs metrics, logs, traces, RUM, synthetic monitoring, security scanning (CSPM), and database monitoring — all correlated in a single UI. Budget is approved.
+
+::: details Recommendation: Datadog
+Datadog is the only platform that unifies all these signals in a single pane of glass. Watchdog AI correlates metrics anomalies with log spikes and trace errors automatically. The DX is polished, and 750+ integrations cover every infrastructure component. Negotiate an annual contract to control costs.
+:::
+
+**Scenario 3:** You are a platform engineering team responsible for observability across 500 hosts. Your company requires on-premise data storage for compliance. You have a Kubernetes cluster and ops capacity to run infrastructure.
+
+::: details Recommendation: Grafana Stack (self-hosted)
+Self-hosted Loki + Mimir + Tempo + Grafana gives you full observability with zero per-GB or per-host licensing costs. Data stays on your infrastructure for compliance. The operational burden is real (you maintain the stack), but the cost savings at 500 hosts are enormous: $0 licensing vs ~$70,000/month for Datadog.
+:::
+
+::: warning Common Misconceptions
+- **"Datadog is expensive"** — Datadog is expensive at scale, but its free tier (5 hosts, limited features) and startup program can make it affordable early on. The pricing shock comes when you scale past initial tiers and enable add-ons (custom metrics, logs, APM, RUM each billed separately).
+- **"Self-hosting Grafana is free"** — Self-hosting has zero licensing costs but real infrastructure and operations costs. Running Mimir, Loki, and Tempo requires compute, storage, and engineers to maintain them. For teams <50 hosts, Grafana Cloud is usually cheaper than self-hosting.
+- **"New Relic is not enterprise-ready"** — New Relic powers observability at major enterprises. Its NRQL query language, Errors Inbox, and APM are production-grade. The free tier generosity sometimes creates a perception of being "not serious."
+- **"You need Dynatrace for Java applications"** — Dynatrace's auto-instrumentation is excellent for Java, but Datadog's dd-trace-java and Grafana's Grafana Agent with OpenTelemetry also provide comprehensive Java APM. Dynatrace's advantage is convenience, not exclusivity.
+:::
+
+::: tip Real Migration Stories
+**Uber: Custom observability to open-source (M3, Jaeger)** — Uber built their own observability stack including M3 (metrics) and Jaeger (tracing), which they open-sourced. Their scale (thousands of microservices) made SaaS observability cost-prohibitive. This extreme example shows that at massive scale, custom/open-source observability can be the only economically viable option.
+
+**DigitalOcean: Datadog to Grafana** — DigitalOcean migrated from Datadog to self-hosted Grafana Stack to reduce observability costs at their scale. The migration took several months and required rewriting dashboards and alerts, but the annual savings were in the millions.
+:::
+
+::: details Quiz
+
+**1. Why does Datadog pricing surprise teams who did not budget carefully?**
+
+Datadog bills separately for each signal type: per-host for infrastructure, per-host for APM, per-GB for logs, per-million for custom metrics, per-million for indexed spans, and per-GB for network monitoring. Teams often enable features incrementally and discover the cumulative cost is 2-5x their initial estimate.
+
+**2. What is the Grafana LGTM stack?**
+
+LGTM stands for Loki (logs), Grafana (visualization), Mimir (metrics, Prometheus-compatible), and Tempo (traces). Together they provide a complete open-source observability platform. Grafana Cloud is the managed SaaS version of this stack.
+
+**3. How does Dynatrace's Davis AI differ from other platforms' alerting?**
+
+Davis AI performs automatic root cause analysis. When an issue occurs, Davis traces the causality chain across infrastructure, application, and service topology to identify the root cause — not just the symptom. Other platforms provide anomaly detection but require human investigation for root cause.
+
+**4. What is the advantage of PromQL over other query languages for metrics?**
+
+PromQL is purpose-built for time-series math: rate calculations, histogram quantiles, label-based aggregation, and cross-metric operations. It is the most expressive language for infrastructure metrics analysis and is the standard query language for Prometheus-compatible systems.
+
+**5. When does self-hosting Grafana Stack NOT make sense?**
+
+When your team is small (<5 engineers), when you do not have Kubernetes operations experience, when you need the monitoring stack to just work without maintenance, or when the infrastructure cost of running Mimir/Loki/Tempo exceeds the cost of Grafana Cloud.
+:::
+
+## One-Liner Summary
+
+Datadog is the all-in-one SaaS gold standard (at a premium price), Grafana Stack is the open-source cost champion, New Relic has the best free tier, and Dynatrace auto-instruments everything for enterprise Java/.NET.

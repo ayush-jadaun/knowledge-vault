@@ -1677,16 +1677,42 @@ export const sidebar: DefaultTheme.Sidebar = {
       items: [
         { text: 'React Native Deep Dive', link: '/mobile-engineering/react-native' },
         { text: 'Flutter Architecture', link: '/mobile-engineering/flutter' },
+        { text: 'Cross-Platform Comparison', link: '/mobile-engineering/cross-platform-comparison' },
       ],
     },
     {
-      text: 'Advanced Topics',
+      text: 'Architecture & State',
+      collapsed: false,
+      items: [
+        { text: 'Mobile Architecture', link: '/mobile-engineering/mobile-architecture' },
+        { text: 'State Management', link: '/mobile-engineering/mobile-state-management' },
+        { text: 'Mobile Networking', link: '/mobile-engineering/mobile-networking' },
+        { text: 'Mobile Databases', link: '/mobile-engineering/mobile-databases' },
+      ],
+    },
+    {
+      text: 'Features & UX',
+      collapsed: false,
+      items: [
+        { text: 'Deep Linking', link: '/mobile-engineering/deep-linking' },
+        { text: 'Mobile Animations', link: '/mobile-engineering/mobile-animations' },
+        { text: 'Mobile Accessibility', link: '/mobile-engineering/mobile-accessibility' },
+        { text: 'Mobile Payments', link: '/mobile-engineering/mobile-payments' },
+        { text: 'Mobile Analytics', link: '/mobile-engineering/mobile-analytics' },
+      ],
+    },
+    {
+      text: 'Operations',
       collapsed: false,
       items: [
         { text: 'Mobile Performance', link: '/mobile-engineering/mobile-performance' },
         { text: 'Push Notification Architecture', link: '/mobile-engineering/push-notifications' },
         { text: 'Offline-First & Local-First', link: '/mobile-engineering/offline-first' },
         { text: 'Mobile Testing', link: '/mobile-engineering/mobile-testing' },
+        { text: 'Mobile CI/CD', link: '/mobile-engineering/mobile-cicd' },
+        { text: 'Mobile Security', link: '/mobile-engineering/mobile-security' },
+        { text: 'Mobile Deployment', link: '/mobile-engineering/mobile-deployment' },
+        { text: 'App Store Optimization', link: '/mobile-engineering/app-store-optimization' },
       ],
     },
   ],

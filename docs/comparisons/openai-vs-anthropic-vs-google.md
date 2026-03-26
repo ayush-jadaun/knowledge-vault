@@ -521,3 +521,63 @@ Use an abstraction layer (Vercel AI SDK, LiteLLM, or LangChain) from day one. Th
 ::: tip Bottom Line
 For most production applications, start with **GPT-4o** or **Claude Sonnet 4** behind an abstraction layer. Use **Gemini 2.0 Flash** for high-volume, cost-sensitive workloads. Self-host **Llama 4** when data cannot leave your infrastructure. Always benchmark on YOUR specific tasks — aggregate benchmarks do not predict domain-specific performance.
 :::
+
+## Which Would You Choose?
+
+**Scenario 1:** You are building a coding assistant IDE plugin. It needs to understand large codebases (50K+ lines), suggest refactors, and write tests. Quality of code output is the top priority.
+
+::: details Recommendation: Claude Sonnet 4
+Claude leads on SWE-bench (real-world coding tasks) with a 72.7% score versus GPT-4o's 33.2%. Its 200K context window can hold an entire codebase for analysis. Extended thinking provides transparent reasoning for complex refactoring decisions. For code-centric applications, Claude is the clear leader.
+:::
+
+**Scenario 2:** Your startup processes 10 million customer support tickets per month. Each ticket needs classification, sentiment analysis, and a suggested response. Cost is the primary constraint.
+
+::: details Recommendation: Gemini 2.0 Flash (or GPT-4o mini)
+At $0.075/1M input tokens and $0.15/1M output tokens, Gemini 2.0 Flash costs ~$225/month for 10M tickets. GPT-4o mini is similar at ~$750/month. Both handle classification and sentiment analysis well. For this volume, the 10-50x cost difference versus frontier models is decisive.
+:::
+
+**Scenario 3:** You are building a medical records analysis system. Patient data absolutely cannot leave your company's servers due to HIPAA requirements. You have a cluster of 8x A100 GPUs available.
+
+::: details Recommendation: Llama 4 (self-hosted)
+Self-hosted Llama 4 keeps all data on your infrastructure — no API calls, no third-party data processing agreements needed. With 8x A100s, you can run the Maverick model with excellent throughput. Fine-tune on your medical domain data to improve accuracy without exposing any patient information.
+:::
+
+::: warning Common Misconceptions
+- **"GPT-4 is always the best model"** — Different models excel at different tasks. Claude leads at coding, Gemini leads at long-context and multimodal, and GPT-4o mini/Gemini Flash beat frontier models on cost-per-quality for simpler tasks.
+- **"Open-source models are much worse than closed models"** — Llama 4 Maverick is competitive with GPT-4o on many benchmarks. The gap has narrowed dramatically. For many production use cases, the quality difference is negligible while the cost and privacy advantages are significant.
+- **"You need the biggest model for every task"** — Classification, sentiment analysis, and extraction tasks work excellently with smaller, cheaper models. Reserve frontier models (Opus 4, o3) for complex reasoning where quality justifies the cost.
+- **"API lock-in is permanent"** — Use an abstraction layer (Vercel AI SDK, LiteLLM) from day one. Switching providers becomes a one-line configuration change instead of a multi-week refactor.
+:::
+
+::: tip Real Migration Stories
+**Replit: OpenAI to custom models** — Replit initially used OpenAI models for their AI coding assistant but invested in training custom code models to reduce latency, cost, and API dependency. Their journey illustrates that many companies start with API providers and eventually invest in self-hosted or custom models as usage scales.
+
+**Notion: Multi-provider strategy** — Notion uses multiple LLM providers simultaneously, routing different features to different models based on cost, quality, and latency requirements. Summarization uses cheaper models, while complex Q&A uses frontier models. This multi-provider approach is becoming the industry standard.
+:::
+
+::: details Quiz
+
+**1. What is the practical significance of Gemini's 1M token context window?**
+
+You can process entire codebases, book-length documents, or hours of meeting transcripts in a single API call without chunking or RAG pipelines. Other models (128K-200K windows) require splitting long content into chunks and managing retrieval, adding complexity and potential information loss.
+
+**2. What is Constitutional AI (Anthropic's safety approach), and how does it differ from RLHF?**
+
+Constitutional AI trains the model to follow a set of principles (a "constitution") rather than relying solely on human preference rankings (RLHF). The model critiques and revises its own outputs against these principles. This aims for safety that is principled rather than based on individual annotator preferences.
+
+**3. Why would you self-host Llama 4 instead of using an API?**
+
+Data sovereignty (data never leaves your servers), no per-token costs at scale (amortized GPU cost only), full fine-tuning capability on proprietary data, no rate limits, and no dependency on a third-party service's uptime or pricing changes.
+
+**4. What is the Vercel AI SDK, and why is it recommended for LLM applications?**
+
+The Vercel AI SDK provides a unified TypeScript API for multiple LLM providers (OpenAI, Anthropic, Google, Mistral). Switching providers requires changing one line (`const model = openai('gpt-4o')` to `const model = anthropic('claude-sonnet-4-20250514')`). This prevents provider lock-in.
+
+**5. When does GPT-4o mini outperform GPT-4o in production?**
+
+For high-volume, simpler tasks (classification, extraction, summarization, basic Q&A), GPT-4o mini delivers similar quality at 1/10th the cost. The quality gap is most noticeable for complex multi-step reasoning, nuanced writing, and advanced coding tasks.
+:::
+
+## One-Liner Summary
+
+OpenAI has the broadest ecosystem, Claude excels at coding and reasoning, Gemini wins on context length and cost, Mistral offers EU-friendly flexibility, and Llama is the king of self-hosted AI.

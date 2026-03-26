@@ -585,3 +585,113 @@ ESI is supported by Varnish, Akamai, Fastly, and Cloudflare. It enables per-frag
 - [Micro-Frontends](/frontend-engineering/micro-frontends) — Code splitting at the architectural level with Module Federation
 - [Rendering Strategies](/frontend-engineering/rendering-strategies) — SSR and RSC reduce client-side JavaScript by moving work to the server
 - [Infrastructure > CI/CD](/infrastructure/ci-cd/) — Enforce bundle budgets in your CI pipeline
+
+---
+
+::: tip Key Takeaway
+- Tree shaking depends on the static structure of ES module imports and the `sideEffects` field in `package.json` — barrel files and CommonJS modules defeat it.
+- Code splitting by route is the highest-leverage optimization: users download only the JavaScript needed for the current page, not the entire application.
+- Compression (Brotli > gzip) is the final optimization layer and should be pre-computed at build time, not computed on every request by the server.
+:::
+
+::: warning Common Misconceptions
+- **"Tree shaking is automatic and always works."** Tree shaking fails when modules have side effects (global mutations, console.log at module scope), when libraries use CommonJS instead of ES modules, or when barrel files force the bundler to include entire packages.
+- **"Code splitting means smaller total bundle size."** Code splitting does not reduce total JavaScript — it distributes it across multiple chunks loaded on demand. Total size stays the same (or slightly increases due to chunk overhead), but initial load shrinks.
+- **"Barrel files are just an organizational pattern."** Barrel files (`index.ts` with re-exports) can prevent tree shaking because importing one export may force the bundler to evaluate the entire barrel, pulling in all re-exported modules.
+- **"Vendor splitting always helps."** Splitting node_modules into a separate chunk helps caching (vendor code changes rarely), but creating too many small chunks increases HTTP request overhead and parsing cost. Find the balance.
+- **"Brotli is always better than gzip."** Brotli compression at high levels (11) is significantly slower than gzip, making it unsuitable for dynamic responses. Pre-compress static assets with Brotli at build time and use gzip for dynamic API responses.
+:::
+
+## When NOT to Optimize Bundles
+
+- **Small applications under 100KB** — If your entire app is 80KB gzipped, spending days configuring manual chunks and analyzing the bundle provides negligible benefit. Focus on features.
+- **Library development (premature chunking)** — Libraries should publish ES modules with `sideEffects: false` and let the consuming application's bundler handle splitting. Do not code-split a library.
+- **Over-splitting into micro-chunks** — Creating 50 separate chunks of 2-5KB each adds HTTP overhead, parsing cost, and makes waterfall loading worse. Aim for chunks in the 30-150KB range.
+- **Premature vendor chunk splitting** — Splitting React, ReactDOM, and every small utility into separate vendor chunks only helps if your code changes frequently while dependencies do not. For apps that deploy weekly, the caching benefit is minimal.
+
+::: tip In Production
+- **Vercel** automatically analyzes Next.js builds and reports per-page bundle sizes. Their build output shows exactly how much JavaScript each route ships, enabling teams to track bundle growth over time.
+- **Shopify** reduced their Polaris admin bundle by 40% by replacing barrel file imports with direct imports and marking their component library as `sideEffects: false`.
+- **Airbnb** replaced moment.js (300KB) with date-fns (tree-shakeable, 6KB per function used), cutting their JavaScript payload by 280KB on pages that only needed date formatting.
+- **Netflix** uses route-based code splitting aggressively — their browse page loads only 150KB of JavaScript initially, with profile and settings pages loaded on navigation.
+- **Webpack's creator Tobias Koppers** built Module Federation to solve Shopify's micro-frontend bundling challenges, and later created Turbopack (the Rust-based successor) for Vercel.
+:::
+
+::: details Quiz
+
+**1. Why can tree shaking not remove code with side effects?**
+
+::: details Answer
+A side effect is code that affects something outside its own scope when the module is imported (e.g., `console.log()`, `window.X = ...`, polyfills). The bundler cannot determine if the side effect is intentional, so it must include the entire module to preserve correctness. The `sideEffects: false` field in `package.json` tells the bundler it is safe to remove unused exports.
+:::
+
+**2. What is the difference between `async` and `defer` on a script tag?**
+
+::: details Answer
+`async` downloads the script in parallel with HTML parsing and executes it as soon as it downloads (potentially before parsing finishes). `defer` downloads in parallel but waits until HTML parsing is complete before executing, and maintains execution order. `defer` is preferred for non-critical scripts because it never blocks parsing.
+:::
+
+**3. What is the module/nomodule pattern and why does it reduce bundle size for most users?**
+
+::: details Answer
+`<script type="module">` is loaded by modern browsers (95%+) and can contain ES2020+ syntax without polyfills. `<script nomodule>` is loaded by legacy browsers and contains transpiled ES5 with polyfills. Modern browsers ignore `nomodule` and legacy browsers ignore `type="module"`, so most users get the smaller modern bundle (typically 30-45% smaller).
+:::
+
+**4. How does the `visualizer` plugin help with bundle optimization?**
+
+::: details Answer
+The `rollup-plugin-visualizer` generates an interactive treemap showing every module in your bundle, its raw size, gzipped size, and brotli size. It reveals duplicate dependencies, unexpectedly large imports, dev-only code in production, and unused library features — all of which are invisible without visualization.
+:::
+
+**5. What is Edge-Side Includes (ESI) and when is it useful?**
+
+::: details Answer
+ESI allows a CDN to compose a page from independently cached fragments, each with its own cache TTL. The header might be cached for a day, product data for 5 minutes, and personalized recommendations not cached at all. It is useful for pages with mixed freshness requirements, supported by Varnish, Akamai, Fastly, and Cloudflare.
+:::
+
+:::
+
+::: details Exercise
+**Bundle Audit and Optimization**
+
+Take a real project (or clone a popular open-source React/Vue app) and perform a complete bundle audit:
+
+1. Add `rollup-plugin-visualizer` (Vite) or `webpack-bundle-analyzer` (Webpack) and generate a treemap
+2. Identify the three largest dependencies and evaluate if lighter alternatives exist
+3. Find any barrel file imports that could be replaced with direct imports
+4. Implement route-based code splitting with `React.lazy()` or dynamic `import()`
+5. Measure before/after: total JS size (raw + gzipped), number of chunks, and initial load chunk size
+
+::: details Solution
+Example audit results for a hypothetical React app:
+
+**Before optimization:**
+- Total JS: 680KB gzipped
+- Initial chunk: 450KB gzipped
+- 1 monolithic bundle
+
+**Findings:**
+1. `moment.js` (72KB gzipped) used for one `format()` call -> Replace with `Intl.DateTimeFormat` (0KB)
+2. `lodash` (24KB gzipped) imported as `import _ from 'lodash'` -> Replace with `import debounce from 'lodash-es/debounce'` (1KB)
+3. Barrel file `import { Button } from '@ui'` pulling in DataGrid (50KB) -> Direct import `import { Button } from '@ui/Button'`
+4. Admin routes loaded eagerly -> Wrap with `React.lazy(() => import('./pages/Admin'))`
+
+**After optimization:**
+- Total JS: 520KB gzipped (23% reduction)
+- Initial chunk: 180KB gzipped (60% reduction)
+- 6 route-based chunks + 1 vendor chunk
+
+```typescript
+// vite.config.ts with route splitting
+const routes = {
+  home: lazy(() => import('./pages/Home')),
+  products: lazy(() => import('./pages/Products')),
+  admin: lazy(() => import('./pages/Admin')),
+  settings: lazy(() => import('./pages/Settings')),
+};
+```
+:::
+
+:::
+
+> **One-Liner Summary:** Every kilobyte of JavaScript you ship must be downloaded, parsed, compiled, and executed on the user's device — bundle optimization is the discipline of deciding which kilobytes earn that privilege.

@@ -491,3 +491,130 @@ A monorepo with clear package boundaries (using Turborepo, Nx, or pnpm workspace
 - [Bundle Optimization](/frontend-engineering/bundle-optimization) — Optimize shared dependencies and code splitting
 - [Infrastructure > CI/CD](/infrastructure/ci-cd/) — Pipeline patterns for multi-app deployments
 - [Rendering Strategies](/frontend-engineering/rendering-strategies) — How SSR/SSG interacts with micro-frontend composition
+
+---
+
+::: tip Key Takeaway
+- Micro-frontends solve organizational problems (team autonomy, independent deployment), not technical ones — if you have fewer than 4-5 frontend teams, a well-structured monorepo is almost always better.
+- Module Federation is the dominant runtime integration approach, enabling shared dependencies and independent deployment, but it requires careful version management.
+- Communication between micro-frontends must be loosely coupled (custom events, URL state) — direct imports between micro-frontends defeat the entire purpose.
+:::
+
+::: warning Common Misconceptions
+- **"Micro-frontends improve performance."** They typically *degrade* performance. Runtime integration adds latency, duplicate dependencies inflate bundle size, and multiple frameworks mean multiple runtimes. The benefit is organizational, not technical.
+- **"Build-time integration (npm packages) is a micro-frontend."** Build-time integration requires the shell to rebuild and redeploy for any change. This is just a well-organized monorepo — you lose the primary benefit of independent deployments.
+- **"Each team can use any framework they want."** While technically possible, mixing React, Vue, and Angular in one app means shipping 3 frameworks to every user. The performance penalty is severe. In practice, teams should align on one framework or accept the cost.
+- **"Web Components solve all integration problems."** Web Components provide DOM encapsulation, but they do not solve shared state, routing, or dependency management. Shadow DOM can also cause problems with global styles and accessibility tools.
+- **"Iframes are outdated and should never be used."** Iframes provide the strongest isolation (CSS, JS, DOM, crash containment) and are still used by Spotify and others for embedding third-party content. They are appropriate when you need absolute isolation and can accept the accessibility and routing trade-offs.
+:::
+
+## When NOT to Use Micro-Frontends
+
+- **Small teams (fewer than 10 frontend developers)** — The coordination overhead is lower than the integration complexity. A monorepo with clear module boundaries is simpler and faster.
+- **Single shared user journey** — If the checkout flow spans 3 teams, every step boundary is an integration point with potential for bugs, style inconsistencies, and state synchronization issues.
+- **Performance-critical consumer apps** — The runtime overhead of micro-frontends (multiple bundles, integration stitching, duplicate dependencies) is unacceptable for apps where every millisecond of LCP matters.
+- **Early-stage startups** — You will pivot before you reach the scale that justifies micro-frontends. Build a monolith, move fast, and split later when team count demands it.
+- **When "we want to modernize our tech stack" is the motivation** — Strangler fig pattern within a monorepo achieves the same gradual migration without micro-frontend complexity.
+
+::: tip In Production
+- **Spotify** was an early adopter of micro-frontends (using iframes initially, later moving to a custom solution), enabling their 200+ squads to deploy independently to the desktop and web players.
+- **IKEA** uses Module Federation across their e-commerce platform, allowing product, cart, and checkout teams to deploy independently while sharing a unified design system.
+- **Zalando** developed the "Mosaic" micro-frontend framework for their e-commerce platform, serving millions of users with independently deployable page fragments.
+- **Amazon** composes their product pages from hundreds of independently owned fragments (each "widget" — buy box, reviews, recommendations — is owned by a separate team).
+- **Shopify** decided against micro-frontends for their admin dashboard, choosing a monorepo with strict module boundaries instead. Their CTO publicly stated that micro-frontends add complexity that smaller organizations do not need.
+:::
+
+::: details Quiz
+
+**1. What is the primary problem micro-frontends solve?**
+
+::: details Answer
+Micro-frontends solve organizational problems: enabling multiple teams to ship independently without coordination, avoiding deployment coupling, and allowing different teams to own their full vertical slice (database to UI). They do not solve technical problems — a well-structured monolith is technically simpler and faster.
+:::
+
+**2. Why does build-time integration (npm packages) not qualify as a true micro-frontend approach?**
+
+::: details Answer
+Build-time integration requires the shell application to rebuild and redeploy whenever any micro-frontend changes. This re-introduces deployment coupling, which is the primary problem micro-frontends exist to solve. It is effectively a well-organized monorepo with published packages.
+:::
+
+**3. What is the `singleton: true` option in Module Federation, and when is it critical?**
+
+::: details Answer
+`singleton: true` ensures only one instance of a shared dependency exists at runtime. It is critical for libraries like React and ReactDOM that maintain internal global state — having two React instances causes hooks to break. It is less important for stateless utility libraries like lodash, which can safely have multiple versions.
+:::
+
+**4. Why are Custom Events recommended over a shared state store for micro-frontend communication?**
+
+::: details Answer
+Custom Events (via `window.dispatchEvent`) are loosely coupled: micro-frontends only depend on the event contract (name + payload shape), not on each other's implementation. A shared state store creates a tight coupling point and a single point of failure. Events also work across any framework combination and can be typed via a shared types package.
+:::
+
+**5. What is the alternative to micro-frontends for most teams?**
+
+::: details Answer
+A monorepo with clear package boundaries (using Turborepo, Nx, or pnpm workspaces) provides module ownership, shared type safety, atomic cross-package refactoring, and a single build/deploy pipeline — without the runtime overhead, integration complexity, or infrastructure duplication of micro-frontends.
+:::
+
+:::
+
+::: details Exercise
+**Micro-Frontend Architecture Decision**
+
+You are the tech lead of an e-commerce company with 30 frontend developers across 5 teams (product catalog, search, cart/checkout, user profile, and marketing content). The current monolith has a 12-minute build time and teams are frequently blocked by merge conflicts.
+
+Design a micro-frontend strategy:
+
+1. Choose an integration approach (Module Federation, Web Components, import maps, or iframes) and justify why
+2. Define the shell application's responsibilities
+3. Design the shared dependency strategy (which libraries are singletons?)
+4. Define the inter-micro-frontend communication protocol
+5. Identify which pages/features belong to which micro-frontend
+
+::: details Solution
+**1. Integration: Module Federation (Rspack)**
+Rspack provides Webpack-compatible Module Federation with faster builds. All teams use React, so framework interop is unnecessary. Runtime integration enables independent deployment.
+
+**2. Shell Responsibilities:**
+- Top-level routing (`/products/*` -> catalog, `/cart/*` -> checkout, etc.)
+- Shared layout (header, footer, navigation)
+- Authentication state (provides user context)
+- Error boundaries per micro-frontend (crash isolation)
+- Analytics initialization
+
+**3. Shared Dependencies:**
+```javascript
+const shared = {
+  react: { singleton: true, requiredVersion: '^18.0.0' },
+  'react-dom': { singleton: true, requiredVersion: '^18.0.0' },
+  'react-router-dom': { singleton: true, requiredVersion: '^6.0.0' },
+  '@acme/design-system': { singleton: true, strictVersion: true },
+  // NOT singleton: utility libraries
+  'date-fns': { singleton: false },
+  'lodash-es': { singleton: false },
+};
+```
+
+**4. Communication Protocol:**
+```typescript
+// Shared types package: @acme/events
+interface MFEvents {
+  'cart:item-added': { productId: string; quantity: number };
+  'cart:updated': { itemCount: number; total: number };
+  'auth:session-expired': {};
+  'search:query-changed': { query: string };
+}
+// Use Custom Events via a typed EventBus class
+```
+
+**5. Team Boundaries:**
+- **Catalog MF:** `/products/*`, product listing, product detail, category pages
+- **Search MF:** Search bar component (embedded in shell), `/search/*` results page
+- **Cart/Checkout MF:** `/cart/*`, `/checkout/*`, mini-cart widget (embedded in shell header)
+- **Profile MF:** `/account/*`, order history, settings
+- **Marketing MF:** `/`, landing pages, promotional banners
+:::
+
+:::
+
+> **One-Liner Summary:** Micro-frontends trade technical simplicity for organizational scalability — use them when team independence demands it, not because the architecture diagram looks impressive.

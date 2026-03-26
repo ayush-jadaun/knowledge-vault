@@ -581,3 +581,116 @@ Test your charts with a color blindness simulator like Chrome DevTools' "Emulate
 - [State Management](/frontend-engineering/state-management) — managing real-time data flow for live dashboards
 - [WCAG Compliance Engineering](/ui-design-systems/accessibility/wcag-compliance) — the full accessibility standard behind chart accessibility
 - [WebAssembly](/frontend-engineering/webassembly) — using WASM for heavy data processing before visualization
+
+---
+
+::: tip Key Takeaway
+- The first question before choosing a chart type is always "what relationship in the data am I showing?" — comparison, trend, distribution, correlation, or part-to-whole each demand a specific chart type.
+- Avoid pie charts in almost all cases — humans are bad at comparing angles, and a horizontal bar chart is clearer for virtually every comparison except simple "X% vs the rest."
+- Accessibility is not optional: charts must have text alternatives, color-blind-safe palettes, keyboard navigation, and screen-reader-compatible data tables as fallbacks.
+:::
+
+::: warning Common Misconceptions
+- **"D3.js is a charting library."** D3 is a set of low-level utilities for binding data to DOM elements. It does not provide pre-built charts — you build them from primitives (scales, axes, shapes). Use Recharts or Chart.js if you want ready-made charts.
+- **"SVG is always the right rendering choice."** SVG performs well up to ~1,000 data points. Beyond that, Canvas (Chart.js, ECharts) or WebGL (deck.gl) is necessary because SVG creates a DOM node per element, and DOM manipulation does not scale to 10,000+ nodes.
+- **"More data on the dashboard is better."** Dashboards should follow the 5-second rule: the main message should be clear within 5 seconds. Overloading a dashboard with 15 charts makes it impossible to extract insight. Prioritize 3-5 key visualizations.
+- **"Dual Y-axes are useful."** Dual Y-axes let you make any two unrelated trends look correlated by adjusting the scales. They are actively misleading. Use two separate charts instead.
+- **"3D charts add a dimension of information."** 3D perspective distortion makes accurate reading impossible. A bar that is "behind" another appears shorter due to perspective, not data. Always use 2D charts.
+:::
+
+## When NOT to Use Charts
+
+- **Three or fewer numbers** — If you are comparing two or three values, just display the numbers with appropriate formatting. A bar chart for "Revenue: $1.2M, Costs: $800K" adds visual overhead without adding insight.
+- **Data that changes every second** — Real-time dashboards with sub-second updates can cause motion sickness and cognitive overload. Aggregate to 5-second or 1-minute intervals unless the use case demands it (e.g., trading).
+- **When a table is clearer** — If users need to look up specific values (exact prices, timestamps, IDs), a sortable/filterable data table is more useful than any chart. Charts show patterns; tables show specifics.
+- **Decorative purposes** — A chart whose only purpose is to make a slide or dashboard look "data-driven" without conveying actionable information is chart junk. Remove it.
+
+::: tip In Production
+- **Airbnb** built Visx (an open-source library) to combine D3's power with React's component model, enabling their data teams to create custom visualizations for host analytics dashboards.
+- **Spotify** uses D3.js for their "Wrapped" year-in-review visualizations, which require novel, highly custom chart types that no pre-built library supports.
+- **Netflix** uses Apache ECharts for their internal operational dashboards, handling real-time metrics from thousands of microservices with Canvas rendering for performance.
+- **Shopify** uses Polaris Viz (their open-source chart library built on D3) across their merchant admin, ensuring consistent visual language with their design system.
+- **The New York Times** is famous for their D3.js-powered data journalism visualizations, often using custom interactive charts that D3's low-level primitives make possible.
+:::
+
+::: details Quiz
+
+**1. When should you use a line chart vs a bar chart?**
+
+::: details Answer
+Line charts show trends over continuous time (sequential data where order matters). Bar charts show comparisons between discrete categories. A line chart for "revenue by country" implies a sequence between countries that does not exist. A bar chart for "daily revenue over 30 days" implies discrete buckets when the data is continuous. Match the chart to the data relationship.
+:::
+
+**2. Why is color alone insufficient for differentiating chart categories?**
+
+::: details Answer
+Approximately 8% of men have red-green color blindness (deuteranopia/protanopia). Using only red and green to differentiate categories makes the chart unreadable for them. Always combine color with another visual channel: patterns (stripes, dots), shapes (circles, squares for scatter plots), labels, or position.
+:::
+
+**3. What is the LTTB algorithm and when do you need it?**
+
+::: details Answer
+Largest Triangle Three Buckets (LTTB) is a data decimation algorithm that reduces thousands of data points to a visually representative subset. For each bucket of points, it selects the point that creates the largest triangle with the previous and next selected points, preserving the visual shape of the data. Use it when you have 10,000+ data points but only 500-1,000 pixels to render them.
+:::
+
+**4. How do you make a chart accessible to screen reader users?**
+
+::: details Answer
+Wrap the chart in a `<figure>` with `role="figure"` and `aria-label`. Mark the visual chart `div` with `role="img"` and a descriptive `aria-label`. Provide a visually hidden (`sr-only`) data table with the same data as the chart, referenced via `aria-describedby`. This gives screen reader users access to the underlying data in a structured format.
+:::
+
+**5. What is Edward Tufte's "data-ink ratio" principle?**
+
+::: details Answer
+The data-ink ratio is the share of ink (pixels) used to present actual data versus non-data elements (gridlines, borders, background fills, legend boxes, decorative elements). Maximizing this ratio means removing anything that does not directly encode data. A chart is finished not when there is nothing more to add, but when there is nothing left to take away.
+:::
+
+:::
+
+::: details Exercise
+**Dashboard Design Challenge**
+
+Design a dashboard for a SaaS product's admin panel showing key business metrics. The dashboard should communicate the following:
+
+1. Monthly Recurring Revenue (MRR) trend over 12 months
+2. Customer acquisition by channel (organic, paid, referral, direct)
+3. Churn rate vs industry benchmark
+4. Top 10 customers by revenue
+5. User activity heatmap (hour of day vs day of week)
+
+For each metric:
+- Choose the correct chart type and justify it
+- Specify the chart library you would use
+- Define the color palette (must be color-blind safe)
+- Describe the accessibility implementation
+
+::: details Solution
+| Metric | Chart Type | Justification | Library |
+|--------|-----------|---------------|---------|
+| MRR trend | Line chart with area fill | Continuous time series showing trend | Recharts |
+| Acquisition by channel | Horizontal bar chart | Comparing 4 discrete categories | Recharts |
+| Churn rate | Line chart with reference line | Trend over time with benchmark comparison | Recharts |
+| Top 10 customers | Horizontal bar chart (sorted) | Comparison between categories, long labels | Recharts |
+| Activity heatmap | Heatmap (7x24 grid) | Two categorical axes with intensity | Visx or D3 |
+
+**Color palette (IBM color-blind safe):**
+```typescript
+const palette = ['#648FFF', '#785EF0', '#DC267F', '#FE6100', '#FFB000'];
+```
+
+**Layout (top to bottom):**
+1. Row 1: KPI cards (MRR, Total Customers, Churn Rate, NPS) with sparklines
+2. Row 2: MRR line chart (full width, 3:1 aspect ratio)
+3. Row 3: Acquisition bar chart (left half) + Churn line chart (right half)
+4. Row 4: Top 10 customers bar chart (left half) + Activity heatmap (right half)
+
+**Accessibility per chart:**
+- Each chart wrapped in `<figure role="figure" aria-label="[description]">`
+- Hidden data table with `class="sr-only"` containing the same data
+- All charts use patterns (stripes, dots) in addition to color
+- Keyboard-navigable tooltips on focus
+:::
+
+:::
+
+> **One-Liner Summary:** Data visualization is making numbers tell stories — choose the chart type that matches the relationship in your data, and remove every pixel that does not encode information.

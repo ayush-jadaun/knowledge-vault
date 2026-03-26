@@ -513,3 +513,63 @@ Migrating an ORM in a production application is high-risk. The database schema d
 **Choose TypeORM** if you have an existing TypeORM project and the migration cost does not justify switching. For new projects, TypeORM's decorator-based approach, maintenance velocity concerns, and type safety gaps make it harder to recommend over Prisma or Drizzle.
 
 **Choose Knex** if you want a minimal query builder without ORM abstractions. Knex is ideal when you want full SQL control, do not need relation mapping, and want to keep your database layer as thin as possible. Pair it with Zod or a validation library for result typing.
+
+## Which Would You Choose?
+
+**Scenario 1:** You are building a Next.js SaaS app deployed on Vercel Edge Functions. Cold start time matters because every request hits a serverless function.
+
+::: details Recommendation: Drizzle
+Drizzle's ~50 KB runtime and no intermediary engine means cold starts of 50-100ms versus Prisma's 800-1200ms. For serverless/edge deployments, this difference is the gap between a snappy app and a noticeable delay on every cold request.
+:::
+
+**Scenario 2:** Your startup is in "move fast" mode. The database schema changes weekly, and you need to iterate on the data model without slowing down. Your team includes 2 junior developers who have never written SQL.
+
+::: details Recommendation: Prisma
+Prisma's schema-first workflow (`schema.prisma` -> `prisma generate` -> auto-generated types) is the fastest way to iterate. Schema changes auto-generate migrations, Studio provides a GUI to browse data, and the declarative query API hides SQL complexity. Juniors can be productive in a day.
+:::
+
+**Scenario 3:** Your team of experienced backend engineers is building a high-throughput API that processes 10,000 requests/second with complex aggregation queries. Everyone knows SQL fluently.
+
+::: details Recommendation: Drizzle (or Knex)
+SQL-fluent teams find Drizzle's API natural because it maps 1:1 to SQL. There is no Rust engine overhead adding latency to every query. For complex aggregations, Drizzle's SQL-like `select().from().groupBy()` is more transparent than Prisma's `_count` and `_avg` abstractions.
+:::
+
+::: warning Common Misconceptions
+- **"Prisma is slow"** — Prisma adds ~0.3-0.5ms overhead per query from IPC with the Rust engine. For most applications making 5-20 queries per request, this is negligible. Prisma is only "slow" relative to direct-driver tools, not in absolute terms.
+- **"Drizzle has no ORM features"** — Drizzle has a full relational query API (`db.query.users.findMany({ with: { posts: true } })`) that handles relations, eager loading, and nested queries. It is a complete ORM, not just a query builder.
+- **"TypeORM is dead"** — TypeORM has 1.5M weekly npm downloads and active maintenance. It is not the recommended choice for new projects, but calling it "dead" ignores the massive existing install base.
+- **"You should always use an ORM"** — For simple CRUD APIs, a query builder (Knex) or even raw SQL with Zod validation can be simpler and faster than any ORM. ORMs add value when you have complex relations and want type-safe results.
+:::
+
+::: tip Real Migration Stories
+**Payload CMS: Mongoose to Drizzle** — Payload CMS added Drizzle as a database adapter alongside their existing Mongoose (MongoDB) adapter to support PostgreSQL. They chose Drizzle for its lightweight footprint and SQL transparency, which aligned with their goal of supporting serverless deployments.
+
+**T3 Stack: Prisma to Drizzle** — The T3 Stack (create-t3-app) initially used Prisma as its default ORM but added Drizzle as an option due to community demand for faster cold starts in serverless environments and a more SQL-like API. Both remain supported, reflecting the legitimate trade-offs between the two.
+:::
+
+::: details Quiz
+
+**1. Why does Prisma require a `prisma generate` step that Drizzle does not?**
+
+Prisma uses a Prisma Schema Language (PSL) file as the source of truth and generates a TypeScript client from it. Drizzle defines schemas directly in TypeScript, so the schema IS the type definition — no code generation needed.
+
+**2. What is the "Rust engine" in Prisma, and what does it do?**
+
+Prisma runs a Rust binary (the Query Engine) that sits between your Node.js application and the database. It handles connection pooling, query optimization, and serialization via IPC. This adds ~0.3-0.5ms per query but enables features like Prisma Accelerate for edge caching.
+
+**3. Why is Drizzle particularly well-suited for serverless/edge deployments?**
+
+Drizzle's runtime is ~50 KB with no external binary dependencies. It talks directly to the database driver. This means cold starts of 50-100ms versus Prisma's 800-1200ms (which must load the Rust engine binary).
+
+**4. What is a "phantom dependency" in the context of TypeORM's decorator-based approach?**
+
+TypeORM uses TypeScript decorators that depend on `reflect-metadata` for runtime type information. This metadata is not always available or accurate, leading to type safety gaps where the TypeScript types do not match the actual database schema — a "phantom" type mismatch.
+
+**5. When should you choose Knex over Drizzle?**
+
+When you want a minimal query builder with zero ORM abstractions, need support for Oracle or exotic databases, or want to build a custom data layer without any framework opinions about relations, migrations, or entity management.
+:::
+
+## One-Liner Summary
+
+Prisma is the friendliest ORM for SQL beginners with the best DX tooling, Drizzle is the lightweight SQL-transparent choice for production performance, TypeORM serves its existing users, and Knex is the no-frills query builder.

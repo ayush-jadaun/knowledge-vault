@@ -87,7 +87,7 @@ features:
 
   - icon: 📱
     title: Mobile Engineering
-    details: React Native (JSI, Fabric, TurboModules), Flutter (Dart, Impeller, Riverpod), mobile performance, push notifications, offline-first patterns with CRDTs.
+    details: "21 pages covering the full mobile stack. React Native, Flutter, architecture patterns, state management, CI/CD, security, deep linking, animations, payments, databases, accessibility, ASO, deployment, and cross-platform comparison."
     link: /mobile-engineering/
     linkText: Go mobile
 
@@ -166,7 +166,7 @@ features:
 
 <div class="home-stats">
   <div class="stat-item">
-    <div class="stat-number">1150+</div>
+    <div class="stat-number">1160+</div>
     <div class="stat-label">Sacred texts</div>
   </div>
   <div class="stat-item">

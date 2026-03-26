@@ -486,4 +486,168 @@ function handleClick() {
 
 ---
 
+::: tip Key Takeaway
+- React's Fiber architecture enables concurrent rendering by splitting work into small units that can be interrupted, allowing the browser to handle user input between render chunks.
+- Hooks are stored as a linked list on each fiber node, which is why they must always be called in the same order — React matches hooks by position, not by name.
+- The commit phase (DOM mutations) is synchronous and uninterruptible, while the render phase (reconciliation/diffing) is interruptible in concurrent mode.
+:::
+
+::: warning Common Misconceptions
+- **"The virtual DOM is fast."** The virtual DOM is not fast — it is fast *enough*. Diffing and reconciling a virtual tree adds overhead compared to direct DOM manipulation. The value of the virtual DOM is that it provides a declarative programming model while keeping updates *reasonably* efficient. Frameworks like Solid and Svelte prove you can be faster without one.
+- **"React re-renders mean DOM updates."** A React re-render means the component function runs again and React creates new React elements. The reconciliation algorithm then diffs these against the current fiber tree. Only if something actually changed does React mutate the DOM. Most re-renders result in zero DOM updates.
+- **"useEffect is the same as componentDidMount."** `useEffect` runs after the browser has painted (asynchronously), while `componentDidMount` runs synchronously after the DOM mutation but before paint. `useLayoutEffect` is the true equivalent of `componentDidMount`.
+- **"React.memo prevents all re-renders."** `React.memo` only does a shallow comparison of props. If you pass inline objects or functions (`onClick={() => ...}`), a new reference is created every render, and `React.memo` thinks props changed. You need `useCallback` and `useMemo` to stabilize references.
+- **"Concurrent rendering makes everything faster."** Concurrent rendering makes the UI more *responsive* by allowing React to interrupt low-priority work for high-priority interactions. It does not reduce the total amount of work — it just schedules it more intelligently.
+:::
+
+## When NOT to Dig Into React Internals
+
+- **Building standard CRUD applications** — You do not need to understand Fiber nodes and lanes to build a todo app or a dashboard. Learn the public API well before diving into internals.
+- **Premature optimization based on internals** — Understanding the reconciliation algorithm does not mean you should micro-optimize every component. Measure first with React DevTools Profiler, then optimize the actual bottlenecks.
+- **Choosing React based on internals** — Do not pick React over Solid/Svelte/Vue because Fiber sounds impressive. Pick based on ecosystem, team familiarity, and project requirements.
+- **Reproducing internal patterns in userland** — Do not try to build your own hook system or reconciler unless you are building a framework. Use the public API and escape hatches React provides.
+
+::: tip In Production
+- **Meta (Facebook)** developed the Fiber architecture to solve jank on their News Feed, where long rendering of complex component trees blocked user input for 100ms+. Concurrent rendering lets the feed stay responsive during re-renders.
+- **Vercel** leverages React Server Components (RSC) in Next.js App Router, where Server Components run only on the server and ship zero JavaScript, reducing client bundle sizes by 30-60% on content-heavy pages.
+- **Shopify** uses `React.memo` and `useMemo` strategically in their Polaris component library to ensure design system components do not cause cascading re-renders in consuming applications.
+- **Discord** found that React's batched state updates (automatic in React 18) eliminated a class of race conditions in their real-time message rendering pipeline where multiple WebSocket messages arrived in the same frame.
+- **Figma** wraps their React UI around a WebGL canvas, using React only for the toolbar and panels while the canvas bypasses React's rendering pipeline entirely for maximum performance.
+:::
+
+::: details Quiz
+
+**1. What is a Fiber node, and how does it differ from a React Element?**
+
+::: details Answer
+A React Element is a cheap, immutable JavaScript object describing what the UI should look like (`{ type, props, key, ref }`). It is created every render and discarded. A Fiber node is a mutable, persistent object that represents a unit of work, stores component state (`memoizedState`), tracks effects, and maintains tree structure (`child`, `sibling`, `return`). Fibers persist across renders; elements do not.
+:::
+
+**2. Why does React maintain two fiber trees (double buffering)?**
+
+::: details Answer
+React maintains a "current" tree (what is on screen) and a "work-in-progress" (WIP) tree (being built during the next render). This double-buffering approach lets React prepare the new UI without modifying the current one. Once the WIP tree is complete, it is committed (swapped in as the new current tree) in a single synchronous step, preventing partial/inconsistent UI states.
+:::
+
+**3. What are the three heuristics React uses for O(n) reconciliation?**
+
+::: details Answer
+(1) Different element types mean a full replacement — React destroys the subtree and rebuilds from scratch. (2) Same element type means an update — React patches the existing DOM node/component. (3) Lists use keys for identity tracking — keys let React detect moves, additions, and deletions efficiently instead of relying on index-based matching.
+:::
+
+**4. Why does `useLayoutEffect` block the browser paint while `useEffect` does not?**
+
+::: details Answer
+`useLayoutEffect` runs synchronously after DOM mutations (commit phase, "Layout" sub-phase) but before the browser paints. This is necessary when you need to read layout and synchronously re-render before the user sees the initial result (e.g., measuring dimensions for tooltip positioning). `useEffect` runs asynchronously after the browser has already painted, making it non-blocking.
+:::
+
+**5. How does React's lane-based priority system improve interactivity?**
+
+::: details Answer
+Lanes are a bitmask-based priority system where each bit represents a priority level (SyncLane for clicks, TransitionLane for `startTransition`, IdleLane for offscreen). When a user types in an input during a transition render, React abandons the in-progress transition (low priority) and immediately processes the input (high priority). The transition restarts after the input is processed, keeping the UI responsive.
+:::
+
+:::
+
+::: details Exercise
+**Build a Minimal React-like Reconciler**
+
+Implement a simplified version of React's reconciliation algorithm:
+
+1. Create a `createElement(type, props, ...children)` function that returns element objects
+2. Implement a `render(element, container)` function that creates DOM nodes
+3. Add a `reconcile(oldFiber, newElement)` function that diffs and patches:
+   - Same type: update props
+   - Different type: replace
+   - New element: insert
+   - Missing element: delete
+4. Add basic `useState` support using a module-level hook array
+
+::: details Solution
+```javascript
+// Minimal reconciler (simplified)
+let hookIndex = 0;
+let hooks = [];
+let rootFiber = null;
+
+function createElement(type, props, ...children) {
+  return {
+    type,
+    props: {
+      ...props,
+      children: children.flat().map(c =>
+        typeof c === 'object' ? c : { type: 'TEXT', props: { nodeValue: c, children: [] } }
+      ),
+    },
+  };
+}
+
+function createDom(fiber) {
+  const dom = fiber.type === 'TEXT'
+    ? document.createTextNode('')
+    : document.createElement(fiber.type);
+
+  Object.keys(fiber.props)
+    .filter(k => k !== 'children')
+    .forEach(k => { dom[k] = fiber.props[k]; });
+
+  return dom;
+}
+
+function reconcile(parentDom, oldFiber, element) {
+  const sameType = oldFiber && element && oldFiber.type === element.type;
+
+  if (sameType) {
+    // UPDATE: same type, patch props
+    Object.keys(element.props)
+      .filter(k => k !== 'children')
+      .forEach(k => { oldFiber.dom[k] = element.props[k]; });
+    // Recurse children
+    const children = element.props.children;
+    const oldChildren = oldFiber.children || [];
+    const max = Math.max(children.length, oldChildren.length);
+    for (let i = 0; i < max; i++) {
+      reconcile(oldFiber.dom, oldChildren[i], children[i]);
+    }
+    return oldFiber;
+  }
+
+  if (element && !sameType) {
+    // INSERT or REPLACE
+    const fiber = { type: element.type, props: element.props, dom: createDom({ type: element.type, props: element.props }), children: [] };
+    if (oldFiber) parentDom.replaceChild(fiber.dom, oldFiber.dom);
+    else parentDom.appendChild(fiber.dom);
+    // Recurse children
+    fiber.children = element.props.children.map(child => reconcile(fiber.dom, null, child));
+    return fiber;
+  }
+
+  if (oldFiber && !element) {
+    // DELETE
+    parentDom.removeChild(oldFiber.dom);
+    return null;
+  }
+}
+
+function useState(initial) {
+  const idx = hookIndex;
+  hooks[idx] = hooks[idx] ?? initial;
+  const setState = (val) => {
+    hooks[idx] = typeof val === 'function' ? val(hooks[idx]) : val;
+    hookIndex = 0;
+    // Re-render (simplified)
+    rootFiber = reconcile(rootFiber.dom.parentNode, rootFiber, rootFiber.element);
+  };
+  hookIndex++;
+  return [hooks[idx], setState];
+}
+```
+
+This exercise demonstrates why hooks must be called in order (array index), why reconciliation compares types, and why keys matter for lists.
+:::
+
+:::
+
+> **One-Liner Summary:** Understanding React's Fiber architecture, hook linked list, and lane-based scheduling turns you from someone who uses React into someone who can explain why React behaves the way it does.
+
 *Last updated: 2026-03-20*

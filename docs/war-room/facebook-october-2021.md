@@ -403,6 +403,52 @@ graph TD
 
 10. **Pre-position recovery assets.** Facebook's recovery was delayed because engineers had to travel to data centers, negotiate physical access, and then carefully audit configuration under stress. Pre-positioned recovery assets — cached configurations on local storage at each DC, pre-authenticated recovery consoles, printed emergency runbooks — would have reduced recovery time significantly. The best time to position these assets is before you need them.
 
+## What Would You Do?
+
+Test your incident response instincts against the decisions Facebook's engineers actually faced.
+
+::: details Scenario 1: It is 15:45 UTC on October 4, 2021. All Facebook services are down. You know the BGP routes were withdrawn. You try SSH — it fails. You try VPN — it fails. Your internal communication tool (Workplace) is down. How do you coordinate your team and get access to the backbone routers?
+**What Facebook did:** With all remote access methods failed, they dispatched engineers physically to data center facilities. But the electronic badge access systems also depended on the internal network, so engineers could not badge in. Physical security staff had to perform manual identity verification — checking IDs, calling managers on personal cell phones — before granting access. This added over an hour to the recovery. The lesson: every system you need during an outage must be independent of the systems that can cause the outage. Pre-establish communication on third-party platforms and ensure physical access works without network connectivity.
+:::
+
+::: details Scenario 2: Your engineers finally have physical console access to the backbone routers. You know the fix is to re-advertise the BGP routes. Do you (A) immediately restore all BGP announcements to get services back as fast as possible, (B) carefully audit the configuration and verify the fix step by step before applying it, or (C) restore routes for one service at a time?
+**What Facebook did:** They chose **(B) — careful audit and verification**, which took approximately 3 hours. This was the right call. Facebook's backbone routers carry configuration for one of the largest networks on the internet. An incorrect fix — a typo in a prefix, a missing route filter, a routing loop — could cause traffic storms, leak internal routes to the public internet, or destabilize neighboring networks. In an incident caused by a bad configuration change, the last thing you want is a second bad configuration change. The 3-hour audit cost additional downtime but ensured the recovery was clean.
+:::
+
+::: details Scenario 3: Post-incident, you must redesign your infrastructure to prevent a single BGP command from making the entire company unreachable. What is your highest-priority architectural change?
+**What Facebook did:** Their highest priority was building a fully independent **out-of-band (OOB) management network** — a separate network path with different physical links, different routers, and different authentication infrastructure. This ensures engineers can access critical network equipment even when the main backbone is completely down. They also added BGP safety checks with hard limits (refusing to withdraw more than X% of prefixes in a single change), rebuilt the audit tool with defense in depth, and ensured physical access systems work independently of the production network.
+:::
+
+::: tip Key Lessons
+- **Out-of-band access is existential, not optional.** If your only way to fix the network is through the network, you have a single point of failure in your recovery process.
+- **BGP changes should be treated like database migrations.** Staged, validated, simulated, and reversible. A single misconfiguration can make an entire company unreachable in 60 seconds.
+- **Audit tools are a single point of failure if they are the only safety check.** Defense in depth requires multiple independent safety layers — if one fails, the others catch the problem.
+- **The speed of failure vastly exceeds the speed of recovery.** The failure took 60 seconds to propagate globally. Recovery took 6 hours — a 360:1 ratio.
+- **Read-only operations must be structurally incapable of writing.** Assessment commands should be architecturally unable to modify configuration, not just "expected not to."
+:::
+
+::: details Quiz
+
+**Q1: What was the root cause of the Facebook outage on October 4, 2021?**
+A configuration change intended to assess backbone network capacity unintentionally withdrew ALL BGP route announcements for Facebook's IP prefixes. A bug in the audit tool that was supposed to validate the command failed to catch that it would cause a total withdrawal.
+
+**Q2: Why did DNS resolution for facebook.com fail during the outage?**
+Facebook's authoritative DNS servers are hosted inside Facebook's network. When the BGP routes to that network were withdrawn, the DNS servers became unreachable — not because DNS was broken, but because there was no network path for DNS queries to reach them. DNS correctly reported that Facebook was unreachable.
+
+**Q3: Why could Facebook engineers not remotely fix the problem?**
+Every remote access method (SSH, VPN, out-of-band management) depended on the same internal network that was down. The BGP withdrawal made the entire Facebook network unreachable, including all management interfaces.
+
+**Q4: What happened when engineers arrived at the data centers to fix the problem physically?**
+The electronic badge access systems authenticated against internal servers that were inside the unreachable network. Engineers could not badge in. Physical security staff had to perform manual identity verification, which added significant time to the recovery.
+
+**Q5: What impact did the BGP withdrawal have on DNS infrastructure globally, beyond Facebook?**
+DNS resolvers worldwide (including Cloudflare 1.1.1.1 and Google 8.8.8.8) experienced a 30x surge in query volume as billions of devices with Facebook, Instagram, and WhatsApp apps repeatedly retried DNS resolution. This surge put pressure on global DNS infrastructure, potentially degrading resolution speed for unrelated domains.
+:::
+
+## One-Liner Summary
+
+One maintenance command withdrew every BGP route to Facebook for 3.5 billion users, and the engineers who needed to fix it could not get into the building because the badge system ran on Facebook's own now-unreachable network.
+
 ## Further Reading
 
 - [Facebook Engineering — More details about the October 4 outage](https://engineering.fb.com/2021/10/05/networking-traffic/outage-details/) (October 5, 2021) — Facebook's detailed postmortem

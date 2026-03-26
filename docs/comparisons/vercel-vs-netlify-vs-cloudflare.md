@@ -410,3 +410,69 @@ vercel --prod
 ::: tip Bottom Line
 Start with **Cloudflare Pages** for budget-conscious projects, **Vercel** for Next.js teams that want zero-friction DX, **Netlify** for content-heavy static sites, and **AWS Amplify** when your infrastructure is already in AWS. The migration cost between platforms is moderate (1-3 days for most projects), so do not let lock-in anxiety paralyze your v1 launch.
 :::
+
+## Which Would You Choose?
+
+**Scenario 1:** You are a solo indie hacker launching a SaaS product. You have zero revenue, your traffic is unpredictable, and every dollar counts. Your stack is Astro + a few API endpoints.
+
+::: details Recommendation: Cloudflare Pages
+Unlimited bandwidth on the free tier is unbeatable for a pre-revenue project. You can deploy your Astro site with Workers for API endpoints and D1 for a database — all on the free or $5/month Workers Paid plan. If your product goes viral overnight, Cloudflare's edge network handles the traffic without surprise bills.
+:::
+
+**Scenario 2:** Your 8-person startup is building a Next.js e-commerce app with ISR, image optimization, and per-PR preview deployments. The team wants the fastest DX possible.
+
+::: details Recommendation: Vercel
+Vercel created Next.js and optimizes every feature for their platform. ISR, `next/image`, middleware, and preview deployments work flawlessly with zero config. The $20/user/month Pro plan is worth it for the DX gains. Be aware that costs will climb as traffic grows — plan to negotiate an Enterprise contract before you hit scale.
+:::
+
+**Scenario 3:** Your content team manages 500+ pages with a headless CMS. They need A/B testing, form submissions without a backend, and easy rollbacks. The dev team is small and does not want to manage infrastructure.
+
+::: details Recommendation: Netlify
+Netlify's built-in form handling, split testing (A/B), and Decap CMS integration make it the best platform for content-heavy teams. The plugin ecosystem covers Lighthouse audits, caching, and CMS webhooks. For a 500-page static site, Netlify's build and deploy pipeline is mature and reliable.
+:::
+
+**Scenario 4:** Your enterprise has a microservices backend on AWS with DynamoDB, Cognito, and SQS. You need a frontend deployment platform that integrates with your existing AWS infrastructure and meets SOC 2 compliance requirements.
+
+::: details Recommendation: AWS Amplify
+Amplify is the natural choice when your backend is already AWS-native. Cognito for auth, DynamoDB for data, and fine-grained IAM controls satisfy enterprise compliance requirements. The DX is worse than Vercel or Netlify, but the operational coherence of staying within one cloud provider outweighs the convenience gap.
+:::
+
+::: warning Common Misconceptions
+- **"Vercel is only for Next.js"** — Vercel supports Nuxt, SvelteKit, Astro, Remix, and static sites. However, advanced features like ISR and image optimization are most polished with Next.js.
+- **"Cloudflare Pages cannot run full-stack apps"** — Cloudflare Workers, D1, KV, R2, and Queues provide a complete backend. The constraint is the V8 Isolates runtime, not the feature set. If your code runs in a Worker, you have a full-stack platform.
+- **"Netlify is dead because Vercel won"** — Netlify serves different needs: form handling, split testing, and CMS integrations that Vercel does not offer. Netlify's composable architecture avoids single-vendor lock-in.
+- **"Vendor lock-in means you can never leave"** — Migration between these platforms typically takes 1-3 days. The config files differ, but the application code stays the same. Lock-in anxiety is overrated for most projects.
+:::
+
+::: tip Real Migration Stories
+**Kent C. Dodds: Netlify to Fly.io** — Kent migrated his high-traffic site off Netlify because he needed a long-running Node.js server for his custom content pipeline, which did not fit Netlify's serverless model. The lesson: pick a platform that matches your architectural pattern, not just your deploy workflow.
+
+**Cal.com: Vercel to self-hosted** — Cal.com, an open-source scheduling platform, moved off Vercel to self-hosted infrastructure as their traffic scaled. Vercel's per-seat pricing and bandwidth costs became untenable at their volume. They still use Next.js but deploy via Docker on their own servers.
+:::
+
+::: details Quiz
+
+**1. Which platform offers unlimited bandwidth on its free tier?**
+
+Cloudflare Pages. All other platforms cap bandwidth (Vercel: 100 GB, Netlify: 100 GB, Amplify: 15 GB).
+
+**2. What is the primary advantage of Vercel's Edge Functions over their Serverless Functions?**
+
+Edge Functions use V8 Isolates with sub-millisecond cold starts and run on ~70+ edge locations globally. Serverless Functions use AWS Lambda with ~250ms cold starts and run in specific regions.
+
+**3. Why might you choose Netlify over Vercel for a marketing site?**
+
+Netlify offers built-in form handling (no backend needed), A/B split testing, and Decap CMS integration — features Vercel does not provide. For content-heavy marketing sites, these built-in capabilities save significant development time.
+
+**4. What is the main limitation of Cloudflare Workers compared to traditional serverless?**
+
+Workers run in a V8 Isolate, not a Node.js environment. There is no `fs` module, limited Node.js API compatibility, a 10 MB compressed bundle size limit, and shorter execution time limits (30 seconds for Workers).
+
+**5. When does AWS Amplify make sense despite its worse developer experience?**
+
+When your backend is already AWS-native (DynamoDB, Cognito, SQS, etc.) and you need enterprise compliance controls (IAM, VPC, SOC 2). The operational coherence of staying within AWS outweighs the DX gap.
+:::
+
+## One-Liner Summary
+
+Vercel is the gold standard for Next.js DX, Cloudflare Pages wins on free-tier generosity and edge speed, Netlify owns the content-site niche, and Amplify is the AWS on-ramp.

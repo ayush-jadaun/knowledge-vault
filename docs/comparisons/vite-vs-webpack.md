@@ -459,3 +459,63 @@ If you have a large Webpack project and want faster builds without rewriting you
 **Choose Turbopack** if you are using Next.js. Vercel is investing heavily in Turbopack as Next.js's default development bundler, and it provides a significant speed improvement over Webpack. You do not need to configure or even think about Turbopack — Next.js manages it. For non-Next.js projects, Turbopack is not yet available as a standalone tool.
 
 **Choose Rspack** if you have a large existing Webpack project and want 5-10x faster builds with minimal migration effort. Rspack is the pragmatic choice for enterprises — you keep your Webpack knowledge, your Webpack loaders, and most of your Webpack config, but everything runs in Rust. ByteDance uses Rspack across thousands of internal projects, proving its production readiness.
+
+## Which Would You Choose?
+
+**Scenario 1:** Your enterprise has a 2,000-module Webpack monolith. Dev server takes 2 minutes to start, HMR takes 5 seconds per change. Developers are frustrated but a full rewrite is not feasible.
+
+::: details Recommendation: Rspack
+Rspack is a drop-in Webpack replacement. Rename your config, swap a few loaders for built-in SWC transforms, and get 5-10x faster builds with minimal changes. Your team keeps their Webpack knowledge, existing loaders mostly work, and you avoid the risk of a full migration to Vite.
+:::
+
+**Scenario 2:** You are starting a new Vue 3 + TypeScript project. You want the fastest possible development experience with minimal configuration.
+
+::: details Recommendation: Vite
+`npm create vite@latest` gives you a working Vue + TypeScript project in 30 seconds. Vite is the official build tool for Vue (created by the same person, Evan You). Dev server starts in ~300ms regardless of project size, HMR updates in ~20ms, and the Vitest testing framework shares the same config.
+:::
+
+**Scenario 3:** You are building a micro-frontend architecture where independent teams deploy separate frontend applications that compose at runtime. Module Federation is a hard requirement.
+
+::: details Recommendation: Webpack (or Rspack)
+Module Federation is a Webpack 5 feature that Rspack also supports. Vite has a community plugin for Module Federation, but the Webpack/Rspack implementation is more mature and battle-tested. For production micro-frontends, stay in the Webpack ecosystem.
+:::
+
+::: warning Common Misconceptions
+- **"Vite is not production-ready"** — Vite powers production sites at companies like Shopify (Hydrogen), GitLab, and thousands of others. It is the default build tool for Vue, Svelte, SolidJS, and Remix.
+- **"Webpack is dead"** — Webpack has millions of weekly downloads and powers most existing production applications, including Next.js production builds. It is mature, not dead.
+- **"Turbopack replaces Webpack"** — Turbopack is currently only available as Next.js's development bundler. It is not a standalone tool and cannot replace Webpack for non-Next.js projects.
+- **"Vite and Webpack produce identical output"** — Vite uses Rollup (or Rolldown) for production, which has different tree-shaking behavior, code splitting strategies, and minification than Webpack. Test production builds thoroughly when migrating.
+:::
+
+::: tip Real Migration Stories
+**Storybook: Webpack to Vite** — Storybook 7+ added Vite as a first-class builder alongside Webpack. Teams reported 2-3x faster Storybook startup and HMR when switching to the Vite builder. The migration required minimal config changes because Storybook abstracts the builder.
+
+**ByteDance: Webpack to Rspack at scale** — ByteDance migrated thousands of internal Webpack projects to Rspack, achieving 5-10x build speed improvements. Their approach: automated config conversion scripts that handled common patterns, with manual fixes for edge cases. The migration validated Rspack's Webpack API compatibility at massive scale.
+:::
+
+::: details Quiz
+
+**1. Why does Vite's dev server start instantly regardless of project size?**
+
+Vite does not bundle during development. It serves source files as native ES modules, transforming each file on-demand when the browser requests it. The "startup" is just launching an HTTP server, which is O(1) regardless of project size.
+
+**2. What is the "dev/prod gap" in Vite, and how is it being addressed?**
+
+Vite uses esbuild/native ESM for development but Rollup for production. This can cause subtle differences between dev and prod behavior. Rolldown (a Rust port of Rollup) in Vite 6+ aims to unify the dev and prod pipelines.
+
+**3. How does Rspack achieve Webpack API compatibility?**
+
+Rspack reimplements Webpack's core architecture (dependency graph, module resolution, chunk splitting) in Rust. It supports most Webpack loaders natively and provides built-in SWC-based transforms for TypeScript and JSX, eliminating the need for babel-loader or ts-loader.
+
+**4. What is Webpack Module Federation, and why is it significant?**
+
+Module Federation allows multiple independently deployed Webpack builds to share code at runtime. Application A can dynamically load a component from Application B without rebuilding. This enables micro-frontend architectures where teams deploy independently.
+
+**5. When would you choose Webpack over Vite for a new project?**
+
+When you need Module Federation for micro-frontends, when you depend on specific Webpack plugins with no Vite equivalents, or when your deployment pipeline has hard dependencies on Webpack's output format.
+:::
+
+## One-Liner Summary
+
+Vite is the modern default with instant dev starts and simple config, Webpack has the largest plugin ecosystem, Turbopack is Next.js-exclusive Rust speed, and Rspack is the painless Webpack-to-Rust migration path.

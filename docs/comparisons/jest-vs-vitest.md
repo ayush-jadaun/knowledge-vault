@@ -575,3 +575,63 @@ it('calls handler', () => {
 **Choose Mocha** if you want a minimal, composable testing framework for backend Node.js projects where you do not need snapshot testing, built-in mocking, or coverage. Mocha's "bring your own" philosophy gives you maximum control at the cost of more setup. It is also the best choice for projects that need to run tests in older Node.js versions without a build step.
 
 **The trend is clear**: Vitest is rapidly becoming the default JavaScript testing framework. Its Jest-compatible API makes migration low-risk, and its Vite-based architecture provides genuine speed improvements. If you are starting fresh, start with Vitest.
+
+## Which Would You Choose?
+
+**Scenario 1:** You are starting a new React project with Vite as the build tool. You need unit tests, component tests, and code coverage from day one.
+
+::: details Recommendation: Vitest
+Vitest shares your Vite config — path aliases, plugins, and transforms work identically in development and testing. There is zero configuration overhead. Coverage via v8 is fast, and browser-mode testing lets you run component tests in a real browser. This is the obvious choice for any Vite-based project.
+:::
+
+**Scenario 2:** Your enterprise has 5,000 Jest tests across 30 packages in a monorepo. Tests take 25 minutes in CI. The team wants faster tests but cannot afford a multi-sprint migration effort.
+
+::: details Recommendation: Migrate to Vitest incrementally
+Vitest's API is Jest-compatible. Enable `globals: true` to avoid updating imports, change `jest.fn()` to `vi.fn()` with a find-and-replace, and update config files. Most teams report completing migration in 1-3 days per package. The 3-5x speed improvement pays back the migration effort within a week of CI savings.
+:::
+
+**Scenario 3:** You are building a pure Node.js backend CLI tool with no build step, no bundler, and no frontend. Tests are simple unit tests with basic assertions.
+
+::: details Recommendation: Mocha (or Node's built-in test runner)
+For a minimal Node.js tool, Mocha with native ESM or Node's built-in `node:test` module avoids adding a build tool (Vite) as a dependency for tests only. Keep it simple — if you do not need snapshot testing, mocking, or coverage, a lightweight runner is sufficient.
+:::
+
+::: warning Common Misconceptions
+- **"Jest is slow because it is bad"** — Jest is slow because it prioritizes isolation (separate worker processes per test file) and compatibility (custom module system for mocking). These are deliberate architectural choices that provide safety at the cost of speed.
+- **"Vitest requires Vite"** — Vitest works without Vite in your project. It includes its own Vite instance for test transformation. However, it shines brightest when sharing config with an existing Vite setup.
+- **"Mocha is outdated"** — Mocha's minimalism is a feature for specific use cases. Its "bring your own" philosophy means no unnecessary dependencies, and it works with the latest ESM and TypeScript loaders.
+- **"You need to migrate all tests at once"** — Vitest and Jest can coexist in a monorepo. Migrate package by package, not all at once.
+:::
+
+::: tip Real Migration Stories
+**Vite core: Jest to Vitest** — The Vite project itself migrated from Jest to Vitest early in Vitest's development. This was both a practical improvement (shared config, faster tests) and a proof-of-concept that validated Vitest's Jest compatibility. The migration was completed in a single PR.
+
+**Shopify Hydrogen: Jest to Vitest** — Shopify migrated Hydrogen's test suite from Jest to Vitest when they moved the project to Vite. They reported significantly faster watch-mode feedback loops and eliminated the need for separate Jest transform configurations.
+:::
+
+::: details Quiz
+
+**1. Why is Vitest's watch mode faster than Jest's?**
+
+Vitest uses Vite's HMR module graph to identify which tests are affected by a file change and re-runs only those specific tests. Jest re-runs entire test files based on file-change detection, which is coarser-grained.
+
+**2. What is the difference between v8 coverage and istanbul coverage in Vitest?**
+
+v8 coverage uses V8's built-in code coverage instrumentation (near-zero overhead). Istanbul coverage uses AST-based code transformation (2-3x slower). v8 is faster but slightly less accurate for branch coverage.
+
+**3. How do you migrate `jest.mock('./module')` to Vitest?**
+
+Replace it with `vi.mock('./module')`. The API is identical — Vitest's `vi` object is a drop-in replacement for Jest's `jest` global. `vi.fn()`, `vi.spyOn()`, and `vi.mocked()` all work the same way.
+
+**4. Why does Jest use more memory than Vitest?**
+
+Jest spawns separate worker processes (each with its own V8 heap and module registry) for test isolation. Vitest uses worker threads that share memory more efficiently, and its module graph avoids duplicating the module registry.
+
+**5. When should you NOT migrate from Jest to Vitest?**
+
+When your project uses Create React App (which ships Jest pre-configured), when migration effort outweighs CI time savings, or when your custom Jest transforms and reporters have no Vitest equivalents.
+:::
+
+## One-Liner Summary
+
+Vitest is the modern default with Vite-native speed and Jest-compatible API, Jest remains solid for existing setups, and Mocha serves the minimalist who wants to bring their own everything.

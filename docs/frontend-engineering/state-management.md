@@ -620,3 +620,99 @@ React Context is a dependency injection mechanism, not a state management tool. 
 - [Architecture Patterns > Event-Driven](/architecture-patterns/event-driven/) — Event-driven patterns that parallel frontend state management
 - [UI & Design Systems > Component Patterns](/ui-design-systems/component-patterns/) — Compound, controlled, and headless component patterns
 - [Bundle Optimization](/frontend-engineering/bundle-optimization) — Tree-shake unused state library code
+
+---
+
+::: tip Key Takeaway
+- Most state is local, most data is server-owned, and what remains rarely justifies a global state library — the first rule is to question whether you need one at all.
+- Treating server data as client state (fetching into Redux) is the most common mistake — use TanStack Query or SWR to handle caching, refetching, and staleness automatically.
+- Signals represent a paradigm shift from React's component-level re-rendering to DOM-node-level updates, eliminating the need for manual memoization.
+:::
+
+::: warning Common Misconceptions
+- **"Redux is required for large React apps."** Redux is one option among many. Zustand, Jotai, and even React Context + TanStack Query cover most use cases with far less boilerplate. Redux Toolkit is justified for teams that benefit from enforced patterns and time-travel debugging.
+- **"Context is a state manager."** React Context is a dependency injection mechanism. It re-renders every consumer when any part of the context value changes. For frequently changing state (typing in an input, drag position), Context causes unnecessary re-renders.
+- **"Global state is simpler than prop drilling."** Global state introduces hidden dependencies, makes components harder to test, and couples unrelated parts of the app. Prop drilling is explicit and traceable — it is often the better choice.
+- **"You need a state library for forms."** Form state is local to the form component. Libraries like React Hook Form or Formik handle it without needing global state. Putting form state in Redux is an anti-pattern.
+- **"Signals make React obsolete."** Signals offer fine-grained reactivity that React lacks, but React's ecosystem, tooling, and community are unmatched. Signals are a reactivity primitive available in Preact, Solid, Angular, and Vue — each with different trade-offs.
+:::
+
+## When NOT to Use State Management Libraries
+
+- **Fewer than 3 components sharing the same state** — Lifting state to a common parent is simpler, more explicit, and has zero bundle cost.
+- **State that belongs in the URL** — Search queries, filters, pagination, and sort order should live in URL params (shareable, bookmarkable, back-button-friendly) — not in a store.
+- **Server data** — If the data originates from an API, it is server state. Use TanStack Query or SWR, not Redux or Zustand. Server state has fundamentally different requirements (caching, refetching, staleness).
+- **Auth state that rarely changes** — Login/logout happens once per session. React Context is perfectly sufficient for this — you do not need Zustand or Redux for state that changes twice per session.
+- **State machine overkill** — XState is powerful but heavy (15KB). A checkout flow with 3 steps does not need a formal state machine. A simple `useState<'cart' | 'shipping' | 'payment'>` suffices.
+
+::: tip In Production
+- **Shopify** uses Zustand for their admin dashboard's UI state, choosing it over Redux for its minimal API surface and zero-provider architecture.
+- **Airbnb** contributed Visx (data visualization) but uses a combination of React Context for theme/auth and TanStack Query for all server data, with no global state library for UI state.
+- **Vercel** built the Next.js App Router around React Server Components, which eliminate the need for client-side data fetching libraries entirely for server-owned data.
+- **Discord** moved from Redux to a custom state solution and later evaluated Zustand, citing Redux's boilerplate overhead for their real-time, high-frequency update patterns.
+- **Facebook/Meta** developed Recoil (atomic state) for their internal apps but the broader React community has largely converged on Jotai and Zustand as lighter alternatives with stronger maintenance.
+:::
+
+::: details Quiz
+
+**1. What are the four types of frontend state, and what tool handles each?**
+
+::: details Answer
+Local UI state (useState/useReducer), Global UI state (Context, Zustand, Jotai), Server state (TanStack Query, SWR), and URL state (Router, URLSearchParams). The key insight is that most "state management problems" are actually server state problems masquerading as client state problems.
+:::
+
+**2. Why does React Context re-render all consumers when any value changes?**
+
+::: details Answer
+Context uses reference equality to detect changes. When you provide an object like `{ user, theme, locale }`, even if only `locale` changes, a new object reference is created, causing all consumers to re-render — even those that only read `user`. This is why Context is a dependency injection tool, not a state manager.
+:::
+
+**3. What problem does TanStack Query solve that Redux does not?**
+
+::: details Answer
+TanStack Query handles the entire server state lifecycle: caching, background refetching, stale-while-revalidate, cache invalidation, optimistic updates, error retry, pagination, and infinite queries. With Redux, you must implement all of this manually. TanStack Query treats server data as a cache with a defined staleness window, not as client-owned state.
+:::
+
+**4. How do Signals differ from React's virtual DOM approach to reactivity?**
+
+::: details Answer
+React re-renders entire components when state changes, then diffs the virtual DOM to find what changed. Signals track dependencies at the individual value level and update only the specific DOM nodes that depend on the changed value. This means signals have O(1) update cost regardless of component tree size, while React's cost grows with component tree depth.
+:::
+
+**5. When is XState (state machines) justified over a simple `useState`?**
+
+::: details Answer
+XState is justified when your state has complex transitions with guards (conditions), parallel states, or when impossible states must be impossible (e.g., a checkout flow where you cannot reach "payment" without "shipping address" being set). For simple toggles or linear flows, useState is clearer and 15KB lighter.
+:::
+
+:::
+
+::: details Exercise
+**State Architecture Audit**
+
+Take an existing React (or Vue/Svelte) application you work on and conduct a state audit:
+
+1. List every piece of state in the app (component state, global stores, URL params, server data)
+2. Classify each into: Local UI, Global UI, Server, or URL state
+3. Identify state that is in the wrong category (e.g., server data stored in Redux)
+4. Propose a migration plan that moves each piece of state to the appropriate tool
+
+::: details Solution
+Example audit for a hypothetical e-commerce app:
+
+| Current State | Current Tool | Category | Correct Tool | Migration |
+|---|---|---|---|---|
+| Product list | Redux store | Server | TanStack Query | Replace `fetchProducts` action with `useQuery` |
+| Cart items | Redux store | Global UI | Zustand | Create `useCartStore` (persisted to localStorage) |
+| Search query | Redux store | URL | URLSearchParams | Move to `?q=` URL param with router |
+| Modal open/close | Redux store | Local UI | useState | Move to component-level state |
+| User auth | Redux store | Global UI | React Context | Auth changes rarely; Context is sufficient |
+| Product filters | Redux store | URL | URLSearchParams | Move to `?category=&sort=` URL params |
+| Form inputs | Redux store | Local UI | React Hook Form | Remove from global state entirely |
+
+After migration: Redux can be removed entirely. Server state is handled by TanStack Query (with caching, refetching). UI state is split between Zustand (cart) and Context (auth). URL state is in the URL. Form state is local. Total reduction: ~11KB (Redux Toolkit) from the bundle.
+:::
+
+:::
+
+> **One-Liner Summary:** The first rule of state management is that most state does not need managing — it is either local to a component, owned by the server, or belongs in the URL.

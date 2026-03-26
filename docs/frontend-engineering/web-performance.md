@@ -591,3 +591,114 @@ onTTFB(sendToAnalytics);
 - [Rendering Strategies](/frontend-engineering/rendering-strategies) — Choose the rendering approach that optimizes for your metrics
 - [Performance Engineering](/performance/) — Server-side profiling and optimization
 - [Performance Profiling > Browser Profiling](/performance/profiling/browser-profiling) — Chrome DevTools deep dive
+
+---
+
+::: tip Key Takeaway
+- Core Web Vitals (LCP, INP, CLS) are the three metrics that define whether your page feels fast, responsive, and stable to real users.
+- JavaScript is the most expensive resource byte-for-byte — a 200KB JS bundle costs 30x more main-thread time than a 200KB image.
+- Performance budgets that are not enforced in CI are just wishes — automate them or they will erode with every sprint.
+:::
+
+::: warning Common Misconceptions
+- **"Lighthouse score = real user experience."** Lighthouse runs on a powerful machine with simulated throttling. Real user metrics (CrUX, RUM) often tell a very different story. Always prioritize field data over lab data.
+- **"Lazy loading everything improves performance."** Lazy loading the LCP image actually *hurts* performance. The hero image should load eagerly with `fetchpriority="high"`.
+- **"HTTP/2 means we don't need to bundle."** While HTTP/2 multiplexes requests, each small file still has overhead (headers, TLS records, parse cost). Bundling still matters — just not as aggressively.
+- **"A fast TTFB means a fast page."** TTFB measures server response time, not user experience. A page can have a 100ms TTFB but a 5s LCP if render-blocking resources and client-side rendering delay content.
+- **"Adding a CDN fixes performance."** A CDN helps with TTFB and asset delivery, but cannot fix render-blocking JavaScript, unoptimized images, or layout shifts caused by missing dimensions.
+:::
+
+## When NOT to Use These Optimizations
+
+Not every optimization applies to every project. Avoid over-engineering performance when:
+
+- **Internal tools with <100 users** — Spending weeks optimizing Core Web Vitals for an admin dashboard behind a VPN is wasted effort. Optimize for developer productivity instead.
+- **Prototype or MVP stage** — Performance work has diminishing returns on apps that might pivot next month. Ship fast, measure, then optimize.
+- **Premature image format migration** — If your CDN does not support AVIF/WebP content negotiation, manually creating multiple formats for a blog with 20 images is not worth the build complexity.
+- **Web Worker analytics on simple sites** — A 5-page marketing site does not need a Web Worker-based analytics pipeline. A simple `defer`-ed script tag is sufficient.
+
+::: tip In Production
+- **Google** developed Core Web Vitals and uses them as a ranking signal in search results. Sites in the "good" CWV bucket see measurably higher click-through rates.
+- **Shopify** invested heavily in Storefront performance, reducing LCP by 45% across their hosted stores by switching to SSR with streaming and AVIF images.
+- **Vercel** built their Analytics product around real user Web Vitals data, giving Next.js teams per-page CWV dashboards out of the box.
+- **Pinterest** reduced perceived wait time by 40% by implementing progressive image loading and performance budgets that block deploys exceeding 150KB JS per page.
+- **The Financial Times** uses performance budgets enforced in CI — any PR that adds more than 5KB gzipped JavaScript triggers a mandatory review from the performance team.
+:::
+
+::: details Quiz
+
+**1. What are the three Core Web Vitals and their target thresholds?**
+
+::: details Answer
+LCP (Largest Contentful Paint) < 2.5s, INP (Interaction to Next Paint) < 200ms, CLS (Cumulative Layout Shift) < 0.1 — all measured at the 75th percentile.
+:::
+
+**2. Why is JavaScript more expensive than an image of the same size?**
+
+::: details Answer
+A 200KB image downloads, decodes (off main thread), and rasterizes (~7ms of main thread time). A 200KB JS bundle downloads, decompresses, parses, compiles, and executes — all on the main thread (~235ms). JavaScript blocks interactivity; images do not.
+:::
+
+**3. What replaced First Input Delay (FID) in March 2024, and why?**
+
+::: details Answer
+Interaction to Next Paint (INP) replaced FID. FID only measured the delay of the first interaction, while INP measures all interactions throughout the page lifecycle and reports the worst (with outlier adjustment), giving a more complete picture of responsiveness.
+:::
+
+**4. What is the `crossorigin` attribute required for when preloading fonts, even for same-origin fonts?**
+
+::: details Answer
+Fonts are always fetched using CORS (anonymous mode). Without the `crossorigin` attribute on the preload link, the browser fetches the font twice — once for the preload (without CORS) and once for the `@font-face` declaration (with CORS) — because the requests don't match.
+:::
+
+**5. What is `font-display: optional` and when should you use it?**
+
+::: details Answer
+`font-display: optional` uses the web font only if it is already cached (from a previous visit). On the first visit, it shows the fallback font with no swap, eliminating CLS from font swapping entirely. Use it when visual stability matters more than using the exact brand font on first load.
+:::
+
+:::
+
+::: details Exercise
+**Performance Audit Challenge**
+
+Pick any public website (e.g., your company's marketing site, a popular e-commerce store, or a news site).
+
+1. Run a Lighthouse audit in Chrome DevTools (Incognito mode, mobile preset)
+2. Check the CrUX data via [PageSpeed Insights](https://pagespeed.web.dev/)
+3. Identify the LCP element using DevTools Performance tab
+4. Document three specific, actionable improvements with estimated impact
+
+**Deliverables:**
+- LCP element identified and screenshot taken
+- Three improvements ranked by impact (e.g., "Preload hero image: estimated -800ms LCP")
+- A `performance-budget.json` file defining JS, CSS, image, and timing budgets for the site
+
+::: details Solution
+Example audit for a hypothetical e-commerce site:
+
+```json
+{
+  "resources": {
+    "javascript": { "maxSize": "200kb", "compressed": true },
+    "css": { "maxSize": "50kb", "compressed": true },
+    "images": { "maxSize": "500kb", "perPage": true },
+    "fonts": { "maxSize": "80kb", "maxFiles": 2 }
+  },
+  "timing": {
+    "lcp": { "target": 2500, "max": 4000 },
+    "inp": { "target": 200, "max": 500 },
+    "cls": { "target": 0.1, "max": 0.25 }
+  }
+}
+```
+
+Common findings:
+1. **Hero image not preloaded** — Add `<link rel="preload" as="image" href="/hero.avif">` and `fetchpriority="high"` on the img tag. Estimated LCP improvement: 500-1200ms.
+2. **Render-blocking third-party scripts** — Move analytics and chat widget to `defer` or facade pattern. Estimated INP improvement: 100-300ms.
+3. **Images without width/height** — Add explicit dimensions to all product images. Estimated CLS improvement: 0.05-0.15.
+:::
+
+:::
+
+> **One-Liner Summary:** Web performance is a constraint, not a feature — every architectural decision either pays it forward or creates a debt your users repay in seconds of waiting.

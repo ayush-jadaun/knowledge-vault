@@ -485,6 +485,150 @@ Do not measure TDD by code coverage. Measure it by:
 | **Test suite run time** | TDD produces fast, focused tests — suite should stay fast |
 | **Defect escape rate** | How many bugs reach production? |
 
+## Key Takeaway
+
+::: tip
+- TDD is a design discipline, not a testing technique — the Red-Green-Refactor cycle forces you to write the simplest code that satisfies each behavior, producing clean architecture as a side effect.
+- Outside-in TDD starts from user behavior and drives inward with mocks, while inside-out TDD builds from small composable units upward — experienced practitioners blend both approaches.
+- BDD uses natural-language specifications (Given/When/Then) to bridge the gap between product requirements and executable tests, whether or not you use Gherkin and Cucumber.
+:::
+
+## Common Misconceptions
+
+::: warning Misconception: TDD means writing all tests before writing any code
+TDD is not "write all tests first." You write *one* test, make it pass, refactor, then write the *next* test. The cycle is measured in minutes. Writing all tests upfront is waterfall testing, not TDD.
+:::
+
+::: warning Misconception: BDD requires Cucumber and Gherkin
+Gherkin is one tool for BDD, but BDD is a thinking approach. You can write BDD-style tests in any framework using nested `describe`/`it` blocks with Given/When/Then naming. The value is in the behavior-focused thinking, not the tooling.
+:::
+
+::: warning Misconception: TDD works for everything
+TDD adds friction in exploratory prototyping, heavy UI work, and legacy codebases with no test infrastructure. Pragmatists use TDD when it helps and skip it when it hurts — the important thing is that code is tested before merging, not whether the test was written first.
+:::
+
+::: warning Misconception: Outside-in TDD is always better because it connects everything
+Outside-in TDD requires mocking fluency and can lead to heavy mock setups that couple tests to implementation. Inside-out TDD produces lower-coupled tests with real objects. Neither is universally superior — the right choice depends on domain clarity and team experience.
+:::
+
+::: warning Misconception: TDD produces slow development
+TDD feels slower on the first feature. Over weeks and months, teams using TDD spend dramatically less time debugging, fixing regressions, and conducting manual verification. The net effect is faster delivery with fewer production incidents.
+:::
+
+## Quick Quiz
+
+**1. What are the three steps of the TDD cycle in order?**
+- A) Green, Red, Refactor
+- B) Write, Test, Deploy
+- C) Red, Green, Refactor
+- D) Plan, Code, Test
+
+::: details Answer
+**C) Red, Green, Refactor.** Write a failing test (Red), make it pass with the simplest code (Green), then clean up the code while keeping tests passing (Refactor).
+:::
+
+**2. In the password validator TDD walkthrough, when did the rule-based refactoring emerge?**
+- A) During the initial design phase before any tests
+- B) When duplication became clear after the third rule was added
+- C) After all tests were written
+- D) It was planned from the start using a design document
+
+::: details Answer
+**B) When duplication became clear after the third rule was added.** The rule-based architecture was not designed upfront. It emerged naturally during the Refactor step when the pattern of repeated if-checks made duplication obvious. This is TDD's secret power — design emerges from the code.
+:::
+
+**3. What is the key difference between inside-out and outside-in TDD?**
+- A) Inside-out uses TypeScript, outside-in uses Python
+- B) Inside-out starts with low-level units, outside-in starts with user behavior
+- C) Inside-out is for backend, outside-in is for frontend
+- D) There is no real difference between them
+
+::: details Answer
+**B) Inside-out starts with low-level units, outside-in starts with user behavior.** Inside-out (Detroit school) builds from small composable units upward using real objects. Outside-in (London school) starts from acceptance tests and drives inward, mocking collaborators that do not exist yet.
+:::
+
+**4. In Gherkin, what does the "Given" keyword represent?**
+- A) The expected outcome
+- B) The action the user takes
+- C) The precondition or starting state
+- D) A comment for documentation
+
+::: details Answer
+**C) The precondition or starting state.** Given establishes context, When describes the action, and Then asserts the expected outcome. This maps directly to the Arrange-Act-Assert pattern in unit testing.
+:::
+
+**5. What is the MOST important metric for measuring TDD effectiveness?**
+- A) Code coverage percentage
+- B) Number of tests written per day
+- C) Regression rate and time to fix bugs
+- D) Lines of test code per line of production code
+
+::: details Answer
+**C) Regression rate and time to fix bugs.** TDD should reduce debugging time and drive the regression rate (bugs that return after being fixed) to near zero. Code coverage is a trailing indicator, not a goal — it can be gamed with meaningless tests.
+:::
+
+## Try It Yourself
+
+**Exercise: TDD a string calculator**
+
+Using the Red-Green-Refactor cycle, build a `stringCalculator(input: string): number` function that:
+1. Returns 0 for an empty string
+2. Returns the number for a single number (e.g., `"5"` returns `5`)
+3. Returns the sum for comma-separated numbers (e.g., `"1,2,3"` returns `6`)
+4. Throws an error for negative numbers, listing all negatives in the message
+
+Write each test BEFORE the implementation. Do not jump ahead.
+
+::: details Solution
+```typescript
+import { describe, it, expect } from 'vitest';
+
+// Step 1 — RED then GREEN
+function stringCalculator(input: string): number {
+  if (input === '') return 0;
+
+  const numbers = input.split(',').map(Number);
+  const negatives = numbers.filter((n) => n < 0);
+
+  if (negatives.length > 0) {
+    throw new Error(`Negatives not allowed: ${negatives.join(', ')}`);
+  }
+
+  return numbers.reduce((sum, n) => sum + n, 0);
+}
+
+describe('stringCalculator', () => {
+  // Test 1 (written first)
+  it('returns 0 for empty string', () => {
+    expect(stringCalculator('')).toBe(0);
+  });
+
+  // Test 2 (written after test 1 passed)
+  it('returns the number for a single number', () => {
+    expect(stringCalculator('5')).toBe(5);
+  });
+
+  // Test 3 (written after test 2 passed)
+  it('returns the sum for comma-separated numbers', () => {
+    expect(stringCalculator('1,2,3')).toBe(6);
+  });
+
+  // Test 4 (written after test 3 passed)
+  it('throws for negative numbers listing all negatives', () => {
+    expect(() => stringCalculator('1,-2,3,-4')).toThrow(
+      'Negatives not allowed: -2, -4'
+    );
+  });
+});
+```
+
+The key insight: each test was written *before* its corresponding implementation. The final `stringCalculator` function shown here is the result of four Red-Green-Refactor cycles, not a single implementation pass.
+:::
+
+---
+
+> **One-Liner Summary:** TDD is not about writing tests first — it is about letting tests drive your design through a rapid Red-Green-Refactor cycle that produces clean, well-structured code as a side effect.
+
 ## Further Reading
 
 - [Unit Testing](/testing/unit-testing) — the tactical foundation TDD builds on

@@ -356,6 +356,52 @@ One compromise anywhere in this chain cascades to everything downstream. The Lit
 - [SolarWinds (2020)](/security/exploits/solarwinds) — Nation-state build pipeline compromise
 - [Supply Chain Security](/security/supply-chain/) — SLSA, SBOMs, Sigstore
 
+## What Would You Do?
+
+Test your supply chain security instincts against the decisions that shaped this incident.
+
+::: details Scenario 1: You are a package maintainer with a CI/CD pipeline that uses several third-party GitHub Actions for scanning and publishing. You hear that a popular GitHub Action (Trivy) was compromised on March 19. Your CI/CD ran Trivy using an unpinned version. Do you (A) immediately rotate all secrets accessible to your CI pipeline, (B) check your CI logs first to see if the compromised version actually ran, or (C) assume you are safe because the compromise happened 5 days ago and you have not seen any issues?
+**What should have happened:** **(A) — immediately rotate all secrets.** If your CI pulled an unpinned action and that action was compromised, you must assume every secret accessible to that CI runner has been exfiltrated. Checking logs (B) is good but insufficient — a sophisticated attacker may clean logs. Assuming safety (C) is exactly how LiteLLM's PyPI publish token was stolen and used 5 days later to publish backdoored packages to 3.4 million daily users. Pin all CI/CD actions to commit SHAs, and isolate secrets so that scanning tools never have access to publishing credentials.
+:::
+
+::: details Scenario 2: You just installed a Python package and your machine immediately became unresponsive — RAM exhausted, CPU pinned at 100%. You kill the runaway processes and trace the issue to a `.pth` file in `site-packages/`. Do you (A) just delete the .pth file and move on, (B) investigate the file's contents and check if credentials were stolen, or (C) wipe the machine and start fresh?
+**What Callum McMahon did:** He chose **(B) — he investigated the .pth file** and discovered it was a 34,628-byte credential stealer targeting SSH keys, cloud credentials, Kubernetes configs, and shell history. The machine crash was caused by an unintended fork bomb in the malware. Without the investigation, the community would not have known about the attack. The correct response after investigation: assume all credentials on the machine are compromised and rotate everything — SSH keys, AWS/GCP/Azure credentials, Docker tokens, npm tokens, PyPI tokens, and anything else the malware targeted.
+:::
+
+::: details Scenario 3: You are a platform engineer responsible for your company's Python dependency management. After the LiteLLM incident, your CISO asks you to prevent similar supply chain attacks. What is your most impactful single change: (A) pin all dependencies to exact versions, (B) set up an internal package proxy that scans packages before allowing internal use, or (C) require `--require-hashes` for all pip installs?
+**The best answer is a combination, but if forced to choose one:** **(B) — an internal package proxy** (like Artifactory or Nexus) provides the broadest protection. It acts as a single control point where packages are scanned, cached, and approved before any internal system can use them. Exact version pinning (A) prevents accidental upgrades but does not protect against a compromised version you have already pinned. Hash verification (C) detects tampering but only works if you have known-good hashes. The proxy gives you all of these plus visibility into what is being used across the organization.
+:::
+
+::: tip Key Lessons
+- **Pin CI/CD actions to commit SHAs, not tags.** Tags like `@latest` or `@v1` can be moved to point at compromised code. Commit SHAs are immutable.
+- **Isolate CI/CD secrets.** Scanning tools should never have access to publishing credentials. Use separate jobs with separate permissions.
+- **Use OIDC trusted publishing for PyPI.** Eliminates long-lived tokens entirely — no token to steal.
+- **Audit `.pth` files in your Python environments.** The `.pth` mechanism executes code on every Python startup, no import needed. Most developers do not even know this exists.
+- **A bug in the malware saved the community.** The fork bomb was unintentional and led to discovery. Without it, credentials would have been silently stolen for far longer.
+:::
+
+::: details Quiz
+
+**Q1: How did the attacker get LiteLLM's PyPI publish token?**
+The attacker (TeamPCP) first compromised the Trivy GitHub Action on March 19. When LiteLLM's CI/CD pipeline ran Trivy using an unpinned version, the compromised action exfiltrated the `PYPI_PUBLISH` token from the GitHub Actions runner environment. The attacker then used that token to publish backdoored versions of LiteLLM to PyPI.
+
+**Q2: Why was the `.pth` file delivery mechanism more dangerous than embedding the payload in a Python source file?**
+A `.pth` file in `site-packages/` executes on every Python interpreter startup — no `import litellm` required. Every Python script, Jupyter notebook, Django server, and pytest run would trigger the malware. A payload in a `.py` file would only execute when that specific module is imported.
+
+**Q3: Why did the malware accidentally crash the researcher's machine?**
+The `.pth` payload spawned a new Python subprocess for credential harvesting. But that new subprocess also triggered the `.pth` execution, which spawned another subprocess, creating an exponential fork bomb. The attacker's code had a bug — it did not guard against recursive execution.
+
+**Q4: What types of credentials did the malware target?**
+SSH private keys, `.env` files, AWS/GCP/Azure credentials, Kubernetes configs, git credentials, Docker Hub tokens, npm tokens, PyPI tokens, shell history (bash/zsh), and in Kubernetes environments, service account tokens from `/var/run/secrets/`.
+
+**Q5: What is OIDC trusted publishing for PyPI and why does it prevent this class of attack?**
+OIDC trusted publishing establishes a trust relationship between GitHub and PyPI using short-lived tokens generated per workflow run. There is no long-lived token to steal — the CI/CD pipeline authenticates to PyPI via GitHub's OIDC identity provider, and each token is scoped to a single publish operation and expires immediately.
+:::
+
+## One-Liner Summary
+
+A compromised security scanner stole a PyPI token, which was used to backdoor a package with 95 million monthly downloads — and the attack was only discovered because the malware had a bug that accidentally fork-bombed itself.
+
 ## Further Reading
 
 - [FutureSearch: LiteLLM PyPI Supply Chain Attack](https://futuresearch.ai/blog/litellm-pypi-supply-chain-attack/) — Callum McMahon's original disclosure

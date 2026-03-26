@@ -449,3 +449,63 @@ psql "postgresql://postgres:password@localhost:5432/postgres" \
 ::: tip Bottom Line
 If you are building a web SaaS, start with **Supabase**. If you are building a mobile app that must work offline, start with **Firebase**. If you want to self-host everything in one `docker compose up`, choose **Appwrite**. If you are a solo developer who wants to ship this weekend, grab **PocketBase**.
 :::
+
+## Which Would You Choose?
+
+**Scenario 1:** You are building a SaaS analytics dashboard. You need complex SQL joins between users, organizations, projects, and events. Your team has strong SQL skills.
+
+::: details Recommendation: Supabase
+Relational data with complex joins is PostgreSQL's sweet spot. Supabase gives you full SQL power, Row-Level Security for multi-tenancy, and pgvector if you later add AI features. Firebase's document model would force you to denormalize everything, making analytics queries painful or impossible.
+:::
+
+**Scenario 2:** You are building a real-time collaborative mobile app (like a chat or whiteboard) that must work offline on iOS and Android. Users in rural areas may have intermittent connectivity.
+
+::: details Recommendation: Firebase
+Firebase's offline persistence and real-time sync are unmatched. Firestore automatically caches data locally, queues writes when offline, and syncs when connectivity resumes. No other BaaS handles the offline-first mobile use case this well. The tradeoff of a document model is worth it for this scenario.
+:::
+
+**Scenario 3:** You are a solo developer building an internal tool for your 50-person company. Budget is zero, and you have a spare Linux server.
+
+::: details Recommendation: PocketBase
+A single 15 MB binary with built-in auth, SQLite database, file storage, and admin UI. Download it, run it, and you are done. No Docker, no cloud accounts, no billing surprises. PocketBase is purpose-built for exactly this scenario.
+:::
+
+::: warning Common Misconceptions
+- **"Supabase is just Postgres with a UI"** — Supabase includes GoTrue for auth (30+ OAuth providers), a real-time WebSocket server, S3-compatible storage with on-the-fly image transforms, Edge Functions on Deno, and pgvector for AI embeddings. It is a full BaaS platform.
+- **"Firebase locks you in forever"** — While migration is non-trivial (document-to-relational conversion), Firebase's data can be exported. The real lock-in is the Firestore query model and Security Rules, not the data itself.
+- **"PocketBase cannot scale"** — PocketBase handles ~10,000 concurrent users on modest hardware. Most internal tools and indie projects never reach this limit. Scale is only a concern if you are building the next Twitter.
+- **"Appwrite is just a worse Supabase"** — Appwrite supports 10+ function runtimes (including Dart for Flutter teams), has a polished self-hosted dashboard, and is fully BSD licensed. It serves a different niche: teams who want total control over their backend.
+:::
+
+::: tip Real Migration Stories
+**Keel.so: Firebase to Supabase** — Keel, a backend platform, migrated from Firestore to Supabase when their data model became too relational for a document database. The biggest challenge was converting denormalized Firestore documents into normalized PostgreSQL tables, which took 4 weeks of data modeling and migration scripting.
+
+**Plausible Analytics: Self-hosted approach** — Plausible chose to build on PostgreSQL (ClickHouse for analytics) rather than any BaaS because they needed full data sovereignty for their privacy-focused analytics product. Their experience shows that for data-sensitive products, self-hosting (whether with Supabase Docker or raw Postgres) can be a competitive advantage.
+:::
+
+::: details Quiz
+
+**1. What is the fundamental data model difference between Supabase and Firebase?**
+
+Supabase uses PostgreSQL (relational, SQL, joins, foreign keys). Firebase uses Firestore (document-based, NoSQL, denormalized, no joins). This difference drives nearly every downstream trade-off.
+
+**2. Why can Firestore Security Rules NOT replace Row-Level Security in Supabase?**
+
+Firestore Security Rules cannot filter data — they only allow or deny entire document reads. If a user can read a document, they read ALL fields. PostgreSQL RLS can filter rows and columns with arbitrary SQL expressions, providing much finer-grained access control.
+
+**3. What makes PocketBase unique among these four BaaS options?**
+
+PocketBase is a single ~15 MB binary with zero dependencies. It embeds SQLite, auth, file storage, and an admin UI in one executable. No Docker, no cloud services, no multi-service orchestration.
+
+**4. When does Firebase's offline persistence give it an advantage over Supabase?**
+
+When building mobile apps for users with intermittent connectivity. Firestore automatically caches data locally, queues writes offline, and syncs when connectivity returns. Supabase has no built-in offline support.
+
+**5. Why might you choose Appwrite over Supabase for a self-hosted deployment?**
+
+Appwrite self-hosts with a single `docker compose up` (one container), while Supabase self-hosting requires 15+ containers. Appwrite also supports 10+ function runtimes (Node, Python, Dart, Ruby, PHP, etc.), making it more flexible for polyglot teams.
+:::
+
+## One-Liner Summary
+
+Supabase gives you PostgreSQL superpowers for web SaaS, Firebase owns offline-first mobile, Appwrite is the self-hosting champion, and PocketBase is the solo developer's dream.

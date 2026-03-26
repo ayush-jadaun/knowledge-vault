@@ -210,6 +210,104 @@ If you are new to testing, read the pages in this order:
 6. [Contract Testing](/testing/contract-testing) — for microservices teams
 7. [Property-Based Testing](/testing/property-based-testing) — advanced verification
 
+## Key Takeaway
+
+::: tip
+- Testing provides confidence to change code, living documentation, and design pressure — it is not a tax but the discipline that makes shipping possible.
+- The testing pyramid (many unit tests, some integration tests, few E2E tests) maximizes coverage while minimizing cost — inverting it into an ice cream cone kills velocity.
+- Test behavior rather than implementation, delete tests that never catch bugs, and treat flaky tests as production-severity bugs that erode trust in the entire suite.
+:::
+
+## Common Misconceptions
+
+::: warning Misconception: More E2E tests mean higher confidence
+E2E tests are slow, flaky, and expensive. Teams that write mostly E2E tests end up with 30-minute CI pipelines where engineers learn to ignore failures. The pyramid shape exists because unit and integration tests give you 90% of the confidence at 10% of the cost.
+:::
+
+::: warning Misconception: 100% code coverage means the software is well-tested
+Coverage measures which lines were executed, not whether assertions are meaningful. A test suite with 60% coverage and strong assertions catches more real bugs than one with 95% coverage full of tests that call functions without asserting anything.
+:::
+
+::: warning Misconception: Testing is a QA team responsibility
+In high-performing organizations, engineers write and own their tests. QA adds value through exploratory testing and test strategy, but the people who write the code are the people best equipped to test it. Throwing code over the wall to QA creates a bottleneck and delays feedback.
+:::
+
+::: warning Misconception: Tests slow down development
+Tests slow down the first commit. They speed up every commit after that. Without tests, every refactoring is a gamble, every deploy is a prayer, and every bug takes hours to diagnose instead of seconds.
+:::
+
+## Quick Quiz
+
+**1. In the testing pyramid, which layer should have the MOST tests?**
+- A) E2E tests
+- B) Integration tests
+- C) Unit tests
+- D) Manual tests
+
+::: details Answer
+**C) Unit tests.** Unit tests are fast, cheap, and easy to debug. They should comprise 60-70% of your test suite. E2E tests should be the fewest because they are slow, expensive, and harder to diagnose.
+:::
+
+**2. What is the "ice cream cone" anti-pattern?**
+- A) A testing strategy focused on performance
+- B) An inverted pyramid with mostly E2E and manual tests
+- C) A CI pipeline that runs tests in parallel
+- D) A technique for testing UI components
+
+::: details Answer
+**B) An inverted pyramid with mostly E2E and manual tests.** The ice cream cone has many manual and E2E tests, few integration tests, and almost no unit tests. This produces slow CI pipelines, flaky suites, and engineers who stop trusting their tests.
+:::
+
+**3. What is the PRIMARY purpose of testing according to this page?**
+- A) Meeting code coverage requirements
+- B) Finding all bugs before production
+- C) Giving confidence to change code
+- D) Satisfying compliance audits
+
+::: details Answer
+**C) Giving confidence to change code.** Tests exist so you can refactor knowing that if something breaks, you will find out in seconds rather than from a customer support ticket. Coverage metrics and compliance are secondary benefits.
+:::
+
+**4. Which statement about test failure is correct?**
+- A) A test should fail when implementation details change
+- B) A test should fail when the behavior it describes changes
+- C) Tests should never fail after initial development
+- D) Failing tests should be deleted to keep CI green
+
+::: details Answer
+**B) A test should fail when the behavior it describes changes.** Tests should be coupled to behavior, not implementation. If you refactor internals without changing the contract, zero tests should break.
+:::
+
+**5. What is the recommended approach when a bug is found in production?**
+- A) Fix the bug and move on
+- B) Write a test that would have caught it, then fix the bug
+- C) Add more E2E tests to cover the scenario
+- D) Increase the code coverage target
+
+::: details Answer
+**B) Write a test that would have caught it, then fix the bug.** The "every bug gets a test" rule ensures the same bug never returns. This regression test is one of the highest-value tests you can write.
+:::
+
+## Try It Yourself
+
+**Exercise: Audit your project's testing pyramid**
+
+Take a real project you work on. Count the number of unit tests, integration tests, and E2E tests. Draw the pyramid shape. Then answer: Is it a pyramid or an ice cream cone? Identify the single highest-value test you could add right now.
+
+::: details Solution Approach
+1. **Count tests by type:** Use your test runner's configuration to categorize tests. For example, in a Node.js project: `find tests/unit -name "*.test.ts" | wc -l` for unit, similar for integration and e2e directories.
+
+2. **Calculate ratios:** A healthy pyramid has roughly 70% unit, 20% integration, 10% E2E. If your ratios are inverted, you have an ice cream cone.
+
+3. **Identify the gap:** If you have 200 E2E tests and 50 unit tests, the highest-value action is converting E2E tests that test single-function logic into unit tests. If you have 500 unit tests and zero integration tests, the highest-value addition is an integration test for your most critical database query or API endpoint.
+
+4. **Measure CI time:** If your pipeline takes more than 15 minutes, the pyramid shape is likely the root cause. Aim for unit tests under 60 seconds, integration under 5 minutes, and E2E under 15 minutes.
+:::
+
+---
+
+> **One-Liner Summary:** The testing pyramid is the single most important mental model in software quality — many fast unit tests at the base, fewer integration tests in the middle, and a handful of slow E2E tests at the top.
+
 ## What's Next
 
 Start with [Unit Testing](/testing/unit-testing) to learn the foundational patterns — AAA, test doubles, and what makes a test trustworthy. If you are already comfortable with unit tests, jump to [Test Architecture](/testing/test-architecture) to learn how to organize tests at scale, or to [Integration Testing](/testing/integration-testing) to learn how to test real system boundaries with tools like Testcontainers.

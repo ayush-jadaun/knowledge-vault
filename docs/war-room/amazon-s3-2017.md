@@ -226,6 +226,52 @@ Any service with a hard dependency on a single AWS region — no matter how reli
 
 5. **Design for graceful degradation.** When S3 went down, services that could not function without S3 went down entirely. Services that cached S3 data locally or could operate in a degraded mode survived. Build your systems so that a dependency failure results in degraded service, not total failure.
 
+## What Would You Do?
+
+Test your incident response instincts against the decisions AWS engineers actually faced.
+
+::: details Scenario 1: It is 9:45 AM PST. S3 is returning errors across us-east-1, and your AWS Health Dashboard shows all services green. You suspect a major S3 outage, but your own status page — hosted on S3 — cannot be updated. How do you communicate with customers?
+**What AWS did:** They initially could not update the AWS Service Health Dashboard because it was hosted on S3. They resorted to posting updates through Twitter and direct customer communication channels. Eventually, they moved the dashboard to a static site hosted on infrastructure completely independent of S3. The lesson: your status page must be hosted independently of the services it monitors. If the thing that is broken is the same thing hosting your status page, you are blind and your users are in the dark.
+:::
+
+::: details Scenario 2: You are an AWS engineer and you have identified that an operator accidentally removed too many S3 index and placement servers. You know how to restart them, but the subsystems have not been fully restarted in years and the dataset has grown massively. Do you (A) rush the restart to minimize downtime, (B) take time to verify the restart procedure at current scale, or (C) try to partially restore just enough servers to resume service?
+**What AWS did:** They chose to begin the full restart immediately, but discovered it took far longer than expected because the system had grown enormously since its last full restart. The index subsystem had to rebuild its state by reading massive amounts of metadata with safety checks for data integrity. This turned a potential 30-minute restart into a 4-hour recovery. The lesson: if your disaster recovery plan relies on restarting a service, test the restart procedure regularly at current scale, not at the scale from when the procedure was written.
+:::
+
+::: details Scenario 3: Post-incident, you must decide how to prevent a single mistyped command from taking down S3 again. The current tooling allows an operator to remove any number of servers in a single command with no guardrails. What architectural change do you prioritize?
+**What AWS did:** They implemented two major changes: (1) Added guardrails to operational tools — maximum removal rates, confirmation prompts for large operations, and automatic rollback if error rates spike. (2) Partitioned S3 subsystems into independent cells so that a failure in one cell does not cascade to others. The cellular architecture was the deeper fix — it limits the blast radius so that even if guardrails fail, the damage is contained to a fraction of the service.
+:::
+
+::: tip Key Lessons
+- **Blast radius must be limited for foundational services.** When everything depends on one service, that service is a single point of failure for the entire ecosystem. Cellular architecture limits how much a single failure can affect.
+- **Destructive operations need guardrails.** Any command that can remove servers or delete data at scale needs input validation, rate limiting, confirmation prompts, and dry-run mode.
+- **Your monitoring cannot depend on what it monitors.** Status pages, dashboards, and alerting systems must be architecturally independent of the services they observe.
+- **Recovery time increases non-linearly with system size.** Test your restart and recovery procedures at current scale, not at the scale from when they were written.
+- **Design for graceful degradation.** Services that cached S3 data locally survived. Services with a hard dependency on real-time S3 access did not.
+:::
+
+::: details Quiz
+
+**Q1: Why did the AWS Health Dashboard show "all green" during the S3 outage?**
+The dashboard was hosted on S3 itself. When S3 went down, the dashboard could not be updated because the infrastructure needed to push updates was unavailable.
+
+**Q2: What two critical S3 subsystems were taken offline by the mistyped command?**
+The index subsystem (which maps object names to physical storage locations) and the placement subsystem (which allocates storage for new objects). Without the index, GETs failed. Without placement, PUTs failed.
+
+**Q3: Was any customer data lost during the S3 outage?**
+No. S3's data durability was never at risk. The actual objects stored on disk were safe throughout. The outage was an availability issue (the "phone book" that maps names to locations was offline), not a durability issue.
+
+**Q4: Why did the recovery take 4 hours instead of minutes?**
+The index and placement subsystems had not been fully restarted in years. The system had grown enormously, and the restart required reading massive amounts of metadata with integrity safety checks. The restart took far longer than historical estimates predicted.
+
+**Q5: What architectural change did AWS make to prevent a single error from taking down all of S3 in a region?**
+AWS partitioned the S3 subsystems into smaller, independent cells. A failure in one cell does not cascade to others, limiting the blast radius of any single operational error to a fraction of the service.
+:::
+
+## One-Liner Summary
+
+A single mistyped server removal command took down the internet's most depended-upon storage service for 4 hours — because no guardrail asked "are you sure you want to remove this many servers?"
+
 ---
 
 *Sources: [AWS Summary of the Amazon S3 Service Disruption in the Northern Virginia (US-EAST-1) Region](https://aws.amazon.com/message/41926/) (March 2, 2017); media reporting from The Verge, TechCrunch, and Ars Technica on February 28, 2017.*

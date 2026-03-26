@@ -213,6 +213,52 @@ GitLab had five backup strategies, but they were not truly independent. Some dep
 
 5. **Write a postmortem and share it.** When something goes wrong, write down exactly what happened, without blame. Share it with your team. Consider sharing it publicly. The engineering community learns more from honest failure stories than from success stories.
 
+## What Would You Do?
+
+Test your incident response instincts against the decisions GitLab's engineers actually faced.
+
+::: details Scenario 1: It is 23:00 UTC on January 31. You are a tired engineer trying to fix a database replication issue. After multiple failed attempts to resync the replica, you decide to wipe the replica's data directory and resync from scratch. You have two terminal windows open — one connected to the primary, one to the replica. You run the rm -rf command. Seconds later, you realize you ran it on the primary. What do you do in the next 60 seconds?
+**What the GitLab engineer did:** They hit Ctrl+C immediately, but rm -rf works fast — approximately 300 GB of data was already gone. They then alerted the team immediately. The lesson is not about those 60 seconds — it is about the 60 seconds before the command. Color-coded terminal prompts (red for production, green for staging), confirmation requirements for destructive commands, and a two-person rule for operations on production databases would have prevented the mistake entirely.
+:::
+
+::: details Scenario 2: The production database is deleted. Your team checks all five backup strategies and discovers: LVM snapshots were never configured, pg_dump has been failing silently, Azure disk snapshots exist but are unverified, S3 backups are incomplete, and pg_basebackup has a 6-hour-old snapshot from a staging sync. Do you (A) attempt to recover from the unverified Azure snapshots, (B) use the 6-hour-old pg_basebackup snapshot and accept the data loss, or (C) spend more time trying to recover more recent data from the partial S3 backups?
+**What GitLab did:** They chose **(B) — restore from the 6-hour-old pg_basebackup snapshot**, accepting the permanent loss of 6 hours of production data (approximately 5,000 projects, 5,000 comments, and 700 merge requests). The pg_basebackup was the most recent known-good snapshot. Attempting to use unverified Azure snapshots or incomplete S3 backups would have added uncertainty and time. The lesson: when you are in crisis, go with the option you have the most confidence in, even if it is not ideal. A verified backup from 6 hours ago is better than an unverified backup from 1 hour ago.
+:::
+
+::: details Scenario 3: You are recovering from a catastrophic database deletion. The recovery will take 18 hours. Do you (A) work silently, communicate only when recovery is complete, (B) post periodic updates on your status page and blog, or (C) live-stream the entire recovery process on YouTube?
+**What GitLab did:** They chose **(C) — they live-streamed the entire recovery process on YouTube** and tweeted status updates in real time. This was unprecedented at the time and was considered risky. But the radical transparency actually increased trust in GitLab. Users could see exactly what happened, what data was lost, and what GitLab was doing to prevent recurrence. The lesson: transparency during failure builds more trust than silence. The engineering community learns more from honest failure stories than from success stories.
+:::
+
+::: tip Key Lessons
+- **The only backup that counts is the one you have successfully restored from.** GitLab had five backup strategies. All five had failed or were non-functional. A backup you have never restored from is a hope, not a backup.
+- **Monitor backup health, not just backup execution.** The pg_dump cron job had been failing silently. There was no monitoring that showed "last successful backup: X hours ago."
+- **Fatigue is a root cause.** The incident happened late at night with a tired engineer under pressure. Limit shift lengths, avoid complex manual operations during fatigue, require peer review for destructive commands.
+- **Color-code your terminals.** It costs nothing and could save your database. Production environments should have visually distinct prompts that make it impossible to confuse them with staging.
+- **Radical transparency builds trust.** Live-streaming the recovery and publishing a brutally honest postmortem earned GitLab respect in the engineering community.
+:::
+
+::: details Quiz
+
+**Q1: What was the immediate cause of the GitLab database deletion?**
+A tired engineer working late to fix a database replication issue ran `rm -rf /var/opt/gitlab/postgresql/data` on the production primary server instead of the replica. The engineer had multiple terminal windows open and confused which one was connected to which server.
+
+**Q2: How many backup strategies did GitLab have, and how many were functional when they were needed?**
+GitLab had five backup strategies: LVM snapshots, pg_dump, Azure disk snapshots, S3 backups, and pg_basebackup. Only one was partially functional — pg_basebackup had a 6-hour-old snapshot from a staging sync. The other four had all failed or were non-functional.
+
+**Q3: How much data was permanently lost in the GitLab incident?**
+Approximately 6 hours of production data was permanently lost, including roughly 5,000 projects, 5,000 comments, and 700 merge requests created during that 6-hour window.
+
+**Q4: Why had the pg_dump backup cron job failed without anyone noticing?**
+The pg_dump cron job had been failing silently for an extended period. There was no monitoring, alerting, or dashboard that showed the last successful backup time. When you need a backup is the worst possible time to discover it does not exist.
+
+**Q5: What unprecedented action did GitLab take during the recovery that earned them respect in the engineering community?**
+GitLab live-streamed the entire 18-hour recovery process on YouTube, tweeting updates in real time. They later published an extremely detailed public postmortem. The radical transparency — showing both the human error and the systemic failures — built trust rather than eroding it.
+:::
+
+## One-Liner Summary
+
+A tired engineer ran rm -rf on the wrong server, deleted the production database, then discovered that all five backup strategies had silently failed — leaving only a 6-hour-old snapshot to restore from.
+
 ---
 
 *Sources: [GitLab — Postmortem of database outage of January 31](https://about.gitlab.com/blog/2017/02/10/postmortem-of-database-outage-of-january-31/) (February 10, 2017); [GitLab — GitLab.com database incident](https://about.gitlab.com/blog/2017/02/01/gitlab-dot-com-database-incident/) (February 1, 2017); live-streamed recovery on YouTube (January 31 – February 1, 2017).*

@@ -517,3 +517,69 @@ Do not migrate a public REST API to GraphQL or tRPC — REST is the universal st
 **Choose gRPC** for service-to-service communication in microservices architectures where latency and throughput matter. gRPC's binary serialization, HTTP/2 multiplexing, and streaming support make it 2-5x faster than JSON-over-HTTP. Proto files serve as a language-neutral API contract. gRPC is the standard for high-performance internal APIs.
 
 **Choose tRPC** for fullstack TypeScript applications where both the client and server are in the same codebase or monorepo. tRPC provides the best developer experience of any API paradigm — zero code generation, instant type errors across the stack, and autocompletion that makes API calls feel like local function calls. The tradeoff is that tRPC only works in TypeScript and is not suitable for public or multi-language APIs.
+
+## Which Would You Choose?
+
+**Scenario 1:** You are building a public API that third-party developers will integrate with. You expect consumers using Python, Go, Java, and JavaScript. Documentation and discoverability are critical.
+
+::: details Recommendation: REST with OpenAPI
+REST is the universal standard for public APIs. Every language has HTTP client libraries, every developer understands REST conventions, and OpenAPI provides standardized documentation, code generation, and testing tools. GraphQL and tRPC add complexity that external consumers should not need to learn.
+:::
+
+**Scenario 2:** You are building a fullstack TypeScript app (Next.js frontend + Node.js backend) in a monorepo. The team is 4 TypeScript developers. You want the tightest possible type safety between frontend and backend.
+
+::: details Recommendation: tRPC
+tRPC gives you end-to-end type safety without code generation, schema files, or any runtime overhead. Change a return type on the server and the frontend gets a TypeScript error immediately. For a TypeScript monorepo where both sides share a codebase, nothing beats this developer experience.
+:::
+
+**Scenario 3:** Your microservices architecture has 20 services written in Go, Java, Python, and TypeScript. Services communicate heavily with each other, and latency between services is a bottleneck.
+
+::: details Recommendation: gRPC
+gRPC's binary protobuf serialization is 2-5x faster than JSON, HTTP/2 multiplexing eliminates head-of-line blocking, and `.proto` files serve as a language-neutral API contract. For high-throughput service-to-service communication across multiple languages, gRPC is the industry standard.
+:::
+
+**Scenario 4:** Your mobile app (iOS + Android) needs to display deeply nested data — a user profile with posts, comments, reactions, and follower counts. Each screen needs a different subset of this data.
+
+::: details Recommendation: GraphQL
+GraphQL lets each mobile screen request exactly the fields it needs in a single query, eliminating overfetching (wasted bandwidth on mobile networks) and underfetching (multiple round-trips that add latency). The normalized client cache (Apollo, Relay) keeps data consistent across screens.
+:::
+
+::: warning Common Misconceptions
+- **"GraphQL is always better than REST"** — GraphQL adds complexity (query parsing, resolver orchestration, N+1 problems, cache invalidation) that is not justified for simple CRUD APIs. For most backends with <20 endpoints, REST is simpler and faster.
+- **"REST cannot be type-safe"** — REST + OpenAPI + code generation provides strong type safety. Tools like `openapi-typescript` generate TypeScript types from OpenAPI specs automatically.
+- **"gRPC cannot be used in browsers"** — `grpc-web` enables browser-to-server gRPC calls, though it requires a proxy (Envoy) to translate HTTP/2 gRPC to HTTP/1.1. For browser clients, REST or GraphQL is still simpler.
+- **"tRPC replaces REST"** — tRPC is for TypeScript-only, same-codebase scenarios. It cannot serve public APIs, mobile clients in Swift/Kotlin, or services in other languages.
+:::
+
+::: tip Real Migration Stories
+**GitHub: REST to GraphQL (API v4)** — GitHub launched their GraphQL API in 2016 alongside their REST API v3. The motivation was that mobile clients needed different data shapes than web clients, and building custom REST endpoints for each was unsustainable. Both APIs still coexist — REST for simple integrations, GraphQL for complex queries.
+
+**Netflix: REST to gRPC for microservices** — Netflix migrated internal service communication from REST to gRPC for latency-sensitive paths. The binary protocol reduced serialization overhead, and HTTP/2 multiplexing improved throughput for their heavily interconnected microservice architecture.
+:::
+
+::: details Quiz
+
+**1. Why is HTTP caching easy with REST but hard with GraphQL?**
+
+REST uses HTTP GET requests with unique URLs (`/users/1`), which CDNs and browsers cache natively via `Cache-Control` headers. GraphQL uses a single POST endpoint (`/graphql`), so every query goes to the same URL — CDNs cannot cache based on URL alone. GraphQL caching requires persisted queries or application-level solutions.
+
+**2. What is the N+1 problem in GraphQL, and how is it solved?**
+
+When resolving a list of users with their posts, a naive GraphQL resolver makes 1 query for users and N queries for each user's posts (N+1 total). DataLoader batches these into 2 queries: one for users, one for all posts matching those user IDs.
+
+**3. How does tRPC achieve type safety without code generation?**
+
+tRPC exports the server router type (`export type AppRouter = typeof appRouter`). The client imports this type and uses TypeScript's type inference to infer input/output types for every procedure. No code generation, no schema files — just TypeScript's type system.
+
+**4. What are the four communication patterns in gRPC?**
+
+Unary (request-response), server streaming (client sends one request, server streams multiple responses), client streaming (client streams multiple requests, server sends one response), and bidirectional streaming (both sides stream simultaneously).
+
+**5. When should you NOT migrate from REST to GraphQL?**
+
+When your API is public and consumed by third-party developers (REST is universal), when your data is flat and simple (no overfetching problem to solve), when HTTP caching is critical for performance, or when your team does not have GraphQL expertise.
+:::
+
+## One-Liner Summary
+
+REST is the universal standard for public APIs, GraphQL solves overfetching for complex client data needs, gRPC is the fastest protocol for service-to-service communication, and tRPC delivers unmatched type safety for TypeScript monorepos.

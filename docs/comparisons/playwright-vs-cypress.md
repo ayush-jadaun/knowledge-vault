@@ -440,3 +440,63 @@ Migrating E2E tests is labor-intensive because each test must be individually re
 **Choose Selenium** if you work in a multi-language enterprise environment, need IE/legacy browser support, or have existing Selenium Grid infrastructure. Selenium's WebDriver protocol is a W3C standard, and its multi-language support is unmatched. For new projects without legacy constraints, however, Playwright or Cypress are better choices — they are faster, more reliable, and provide dramatically better developer experience.
 
 **The industry trend**: Playwright is rapidly becoming the default E2E testing framework. Its feature set, performance, and free parallelism make it hard to argue against for new projects. Cypress retains a loyal following for its debugging DX, and Selenium remains dominant in enterprises that need multi-language support.
+
+## Which Would You Choose?
+
+**Scenario 1:** Your CI pipeline runs 200 E2E tests, and the current Cypress suite takes 45 minutes. You need to cut that to under 10 minutes without paying for Cypress Cloud.
+
+::: details Recommendation: Playwright
+Playwright's built-in parallelism (free, unlimited workers) can distribute 200 tests across 8 workers, cutting runtime by ~8x. With Cypress, free parallelization requires third-party tools like sorry-cypress. Playwright also produces smaller Docker images (~500 MB vs ~1.5 GB), further reducing CI overhead.
+:::
+
+**Scenario 2:** Your QA team of 3 non-developers writes E2E tests. They need the best possible debugging experience when tests fail, and they prefer a visual, interactive approach.
+
+::: details Recommendation: Cypress
+Cypress's interactive Test Runner with time-travel debugging is genuinely the best debugging experience. The command log shows every action, and hovering over any command shows the exact DOM state at that moment. For non-developer QA engineers, this visual approach is significantly more accessible than Playwright's Trace Viewer.
+:::
+
+**Scenario 3:** Your Java-based enterprise has 500 existing Selenium tests with a Selenium Grid infrastructure. You want to modernize but cannot rewrite everything at once.
+
+::: details Recommendation: Stay with Selenium (or migrate gradually to Playwright)
+Do not throw away working infrastructure. If the existing Selenium suite is reliable and CI times are acceptable, the migration cost (1-2 hours per complex test) is hard to justify. If you do migrate, run both frameworks in parallel and convert test by test. Playwright's async/await API is closer to Selenium's style than Cypress's chainable API.
+:::
+
+::: warning Common Misconceptions
+- **"Cypress is slower than Playwright"** — For individual tests, Cypress and Playwright are comparable. The speed difference comes from parallelism: Playwright runs tests in parallel for free; Cypress requires paid Cloud or third-party tools.
+- **"Playwright cannot do component testing"** — Playwright has experimental component testing support for React, Vue, and Svelte. However, Cypress's component testing is more mature and widely used.
+- **"Selenium is always flaky"** — Selenium tests are flaky when developers use implicit waits instead of explicit waits. Modern Selenium 4 with proper `ExpectedConditions` is reliable. Playwright and Cypress auto-wait, which eliminates this category of bugs.
+- **"You cannot test Safari with Cypress"** — Cypress has experimental WebKit (Safari engine) support since Cypress 10, but Playwright's WebKit support is more mature and stable.
+:::
+
+::: tip Real Migration Stories
+**Microsoft: Selenium to Playwright** — Microsoft teams migrated internal E2E test suites from Selenium to Playwright (unsurprisingly, since Microsoft created Playwright). They reported 3-5x faster CI runs due to built-in parallelism and significantly fewer flaky tests due to auto-waiting.
+
+**Replay.io: Cypress to Playwright** — Replay.io, a time-travel debugging tool, migrated their E2E suite from Cypress to Playwright for multi-browser support and free parallelism. They kept Cypress for component tests where its debugging experience excels, demonstrating that the two tools can complement each other.
+:::
+
+::: details Quiz
+
+**1. Why does Cypress run test code inside the browser while Playwright runs it outside?**
+
+Cypress injects test code into the browser's JavaScript context to enable direct DOM access and time-travel debugging (DOM snapshots at every command). Playwright controls browsers via debugging protocols from Node.js, enabling multi-tab, multi-origin, and cross-browser support that Cypress's architecture cannot.
+
+**2. What is Playwright's Trace Viewer, and how does it compare to Cypress's time-travel debugging?**
+
+Trace Viewer is a post-mortem debugging tool that captures DOM snapshots, network requests, and console logs at every test action. You open it after a test fails. Cypress's time-travel debugging is real-time — you see snapshots as the test runs. Cypress's approach is more immediate; Playwright's is more comprehensive.
+
+**3. Why is Playwright's Docker image smaller than Cypress's (~500 MB vs ~1.5 GB)?**
+
+Playwright installs browser binaries separately and its test runner is lightweight. Cypress bundles an Electron app (the interactive Test Runner) even in CI mode, adding significant size.
+
+**4. How does Playwright handle multiple browser tabs, and why can't Cypress do this?**
+
+Playwright creates browser contexts (isolated sessions) and can open multiple pages (tabs) within each context via `browser.newPage()`. Cypress runs inside a single browser tab and cannot natively open or interact with multiple tabs because its architecture requires co-locating test code with the application.
+
+**5. What is the `page.route()` API in Playwright, and what is its Cypress equivalent?**
+
+`page.route()` intercepts network requests and returns mock responses. The Cypress equivalent is `cy.intercept()`. Both achieve the same goal — mocking API responses for testing — with slightly different APIs.
+:::
+
+## One-Liner Summary
+
+Playwright leads on speed, multi-browser, and free parallelism; Cypress leads on interactive debugging DX; Selenium still dominates multi-language enterprise environments.

@@ -7,6 +7,21 @@ description: "What's new in Archon — recent additions and updates"
 
 ## March 2026
 
+### March 27, 2026 — Mobile Engineering Expansion + Site-Wide Interactive Enhancements
+
+**+14 new mobile pages. Archon reaches 1,160+ pages.**
+
+#### Mobile Engineering (14 new pages)
+- CI/CD (Fastlane, GitHub Actions), Security (OWASP Mobile Top 10, certificate pinning), Deep Linking (Universal Links, App Links), Analytics (Firebase, Mixpanel), Architecture (MVVM, MVI, Clean), Networking (REST, GraphQL, WebSocket), State Management (Zustand, Riverpod, Bloc), Accessibility (VoiceOver, TalkBack), Animations (Reanimated, Lottie), ASO, Databases (WatermelonDB, Room), Cross-Platform Comparison, Payments (IAP, RevenueCat), Deployment (CodePush, Shorebird)
+
+#### Interactive Enhancements (batch 2-6)
+- **War Room** (9 pages) — "What Would You Do?" scenarios, Key Lessons, Quiz
+- **Frontend** (10 pages) — Key Takeaway, Misconceptions, In Production, Quiz, Exercise
+- **Comparisons** (20 pages) — "Which Would You Choose?", Migration Stories, Quiz
+- **Testing** (4 pages) — Key Takeaway, Misconceptions, Quiz, Exercise
+
+---
+
 ### March 27, 2026 — Interactive Enhancements & Learning Paths Overhaul
 
 Massive quality pass across the entire site. Every section gets richer, more interactive, and more useful.

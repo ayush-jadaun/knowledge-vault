@@ -572,6 +572,155 @@ test.prop([fc.string()])(
 );
 ```
 
+## Key Takeaway
+
+::: tip
+- Property-based testing describes invariants that must hold for *all possible inputs* and lets the framework generate hundreds of random inputs to try to break your code — catching edge cases humans would never think of.
+- Five recurring property patterns cover most use cases: round-trip (encode/decode), invariants, idempotency, commutativity, and oracle (reference implementation) comparisons.
+- Shrinking is the killer feature — when a test fails on a complex input, the framework automatically simplifies it to the smallest input that still triggers the bug, making debugging dramatically easier.
+:::
+
+## Common Misconceptions
+
+::: warning Misconception: Property-based testing replaces example-based testing
+Property-based tests complement example-based tests. A practical ratio is 80% example-based (specific cases, edge cases, error paths) and 20% property-based (invariants, round-trips, algorithmic properties). You still need examples for business-rule-specific scenarios.
+:::
+
+::: warning Misconception: Finding good properties is too hard to be practical
+Five recurring patterns (round-trip, invariants, idempotency, commutativity, oracle) cover the vast majority of real-world cases. Start with round-trip properties for any serialization code — `decode(encode(x)) === x` — and you will immediately find bugs.
+:::
+
+::: warning Misconception: Property-based tests are non-deterministic and unreliable in CI
+Both fast-check and Hypothesis support seed-based reproduction. When a test fails, the framework prints the exact seed and counterexample. Pin the seed in CI for reproducibility, or use Hypothesis's built-in failure database to replay exact failures.
+:::
+
+::: warning Misconception: Property-based testing only works for pure mathematical functions
+State machine testing extends property-based testing to complex stateful systems. You can generate random sequences of operations (deposit, withdraw, transfer) and verify invariants hold after each step. This technique catches subtle race conditions and state corruption bugs.
+:::
+
+::: warning Misconception: You need to write custom generators for everything
+Libraries like fast-check and Hypothesis provide built-in generators for emails, UUIDs, IP addresses, domains, dates, and complex composite types. Custom generators built with combinators (`fc.record`, `st.composite`) inherit shrinking automatically — you rarely need to build generators from scratch.
+:::
+
+## Quick Quiz
+
+**1. What is the fundamental difference between example-based and property-based testing?**
+- A) Property-based tests are faster
+- B) Example-based tests pick specific inputs; property-based tests describe invariants for all possible inputs
+- C) Property-based tests do not use assertions
+- D) Example-based tests are only for unit testing
+
+::: details Answer
+**B) Example-based tests pick specific inputs; property-based tests describe invariants for all possible inputs.** With example-based testing, you choose inputs like `[3, 1, 2]`. With property-based testing, you describe a property like "sorted output is always ascending" and the framework generates hundreds of random arrays to verify it.
+:::
+
+**2. What is the "round-trip" property pattern?**
+- A) Testing that a function returns the same result when called twice
+- B) Verifying that `decode(encode(x))` equals `x` for all valid inputs
+- C) Checking that a function works in both Node.js and the browser
+- D) Running the same test in CI and locally
+
+::: details Answer
+**B) Verifying that `decode(encode(x))` equals `x` for all valid inputs.** The round-trip property is the most common and most powerful pattern for serialization, parsing, and data conversion code. If encoding then decoding does not return the original value, you have a data loss bug.
+:::
+
+**3. What does "shrinking" do in property-based testing?**
+- A) Reduces the number of test runs for faster CI
+- B) Compresses test output for smaller log files
+- C) Automatically simplifies a failing input to the smallest input that still triggers the bug
+- D) Removes unused generators from the test suite
+
+::: details Answer
+**C) Automatically simplifies a failing input to the smallest input that still triggers the bug.** If your sort function fails on `[42, -7, 999, 0, -3, 55]`, shrinking reduces it to something like `[-1, 0]` — immediately revealing that the bug is related to negative numbers.
+:::
+
+**4. Which scenario is the BEST fit for property-based testing?**
+- A) Testing a specific UI button click handler
+- B) Verifying a JSON serializer/deserializer round-trips correctly
+- C) Testing that a login form shows the right error message
+- D) Checking that a CSS class is applied to an element
+
+::: details Answer
+**B) Verifying a JSON serializer/deserializer round-trips correctly.** Serialization and parsing code has clear mathematical properties (round-trip preservation) and benefits enormously from testing against thousands of randomly generated inputs including empty strings, Unicode, special characters, and deeply nested structures.
+:::
+
+**5. How should property-based tests be integrated with a typical test suite?**
+- A) Replace all example-based tests with property-based tests
+- B) Run property-based tests only manually, not in CI
+- C) Complement example-based tests at roughly 20% of unit tests, using seeds for CI reproducibility
+- D) Only use property-based tests for integration testing
+
+::: details Answer
+**C) Complement example-based tests at roughly 20% of unit tests, using seeds for CI reproducibility.** Property-based tests should live alongside example-based tests. Use them for invariants, round-trips, and algorithmic code. Set seeds or use failure databases to ensure CI reproducibility.
+:::
+
+## Try It Yourself
+
+**Exercise: Write property-based tests for a `clamp` function**
+
+Implement a `clamp(value, min, max)` function that constrains a number to a range. Then write property-based tests verifying at least three properties of the function.
+
+::: details Solution
+```typescript
+import { fc, test } from '@fast-check/vitest';
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+// Property 1: Output is always within bounds
+test.prop([fc.integer(), fc.integer(), fc.integer()])(
+  'clamped value is always between min and max',
+  (value, a, b) => {
+    const min = Math.min(a, b);
+    const max = Math.max(a, b);
+    const result = clamp(value, min, max);
+    expect(result).toBeGreaterThanOrEqual(min);
+    expect(result).toBeLessThanOrEqual(max);
+  }
+);
+
+// Property 2: Idempotency — clamping twice gives the same result
+test.prop([fc.integer(), fc.integer(), fc.integer()])(
+  'clamp is idempotent',
+  (value, a, b) => {
+    const min = Math.min(a, b);
+    const max = Math.max(a, b);
+    const once = clamp(value, min, max);
+    const twice = clamp(once, min, max);
+    expect(twice).toBe(once);
+  }
+);
+
+// Property 3: Values already in range are unchanged
+test.prop([fc.integer(), fc.integer(), fc.integer()])(
+  'values within range are returned unchanged',
+  (a, b, c) => {
+    const sorted = [a, b, c].sort((x, y) => x - y);
+    const [min, value, max] = sorted;
+    expect(clamp(value, min, max)).toBe(value);
+  }
+);
+
+// Property 4: Clamp of min returns min, clamp of max returns max
+test.prop([fc.integer(), fc.integer()])(
+  'clamping min returns min and clamping max returns max',
+  (a, b) => {
+    const min = Math.min(a, b);
+    const max = Math.max(a, b);
+    expect(clamp(min, min, max)).toBe(min);
+    expect(clamp(max, min, max)).toBe(max);
+  }
+);
+```
+
+Key insight: four properties together describe the complete behavior of `clamp` more thoroughly than any number of hand-picked examples. The framework will test with negative numbers, zero, `Number.MAX_SAFE_INTEGER`, and other edge cases you might not think of.
+:::
+
+---
+
+> **One-Liner Summary:** Property-based testing generates thousands of random inputs to verify invariants you define, catching edge cases that humans would never think to write example tests for.
+
 ## Further Reading
 
 - [Unit Testing](/testing/unit-testing) — the example-based foundation that property-based testing extends

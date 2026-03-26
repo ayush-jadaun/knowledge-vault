@@ -587,3 +587,63 @@ For complex Nginx configs with Lua modules, OpenResty, or ModSecurity: migration
 ::: tip Bottom Line
 Use **Nginx** when performance matters most or you need advanced modules (WAF, Lua). Use **Caddy** when you want the simplest possible setup with automatic HTTPS. Use **Traefik** when you run Docker/Kubernetes and want zero-touch service discovery. For most modern web projects, **Caddy** is the right default — you can always move to Nginx later if you hit its (very generous) performance ceiling.
 :::
+
+## Which Would You Choose?
+
+**Scenario 1:** You are deploying a side project on a $5/month VPS. You have one domain, one backend app, and zero desire to manage TLS certificates manually.
+
+::: details Recommendation: Caddy
+Three lines in a Caddyfile and you have automatic HTTPS, HTTP/2, and reverse proxying. No certbot cron jobs, no SSL configuration, no certificate renewal anxiety. Caddy provisions and renews certificates from Let's Encrypt automatically. This is the fastest path from zero to production HTTPS.
+:::
+
+**Scenario 2:** You run a Docker Compose stack with 12 microservices. Services scale up and down, and you add new services weekly. You do not want to edit a config file every time.
+
+::: details Recommendation: Traefik
+Traefik auto-discovers services from Docker labels. Add a new service with the right labels, and Traefik routes traffic to it automatically with TLS. No config file to edit, no reload command to run. For dynamic Docker environments, Traefik eliminates the proxy management burden entirely.
+:::
+
+**Scenario 3:** You are running a high-traffic CDN origin server handling 50,000+ requests/second. You need ModSecurity WAF, custom Lua scripting for request manipulation, and maximum throughput.
+
+::: details Recommendation: Nginx
+Nginx's C-based event-driven architecture delivers the highest throughput of any reverse proxy. ModSecurity integration provides enterprise WAF capabilities, and Lua scripting (via OpenResty) enables custom request processing at wire speed. Caddy and Traefik cannot match this performance ceiling.
+:::
+
+::: warning Common Misconceptions
+- **"Caddy is slow"** — Caddy handles 55,000-75,000 req/s depending on the benchmark. For 99% of applications, this is more than enough. You will hit your backend's limits long before Caddy becomes the bottleneck.
+- **"Nginx cannot do automatic HTTPS"** — Nginx can use certbot for automatic certificate provisioning, but it requires separate installation, cron jobs, and reload hooks. It is not built-in the way Caddy's ACME client is.
+- **"Traefik is only for Docker"** — Traefik supports file-based configuration, Consul, etcd, Kubernetes, and other providers. Docker is its most popular use case but not its only one.
+- **"You need Nginx for production"** — Many production sites run Caddy or Traefik successfully at scale. "Nginx for production" is a cargo-cult default, not a technical requirement for most applications.
+:::
+
+::: tip Real Migration Stories
+**Tailscale: Nginx to Caddy** — Tailscale uses Caddy as part of their infrastructure because of its automatic HTTPS and clean API-driven configuration. They valued the ability to reload configuration via API without any downtime, which is harder to achieve with Nginx's `nginx -s reload`.
+
+**Traefik Labs: Dog-fooding Traefik in production** — Traefik Labs runs their own SaaS platform behind Traefik, using Docker labels for service discovery and IngressRoute CRDs on Kubernetes. They handle thousands of routes with automatic TLS provisioning and middleware chains for rate limiting, authentication, and circuit breaking.
+:::
+
+::: details Quiz
+
+**1. How does Caddy's automatic HTTPS work without any configuration?**
+
+Caddy has a built-in ACME client. When you specify a domain name in the Caddyfile, Caddy automatically provisions a TLS certificate from Let's Encrypt (or ZeroSSL), configures HTTPS, redirects HTTP to HTTPS, and renews the certificate before expiry — all with zero configuration.
+
+**2. What is Traefik's "provider" model?**
+
+Traefik providers are sources of dynamic configuration. Docker, Kubernetes, Consul, etcd, and file-based configs are all providers. Traefik watches these providers for changes and automatically updates routing rules, load balancers, and TLS certificates without restarts.
+
+**3. Why is Nginx faster than Caddy and Traefik in raw benchmarks?**
+
+Nginx is written in C with a highly optimized event-driven architecture that has been tuned for 20 years. Caddy and Traefik are written in Go, which has garbage collection pauses and higher per-connection memory overhead. The gap is ~30-50% in synthetic benchmarks.
+
+**4. What is the security concern with Traefik's Docker socket mount?**
+
+Traefik needs access to the Docker socket (`/var/run/docker.sock`) to discover containers. This socket provides root-level access to the Docker daemon. A compromised Traefik container could control all other containers. Mitigations include read-only mounts and socket proxies.
+
+**5. When would you choose Nginx Ingress Controller over Traefik in Kubernetes?**
+
+When you need the most battle-tested Kubernetes ingress with the largest community, standard Kubernetes Ingress resource support, and compatibility with cert-manager. Nginx Ingress Controller has more users and more community answers than Traefik's IngressRoute CRD.
+:::
+
+## One-Liner Summary
+
+Nginx delivers unmatched raw performance for high-traffic sites, Caddy is the fastest path to automatic HTTPS with minimal config, and Traefik auto-discovers Docker and Kubernetes services without touching a config file.

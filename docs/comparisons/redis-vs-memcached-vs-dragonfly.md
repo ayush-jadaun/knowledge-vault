@@ -535,3 +535,63 @@ Always run both systems in parallel during migration and compare response correc
 ::: tip Bottom Line
 Start with **Redis** (or **Valkey** if license matters) for most use cases — the ecosystem is unmatched. Reach for **DragonflyDB** when you need maximum throughput per dollar. Use **Memcached** when you want dead-simple key-value caching. Consider **KeyDB** when you need multi-master replication or SSD-tiered storage with Redis compatibility.
 :::
+
+## Which Would You Choose?
+
+**Scenario 1:** You need a cache for a high-traffic web app. Cache entries are simple key-value strings with TTLs. No pub/sub, no sorted sets, no persistence needed.
+
+::: details Recommendation: Memcached
+Memcached is purpose-built for this exact use case. Multi-threaded from day one, dead-simple API, predictable memory usage via the slab allocator. Adding Redis's data structure overhead is unnecessary when all you need is `get`/`set`/`delete`.
+:::
+
+**Scenario 2:** You are running a 6-node Redis Cluster for a gaming leaderboard. Each node handles 100K ops/s, and your infrastructure team is tired of managing cluster topology. You want to consolidate to fewer, more powerful nodes.
+
+::: details Recommendation: DragonflyDB
+A single DragonflyDB instance can handle 4M+ ops/s — replacing your entire 6-node Redis Cluster with one or two DragonflyDB instances. Sorted Sets work identically (same RESP protocol, same client libraries). Fork-free snapshots eliminate the memory doubling during persistence.
+:::
+
+**Scenario 3:** Your company's legal team says you cannot use SSPL-licensed software. You need a Redis-compatible in-memory store with persistence, pub/sub, and sorted sets.
+
+::: details Recommendation: Valkey or KeyDB
+Valkey is the Linux Foundation's BSD-licensed fork of Redis 7.2.4 — it is a drop-in replacement with the same protocol, same RDB format, and same client libraries. KeyDB offers the additional advantage of multi-threading and active-replica multi-master replication, also under a BSD license.
+:::
+
+::: warning Common Misconceptions
+- **"Redis is single-threaded and therefore slow"** — Redis handles 100K+ ops/s on a single thread because most operations are memory-bound, not CPU-bound. I/O threads (Redis 6+) handle network read/write in parallel. Single-threaded command processing actually simplifies concurrency and eliminates lock contention.
+- **"DragonflyDB is just a faster Redis"** — DragonflyDB uses a fundamentally different architecture (shared-nothing, per-core sharding) that trades some consistency guarantees for throughput. It is not a drop-in replacement for all Redis use cases — verify that your specific commands and patterns are supported.
+- **"Memcached is obsolete"** — Memcached is still the right tool for pure key-value caching. Facebook (Meta) runs one of the world's largest Memcached deployments. It is not obsolete; it is specialized.
+- **"Redis license change means Redis is no longer usable"** — The SSPL license only restricts competitive cloud hosting services. End-user deployment is unaffected. If licensing concerns you, Valkey is a community fork under the original BSD license.
+:::
+
+::: tip Real Migration Stories
+**Twitter/X: Memcached to Redis** — Twitter migrated from Memcached to Redis for their timeline caching because they needed sorted sets for time-ordered feeds and pub/sub for real-time notifications. The migration demonstrated that when your use case grows beyond simple key-value caching, Redis's data structures justify the switch.
+
+**Snap (Snapchat): Redis to KeyDB** — Snap adopted KeyDB for workloads that exceeded single-threaded Redis throughput limits. KeyDB's multi-threaded architecture delivered the throughput they needed without the operational complexity of Redis Cluster, while maintaining full Redis protocol compatibility.
+:::
+
+::: details Quiz
+
+**1. Why does Redis fork the process for RDB snapshots, and what is the problem with this approach?**
+
+Redis uses `fork()` to create a child process that writes the snapshot while the parent continues serving requests. Copy-on-write means modified pages are duplicated, which can temporarily double memory usage under write-heavy workloads. DragonflyDB and KeyDB solve this with fork-free snapshot algorithms.
+
+**2. What is DragonflyDB's "shared-nothing" architecture?**
+
+Each CPU core runs an independent fiber with its own memory shard. There are no locks or shared data structures between cores. Requests are routed to the core that owns the relevant key shard. This eliminates lock contention and scales linearly with core count.
+
+**3. Why might you choose Memcached over Redis for a simple caching layer?**
+
+Memcached is multi-threaded by design (no single-thread bottleneck), uses a slab allocator for predictable memory (no fragmentation), and has a simpler API surface (fewer ways to misconfigure). For pure key-value caching with no data structure needs, Memcached's simplicity is an advantage.
+
+**4. What is Valkey, and how does it relate to Redis?**
+
+Valkey is a Linux Foundation fork of Redis 7.2.4, created in March 2024 after Redis changed from BSD to SSPL license. It is a drop-in replacement that maintains the BSD license, same protocol (RESP), same RDB format, and same client library compatibility.
+
+**5. What is KeyDB's "Active Replica" feature?**
+
+Active Replica enables multi-master replication where multiple KeyDB nodes accept writes simultaneously. Writes are propagated asynchronously between masters. This enables horizontal write scaling without the complexity of Redis Cluster's hash slot sharding.
+:::
+
+## One-Liner Summary
+
+Redis is the king of in-memory data structures with the largest ecosystem, DragonflyDB delivers 10-25x throughput on a single node, Memcached is the simplest pure cache, and KeyDB/Valkey offer BSD-licensed Redis alternatives.

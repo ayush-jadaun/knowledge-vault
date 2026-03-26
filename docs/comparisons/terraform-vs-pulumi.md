@@ -531,3 +531,63 @@ Terraform to OpenTofu is trivial (same HCL, same state format). Terraform to Pul
 ::: tip Bottom Line
 Start with **Terraform/OpenTofu** if you have no strong preference — it is the lingua franca of IaC. Choose **Pulumi** if your team values TypeScript/Python and testing. Pick **CDK** for AWS-only shops that want high-level abstractions. Adopt **Crossplane** only when you are building a platform engineering team on Kubernetes.
 :::
+
+## Which Would You Choose?
+
+**Scenario 1:** You are a platform engineer at a 500-person company. You need to provide self-service infrastructure for 20 product teams across AWS and GCP. Teams should request resources without knowing Terraform or Pulumi.
+
+::: details Recommendation: Crossplane
+Crossplane lets you build self-service abstractions (Compositions) that product teams consume via simple Kubernetes YAML claims. Teams request a "DatabaseCluster" without knowing which cloud provider or configuration is used underneath. The Kubernetes reconciliation loop ensures drift is automatically corrected.
+:::
+
+**Scenario 2:** Your team of 5 backend developers writes TypeScript all day. You need to provision AWS infrastructure and want to write unit tests for your infrastructure the same way you test application code.
+
+::: details Recommendation: Pulumi
+Pulumi lets your team use TypeScript, npm packages, and Vitest/Jest to define and test infrastructure. No new language to learn (HCL), no separate toolchain. You can write `expect(bucket.versioning).toBe(true)` in a unit test alongside your application tests.
+:::
+
+**Scenario 3:** You are a DevOps consultant who works with 10 different clients on AWS, GCP, Azure, and DigitalOcean. You need a tool that works everywhere with the broadest community support.
+
+::: details Recommendation: Terraform (or OpenTofu)
+Terraform's 3,000+ providers and massive community make it the lingua franca of multi-cloud IaC. Every cloud, every SaaS tool, and every infrastructure vendor has a Terraform provider. The knowledge transfers across every client engagement.
+:::
+
+::: warning Common Misconceptions
+- **"Terraform's BSL license means you cannot use it"** — The BSL restricts competitive hosted services, not end-user usage. You can still use Terraform freely for your own infrastructure. If the license concerns you, OpenTofu is a drop-in BSD-licensed fork.
+- **"Pulumi is just Terraform with TypeScript"** — Pulumi's architecture is different: it uses a deployment engine that can bridge Terraform providers but also has native providers. The real advantage is not just the language but testing, IDE support, and package management.
+- **"CDK locks you into AWS"** — CDKTF (CDK for Terraform) lets you use CDK constructs with Terraform providers, supporting multi-cloud. However, native CDK is indeed AWS-only.
+- **"Crossplane replaces Terraform"** — Crossplane complements Terraform for platform teams. It is not a general-purpose IaC tool; it is a Kubernetes-native control plane for infrastructure self-service.
+:::
+
+::: tip Real Migration Stories
+**Loom: Terraform to Pulumi** — Loom migrated from Terraform to Pulumi to leverage TypeScript for their infrastructure. Their primary motivation was testing — they wanted to unit test infrastructure configurations the same way they tested application code. The `pulumi convert` tool handled ~80% of the migration automatically.
+
+**Mercedes-Benz: Terraform to Crossplane** — Mercedes-Benz adopted Crossplane to build a self-service platform for hundreds of development teams. Instead of each team writing Terraform, platform engineers created Crossplane Compositions that teams consume via simple YAML claims, reducing infrastructure provisioning from days to minutes.
+:::
+
+::: details Quiz
+
+**1. What is the key difference between Terraform's state management and Crossplane's?**
+
+Terraform stores state in a JSON file (remote backend like S3). Crossplane uses Kubernetes etcd as its state store — the desired state is a Kubernetes resource, and the controller continuously reconciles actual state to match.
+
+**2. Why does CDK generate CloudFormation instead of calling AWS APIs directly?**
+
+CDK uses CloudFormation as its deployment engine to get rollback support, dependency ordering, and change set previews. The tradeoff is CloudFormation's limits (500 resources per stack, slower deployments).
+
+**3. What does "continuous reconciliation" mean in Crossplane?**
+
+Crossplane controllers run in a loop, comparing the desired state (Kubernetes CRDs) with the actual state (cloud resources). If someone manually changes a cloud resource, Crossplane automatically reverts it to match the desired state. This eliminates infrastructure drift by design.
+
+**4. How does Pulumi achieve type safety for infrastructure?**
+
+Pulumi generates typed SDKs from provider schemas. When you write `new aws.s3.Bucket(...)` in TypeScript, the constructor parameters are fully typed with IntelliSense, and the compiler catches invalid configurations before deployment.
+
+**5. What is OpenTofu, and why does it exist?**
+
+OpenTofu is a Linux Foundation fork of Terraform 1.5.x, created after HashiCorp changed Terraform's license from MPL to BSL in August 2023. It is a drop-in replacement with the same HCL syntax and state format, maintained under a permissive open-source license.
+:::
+
+## One-Liner Summary
+
+Terraform is the industry-standard multi-cloud DSL, Pulumi brings real programming languages and testing, CDK automates AWS IAM, and Crossplane turns Kubernetes into a self-service infrastructure control plane.

@@ -248,6 +248,52 @@ Twitter's Rails monolith was not inherently bad. It was the wrong architecture f
 
 5. **Custom infrastructure is a last resort, not a first choice.** Twitter built custom databases, RPC frameworks, and search engines because nothing else worked at their scale. For most companies, using existing tools (PostgreSQL, gRPC, Elasticsearch) is the right choice. Only build custom infrastructure when you have evidence that off-the-shelf solutions cannot meet your specific requirements.
 
+## What Would You Do?
+
+Test your scaling instincts against the decisions Twitter's engineers actually faced.
+
+::: details Scenario 1: It is 2009. Your Ruby on Rails monolith crashes during every major event — elections, celebrity news, sporting events. Ruby's Global Interpreter Lock means each process uses only one CPU core on a 32-core server. Do you (A) optimize the Rails code and add more servers, (B) rewrite the hot paths in a JVM language while keeping Rails for less critical endpoints, or (C) rewrite the entire system from scratch in a new language?
+**What Twitter did:** They chose **(B) — decompose the monolith and rewrite performance-critical services in Scala on the JVM.** A full rewrite (C) would have taken too long while the platform was actively failing. Simply adding servers (A) could not overcome the fundamental GIL limitation — 31 of 32 cores sat idle per process. By extracting the timeline service, tweet service, and search service into independent JVM services, they achieved 25-100x throughput improvement per server while continuing to serve users throughout the migration.
+:::
+
+::: details Scenario 2: Twitter's timeline feature is collapsing under load. Currently, when a user opens Twitter, the system queries for tweets from all 500 accounts they follow, sorts them by time, and returns the top 50. This "fan-out on read" approach is O(followees) per timeline view. Do you (A) add more aggressive caching to reduce database load, (B) switch to "fan-out on write" where each tweet is pre-written to every follower's timeline in Redis, or (C) implement a hybrid approach immediately?
+**What Twitter did:** They chose **(B) — fan-out on write.** When a user posts a tweet, it is immediately written to every follower's timeline in Redis. When a user opens Twitter, their timeline is already pre-built — just read from Redis. This transformed timeline reads from expensive, variable-latency database operations into simple, fast cache reads. The tradeoff was massive write amplification (a user with 10M followers causes 10M Redis writes per tweet), which they later addressed with a hybrid approach for celebrity accounts.
+:::
+
+::: details Scenario 3: You are building the new distributed architecture. You need unique, time-ordered IDs for billions of tweets. Traditional auto-increment IDs require coordination between servers, creating a bottleneck. Do you (A) use UUIDs which require no coordination but are not time-ordered, (B) use a centralized ID service that hands out sequential IDs, or (C) design a distributed ID scheme that encodes timestamps without requiring coordination?
+**What Twitter did:** They chose **(C) — they created Snowflake**, a distributed ID generation system where each 64-bit ID encodes a timestamp (41 bits), datacenter (5 bits), worker (5 bits), and sequence number (12 bits). This means IDs are naturally time-ordered (no secondary index needed for chronological queries), can be generated at 4,096 unique IDs per millisecond per worker, and require no coordination between workers. Snowflake became one of the most widely adopted ID generation patterns in the industry, used by Discord and many others.
+:::
+
+::: tip Key Lessons
+- **Language runtime matters at scale.** Ruby's GIL limited throughput to one core per process. Moving to the JVM gave 25-100x improvement. For CPU-bound, high-concurrency workloads, the threading model is a fundamental constraint.
+- **Fan-out on read vs. write is a fundamental architecture decision.** Computing at read time (current but slow) versus pre-computing at write time (fast reads but write amplification) is one of the most consequential decisions in social platforms.
+- **Monolith to microservices is a multi-year journey.** Twitter's migration took 3 years with a large team. Services were extracted incrementally, starting with the most performance-critical paths.
+- **Build custom infrastructure only when off-the-shelf cannot meet your needs.** Twitter built Finagle, Manhattan, Earlybird, Snowflake, and Gizzard — each solving problems no existing solution could handle at their scale.
+- **The monolith is not the enemy — the wrong monolith is.** A monolith in a language with good concurrency support might have lasted longer. Choose architecture based on your constraints.
+:::
+
+::: details Quiz
+
+**Q1: Why did Ruby on Rails fail as Twitter's platform at scale?**
+Ruby MRI's Global Interpreter Lock (GIL) prevented true parallel execution of Ruby threads, severely limiting throughput per server. On a 32-core server, only 1 core could execute Ruby code. Combined with monolith coupling (a spike in any feature affected all features) and a single MySQL database bottleneck, the architecture could not handle Twitter's explosive growth.
+
+**Q2: What is "fan-out on write" and why was it the key to solving Twitter's timeline scalability?**
+Fan-out on write pre-computes timelines when a tweet is posted — each follower's timeline in Redis is immediately updated with the new tweet. When a user opens Twitter, their timeline is already built and is just read from cache. This transformed timeline reads from expensive database operations (querying 500+ users, sorting, returning) into simple Redis cache reads with single-digit millisecond latency.
+
+**Q3: What was Snowflake and why did Twitter need it?**
+Snowflake is a distributed ID generation system producing 64-bit IDs that encode timestamp, datacenter, worker, and sequence number. Twitter needed it because traditional auto-increment IDs require coordination between servers (a bottleneck), while UUIDs are not time-ordered. Snowflake IDs are time-ordered, require no coordination, and can generate 4,096 unique IDs per millisecond per worker.
+
+**Q4: What was the approximate throughput improvement per server from migrating to the JVM?**
+25-100x improvement. Ruby on Rails handled roughly 200-400 requests per second per server with concurrency limited by the GIL. Scala with Finagle on the JVM handled 10,000-50,000 requests per second per server with full multi-core utilization.
+
+**Q5: How did Twitter handle the write amplification problem for celebrity accounts with millions of followers?**
+They used a hybrid approach. Regular users got full fan-out on write (tweet is pre-written to all followers' timelines). Celebrity users with millions of followers used a mixed approach — fan-out on write to active followers, fan-out on read for inactive followers. This limited the write amplification while keeping reads fast for engaged users.
+:::
+
+## One-Liner Summary
+
+Twitter's iconic Fail Whale disappeared when they replaced a single-threaded Ruby monolith with JVM microservices and switched from computing timelines at read time to pre-building them at write time — a 3-year migration that transformed how the industry thinks about social platform architecture.
+
 ---
 
 *Sources: [Twitter Engineering Blog — The Infrastructure Behind Twitter: Scale](https://blog.twitter.com/engineering/en_us/a/2013/new-tweets-per-second-record-and-how) (2013); [Raffi Krikorian — Timelines at Scale](https://www.infoq.com/presentations/Twitter-Timeline-Scalability/) (QCon 2012); [Finagle: A Protocol-Agnostic RPC System](https://blog.twitter.com/engineering/en_us/a/2011/finagle-a-protocol-agnostic-rpc-system) (2011); [Twitter Engineering — Snowflake](https://blog.twitter.com/engineering/en_us/a/2010/announcing-snowflake) (2010); various Twitter engineering talks at Strange Loop, QCon, and Velocity.*

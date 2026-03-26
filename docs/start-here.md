@@ -5,7 +5,7 @@ description: "Your quest through Archon begins here — choose your path, forge 
 
 # Begin Your Journey
 
-You stand before **1150+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
+You stand before **1160+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
 
 Choose your quest.
 
@@ -202,7 +202,7 @@ claude mcp add archon -- npx archon-mcp-server
 
 ### "I just want to browse and explore"
 
-- [Knowledge Graph](/graph) — visual map of all 1150+ topics and how they connect
+- [Knowledge Graph](/graph) — visual map of all 1160+ topics and how they connect
 - [Browse by Tag](/tags) — 3,000+ tags, filter by difficulty
 - [Compare Technologies](/compare) — side-by-side comparison (Kafka vs RabbitMQ, Postgres vs MongoDB, etc.)
 - [Cheat Sheets](/cheat-sheets/) — 22 quick reference cards
@@ -232,7 +232,7 @@ claude mcp add archon -- npx archon-mcp-server
 | **Machine Learning** | 30 | Math foundations, linear/logistic regression, decision trees, random forests, XGBoost/LightGBM, SVM, KNN, naive bayes, clustering, PCA, anomaly detection, time series, recommendations, SHAP/LIME — all with from-scratch code + real datasets |
 | **Deep Learning** | 25 | Neural networks from scratch, PyTorch, CNN, RNN/LSTM, Transformers (attention math), VAE, GANs, GNNs, BERT, text generation, YOLO, U-Net, diffusion models, RL, CLIP — full math + PyTorch code |
 | **Frontend Engineering** | 12 | Web performance, browser rendering, SSR/SSG, state management, React internals, WebAssembly, i18n, data visualization |
-| **Mobile Engineering** | 7 | React Native, Flutter, mobile performance, push notifications, offline-first, mobile testing |
+| **Mobile Engineering** | 21 | React Native, Flutter, architecture, state management, networking, databases, CI/CD, security, deep linking, animations, accessibility, payments, analytics, ASO, deployment, cross-platform comparison |
 | **Testing** | 8 | Unit, integration, E2E, contract, property-based, TDD/BDD, test architecture |
 | **Performance** | 35+ | Profiling, optimization, caching, database tuning, edge computing, load testing, benchmarks, compilers |
 | **Spring Boot** | 55 | REST, JPA, Security, JWT, OAuth2, Cloud Gateway, Kafka, Batch, Integration, WebFlux, GraphQL, gRPC, Modulith, Native Image, Virtual Threads, Spring AI |

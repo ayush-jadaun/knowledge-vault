@@ -676,3 +676,63 @@ Start with **raw API calls** for v1. As your application grows, identify the spe
 ::: tip Bottom Line
 **Do not use a framework by default.** Start with raw API calls. Add **LlamaIndex** when you need sophisticated RAG (complex documents, query planning, multi-index routing). Add **LangChain/LangGraph** when you need stateful multi-step agents with tool orchestration. The best LLM applications use frameworks surgically — for the specific patterns where they add genuine value — not as a wholesale abstraction layer over simple API calls.
 :::
+
+## Which Would You Choose?
+
+**Scenario 1:** You are building a chatbot that answers customer questions by searching through 10,000 PDF documents containing product manuals, legal contracts, and technical specifications with tables and charts.
+
+::: details Recommendation: LlamaIndex
+LlamaIndex is purpose-built for this exact use case. LlamaParse handles complex PDF parsing (tables, charts, multi-column layouts), semantic chunking preserves document meaning, and the query engine handles retrieval and synthesis. Building this from scratch with raw APIs would require weeks of custom document parsing and chunking logic.
+:::
+
+**Scenario 2:** You are adding a simple AI chat feature to your SaaS product. Users send a message, the LLM responds with text. No RAG, no tools, no agents. You deploy on Cloudflare Workers with a 10 MB bundle limit.
+
+::: details Recommendation: Raw API
+A simple chat completion is 10-15 lines of code with the OpenAI SDK (~1 MB). LangChain would add 50-100 MB of dependencies that do not fit in a Worker and add no value for a simple request-response pattern. Do not use a framework when you do not need one.
+:::
+
+**Scenario 3:** You are building a complex AI agent that takes a user's goal, breaks it into subtasks, uses 8 different tools (web search, SQL queries, API calls, file operations), handles errors with retries, requires human approval for destructive actions, and maintains state across sessions.
+
+::: details Recommendation: LangGraph (LangChain)
+LangGraph's state machine model is designed for exactly this: multi-step agents with branching logic, tool orchestration, error handling, human-in-the-loop approval gates, and persistent checkpointing. Building this from scratch requires implementing your own state machine, which LangGraph handles out of the box.
+:::
+
+::: warning Common Misconceptions
+- **"You need LangChain to build any LLM app"** — Most LLM applications are simple chat completions or basic RAG. LangChain adds value only for complex orchestration patterns. Start without it and add it when you hit a specific pain point.
+- **"LlamaIndex is only for RAG"** — LlamaIndex also supports agents (SubQuestion query engines, router query engines), but its primary strength is data indexing and retrieval. For agent-heavy workloads, LangGraph is a better fit.
+- **"Raw API means writing everything from scratch"** — The Vercel AI SDK provides streaming, tool calling, structured output, and multi-provider support without the heavy abstraction of LangChain. It is a middle ground between raw API calls and a full framework.
+- **"LangChain's breaking changes mean it is unreliable"** — LangChain has stabilized significantly with the LangChain v0.2+ / LangGraph split. Core APIs are more stable now, though the pace of change is still higher than traditional libraries.
+:::
+
+::: tip Real Migration Stories
+**Many startups: LangChain to raw API** — A common pattern in the LLM ecosystem: teams start with LangChain for rapid prototyping, then rewrite the critical path with raw API calls when they need better performance, debugging, and control. The framework was valuable for learning but became an obstacle in production.
+
+**Perplexity AI: Custom RAG pipeline** — Perplexity, one of the most successful RAG applications, built their retrieval pipeline from scratch rather than using LlamaIndex or LangChain. Their custom pipeline gives them full control over ranking, citation extraction, and streaming — demonstrating that the most demanding RAG applications often outgrow framework abstractions.
+:::
+
+::: details Quiz
+
+**1. Why do LangChain and LlamaIndex add 1-5 seconds to serverless cold starts?**
+
+Both frameworks have large dependency trees (50-100 MB installed). Serverless platforms must load all dependencies into memory on cold start. Raw API calls with just the provider SDK (1-5 MB) cold-start 5-10x faster.
+
+**2. What is the "framework as spice" approach?**
+
+Start with raw API calls. Use a framework (LangChain, LlamaIndex) only for specific patterns where it adds genuine value — complex RAG, stateful agents, multi-provider orchestration. Do not wrap your entire application in a framework when only one component needs it.
+
+**3. How does LlamaIndex's `VectorStoreIndex.fromDocuments()` compare to building RAG from scratch?**
+
+LlamaIndex's one-liner handles document parsing, chunking (sentence splitting), embedding generation, vector storage, and index creation. The raw API equivalent requires 50-60 lines covering PDF parsing, custom chunking, OpenAI embedding calls, vector storage, and similarity search.
+
+**4. What is LangGraph, and how does it relate to LangChain?**
+
+LangGraph is LangChain's library for building stateful, multi-step agent workflows as directed graphs. It provides state machines, conditional edges, persistence (checkpointing), and human-in-the-loop approval gates. It replaces LangChain's older AgentExecutor with a more composable architecture.
+
+**5. When should you use the Vercel AI SDK instead of LangChain?**
+
+When you need streaming, tool calling, structured output, and multi-provider support without LangChain's heavy abstraction layer. The Vercel AI SDK is lighter (smaller bundle), simpler (fewer concepts), and production-focused (designed for Next.js and edge deployment).
+:::
+
+## One-Liner Summary
+
+Start with raw API calls for simple LLM features, reach for LlamaIndex when your RAG pipeline gets complex, and adopt LangGraph when you need stateful multi-tool agents — frameworks are spice, not the main course.

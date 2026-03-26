@@ -608,3 +608,63 @@ In all cases, run both systems in parallel during transition.
 ::: tip Bottom Line
 If you use **GitHub**, use **GitHub Actions** — the integration advantage is too significant to ignore. If you use **GitLab**, use **GitLab CI** for the same reason. If you need maximum control or are on Bitbucket/self-hosted Git, choose **Jenkins** for flexibility or **CircleCI** for speed. Do not over-engineer: most projects need fewer than 100 lines of CI/CD configuration.
 :::
+
+## Which Would You Choose?
+
+**Scenario 1:** You are an open-source maintainer with a project on GitHub. You need CI for tests, linting, and automated releases. Budget is zero.
+
+::: details Recommendation: GitHub Actions
+GitHub Actions is free and unlimited for public repositories. The marketplace has 20,000+ community actions for every task (release automation, Slack notifications, Docker builds). PR checks, issue automation, and package publishing are deeply integrated. There is no reason to use anything else for open-source on GitHub.
+:::
+
+**Scenario 2:** Your 100-person engineering org wants a single platform for code hosting, CI/CD, container registry, SAST/DAST security scanning, and deployment tracking. The security team requires built-in vulnerability scanning.
+
+::: details Recommendation: GitLab Ultimate
+GitLab is the only platform that unifies code hosting, CI/CD, container registry, and security scanning (SAST, DAST, dependency scanning, secret detection) in a single product. The $29/user/month cost is justified when you account for not needing separate Snyk, Docker Hub, and deployment tracking tools.
+:::
+
+**Scenario 3:** Your bank runs critical systems on mainframes and VMs with strict network isolation. CI/CD pipelines must run entirely within your private network. You need approval gates, audit logs, and custom compliance checks.
+
+::: details Recommendation: Jenkins
+Jenkins is the only option that runs entirely on your infrastructure with zero external dependencies. Its 1,800+ plugins cover mainframe deployment, approval workflows, and audit logging. The operational burden is real, but it is the only CI/CD tool that provides complete control over every aspect of the pipeline.
+:::
+
+::: warning Common Misconceptions
+- **"GitHub Actions is only for GitHub projects"** — GitHub Actions can be triggered by webhooks, schedules, and external events. You could use it for non-GitHub projects, but the deep GitHub integration is the primary reason to choose it.
+- **"Jenkins is outdated"** — Jenkins is operationally heavy, not technically outdated. Its Declarative Pipeline syntax is modern, its plugin ecosystem is the most extensive, and it remains the only fully self-hosted option. For regulated industries, this is a feature.
+- **"CircleCI had a security breach so it is unsafe"** — The January 2023 incident was serious, but CircleCI has since implemented additional security measures. Every SaaS platform carries some risk; evaluate their current security posture, not just historical incidents.
+- **"You cannot run GitHub Actions locally"** — Tools like `act` let you run GitHub Actions workflows locally for testing. It is not perfect (some Actions require GitHub-hosted runner features), but it covers most testing scenarios.
+:::
+
+::: tip Real Migration Stories
+**Linux Kernel: Custom CI to GitHub** — While the Linux kernel development remains on mailing lists, associated projects and testing infrastructure have adopted GitHub Actions for automated testing, demonstrating that even the most traditional open-source projects benefit from modern CI.
+
+**Shopify: Custom CI to GitHub Actions** — Shopify migrated their CI infrastructure to GitHub Actions for tighter GitHub integration. For a company of Shopify's scale, the migration involved thousands of workflows and custom actions, but the reduced operational overhead of not managing CI infrastructure justified the effort.
+:::
+
+::: details Quiz
+
+**1. What is the key advantage of GitHub Actions' matrix strategy?**
+
+Matrix strategy lets you run the same job across multiple variable combinations (Node versions, OS platforms, database versions) in parallel with a single config block. For example, testing across Node 18/20/22 on Ubuntu/macOS/Windows = 9 parallel jobs from one definition.
+
+**2. How does GitLab CI's `include` differ from GitHub Actions' reusable workflows?**
+
+GitLab's `include` merges external YAML files into the current pipeline at parse time, allowing template-based composition. GitHub's reusable workflows are called as separate workflow runs, with explicit input/output contracts. GitLab's approach is more flexible; GitHub's is more explicit.
+
+**3. Why is Jenkins faster for cached builds than cloud-hosted CI runners?**
+
+Jenkins agents are persistent — caches, Docker layers, and node_modules live on disk permanently. Cloud CI runners (GitHub Actions, GitLab shared runners) start fresh each time, requiring cache download from remote storage. Jenkins avoids this cache round-trip entirely.
+
+**4. What is GitHub Actions OIDC, and why does it matter for cloud deployments?**
+
+OIDC (OpenID Connect) lets GitHub Actions authenticate with AWS, GCP, or Azure without storing long-lived credentials as secrets. The runner requests a short-lived token from the cloud provider for each workflow run, eliminating the risk of secret leakage.
+
+**5. When does the choice of CI/CD platform effectively not matter?**
+
+When your pipeline is simple (lint, test, build, deploy) and you are already on a specific Git platform. GitHub users should use Actions, GitLab users should use GitLab CI. The integration advantage of the native CI tool outweighs any technical differences for standard pipelines.
+:::
+
+## One-Liner Summary
+
+GitHub Actions is the default for GitHub repos with the largest marketplace, GitLab CI is the all-in-one DevOps platform, Jenkins provides unlimited self-hosted flexibility, and CircleCI offers the fastest Docker-native builds.

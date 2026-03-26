@@ -375,3 +375,63 @@ If migrating to Yarn Berry, start with `nodeLinker: node-modules` in `.yarnrc.ym
 **Choose Yarn Berry** if CI install speed is your top priority and your team is willing to invest in PnP setup. Zero-installs (committing dependencies to git) eliminates the install step in CI entirely, which is transformative for large projects with slow CI pipelines. The tradeoff is PnP compatibility issues and additional editor configuration.
 
 **Choose bun** if you are already using bun as your JavaScript runtime and want the fastest possible install times. bun's package manager is 3-5x faster than npm for raw installation. The tradeoff is a binary lockfile (no human-readable diffs in PRs), fewer audit/security features, and a smaller community for troubleshooting.
+
+## Which Would You Choose?
+
+**Scenario 1:** You maintain an open-source library on npm. Contributors should be able to clone the repo and start working with zero friction, regardless of which package manager they prefer.
+
+::: details Recommendation: npm
+npm ships with Node.js, so every contributor has it by default. No installation step, no Corepack configuration, no "please install pnpm first" in your README. For open-source projects where contributor accessibility matters most, npm is the lowest-friction choice.
+:::
+
+**Scenario 2:** You work as a freelancer on 15 different client projects. Your laptop's SSD is 256 GB, and `node_modules` across all projects is eating 8 GB of disk space.
+
+::: details Recommendation: pnpm
+pnpm's content-addressable store means 15 projects sharing React, TypeScript, and ESLint only store each package version once on disk. You will reclaim 5-6 GB immediately. The more projects you have, the more pnpm saves.
+:::
+
+**Scenario 3:** Your CI pipeline spends 90 seconds on `npm install` for every PR build. You have 50 PRs per day. Developers are frustrated waiting for CI.
+
+::: details Recommendation: Yarn Berry with zero-installs (or bun)
+Yarn Berry's zero-install mode commits dependencies to git, making the CI install step literally 0 seconds. Alternatively, bun installs packages 3-5x faster than npm, cutting your 90-second install to ~20 seconds. Either approach saves your team hours per day.
+:::
+
+::: warning Common Misconceptions
+- **"pnpm's symlinks break things"** — pnpm's strict `node_modules` structure exposes phantom dependencies (packages you use but did not declare). This feels like breakage but is actually pnpm fixing a real bug in your dependency declarations. Add the missing packages and your project is more correct.
+- **"Yarn PnP breaks everything"** — Yarn PnP breaks packages that hardcode `node_modules` paths, which is a diminishing minority. Most modern packages work fine. Start with `nodeLinker: node-modules` and switch to PnP when ready.
+- **"bun's binary lockfile is a dealbreaker"** — Binary lockfiles cannot be reviewed in PR diffs, which is a legitimate concern for security-conscious teams. However, bun automatically resolves merge conflicts (no manual lockfile merging), which is a genuine advantage.
+- **"npm is too slow for real projects"** — npm v10 with `npm ci` and a warm cache is acceptable for most projects. The speed difference matters most in CI pipelines and monorepos, not for typical development workflows.
+:::
+
+::: tip Real Migration Stories
+**Vue/Vite ecosystem: npm to pnpm** — The Vue, Vite, and Vitest projects all migrated to pnpm for their monorepo workspace management. pnpm's filtering (`--filter "...[origin/main]"`) and strict dependency resolution caught phantom dependencies that npm's hoisting had hidden for years.
+
+**Vercel: yarn v1 to pnpm** — Vercel migrated their internal monorepo from Yarn Classic to pnpm, citing better workspace filtering, strict dependency resolution, and faster install times. The migration also improved CI cache efficiency because pnpm's lockfile is more stable across updates.
+:::
+
+::: details Quiz
+
+**1. What is a "phantom dependency," and which package managers prevent it?**
+
+A phantom dependency is a package your code imports that is not declared in your `package.json` — it works because npm/yarn hoists it to the top of `node_modules`. pnpm and Yarn PnP prevent this by enforcing strict module resolution where only declared dependencies are accessible.
+
+**2. How does pnpm's content-addressable store save disk space?**
+
+pnpm stores every package version once in a global store (`~/.pnpm-store`). Projects use hard links to reference packages from this store. If 10 projects use React 19, only one copy exists on disk, linked 10 times.
+
+**3. What is Yarn Berry's "zero-install" mode?**
+
+Zero-installs means committing the `.yarn/cache` directory (compressed package archives) and `.pnp.cjs` (resolution map) to git. CI machines skip the install step entirely because all dependencies are already in the repository. The tradeoff is a larger git repository.
+
+**4. Why is bun's lockfile binary instead of text-based?**
+
+Binary lockfiles are faster to read and write than text-based YAML/JSON. bun prioritizes raw speed in every operation. The tradeoff is that binary lockfiles cannot be human-reviewed in PRs.
+
+**5. When should you use Corepack instead of globally installing pnpm or yarn?**
+
+Corepack (built into Node.js 16+) manages package manager versions per-project via the `packageManager` field in `package.json`. Use it when different projects require different pnpm/yarn versions, ensuring every developer and CI machine uses the exact same version.
+:::
+
+## One-Liner Summary
+
+pnpm saves disk space and enforces correct dependencies, npm is the universal zero-setup default, Yarn Berry eliminates CI install time with zero-installs, and bun is the fastest raw installer.

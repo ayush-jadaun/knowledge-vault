@@ -646,6 +646,201 @@ Track these metrics over time to monitor your test suite's health:
 | **Test-to-code ratio** | 1:1 to 3:1 | < 0.5:1 | No tests |
 | **Time to debug a failure** | < 5 min | 5-30 min | > 30 min |
 
+## Key Takeaway
+
+::: tip
+- Factory functions and builders eliminate brittle inline test data — tests override only the fields they care about, so adding a new required field to a type does not break hundreds of tests.
+- Mock only what you do not own by wrapping third-party libraries in your own adapters — mocking implementation details couples tests to internal structure and causes false failures on every refactor.
+- Flaky tests are production-severity bugs that erode trust in the entire suite — quarantine them immediately, fix within 48 hours, and track root causes (time dependence, shared state, race conditions) systematically.
+:::
+
+## Common Misconceptions
+
+::: warning Misconception: More mocking makes tests better isolated
+Over-mocking replaces real behavior with assumptions about implementation. If your test has more mock setup than assertions, you are testing your mocks, not your code. Default to real objects, use fakes for external dependencies, and reserve mocks for verifying important side effects.
+:::
+
+::: warning Misconception: Test coverage percentage is the best measure of test quality
+Coverage measures which lines were executed, not whether assertions are meaningful. Mutation testing is the gold standard — it checks whether your tests actually *detect* code changes. A coverage ratchet (coverage must never decrease) is more useful than a fixed target.
+:::
+
+::: warning Misconception: Flaky tests are normal and acceptable
+Teams that tolerate flaky tests train engineers to ignore failures. When ignoring failures becomes habit, real bugs slip through. Every flaky test has a root cause (time dependence, shared state, race conditions), and each one must be treated as a bug with the same urgency as production issues.
+:::
+
+::: warning Misconception: Test structure should mirror source code structure exactly
+Mirroring source structure is a reasonable starting convention, but test organization should prioritize discoverability. Group tests by behavior or feature rather than by class name. A test named `calculateShipping_premiumUser_returnsFreeShipping` is worth more than `OrderServiceTest.test1`.
+:::
+
+## Quick Quiz
+
+**1. What is the primary advantage of factory functions over inline test data?**
+- A) They run faster
+- B) They centralize defaults so adding a new required field does not break all tests
+- C) They use less memory
+- D) They produce random data for property-based testing
+
+::: details Answer
+**B) They centralize defaults so adding a new required field does not break all tests.** When you add a new required field to a type, you update one factory function instead of fixing hundreds of tests. Tests override only the fields they care about, making them focused and readable.
+:::
+
+**2. Why should you NOT mock third-party libraries directly?**
+- A) Third-party libraries are too complex to mock
+- B) Mocking is too slow for third-party code
+- C) If the library changes its interface, your mocks keep passing but your code breaks
+- D) Mocking libraries is against their license terms
+
+::: details Answer
+**C) If the library changes its interface, your mocks keep passing but your code breaks.** Wrap third-party libraries in your own adapter (Ports and Adapters pattern) and mock the adapter. This way, a library API change is caught at compile time in one place, not silently hidden by mocks.
+:::
+
+**3. What does mutation testing measure that code coverage does not?**
+- A) How many lines of code were executed
+- B) How fast the tests run
+- C) Whether tests actually detect code changes (mutations)
+- D) The number of test files in the project
+
+::: details Answer
+**C) Whether tests actually detect code changes (mutations).** Mutation testing makes small changes to your code (like changing `>=` to `>`) and checks if any test fails. If no test catches the change, the test suite has a gap — even if coverage says 100%.
+:::
+
+**4. What is the recommended fix for time-dependent flaky tests?**
+- A) Add retry logic to the test
+- B) Increase the timeout
+- C) Inject a clock and use fixed timestamps in tests
+- D) Skip the test in CI
+
+::: details Answer
+**C) Inject a clock and use fixed timestamps in tests.** Time dependence is the most common cause of flaky tests. By injecting a clock (or using `vi.useFakeTimers()` / `freezegun`), you make tests deterministic regardless of when they run.
+:::
+
+**5. In the optimal CI pipeline, what should run FIRST?**
+- A) E2E tests for maximum confidence
+- B) Integration tests for real dependencies
+- C) Lint and type checks followed by unit tests
+- D) Visual regression tests
+
+::: details Answer
+**C) Lint and type checks followed by unit tests.** Fail fast. If linting or type checks fail, there is no point spending 10 minutes on integration or E2E tests. Run the fastest, cheapest checks first.
+:::
+
+## Try It Yourself
+
+**Exercise: Build a test factory system**
+
+Create a factory system for an e-commerce domain with `User`, `Product`, and `Order` types. Requirements:
+1. Each factory should provide sensible defaults
+2. Factories should support partial overrides
+3. Build a `createPremiumUser()` convenience factory
+4. Build an `OrderBuilder` with a fluent API for adding items
+
+::: details Solution
+```typescript
+// Types
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  tier: 'standard' | 'premium';
+}
+
+interface Product {
+  id: string;
+  name: string;
+  price: number; // in cents
+  stock: number;
+}
+
+interface OrderItem {
+  productId: string;
+  quantity: number;
+  price: number;
+}
+
+interface Order {
+  id: string;
+  userId: string;
+  items: OrderItem[];
+  total: number;
+  status: 'pending' | 'completed' | 'cancelled';
+}
+
+// Factories
+let userCounter = 0;
+function createUser(overrides: Partial<User> = {}): User {
+  userCounter++;
+  return {
+    id: `usr-${userCounter}`,
+    name: `Test User ${userCounter}`,
+    email: `user${userCounter}@test.com`,
+    tier: 'standard',
+    ...overrides,
+  };
+}
+
+function createPremiumUser(overrides: Partial<User> = {}): User {
+  return createUser({ tier: 'premium', ...overrides });
+}
+
+let productCounter = 0;
+function createProduct(overrides: Partial<Product> = {}): Product {
+  productCounter++;
+  return {
+    id: `prod-${productCounter}`,
+    name: `Test Product ${productCounter}`,
+    price: 1999,
+    stock: 100,
+    ...overrides,
+  };
+}
+
+// Builder
+class OrderBuilder {
+  private order: Partial<Order> = {
+    id: `ord-${Date.now()}`,
+    items: [],
+    total: 0,
+    status: 'pending',
+  };
+
+  forUser(userId: string): this {
+    this.order.userId = userId;
+    return this;
+  }
+
+  withItem(productId: string, quantity: number, price: number): this {
+    this.order.items!.push({ productId, quantity, price });
+    this.order.total! += quantity * price;
+    return this;
+  }
+
+  completed(): this {
+    this.order.status = 'completed';
+    return this;
+  }
+
+  build(): Order {
+    return this.order as Order;
+  }
+}
+
+// Usage in tests
+test('premium user gets free shipping', () => {
+  const user = createPremiumUser();
+  const order = new OrderBuilder()
+    .forUser(user.id)
+    .withItem('prod-1', 2, 2500)
+    .build();
+
+  expect(calculateShipping(user, order)).toBe(0);
+});
+```
+:::
+
+---
+
+> **One-Liner Summary:** Test architecture is what separates a test suite that enables fearless shipping from one that makes every deploy a gamble — invest in factories, fight flakiness, and fail fast in CI.
+
 ## Further Reading
 
 - [Unit Testing](/testing/unit-testing) — the patterns that test architecture organizes at scale

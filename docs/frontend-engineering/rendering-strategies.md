@@ -554,3 +554,96 @@ export default function SearchPage() {
 - [Browser Rendering Pipeline](/frontend-engineering/browser-rendering) — Understand what happens after HTML reaches the browser
 - [Bundle Optimization](/frontend-engineering/bundle-optimization) — Minimize the JavaScript penalty for CSR and hydration
 - [State Management](/frontend-engineering/state-management) — Handle client and server state across rendering boundaries
+
+---
+
+::: tip Key Takeaway
+- There is no universally correct rendering strategy — only trade-offs aligned with your specific requirements for performance, SEO, data freshness, and infrastructure cost.
+- The "uncanny valley" of SSR — where the page is visible but not interactive during hydration — can be worse than CSR's honestly blank screen, making streaming SSR and RSC critical for large apps.
+- Modern frameworks (Next.js, Nuxt, SvelteKit) support mixing strategies per route, so you do not need to pick one approach for your entire application.
+:::
+
+::: warning Common Misconceptions
+- **"SSR is always faster than CSR."** SSR improves FCP but can increase TTFB (server compute per request) and create the hydration "uncanny valley" where the page looks interactive but is not. On slow servers, SSR can actually feel slower.
+- **"SSG scales infinitely."** Build times scale linearly with page count. A 100,000-page e-commerce catalog could take hours to build statically, which is why ISR exists.
+- **"React Server Components replace SSR."** RSC and SSR are complementary. SSR generates HTML for first paint. RSCs are a new component type that runs only on the server and ships zero JavaScript. They work together, not as replacements.
+- **"CSR is dead."** CSR is the correct choice for apps behind authentication (dashboards, internal tools, design tools like Figma) where SEO is irrelevant and the initial load is amortized over a long session.
+- **"ISR gives you real-time data."** ISR serves stale content for up to the `revalidate` window. For truly real-time data, you need SSR or client-side fetching with WebSockets/polling.
+:::
+
+## When NOT to Use Each Strategy
+
+- **SSR for static marketing pages** — If the content changes once a week, SSR adds unnecessary server cost and complexity. Use SSG.
+- **SSG for personalized dashboards** — SSG generates the same HTML for every visitor. You cannot show user-specific data with pure SSG.
+- **ISR without understanding staleness** — If showing data that is 60 seconds out of date is unacceptable (stock prices, live scores), ISR is the wrong tool. Use SSR or client-side fetching.
+- **Streaming SSR for simple pages** — If your page has no slow data dependencies, streaming adds complexity without benefit. A regular SSR or SSG render is simpler and equally fast.
+- **RSC everywhere** — Not every component benefits from being a Server Component. If a component is purely presentational with no data fetching, the overhead of the RSC protocol provides no advantage.
+
+::: tip In Production
+- **Vercel** (creators of Next.js) pioneered ISR and uses it across their own marketing site, serving pages from the edge CDN with automatic background revalidation.
+- **Shopify** uses streaming SSR for their Hydrogen framework (custom storefronts), allowing product data to stream as it resolves while the page shell renders instantly.
+- **Netflix** uses CSR for their member experience (the app you use after login) because it is a long-session, highly interactive SPA where the initial load is amortized over hours of use.
+- **GitHub** migrated to React Server Components for their file explorer, eliminating client-side JavaScript for rendering repository file trees while keeping interactive elements (search, file actions) as Client Components.
+- **Airbnb** adopted a hybrid approach: SSG for listing pages (cached on CDN), SSR for search results (personalized per request), and CSR for the booking flow (highly interactive).
+:::
+
+::: details Quiz
+
+**1. What is the fundamental difference between SSR and SSG?**
+
+::: details Answer
+SSR generates HTML on the server for every request (dynamic, real-time data possible). SSG generates all HTML at build time (static files served from CDN, no server compute per request). SSR costs server resources per request; SSG costs only CDN bandwidth.
+:::
+
+**2. What is hydration, and what is its main performance problem?**
+
+::: details Answer
+Hydration is the process of making server-rendered HTML interactive by downloading JavaScript, parsing it, and attaching event listeners to the existing DOM. The main problem is the "uncanny valley" — the page appears interactive (buttons are visible) but does not respond to clicks until hydration completes, creating a frustrating user experience.
+:::
+
+**3. How does streaming SSR differ from traditional SSR?**
+
+::: details Answer
+Traditional SSR waits for the entire page to render (including all data fetches) before sending any HTML. Streaming SSR sends HTML in chunks as it is generated — the shell renders immediately, and slow data sections stream in later with Suspense fallbacks replaced as data resolves. This dramatically improves TTFB and FCP.
+:::
+
+**4. What is the key benefit of React Server Components over traditional SSR?**
+
+::: details Answer
+RSCs ship zero JavaScript to the client for Server Components. Traditional SSR sends all component code for hydration. RSCs can also directly access databases and file systems, eliminating the need for an API layer. Only components marked with `'use client'` ship JavaScript.
+:::
+
+**5. When is CSR the correct architectural choice?**
+
+::: details Answer
+CSR is correct for applications behind authentication (dashboards, internal tools), highly interactive SPAs where initial load is amortized over long sessions (Figma, Google Docs), and offline-first PWAs. In these cases, SEO is irrelevant and the richness of client-side interactivity outweighs the slower initial load.
+:::
+
+:::
+
+::: details Exercise
+**Rendering Strategy Decision Matrix**
+
+For each of the following products, choose the optimal rendering strategy (or hybrid approach) and justify your choice with specific metrics:
+
+1. A public developer documentation site with 500 pages updated weekly
+2. An e-commerce product catalog with 50,000 products, prices changing hourly
+3. A real-time stock trading dashboard (authenticated users only)
+4. A company blog with 200 posts, updated twice a week, needs SEO
+5. A social media feed with personalized content and infinite scroll
+
+::: details Solution
+1. **Documentation site** — **SSG** (VitePress, Astro). Content rarely changes, SEO matters, 500 pages builds in <2 minutes. No server needed.
+
+2. **E-commerce catalog** — **ISR with revalidate: 300** (5 minutes). 50,000 pages is too many to rebuild fully, but ISR regenerates on demand. Prices stale by at most 5 minutes. Combine with client-side price check at add-to-cart.
+
+3. **Trading dashboard** — **CSR** with WebSocket for real-time data. Behind auth (no SEO), long session, highly interactive. Initial load penalty is irrelevant for an app used 8+ hours/day.
+
+4. **Company blog** — **SSG with on-demand revalidation**. Content updates are infrequent and triggered by CMS publish. Use a webhook from the CMS to trigger rebuilds. SSG gives fastest possible TTFB.
+
+5. **Social media feed** — **Streaming SSR** for the initial load (personalized, needs SEO for public profiles), then **CSR** for infinite scroll and real-time interactions. Hybrid approach: server renders the first "page" of content, client takes over for subsequent loads.
+:::
+
+:::
+
+> **One-Liner Summary:** Where and when your HTML is generated is the most consequential architectural decision in frontend engineering — there is no best strategy, only the right trade-off for your specific constraints.
