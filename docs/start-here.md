@@ -5,7 +5,7 @@ description: "Your quest through Archon begins here — choose your path, forge 
 
 # Begin Your Journey
 
-You stand before **1090+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
+You stand before **1140+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
 
 Choose your quest.
 
@@ -202,7 +202,7 @@ claude mcp add archon -- npx archon-mcp-server
 
 ### "I just want to browse and explore"
 
-- [Knowledge Graph](/graph) — visual map of all 1090+ topics and how they connect
+- [Knowledge Graph](/graph) — visual map of all 1140+ topics and how they connect
 - [Browse by Tag](/tags) — 3,000+ tags, filter by difficulty
 - [Compare Technologies](/compare) — side-by-side comparison (Kafka vs RabbitMQ, Postgres vs MongoDB, etc.)
 - [Cheat Sheets](/cheat-sheets/) — 22 quick reference cards
@@ -218,9 +218,9 @@ claude mcp add archon -- npx archon-mcp-server
 
 | Section | Pages | What awaits |
 |---------|-------|-------------|
-| **System Design** | 90+ | Distributed systems, databases, caching, queues, consensus, networking, API design, concurrency, geospatial, search, background jobs |
+| **System Design** | 140+ | Fundamentals, patterns, distributed systems, databases, caching, queues, consensus, networking, API design, concurrency, geospatial, search, background jobs, advanced architecture, interview mastery |
 | **System Design Interviews** | 48 | Instagram, Uber, YouTube, Slack, Zoom, Google Docs, ChatGPT, Copilot, Recommendation Engine, Fraud Detection, and 38 more |
-| **LLD Interviews** | 12 | Parking lot, elevator, chess, library, snake & ladders, vending machine, ATM, movie booking, hotel, file system, tic-tac-toe |
+| **LLD Interviews** | 15 | Parking lot, elevator, chess, library, snake & ladders, vending machine, ATM, movie booking, hotel, file system, tic-tac-toe, 30 practice problems (easy/medium/hard) |
 | **Algorithms & Data Structures** | 20 | Arrays, trees, graphs, DP, sorting, heaps, hash tables, backtracking, greedy, bit manipulation, strings, JS/React/Node interview questions |
 | **Architecture Patterns** | 55+ | Microservices, event-driven, CQRS, DDD, SOLID, FP, design patterns, cloud-native, multi-tenancy |
 | **Infrastructure** | 80+ | Terraform, K8s, Docker, AWS, GCP, CI/CD, Nginx, service mesh, observability, Linux internals, storage, FinOps, platform engineering, AI infrastructure |

@@ -2,9 +2,9 @@
 
 > *"Give me six hours to chop down a tree and I'll spend four sharpening the axe."* — This is the axe.
 
-The holy grail of engineering knowledge. 1,091 sacred texts, from first principles to production mastery.
+The holy grail of engineering knowledge. 1,143 sacred texts, from first principles to production mastery.
 
-**1,091 pages | 30 ML | 25 DL | 55 Spring Boot | 69 EDA | 48 System Design Interviews | 25 Data Pipeline | 21 MCP Tools | AI Chatbot**
+**1,143 pages | 30 ML | 25 DL | 55 Spring Boot | 69 EDA | 48 System Design Interviews | 25 Data Pipeline | 21 MCP Tools | AI Chatbot**
 
 [Live Site](https://archon-eight.vercel.app) · [Start Here](https://archon-eight.vercel.app/start-here) · [MCP Server](https://archon-eight.vercel.app/mcp) · [Spring Boot](https://archon-eight.vercel.app/spring-boot/) · [Cheat Sheets](https://archon-eight.vercel.app/cheat-sheets/)
 
@@ -24,7 +24,7 @@ claude mcp add archon -- npx archon-mcp-server
 
 | Section | Pages | What awaits |
 |---------|-------|------------|
-| **System Design** | 80+ | Distributed systems, databases, caching, message queues, consensus, networking, API design, concurrency, search |
+| **System Design** | 140+ | Fundamentals, patterns, distributed systems, databases, caching, message queues, consensus, networking, API design, concurrency, search, advanced architecture, interview mastery |
 | **System Design Interviews** | 40 | Instagram, Uber, YouTube, Slack, Zoom, Google Docs, GitHub, Reddit, Airbnb, and 31 more |
 | **Algorithms & Data Structures** | 10 | Arrays, trees, graphs, DP, sorting, heaps, hash tables, backtracking |
 | **Architecture Patterns** | 50+ | Microservices, event-driven, CQRS, DDD, SOLID, FP, design patterns, cloud-native, multi-tenancy |

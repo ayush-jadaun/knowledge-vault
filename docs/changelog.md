@@ -7,6 +7,27 @@ description: "What's new in Archon — recent additions and updates"
 
 ## March 2026
 
+### March 25, 2026 — System Design Mastery
+
++52 pages. System design section restructured from 90 to 140+ pages.
+
+#### System Design Fundamentals (12 pages)
+- How the Internet Works, Client-Server, Scaling Fundamentals, Zero to Million Users, System Design Characteristics, Estimation Practice, Building Blocks Overview, Proxies, Redundancy & Replication, SQL vs NoSQL Decision, How to Read Architecture, System Design Glossary
+
+#### System Design Patterns (12 pages)
+- Scalability, Availability, Consistency patterns, Data Partitioning, Communication, ID Generation, Blob Storage, Distributed Logging, Notification Patterns, Search Patterns, Event vs Request Driven, Microservices vs Monolith
+
+#### Interview Mastery (10 pages)
+- Framework, Tradeoffs, Mistakes, Templates, Practice Questions, Mock Interview Walkthrough
+
+#### Advanced Architecture (12 pages)
+- Database Per Service, CQRS Decision, Serverless, Edge, Multi-Region, Cost of Scale, Anti-Patterns, DDIA Summary, Real-World Architectures, Security in Design, Observability in Design, Design Scenarios
+
+#### LLD Practice (6 pages)
+- 30 practice problems (easy/medium/hard), Design Scenarios, Architecture Review Exercises, Decision Log Template
+
+---
+
 ### March 25, 2026 — Machine Learning & Deep Learning
 
 **+56 pages. Archon reaches 1,091 pages.**
