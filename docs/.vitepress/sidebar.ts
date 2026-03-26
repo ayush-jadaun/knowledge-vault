@@ -2306,4 +2306,136 @@ export const sidebar: DefaultTheme.Sidebar = {
     },
   ],
 
+  '/machine-learning/': [
+    {
+      text: 'Foundations',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/machine-learning/' },
+        { text: 'Math Foundations', link: '/machine-learning/math-foundations' },
+        { text: 'ML Workflow', link: '/machine-learning/ml-workflow' },
+        { text: 'Python ML Ecosystem', link: '/machine-learning/python-ml-ecosystem' },
+        { text: 'Data Preparation', link: '/machine-learning/data-preparation' },
+      ],
+    },
+    {
+      text: 'Supervised Learning',
+      collapsed: false,
+      items: [
+        { text: 'Linear Regression', link: '/machine-learning/linear-regression' },
+        { text: 'Logistic Regression', link: '/machine-learning/logistic-regression' },
+        { text: 'Decision Trees', link: '/machine-learning/decision-trees' },
+        { text: 'Random Forests', link: '/machine-learning/random-forests' },
+        { text: 'Gradient Boosting', link: '/machine-learning/gradient-boosting' },
+        { text: 'SVM', link: '/machine-learning/svm' },
+        { text: 'KNN', link: '/machine-learning/knn' },
+        { text: 'Naive Bayes', link: '/machine-learning/naive-bayes' },
+      ],
+    },
+    {
+      text: 'Unsupervised Learning',
+      collapsed: false,
+      items: [
+        { text: 'Clustering', link: '/machine-learning/clustering' },
+        { text: 'Dimensionality Reduction', link: '/machine-learning/dimensionality-reduction' },
+        { text: 'Anomaly Detection', link: '/machine-learning/anomaly-detection' },
+        { text: 'Association Rules', link: '/machine-learning/association-rules' },
+        { text: 'Topic Modeling', link: '/machine-learning/topic-modeling' },
+      ],
+    },
+    {
+      text: 'Evaluation & Selection',
+      collapsed: false,
+      items: [
+        { text: 'Evaluation Metrics', link: '/machine-learning/evaluation-metrics' },
+        { text: 'Cross-Validation', link: '/machine-learning/cross-validation' },
+        { text: 'Hyperparameter Tuning', link: '/machine-learning/hyperparameter-tuning' },
+        { text: 'Model Selection', link: '/machine-learning/model-selection' },
+      ],
+    },
+    {
+      text: 'Advanced',
+      collapsed: false,
+      items: [
+        { text: 'Feature Engineering Advanced', link: '/machine-learning/feature-engineering-advanced' },
+        { text: 'Ensemble Methods', link: '/machine-learning/ensemble-methods' },
+        { text: 'Time Series ML', link: '/machine-learning/time-series-ml' },
+        { text: 'Recommendation Systems', link: '/machine-learning/recommendation-systems' },
+        { text: 'ML Interpretability', link: '/machine-learning/ml-interpretability' },
+      ],
+    },
+    {
+      text: 'Reference',
+      collapsed: false,
+      items: [
+        { text: 'ML Checklist', link: '/machine-learning/ml-checklist' },
+        { text: 'Algorithm Selection Guide', link: '/machine-learning/algorithm-selection-guide' },
+      ],
+    },
+  ],
+
+  '/deep-learning/': [
+    {
+      text: 'Foundations',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/deep-learning/' },
+        { text: 'Neural Network Basics', link: '/deep-learning/neural-network-basics' },
+        { text: 'PyTorch Fundamentals', link: '/deep-learning/pytorch-fundamentals' },
+        { text: 'Training Techniques', link: '/deep-learning/training-techniques' },
+      ],
+    },
+    {
+      text: 'Core Architectures',
+      collapsed: false,
+      items: [
+        { text: 'CNN', link: '/deep-learning/cnn' },
+        { text: 'RNN & LSTM', link: '/deep-learning/rnn-lstm' },
+        { text: 'Transformers', link: '/deep-learning/transformers' },
+        { text: 'Autoencoders', link: '/deep-learning/autoencoders' },
+        { text: 'GANs', link: '/deep-learning/gans' },
+        { text: 'Graph Neural Networks', link: '/deep-learning/graph-neural-networks' },
+      ],
+    },
+    {
+      text: 'NLP',
+      collapsed: false,
+      items: [
+        { text: 'NLP Fundamentals', link: '/deep-learning/nlp-fundamentals' },
+        { text: 'Language Models', link: '/deep-learning/language-models' },
+        { text: 'BERT Family', link: '/deep-learning/bert-family' },
+        { text: 'Text Generation', link: '/deep-learning/text-generation' },
+      ],
+    },
+    {
+      text: 'Computer Vision',
+      collapsed: false,
+      items: [
+        { text: 'Image Classification', link: '/deep-learning/image-classification' },
+        { text: 'Object Detection', link: '/deep-learning/object-detection' },
+        { text: 'Image Segmentation', link: '/deep-learning/image-segmentation' },
+      ],
+    },
+    {
+      text: 'Advanced',
+      collapsed: false,
+      items: [
+        { text: 'Transfer Learning', link: '/deep-learning/transfer-learning' },
+        { text: 'Model Optimization', link: '/deep-learning/model-optimization' },
+        { text: 'Diffusion Models', link: '/deep-learning/diffusion-models' },
+        { text: 'Reinforcement Learning', link: '/deep-learning/reinforcement-learning' },
+        { text: 'Multimodal Models', link: '/deep-learning/multimodal-models' },
+      ],
+    },
+    {
+      text: 'Reference',
+      collapsed: false,
+      items: [
+        { text: 'DL Checklist', link: '/deep-learning/dl-checklist' },
+        { text: 'Architecture Selection Guide', link: '/deep-learning/architecture-selection-guide' },
+        { text: 'Papers Reading List', link: '/deep-learning/papers-reading-list' },
+      ],
+    },
+  ],
+
 }
