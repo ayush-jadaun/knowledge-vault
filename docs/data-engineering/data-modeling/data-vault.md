@@ -763,3 +763,120 @@ An emerging approach that combines Data Vault for the integration layer with dim
 - [Slowly Changing Dimensions](./slowly-changing-dimensions.md) — SCD handling in Data Vault satellites
 - [Schema Evolution](./schema-evolution.md) — How Data Vault handles schema changes
 - [Data Lineage](../pipeline-patterns/data-lineage.md) — Traceability through Data Vault
+
+---
+
+::: tip Key Takeaway
+- Data Vault uses three entity types: Hubs (business keys), Links (relationships), and Satellites (descriptive attributes with full history) for enterprise-scale data integration.
+- Hash keys on business keys enable parallel, insert-only loading from multiple sources with no coordination between teams.
+- Data Vault is the integration layer, not the presentation layer -- always build star schemas (Business Vault or Information Mart) on top for analytics.
+:::
+
+::: details Exercise
+**Model a Multi-Source Customer Data Integration**
+
+You have customer data arriving from three source systems:
+- CRM (Salesforce): `customer_id`, `name`, `email`, `segment`, `owner`
+- E-commerce: `user_id`, `email`, `signup_date`, `last_login`, `preferences`
+- Support (Zendesk): `contact_id`, `email`, `name`, `plan_tier`, `ticket_count`
+
+All three systems represent the same customers but with different keys. Design a Data Vault model that:
+1. Creates a Hub for the customer business entity
+2. Creates Satellites for each source's attributes
+3. Handles the key resolution problem (different IDs for the same person)
+4. Supports loading from all three sources in parallel
+
+::: details Solution
+**Hub: `hub_customer`**
+- `hub_customer_hash_key` = MD5(UPPER(TRIM(email))) -- email is the business key across systems
+- `load_date`, `record_source`
+- `email` (the business key)
+
+**Satellites:**
+1. `sat_customer_crm` -- name, segment, owner, load_date, hash_diff, record_source='CRM'
+2. `sat_customer_ecommerce` -- signup_date, last_login, preferences, load_date, hash_diff, record_source='ECOM'
+3. `sat_customer_support` -- plan_tier, ticket_count, load_date, hash_diff, record_source='ZENDESK'
+
+**Key Resolution:**
+- Use email (normalized: UPPER + TRIM) as the business key for hub hash generation.
+- Create a `sat_customer_source_keys` satellite mapping each source system's native ID to the hub: `{crm_customer_id, ecom_user_id, zendesk_contact_id}`.
+- If email is unreliable, add a Link (`link_customer_identity`) connecting hub records that represent the same person via fuzzy matching.
+
+**Parallel Loading:**
+- Each source loads independently: insert into Hub (ON CONFLICT DO NOTHING), then insert new Satellite rows (only when hash_diff changes). No coordination needed because hub inserts are idempotent on the hash key.
+:::
+
+::: warning Common Misconceptions
+- **"Data Vault replaces star schemas."** Data Vault is an integration/historical tracking layer. You still need star schemas (or materialized views) for analytics and BI consumption.
+- **"Data Vault is only for large enterprises."** Small teams with a single data source get little benefit from the Hub/Link/Satellite overhead. Data Vault shines with multiple source systems and audit requirements.
+- **"Hash keys eliminate the need for business key analysis."** You still must identify the correct business key for each hub. Hashing the wrong key produces a wrong model. Hash keys just make loading faster.
+- **"Satellites should store all attributes from all sources."** Each satellite should contain attributes from ONE source or ONE domain. Mixing sources in a satellite defeats the purpose of parallel, independent loading.
+:::
+
+::: tip In Production
+- **ING Bank** uses Data Vault 2.0 to integrate data from 200+ source systems across their global banking operations, with full audit trail for regulatory compliance (Basel III, GDPR).
+- **Uber** adopted Data Vault principles for their data lake integration layer, using hash-based keys for parallel loading of ride, payment, and driver data from separate microservices.
+- **USAA** (financial services) uses Data Vault to maintain complete history of all customer interactions across banking, insurance, and investment systems for regulatory reporting.
+- **AutoTrader UK** uses Data Vault for their vehicle, dealer, and listing data integration, supporting 15+ source systems with automated daily loading.
+:::
+
+::: details Quiz
+**1. What are the three core entity types in Data Vault?**
+
+A) Fact, Dimension, Bridge
+B) Hub, Link, Satellite
+C) Source, Staging, Target
+D) Entity, Attribute, Relationship
+
+::: details Answer
+**B)** Hub (unique business keys), Link (relationships between hubs), and Satellite (descriptive attributes with full change history). Together they form a flexible, auditable integration layer.
+:::
+
+**2. Why are hash keys used instead of natural keys in Data Vault?**
+
+A) Hash keys are shorter
+B) Hash keys enable parallel loading from multiple sources without sequence coordination, and provide consistent key width for joins
+C) Hash keys are more secure
+D) Natural keys are not supported in modern databases
+
+::: details Answer
+**B)** Hash keys (MD5/SHA-256 of the business key) have consistent length, enable parallel insert-only loading from multiple sources without needing a central sequence generator, and make joins faster due to fixed-width key comparisons.
+:::
+
+**3. What is a Business Vault?**
+
+A) A physical vault for storing backup tapes
+B) A layer of derived tables built on top of the Raw Data Vault that applies business rules, calculations, and soft rules
+C) A vault that stores business documents
+D) The production database
+
+::: details Answer
+**B)** The Business Vault adds computed attributes, business rules (e.g., "customer lifetime value"), and soft relationships that require business logic. It sits between the Raw Vault (pure source data) and the Information Mart (star schemas for analytics).
+:::
+
+**4. How does Data Vault handle schema changes from source systems?**
+
+A) It requires a full rebuild of the model
+B) New attributes are added as new columns in existing satellites, or as new satellites -- no existing structure changes
+C) Schema changes are not supported
+D) All data must be reloaded from scratch
+
+::: details Answer
+**B)** Adding a new field from a source = add a column to the existing satellite or create a new satellite. Removing a field = stop populating it (NULLs in new rows). The insert-only pattern means historical data is never modified.
+:::
+
+**5. When would you NOT choose Data Vault?**
+
+A) When you have 200+ source systems
+B) When regulatory compliance requires full audit trails
+C) When you have a single source system and a small team with no audit requirements
+D) When you need parallel loading from multiple sources
+
+::: details Answer
+**C)** Data Vault's Hub/Link/Satellite overhead provides little benefit when you have one source, no audit requirements, and a small team. A simple star schema or even a denormalized table is more practical in that scenario.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Data Vault separates business identity (Hubs), relationships (Links), and change history (Satellites) to enable parallel, audit-ready integration from any number of source systems.

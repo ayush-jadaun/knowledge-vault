@@ -1129,3 +1129,113 @@ Where headroom (typically 20-30%) absorbs traffic spikes. Systems like DS2 (Kala
 - [Watermarks](./watermarks.md) — Watermark propagation during backpressure
 - [Windowing](./windowing.md) — Window accumulation under backpressure
 - [Orchestration](../pipeline-patterns/orchestration.md) — Pipeline-level backpressure management
+
+---
+
+::: tip Key Takeaway
+- Backpressure is the mechanism by which slow consumers signal fast producers to slow down -- without it, buffers overflow and the system crashes.
+- Credit-based flow control (used by Flink) is the most precise approach: consumers grant credits representing buffer capacity, and producers cannot send without credits.
+- Detecting backpressure requires monitoring buffer utilization, throughput degradation, and latency spikes -- the bottleneck is always the operator with the highest input buffer utilization.
+:::
+
+::: details Exercise
+**Locate and Fix a Backpressure Bottleneck**
+
+Your Flink pipeline has this topology: `Kafka Source (p=4)` -> `Enrich (p=8)` -> `Window Aggregate (p=4)` -> `JDBC Sink (p=2)`
+
+Monitoring shows:
+- Source: output buffer 95% full
+- Enrich: input buffer 10%, output buffer 90% full
+- Window Aggregate: input buffer 85%, output buffer 95% full
+- JDBC Sink: input buffer 98% full
+
+Throughput has dropped from 100K events/sec to 20K. Diagnose the bottleneck and propose three solutions.
+
+::: details Solution
+**Diagnosis:** The bottleneck is the JDBC Sink. Its input buffer is 98% full (saturated), which means it cannot keep up with incoming data. This propagates upstream: Window Aggregate's output buffer fills (95%), then Enrich's output buffer fills (90%), then Source's output buffer fills (95%). Backpressure flows backward through the pipeline.
+
+**Evidence:** In a healthy pipeline, buffer utilization should be < 50% everywhere. The operator with the highest INPUT buffer utilization is the bottleneck (JDBC Sink at 98%).
+
+**Solutions:**
+1. **Increase sink parallelism:** Scale JDBC Sink from p=2 to p=8 to match the pipeline's throughput. Each instance handles 1/8 of the key space.
+2. **Batch writes:** Instead of single-row JDBC inserts, buffer records and use batch inserts (e.g., 1000 rows per batch). This reduces per-record overhead from ~5ms to ~0.05ms.
+3. **Async sink:** Use Flink's AsyncFunction for JDBC writes with a connection pool (e.g., 32 concurrent connections). This overlaps I/O waits with processing.
+
+**Bonus:** Consider switching from synchronous JDBC to writing to Kafka and having a separate consumer write to the database, decoupling the sink from the streaming pipeline.
+:::
+
+::: warning Common Misconceptions
+- **"Backpressure means the pipeline is broken."** Backpressure is a healthy safety mechanism. It means the system is protecting itself from overload. The problem is the root cause (slow operator), not the backpressure itself.
+- **"Adding more parallelism always fixes backpressure."** If the bottleneck is a single slow external system (database, API), more parallelism just means more threads waiting on the same bottleneck.
+- **"Dropping data is always wrong."** For some use cases (metrics sampling, log aggregation), controlled load shedding (dropping low-priority data) is better than unbounded buffering or global slowdown.
+- **"Backpressure only affects throughput."** It also affects checkpoint completion (barriers are delayed behind backpressured buffers), watermark propagation (watermarks travel through the same channels as data), and end-to-end latency.
+- **"Unbounded buffers solve backpressure."** They trade backpressure for OOM crashes. Always use bounded buffers with explicit flow control.
+:::
+
+::: tip In Production
+- **Uber** monitors backpressure as a first-class SLI for all streaming pipelines, with automatic alerting when any operator's buffer utilization exceeds 80% for more than 5 minutes.
+- **Netflix** uses dynamic rate adjustment in their streaming pipelines: when backpressure is detected, the source operator reduces its Kafka consumer poll batch size to give downstream operators time to catch up.
+- **LinkedIn** implements per-key backpressure in their feed processing pipeline, throttling only the hot keys that cause bottlenecks rather than slowing down the entire pipeline.
+- **Spotify** uses Flink's unaligned checkpoints specifically because checkpoint barrier alignment under backpressure was causing checkpoint timeouts in their high-throughput event processing pipeline.
+:::
+
+::: details Quiz
+**1. What happens in a streaming pipeline without backpressure when a consumer is slower than a producer?**
+
+A) The system automatically scales the consumer
+B) Buffers grow without bound until the system runs out of memory and crashes
+C) The producer automatically slows down
+D) Data is automatically discarded
+
+::: details Answer
+**B)** Without backpressure, the producer keeps sending data at full speed. The difference between producer and consumer rates accumulates in buffers: `buffer_growth = (rate_producer - rate_consumer) * time`. Eventually, memory is exhausted and the system crashes (OOM).
+:::
+
+**2. How does credit-based flow control work?**
+
+A) The producer sends data at a fixed rate
+B) The consumer grants credits representing available buffer capacity; the producer can only send data when it has credits
+C) A central coordinator allocates bandwidth to each operator
+D) Data is sampled at a configurable rate
+
+::: details Answer
+**B)** The consumer tells the producer "I have space for N buffers." The producer can send up to N buffers. When the consumer processes a buffer, it sends another credit. This creates a precise feedback loop matching producer rate to consumer capacity.
+:::
+
+**3. How do you identify the backpressure bottleneck in a pipeline?**
+
+A) The operator with the highest CPU usage
+B) The operator with the highest input buffer utilization (close to 100%)
+C) The first operator in the pipeline
+D) The operator with the lowest parallelism
+
+::: details Answer
+**B)** The bottleneck operator has high input buffer utilization (it cannot process data fast enough, so input buffers fill up). This causes its upstream operator's output buffers to fill, propagating backpressure backward through the pipeline.
+:::
+
+**4. Why does backpressure affect checkpoint completion?**
+
+A) Checkpoints require more memory under backpressure
+B) Checkpoint barriers travel through the same channels as data; when channels are congested with backpressured data, barriers are delayed
+C) The checkpoint coordinator crashes under backpressure
+D) Backpressure changes the checkpoint interval
+
+::: details Answer
+**B)** Checkpoint barriers are injected into the data stream and flow through the same network buffers as data. When buffers are full due to backpressure, barriers queue behind the data, delaying checkpoint completion. This is why Flink introduced unaligned checkpoints.
+:::
+
+**5. When is load shedding (dropping data) an acceptable response to backpressure?**
+
+A) Never -- all data must be processed
+B) When the data is non-critical (metrics, logs) and approximate results are acceptable
+C) Only in development environments
+D) When the pipeline has exactly-once semantics
+
+::: details Answer
+**B)** For use cases like metrics aggregation, log sampling, or approximate analytics, dropping a controlled percentage of low-priority data (load shedding) is better than unbounded latency growth or system crashes. Critical data (financial transactions, compliance events) should never be shed.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Backpressure is the streaming system's immune response -- it slows producers to match consumers, and fixing it means speeding up the bottleneck operator, not fighting the flow control.

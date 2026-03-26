@@ -500,3 +500,111 @@ For teams under 50 engineers, ClickHouse is usually the best choice due to lower
 4. **All three are excellent** — the "wrong" choice among these three is still much better than using PostgreSQL or Elasticsearch for OLAP workloads
 5. **Operational cost matters** — ClickHouse (1 binary) vs Druid/Pinot (6-10 components) is a significant operational difference
 6. **Start simple, migrate if needed** — ClickHouse is the easiest starting point; migrate to Druid or Pinot only when you hit their specific strengths
+
+---
+
+::: tip Key Takeaway
+- ClickHouse is the SQL-first, operationally simplest choice (single binary); Druid excels at time-series dashboards with deep storage tiering; Pinot is built for LinkedIn-scale user-facing analytics with extreme concurrency.
+- All three ingest millions of events per second and serve analytical queries in milliseconds, but through fundamentally different architectures.
+- Operational cost (ClickHouse: 1 binary vs Druid/Pinot: 6-10 components) is often the deciding factor for teams without dedicated infrastructure engineers.
+:::
+
+::: details Exercise
+**Choose an OLAP Engine for These Scenarios**
+
+For each scenario, recommend ClickHouse, Druid, or Pinot, and explain why:
+
+1. A startup with 3 engineers needs sub-second dashboards over 10 TB of event data
+2. An ad-tech company needs to serve 50,000 concurrent analytical queries per second to end users
+3. A financial services company needs time-series analytics on market data with 6 months of hot data and 5 years of cold data
+4. A gaming company needs real-time leaderboards with upserts (player scores change constantly)
+5. An observability platform ingesting 5M log events/second that engineers query ad-hoc via SQL
+
+::: details Solution
+1. **ClickHouse.** Simplest operations (single binary), best SQL support, and 3 engineers cannot afford to manage Druid/Pinot's multi-component architecture. 10 TB is well within ClickHouse's sweet spot.
+
+2. **Apache Pinot.** Built for exactly this use case (LinkedIn's "who viewed your profile"). Native multi-tenancy, extreme concurrent query throughput, and query isolation between tenants. ClickHouse and Druid struggle with 50K+ QPS.
+
+3. **Apache Druid.** Mature deep storage tiering (hot segments on SSD, cold on S3) is purpose-built for this. Druid's segment-based architecture makes tiering natural. ClickHouse can do this with tiered storage but it is less mature.
+
+4. **Apache Pinot.** Native upsert support (MutableSegment) enables real-time score updates without rewriting entire segments. ClickHouse ReplacingMergeTree can approximate this but deduplication is eventual, not immediate.
+
+5. **ClickHouse.** Best ad-hoc SQL support, fastest for exploratory queries by engineers. Log data is a natural fit for ClickHouse's MergeTree engine. Grafana and other tools have native ClickHouse integrations for observability.
+:::
+
+::: warning Common Misconceptions
+- **"ClickHouse cannot handle real-time data."** ClickHouse supports Kafka ingestion and MaterializedView for continuous aggregation. It is not streaming-native like Druid/Pinot, but it handles real-time well for most use cases.
+- **"Druid and Pinot are interchangeable."** Druid is optimized for time-series analytics with deep storage; Pinot is optimized for user-facing analytics with multi-tenancy. They have different architectural strengths.
+- **"These OLAP engines replace a data warehouse."** OLAP engines are optimized for specific query patterns (aggregations, time-series, high concurrency). They are not general-purpose warehouses -- they complement Snowflake/BigQuery, not replace them.
+- **"More nodes always means faster queries."** These engines are designed for high-throughput on moderate cluster sizes. Poorly designed schemas, missing pre-aggregations, or wrong sort orders cause more performance issues than insufficient hardware.
+- **"You need all your data in the OLAP engine."** Use these engines for hot data that needs sub-second query latency. Cold/archival data should stay in cheaper storage (S3, data lake) and be queried with Spark/Trino when needed.
+:::
+
+::: tip In Production
+- **Uber** uses Apache Pinot for their real-time analytics dashboard, processing millions of trip events per second and serving hundreds of thousands of concurrent dashboard queries for operations teams.
+- **Netflix** uses Apache Druid for their streaming quality analytics, ingesting billions of playback events and serving real-time quality dashboards for content and infrastructure teams.
+- **Cloudflare** uses ClickHouse to power their analytics products (Web Analytics, DNS Analytics), processing millions of queries per second with sub-100ms latency across petabytes of data.
+- **LinkedIn** created Apache Pinot specifically for their "who viewed your profile" feature, serving 200K+ QPS with sub-millisecond latencies across billions of records.
+- **Spotify** uses ClickHouse for their internal analytics platform, providing ad-hoc SQL access to hundreds of billions of streaming events for data scientists and engineers.
+:::
+
+::: details Quiz
+**1. What is the key architectural difference between ClickHouse and Druid/Pinot?**
+
+A) ClickHouse is open source; Druid and Pinot are not
+B) ClickHouse is a single-binary SQL database; Druid and Pinot are multi-component distributed systems with separate processes for ingestion, query serving, and coordination
+C) ClickHouse is faster for all workloads
+D) Druid and Pinot do not support SQL
+
+::: details Answer
+**B)** ClickHouse is a single binary that handles everything. Druid has 6+ components (broker, coordinator, historical, middleManager, overlord, router) and Pinot has similar complexity. This makes ClickHouse significantly simpler to operate but potentially less flexible for specialized architectures.
+:::
+
+**2. When is Apache Pinot the strongest choice?**
+
+A) For ad-hoc SQL analytics by data engineers
+B) For user-facing analytics requiring extreme concurrent query throughput (50K+ QPS) and multi-tenancy
+C) For small datasets under 100 GB
+D) For log search and observability
+
+::: details Answer
+**B)** Pinot was built at LinkedIn for exactly this: serving analytical queries to millions of end users simultaneously. Its architecture includes native multi-tenancy, query isolation, and optimizations for high-concurrency, low-latency query patterns.
+:::
+
+**3. What is "deep storage tiering" in Apache Druid?**
+
+A) Storing data in deep neural networks
+B) Automatically moving older data segments from fast local storage to cheaper object storage (S3/GCS) while keeping them queryable
+C) Compressing data more aggressively
+D) Encrypting data at rest
+
+::: details Answer
+**B)** Druid separates hot segments (on local SSD for fast queries) from cold segments (on S3/GCS for cost-effective storage). Queries transparently read from both tiers. This makes Druid cost-effective for long-retention time-series data.
+:::
+
+**4. Why might ClickHouse be preferred for an observability platform?**
+
+A) It has the best visualization tools
+B) It offers the best SQL support for ad-hoc queries, fastest single-query performance, and simplest operations -- all critical for engineers investigating production issues
+C) It is the cheapest option
+D) It has the best alerting features
+
+::: details Answer
+**B)** Engineers investigating production issues need fast, flexible SQL queries over log/metrics data. ClickHouse's full SQL support, fastest single-query latency, and single-binary operational simplicity make it ideal. Grafana, Kibana, and other observability tools have native ClickHouse integrations.
+:::
+
+**5. What is the relationship between these OLAP engines and a data warehouse like Snowflake?**
+
+A) They replace data warehouses entirely
+B) They complement data warehouses -- OLAP engines handle sub-second real-time queries while warehouses handle complex batch analytics, joins, and ad-hoc exploration
+C) Data warehouses are always faster
+D) They store the same data in the same format
+
+::: details Answer
+**B)** OLAP engines are optimized for specific patterns (time-series, high-concurrency aggregations) with sub-second latency. Data warehouses handle complex multi-table joins, ad-hoc exploration, and batch analytics. Most production architectures use both: warehouse for deep analytics, OLAP engine for real-time dashboards.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** ClickHouse for SQL simplicity and single-binary ops, Druid for time-series with deep storage, Pinot for user-facing analytics at LinkedIn scale -- all three are excellent, so choose based on your operational capacity and query pattern.

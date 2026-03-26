@@ -422,3 +422,110 @@ Never set the vacuum retention period shorter than the longest-running query aga
   - [Query Engines](./query-engines) — engines that read these table formats
   - [Storage Engines](/system-design/databases/storage-engines) — how databases store data at the page level
   - [Stream Processing](/data-engineering/stream-processing/) — real-time ingestion into lakehouse tables
+
+---
+
+::: tip Key Takeaway
+- Open table formats (Delta Lake, Iceberg, Hudi) add ACID transactions, time travel, and schema evolution on top of Parquet files in object storage.
+- Delta Lake is tightly integrated with Databricks/Spark, Iceberg has the broadest multi-engine support, and Hudi excels at record-level upserts for CDC workloads.
+- All three formats are converging in features -- choose based on your engine ecosystem, not feature checklists.
+:::
+
+::: details Exercise
+**Choose a Table Format for These Use Cases**
+
+For each scenario, recommend a table format and justify your choice:
+
+1. A Databricks-centric analytics platform with 500 TB of data
+2. A multi-engine lakehouse where Spark writes and Trino/DuckDB read
+3. A CDC pipeline that needs to apply millions of row-level upserts per hour
+4. A data lake where time travel (querying historical snapshots) is a compliance requirement
+5. A startup with a small team that wants the simplest path to production
+
+::: details Solution
+1. **Delta Lake.** Tight Databricks integration, Unity Catalog for governance, optimized Spark performance with Z-ordering and liquid clustering. The Databricks ecosystem advantage is significant.
+
+2. **Apache Iceberg.** Best multi-engine support: native readers in Spark, Trino, Flink, DuckDB, Snowflake, BigQuery, and Athena. Iceberg's catalog-based design (REST catalog, Hive Metastore, Nessie) decouples the format from any single engine.
+
+3. **Apache Hudi.** Purpose-built for record-level upserts with Merge-on-Read (MoR) tables. Hudi's indexing (bucket, bloom, HBase) makes upserts efficient at scale. Copy-on-Write (CoW) is also available for read-heavy workloads.
+
+4. **Any of the three.** All support time travel/snapshot queries. Iceberg has the most elegant snapshot management (snapshot IDs, branch/tag). Delta Lake integrates time travel with Databricks Unity Catalog for compliance.
+
+5. **Delta Lake.** Simplest getting-started experience with `pip install delta-spark`. Good documentation, largest community, and the `delta-rs` library enables Python-native reads/writes without Spark.
+:::
+
+::: warning Common Misconceptions
+- **"Table formats replace databases."** Table formats add database-like guarantees to files on object storage, but they do not provide indexing, query optimization, or a query engine. You still need Spark/Trino/DuckDB to query them.
+- **"Delta Lake only works with Databricks."** Delta Lake is open source and works with Apache Spark, the `delta-rs` library (Python/Rust), Trino, and Flink. Databricks adds proprietary optimizations but the core format is open.
+- **"You must choose one format for your entire lake."** Different tables can use different formats. Use Hudi for CDC-heavy tables and Iceberg for analytics tables. Engines like Trino can query both.
+- **"Time travel is free."** Every write operation creates a new snapshot. Without vacuuming old snapshots, storage grows linearly with write frequency. Schedule regular maintenance (VACUUM, expire_snapshots).
+- **"Table formats solve the small files problem."** They manage transactions, not file sizes. You still need compaction jobs (OPTIMIZE in Delta, rewrite_data_files in Iceberg) to consolidate small files.
+:::
+
+::: tip In Production
+- **Netflix** uses Apache Iceberg as their primary table format, processing petabytes of viewing data with Spark and querying with Trino, leveraging Iceberg's snapshot isolation for concurrent reads and writes.
+- **Uber** built Apache Hudi specifically for their CDC workloads, handling billions of record-level upserts daily for their trip and payment data lake.
+- **Airbnb** standardized on Apache Iceberg across their data lake, using Iceberg's partition evolution to change partitioning strategies without rewriting data.
+- **Adobe** uses Delta Lake for their Experience Platform, processing trillions of events with Delta's ACID transactions ensuring consistency across hundreds of concurrent writers.
+:::
+
+::: details Quiz
+**1. What fundamental problem do open table formats solve?**
+
+A) They compress data more efficiently than Parquet
+B) They add ACID transactions, consistent snapshots, and schema enforcement on top of files in object storage
+C) They replace the need for a query engine
+D) They provide faster network transfer speeds
+
+::: details Answer
+**B)** Without table formats, a directory of Parquet files has no transactions (partial writes are visible), no consistent reads (readers may see partial updates), and no schema enforcement. Table formats add a metadata layer that provides these guarantees.
+:::
+
+**2. What is the difference between Copy-on-Write (CoW) and Merge-on-Read (MoR)?**
+
+A) CoW is for reads; MoR is for writes
+B) CoW rewrites entire files on updates (fast reads, slow writes); MoR writes deltas that are merged at read time (fast writes, slower reads)
+C) CoW uses more memory; MoR uses more disk
+D) They produce different data formats
+
+::: details Answer
+**B)** CoW creates new data files containing the updated data on every write (great for read-heavy workloads). MoR writes small delta/log files that are merged with base files at query time (great for write-heavy workloads with periodic compaction).
+:::
+
+**3. What is "time travel" in the context of table formats?**
+
+A) Replicating data across time zones
+B) Querying historical versions of a table as it existed at a specific point in time, using retained snapshots
+C) Predicting future data values
+D) Scheduling queries to run at specific times
+
+::: details Answer
+**B)** Table formats retain snapshots of the table state at each write. You can query any historical snapshot: `SELECT * FROM table VERSION AS OF '2026-03-01'`. This enables auditing, debugging, and compliance without maintaining separate historical tables.
+:::
+
+**4. Why is regular maintenance (VACUUM/compaction) necessary?**
+
+A) To improve query accuracy
+B) To reclaim storage from old snapshots and compact small files into optimally-sized ones for query performance
+C) To update the table schema
+D) To refresh the query cache
+
+::: details Answer
+**B)** Without maintenance: (1) old snapshots accumulate, growing storage linearly; (2) many small files from streaming writes create metadata overhead and slow queries. VACUUM removes old snapshots; OPTIMIZE/compaction merges small files.
+:::
+
+**5. Which table format has the broadest multi-engine support as of 2026?**
+
+A) Delta Lake
+B) Apache Hudi
+C) Apache Iceberg
+D) They all have identical engine support
+
+::: details Answer
+**C)** Apache Iceberg has native support in Spark, Flink, Trino, DuckDB, Snowflake, BigQuery, Athena, Dremio, and StarRocks. Its catalog-based design (REST catalog API) makes it engine-agnostic by design.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Open table formats turn a directory of Parquet files into a proper table with ACID transactions, time travel, and schema evolution -- choose based on your engine ecosystem, not feature checklists.

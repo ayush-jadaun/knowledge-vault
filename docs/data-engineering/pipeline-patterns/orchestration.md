@@ -712,3 +712,127 @@ const environments: EnvironmentConfig[] = [
 - [Data Lineage](./data-lineage.md) — Lineage from orchestration metadata
 - [Testing Data Pipelines](./testing-data-pipelines.md) — Testing orchestrated workflows
 - [Backpressure](../stream-processing/backpressure.md) — Flow control in streaming orchestration
+
+---
+
+::: tip Key Takeaway
+- Orchestration manages pipeline dependencies, scheduling, retries, and monitoring -- it answers "what runs when, in what order, and what happens when something fails."
+- Airflow dominates the market but Dagster (software-defined assets) and Prefect (dynamic workflows) offer compelling alternatives for specific use cases.
+- DAG design should follow the principle of idempotent, atomic tasks with clear inputs and outputs -- never build a single monolithic task that does everything.
+:::
+
+::: details Exercise
+**Design an Airflow DAG for a Data Warehouse Refresh**
+
+Design an Airflow DAG that:
+1. Extracts data from 3 sources in parallel: PostgreSQL (orders), REST API (products), S3 (clickstream)
+2. Validates each source independently
+3. Runs a Spark transformation that joins all three sources
+4. Loads results into Snowflake
+5. Runs dbt models on top of the Snowflake data
+6. Sends a Slack notification on success or failure
+7. Handles partial failures (API source fails but the other two succeed)
+
+Draw the task dependency graph and specify retry/timeout policies.
+
+::: details Solution
+**DAG Structure:**
+```
+extract_postgres ─> validate_postgres ─┐
+extract_api ─────> validate_api ───────┼─> spark_transform ─> load_snowflake ─> dbt_run ─> notify_success
+extract_s3 ──────> validate_s3 ────────┘                                                    │
+                                                                                             └─> notify_failure (trigger_rule=one_failed)
+```
+
+**Retry policies:**
+- `extract_api`: retries=3, retry_delay=60s, retry_exponential_backoff=True (APIs are flaky)
+- `extract_postgres`, `extract_s3`: retries=1, retry_delay=30s (infrastructure, usually one-off)
+- `spark_transform`: retries=1, retry_delay=300s (resource contention)
+- `load_snowflake`: retries=2, retry_delay=60s (connection timeouts)
+- `dbt_run`: retries=0 (bugs should fail fast)
+
+**Timeout policies:**
+- Each extract: execution_timeout=30min
+- spark_transform: execution_timeout=2hr
+- Total DAG: dagrun_timeout=4hr
+
+**Partial failure handling:**
+- `spark_transform` has `trigger_rule='all_success'` -- requires all three validated sources.
+- If API fails after 3 retries, the entire DAG stops at spark_transform. Option: create an alternative path `spark_transform_without_api` with `trigger_rule='one_success'` that runs with degraded data and emits a WARNING.
+:::
+
+::: warning Common Misconceptions
+- **"Airflow executes your data processing."** Airflow is an orchestrator, not a processing engine. It triggers external systems (Spark, dbt, APIs). Heavy computation should never run inside Airflow tasks.
+- **"One big task is simpler than many small tasks."** A monolithic task is impossible to debug, retry partially, or parallelize. Break tasks into atomic, idempotent units with clear inputs and outputs.
+- **"Catchup=True is the safe default."** When you deploy a DAG with a start_date in the past, catchup=True creates backfill runs for every missed interval. This can launch hundreds of tasks simultaneously. Use catchup=False unless you explicitly need backfills.
+- **"DAG dependencies should mirror table dependencies."** DAGs should represent business processes, not individual table refreshes. Over-granular DAGs create orchestration overhead that exceeds the pipeline logic.
+- **"Dagster and Prefect are just Airflow alternatives."** Dagster's asset-centric model and Prefect's dynamic task generation solve genuinely different problems than Airflow's task-centric DAGs.
+:::
+
+::: tip In Production
+- **Airbnb** runs 20,000+ Airflow DAGs with custom extensions for SLA monitoring, data quality gates between tasks, and automatic lineage extraction from task metadata.
+- **Spotify** uses a custom orchestration layer built on top of Luigi (now migrating to Airflow/Dagster) for their 10,000+ daily batch pipelines, with per-pipeline SLA tracking.
+- **Uber** operates one of the largest Airflow deployments (100,000+ tasks/day) with custom executors for Spark, Hive, and Presto job submission.
+- **Netflix** uses their internal Maestro orchestrator (open-sourced 2024) for both batch and streaming pipeline orchestration, with native support for conditional workflows and parameter sweeps.
+:::
+
+::: details Quiz
+**1. What is the primary role of a pipeline orchestrator?**
+
+A) To execute data transformations
+B) To manage task dependencies, scheduling, retries, and monitoring -- ensuring the right tasks run in the right order
+C) To store processed data
+D) To visualize data pipelines
+
+::: details Answer
+**B)** An orchestrator coordinates WHEN tasks run (scheduling), in WHAT ORDER (dependency management), WHAT HAPPENS when they fail (retries, alerts), and WHO is notified (monitoring). It delegates actual computation to external systems.
+:::
+
+**2. What is the key architectural difference between Airflow and Dagster?**
+
+A) Airflow is open source; Dagster is proprietary
+B) Airflow is task-centric (define tasks and their order); Dagster is asset-centric (define the data assets and their dependencies)
+C) Airflow supports Python; Dagster supports SQL
+D) Airflow is for batch; Dagster is for streaming
+
+::: details Answer
+**B)** Airflow defines "do this task, then that task." Dagster defines "this dataset depends on that dataset." The asset-centric model makes lineage, testing, and partial materialization more natural.
+:::
+
+**3. Why should you set `max_active_runs=1` for most production DAGs?**
+
+A) To save compute resources
+B) To prevent overlapping runs that could cause data corruption when the current run hasn't finished before the next one starts
+C) To speed up processing
+D) To simplify logging
+
+::: details Answer
+**B)** If a daily DAG takes 3 hours but is scheduled every 2 hours, runs would overlap. With non-idempotent tasks, this can cause duplicate data, resource contention, or lock conflicts. `max_active_runs=1` ensures sequential execution.
+:::
+
+**4. What is a sensor in Airflow?**
+
+A) A monitoring tool for hardware health
+B) A special task type that waits (polls) for an external condition to be met before allowing downstream tasks to proceed
+C) A data validation function
+D) A notification system
+
+::: details Answer
+**B)** Sensors poll for conditions like "has a file arrived in S3?" or "has an upstream DAG completed?" They block downstream tasks until the condition is met, with configurable timeout and polling interval.
+:::
+
+**5. What does `trigger_rule='one_failed'` mean for an Airflow task?**
+
+A) The task runs only if all upstream tasks succeed
+B) The task runs if at least one upstream task has failed -- useful for failure notification tasks
+C) The task retries once on failure
+D) The task is skipped if one upstream fails
+
+::: details Answer
+**B)** The default trigger_rule is `all_success`. Setting it to `one_failed` means the task runs when any upstream fails. This is the standard pattern for notification tasks that should alert on pipeline failures.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Orchestration is the control plane of data engineering -- it ensures the right pipelines run at the right time, in the right order, with the right error handling.

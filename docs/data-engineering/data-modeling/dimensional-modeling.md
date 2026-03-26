@@ -759,3 +759,117 @@ This avoids creating millions of SCD Type 2 rows when demographics change freque
 - [Normalization & Denormalization](./normalization-denormalization.md) — Theory behind star/snowflake choices
 - [Data Vault](./data-vault.md) — Alternative modeling approach
 - [Schema Evolution](./schema-evolution.md) — Evolving dimensional models
+
+---
+
+::: tip Key Takeaway
+- Dimensional modeling organizes data around business processes with a central fact table (events/transactions) surrounded by descriptive dimension tables (who, what, where, when).
+- Star schemas denormalize dimensions into single wide tables for simple joins; snowflake schemas normalize dimensions into sub-tables for storage efficiency at the cost of join complexity.
+- Conformed dimensions (shared across fact tables) are the key to enterprise-wide analytical consistency.
+:::
+
+::: details Exercise
+**Design a Star Schema for an E-Commerce Platform**
+
+An e-commerce company needs to analyze:
+- Revenue by product category, customer segment, and time period
+- Order fulfillment times by warehouse and shipping method
+- Return rates by product and reason code
+
+Design a star schema with:
+1. One fact table with the appropriate grain
+2. At least 4 dimension tables
+3. Identify which dimensions should be conformed (shared across multiple fact tables)
+4. Specify at least 3 measures in the fact table
+
+::: details Solution
+**Fact Table: `fct_order_lines`**
+- Grain: one row per order line item
+- Foreign keys: `date_key`, `customer_key`, `product_key`, `warehouse_key`, `shipping_key`
+- Measures: `quantity`, `unit_price`, `discount_amount`, `net_revenue`, `cost_of_goods`, `fulfillment_days`
+- Degenerate dimension: `order_number` (no separate dimension table needed)
+
+**Dimension Tables:**
+1. `dim_date` (CONFORMED) -- date, day_of_week, month, quarter, year, is_holiday, fiscal_quarter
+2. `dim_customer` (CONFORMED) -- customer_id, name, segment, acquisition_channel, city, state, country
+3. `dim_product` (CONFORMED) -- product_id, name, category, subcategory, brand, supplier
+4. `dim_warehouse` -- warehouse_id, name, region, capacity, type (owned/3PL)
+5. `dim_shipping` -- shipping_method, carrier, service_level, estimated_days
+
+**Conformed dimensions:** `dim_date`, `dim_customer`, and `dim_product` are shared across `fct_order_lines`, `fct_returns`, and `fct_page_views`, ensuring consistent analysis across business processes.
+:::
+
+::: warning Common Misconceptions
+- **"Star schemas are just denormalized tables."** Star schemas are intentionally denormalized with a specific structure: one fact table at the center, dimension tables around it. Random denormalization is not dimensional modeling.
+- **"Snowflake schemas are always better because they save storage."** Storage is cheap; analyst productivity is expensive. The extra joins in snowflake schemas slow queries and confuse business users. Star schemas are preferred unless storage constraints are extreme.
+- **"The fact table should have descriptive attributes."** Facts should contain only measures (numbers you compute on) and foreign keys to dimensions. Descriptive attributes belong in dimension tables.
+- **"One big fact table is better than several smaller ones."** Each fact table should represent one business process at one grain. Mixing grains (e.g., daily and monthly metrics in the same table) creates confusion and errors.
+:::
+
+::: tip In Production
+- **Airbnb** uses star schemas with conformed dimensions for their core analytics, with `dim_listing`, `dim_host`, and `dim_guest` shared across booking, search, and review fact tables.
+- **Uber** models their ride data as a fact table (`fct_trips`) with dimensions for driver, rider, city, time, and vehicle type, enabling consistent cross-functional analytics.
+- **Spotify** uses dimensional modeling for their music consumption analytics, with `fct_streams` surrounded by `dim_track`, `dim_artist`, `dim_user`, and `dim_date`.
+- **Netflix** maintains conformed `dim_title` and `dim_member` dimensions shared across viewing, search, and recommendation fact tables for enterprise-wide consistency.
+:::
+
+::: details Quiz
+**1. What is the "grain" of a fact table?**
+
+A) The storage format used (Parquet, ORC, etc.)
+B) The level of detail represented by each row -- what one row in the fact table means
+C) The number of columns in the table
+D) The compression ratio of the data
+
+::: details Answer
+**B)** The grain defines the atomic level of detail in the fact table. For example, "one row per order line item" vs "one row per order" vs "one row per daily summary." Declaring the grain is the most critical step in dimensional modeling.
+:::
+
+**2. What is a degenerate dimension?**
+
+A) A dimension table with no rows
+B) A dimension attribute stored directly in the fact table (like order_number) because it has no meaningful attributes to justify a separate table
+C) A dimension that is no longer used
+D) A dimension with only one row
+
+::: details Answer
+**B)** A degenerate dimension is a dimension key that lives in the fact table with no corresponding dimension table. Order numbers, invoice numbers, and transaction IDs are common examples -- they are used for grouping but have no descriptive attributes.
+:::
+
+**3. Why are conformed dimensions important?**
+
+A) They reduce storage costs
+B) They ensure consistent definitions across fact tables, enabling cross-process analysis (e.g., the same customer definition in sales and support analytics)
+C) They improve query performance
+D) They are required by data warehouse standards
+
+::: details Answer
+**B)** Conformed dimensions provide a single, agreed-upon definition of business entities (customers, products, dates) shared across multiple fact tables. Without them, different teams may define "customer" differently, making cross-functional analysis impossible.
+:::
+
+**4. What is the difference between additive, semi-additive, and non-additive facts?**
+
+A) They refer to different storage formats
+B) Additive facts can be summed across all dimensions; semi-additive across some; non-additive across none
+C) They are different types of joins
+D) They describe how facts are loaded into the warehouse
+
+::: details Answer
+**B)** Revenue is additive (sum across any dimension). Account balance is semi-additive (sum across customers but not across time -- use snapshot). Unit price is non-additive (summing prices is meaningless -- use average or weighted average).
+:::
+
+**5. When would you choose a snowflake schema over a star schema?**
+
+A) Always, because it is more normalized
+B) When storage costs are a significant concern and the query engine handles multi-level joins efficiently
+C) When you want simpler queries for business users
+D) When you have fewer than 5 dimension tables
+
+::: details Answer
+**B)** Snowflake schemas normalize dimension tables (e.g., product -> category -> department), saving storage by eliminating redundancy. This is beneficial when storage is expensive or when the query engine (e.g., Snowflake, BigQuery) optimizes multi-level joins automatically.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Dimensional modeling organizes analytics around business processes -- one fact table for measurements, surrounded by dimension tables for context, with conformed dimensions tying everything together.

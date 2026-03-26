@@ -429,3 +429,122 @@ The architecture is most valuable when you have multiple sources, multiple consu
   - [Data Quality Checks](/data-engineering/pipeline-patterns/data-quality-checks) — automated quality gates
   - [CDC Patterns](/data-engineering/pipeline-patterns/cdc-patterns) — change data capture for continuous Bronze ingestion
   - [Dimensional Modeling](/data-engineering/data-modeling/dimensional-modeling) — star schema design for Gold tables
+
+---
+
+::: tip Key Takeaway
+- Medallion architecture organizes lakehouse data into Bronze (raw, as-is), Silver (cleaned, validated), and Gold (business-ready aggregations) with quality gates between each layer.
+- Bronze is append-only and schema-on-read; Silver enforces schema, deduplicates, and validates; Gold applies business logic and dimensional modeling.
+- Each layer serves different consumers: Bronze for data engineers debugging, Silver for data scientists exploring, Gold for business analysts and dashboards.
+:::
+
+::: details Exercise
+**Implement Medallion Architecture for IoT Sensor Data**
+
+A manufacturing company collects data from 10,000 sensors across 5 factories, generating 50M events/day. Each event has: `sensor_id`, `factory_id`, `reading_type`, `value`, `timestamp`, `metadata` (JSON blob).
+
+Design the Bronze, Silver, and Gold layers:
+1. What does each layer's schema look like?
+2. What quality gates exist between layers?
+3. What is the retention policy for each layer?
+4. How do you handle late-arriving sensor data?
+
+::: details Solution
+**Bronze Layer:**
+- Schema: raw JSON as-is + `_ingested_at`, `_source_file`, `_batch_id`
+- Storage: append-only, partitioned by `_ingested_date`
+- Retention: 90 days (regulatory requirement for raw data)
+- No validation -- store everything, even malformed events
+
+**Silver Layer:**
+- Schema: `sensor_id (STRING)`, `factory_id (STRING)`, `reading_type (STRING)`, `value (DECIMAL)`, `event_timestamp (TIMESTAMP)`, `metadata (MAP<STRING,STRING>)`, `_processed_at`
+- Quality gates: NOT NULL on sensor_id/factory_id/value, value within physical limits (e.g., temperature -50 to 500), valid timestamp (not in future, not older than 7 days)
+- Deduplication: deduplicate on (sensor_id, event_timestamp)
+- Partitioned by: event_date, factory_id
+- Retention: 2 years
+
+**Gold Layer:**
+- `gold_sensor_hourly_stats`: hourly aggregates per sensor (min, max, avg, stddev, count)
+- `gold_factory_daily_health`: daily factory-level metrics (uptime, anomaly_count, avg_readings)
+- `gold_anomaly_events`: detected anomalies (value > 3 sigma from rolling average)
+- Partitioned by: event_date
+- Retention: 5 years
+
+**Late data:** Silver uses MERGE with event_timestamp as part of the key. Late data within 7 days is merged normally. Data older than 7 days routes to a "late_data" quarantine table for manual review.
+:::
+
+::: warning Common Misconceptions
+- **"Bronze should validate and clean data."** Bronze is intentionally raw. If you reject data at Bronze, you lose it forever. Store everything; validate at the Silver gate.
+- **"Every dataset needs all three layers."** Simple, single-source datasets may only need Bronze and Gold. The Silver layer adds value when you have multiple sources, complex cleaning logic, or data science consumers who need clean-but-unaggregated data.
+- **"Gold tables replace Silver tables."** Gold tables serve specific business use cases (dashboards, reports). Data scientists and ML engineers often need Silver-level data (cleaned but not aggregated) for feature engineering and exploratory analysis.
+- **"Medallion architecture requires Databricks."** The pattern works with any lakehouse stack: Spark + Iceberg, dbt + Snowflake, or even Python + DuckDB + Parquet. It is a design pattern, not a product.
+- **"More layers means better data quality."** Some teams add "Platinum" or "Diamond" layers. Extra layers add complexity without proportional benefit. Three layers (raw, clean, business) are sufficient for most use cases.
+:::
+
+::: tip In Production
+- **Uber** implements a medallion architecture for their trip data: raw events in Bronze, cleaned/enriched trip records in Silver, and aggregated city-level metrics in Gold for ops dashboards.
+- **Netflix** uses three-tier data processing: raw event ingestion (Bronze), cleaned/sessionized viewing data (Silver), and content performance metrics (Gold) for their recommendation team.
+- **Airbnb** applies medallion architecture with dbt: staging models (Silver) clean and deduplicate source data, mart models (Gold) build business metrics, with automated quality checks at each layer transition.
+- **Spotify** uses the medallion pattern for their listening data pipeline: raw Kafka events (Bronze), validated/enriched play events (Silver), and per-user/per-artist aggregations (Gold) for analytics and ML.
+:::
+
+::: details Quiz
+**1. What is the primary purpose of the Bronze layer?**
+
+A) To serve clean data to analysts
+B) To store raw, unmodified source data as a permanent record of truth, ensuring no data is lost
+C) To aggregate business metrics
+D) To enforce schema validation
+
+::: details Answer
+**B)** Bronze is the "landing zone" that stores data exactly as received from sources. No cleaning, no validation, no transformation. This preserves the raw data for debugging, reprocessing, and compliance.
+:::
+
+**2. What quality gates should exist at the Bronze-to-Silver boundary?**
+
+A) No gates -- data flows freely between layers
+B) Schema validation, null checks on required fields, deduplication, and data type enforcement
+C) Only row count checks
+D) Business rule validation
+
+::: details Answer
+**B)** The Bronze-to-Silver gate enforces technical data quality: correct schema, required fields present, valid data types, no duplicates. Business rules (e.g., "order amount must be positive") belong at the Silver-to-Gold gate.
+:::
+
+**3. Who are the primary consumers of each layer?**
+
+A) All consumers use Gold exclusively
+B) Data engineers use Bronze (debugging), data scientists use Silver (exploration/ML), business analysts use Gold (dashboards/reports)
+C) Everyone uses Silver
+D) Only executives use Gold
+
+::: details Answer
+**B)** Each layer serves different needs: Bronze for raw data investigation, Silver for clean-but-granular data exploration and ML features, Gold for pre-aggregated business metrics and dashboards.
+:::
+
+**4. Why is the Bronze layer typically append-only?**
+
+A) Because databases require append-only tables
+B) To preserve a complete, immutable record of all data received, enabling reprocessing and auditing
+C) Because it is faster
+D) Because Bronze data is never queried
+
+::: details Answer
+**B)** Append-only Bronze ensures that no data is ever lost or modified. If a Silver transformation has a bug, you can reprocess from Bronze. If an audit requires the original data, Bronze has it unchanged.
+:::
+
+**5. When is medallion architecture overkill?**
+
+A) When you have multiple data sources
+B) When you have fewer than 5 sources, under 1 TB total, a single consumer team, and no audit requirements
+C) When using cloud storage
+D) When processing streaming data
+
+::: details Answer
+**B)** For small, simple setups with one source and one consumer, the overhead of maintaining three layers does not pay off. A single curated layer (Silver-equivalent) may be sufficient.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Medallion architecture is Bronze (store everything raw), Silver (clean and validate), Gold (aggregate for business) -- three layers with quality gates that transform raw data into trusted analytics.

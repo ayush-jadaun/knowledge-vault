@@ -444,3 +444,111 @@ For new projects, start by developing and testing your transformations locally w
   - [Medallion Architecture](./medallion-architecture) — Bronze/Silver/Gold layers that engines power
   - [Stream Processing](/data-engineering/stream-processing/) — Flink and Spark Streaming for continuous processing
   - [Elasticsearch Internals](/system-design/databases/elasticsearch-internals) — a different kind of query engine for search
+
+---
+
+::: tip Key Takeaway
+- Different query engines excel at different workloads: Spark for ETL and ML, Trino for interactive federation, DuckDB for local/embedded analytics, and Datafusion for custom applications.
+- The lakehouse decouples storage (open formats on object storage) from compute (any engine that understands the format), enabling the right engine for each workload.
+- Start with DuckDB for development and testing, scale to Spark when data exceeds single-machine capacity.
+:::
+
+::: details Exercise
+**Design a Multi-Engine Lakehouse Architecture**
+
+Your company has these workloads:
+1. Daily ETL: Transform 500 GB of raw data through Bronze/Silver/Gold layers
+2. Interactive BI: Analysts run ad-hoc SQL queries via Tableau, expecting sub-10-second response
+3. Data science: ML engineers explore data in Jupyter notebooks
+4. Data quality CI/CD: Automated tests run on every dbt model change in GitHub Actions
+5. Embedded analytics: A customer-facing product needs to run queries on per-tenant data
+
+Assign each workload to an engine and justify your choices.
+
+::: details Solution
+1. **Daily ETL: Apache Spark.** Handles 500 GB transformations with distributed processing, native support for Delta/Iceberg/Hudi, built-in exactly-once semantics, and UDF support for complex business logic.
+
+2. **Interactive BI: Trino.** Low-latency federated SQL queries optimized for interactive workloads. Connect Tableau directly to Trino. Trino reads from Iceberg/Delta tables on object storage without duplicating data.
+
+3. **Data science: DuckDB (local) + Spark (large datasets).** Data scientists use DuckDB in Jupyter for fast exploration on samples (< 100 GB). For full-dataset operations (ML training), they submit Spark jobs to the cluster.
+
+4. **CI/CD tests: DuckDB.** Zero-infrastructure, runs in GitHub Actions without a cluster. Reads sample Parquet/Iceberg files directly. Sub-second test execution for schema validation and transform verification.
+
+5. **Embedded analytics: Apache Datafusion (Rust) or DuckDB (embedded).** Datafusion compiles to a native library for embedding in the product. DuckDB can also run in-process. Both provide single-tenant query isolation without shared infrastructure.
+:::
+
+::: warning Common Misconceptions
+- **"Spark is always the best choice for lakehouse queries."** Spark excels at large-scale ETL but has high latency for interactive queries (JVM startup, task scheduling overhead). Trino is better for sub-second BI queries.
+- **"DuckDB is just a toy for small data."** DuckDB processes hundreds of gigabytes on a single machine with vectorized execution. For many workloads, it outperforms distributed engines because there is no network overhead.
+- **"You need one engine for everything."** The lakehouse model's key advantage is engine decoupling. Use the best engine for each workload -- they all read the same open-format data.
+- **"Trino and Spark are interchangeable."** Trino is optimized for short, interactive queries (seconds). Spark is optimized for long, batch jobs (minutes to hours). Using Spark for interactive BI or Trino for massive ETL produces poor results.
+- **"Federated queries are as fast as local queries."** Federated queries across multiple data sources involve network hops, serialization, and limited pushdown. They are convenient but slower than queries on co-located data.
+:::
+
+::: tip In Production
+- **Netflix** uses Spark for ETL/ML workloads and Trino (formerly Presto, which Netflix helped develop) for interactive analytics, both reading from Iceberg tables on S3.
+- **Uber** runs Spark for their massive-scale data processing pipelines and Presto/Trino for interactive queries, with both engines reading from Apache Hudi tables.
+- **Airbnb** uses Spark for Silver/Gold transformations, Trino for analyst-facing queries, and has adopted DuckDB for local data exploration and CI/CD pipeline testing.
+- **Spotify** uses Spark for batch ETL, BigQuery for interactive analytics (via federated queries to their data lake), and custom Python for ML feature engineering.
+:::
+
+::: details Quiz
+**1. What is the key advantage of the lakehouse model for query engines?**
+
+A) All engines provide the same performance
+B) Storage and compute are decoupled -- multiple engines can read the same open-format data independently
+C) It eliminates the need for a data warehouse
+D) It automatically optimizes queries
+
+::: details Answer
+**B)** Because data is stored in open formats (Parquet + table format metadata) on object storage, any compatible engine can read it. This means you can use Spark for ETL and Trino for BI without duplicating data.
+:::
+
+**2. When should you choose DuckDB over Spark?**
+
+A) For distributed processing of petabyte-scale datasets
+B) For local development, CI/CD testing, and datasets that fit on a single machine (up to hundreds of GB)
+C) For real-time stream processing
+D) For multi-user concurrent query workloads
+
+::: details Answer
+**B)** DuckDB runs in-process with zero infrastructure, provides sub-second startup (no JVM), and processes hundreds of GB on a single machine. It is ideal for development, testing, and datasets that do not require distributed processing.
+:::
+
+**3. What is query pushdown in federated engines like Trino?**
+
+A) Pushing queries to a message queue
+B) Pushing filter predicates and projections to the underlying data source so less data is transferred over the network
+C) Pushing queries to background execution
+D) Pushing query results to a cache
+
+::: details Answer
+**B)** When Trino queries an external source (PostgreSQL, S3/Iceberg), it pushes filters (WHERE clauses) and column selections (SELECT columns) to the source. The source processes these locally and returns only the matching data, dramatically reducing data transfer.
+:::
+
+**4. Why is Spark not ideal for interactive BI queries?**
+
+A) Spark cannot run SQL
+B) Spark has JVM startup overhead, task scheduling latency, and is optimized for throughput (batch) rather than latency (interactive)
+C) Spark does not support Parquet
+D) Spark requires too much memory
+
+::: details Answer
+**B)** Even a simple Spark SQL query incurs JVM startup (seconds), DAG compilation, and task scheduling overhead. Spark is designed for high-throughput batch processing, not low-latency interactive queries. Trino and DuckDB are purpose-built for interactive SQL.
+:::
+
+**5. What is the recommended approach for a new lakehouse project?**
+
+A) Start with Spark for everything
+B) Start with DuckDB for development and testing, scale to Spark when data volume exceeds single-machine capacity
+C) Start with Trino for all workloads
+D) Build a custom query engine
+
+::: details Answer
+**B)** DuckDB provides instant startup, zero infrastructure, and near-identical SQL syntax. Develop and test locally with DuckDB, then port to Spark when data volume requires distributed processing. The migration cost is low since both support standard SQL on Parquet/Iceberg.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** The lakehouse decouples storage from compute -- use Spark for ETL, Trino for interactive BI, DuckDB for development, and let them all read the same open-format data.

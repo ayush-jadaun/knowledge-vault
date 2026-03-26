@@ -803,3 +803,117 @@ interface DataObservabilityMetrics {
 - [Testing Data Pipelines](./testing-data-pipelines.md) — Broader testing strategies
 - [Schema Evolution](../data-modeling/schema-evolution.md) — Schema validation as quality check
 - [Data Contracts](./data-quality-checks.md#data-contracts) — Formal quality agreements
+
+---
+
+::: tip Key Takeaway
+- Data quality checks should be embedded in pipelines as gates between processing stages -- bad data caught early costs orders of magnitude less to fix than bad data caught downstream.
+- Use a layered approach: schema validation (shape), statistical checks (distribution), business rules (logic), and freshness checks (timeliness).
+- Data contracts formalize quality expectations between producers and consumers, shifting responsibility for data quality to the teams that produce it.
+:::
+
+::: details Exercise
+**Design Data Quality Gates for a Medallion Architecture**
+
+You are implementing Bronze/Silver/Gold layers for a customer analytics pipeline. Design data quality checks for each transition:
+
+1. **Bronze -> Silver gate:** What checks prevent bad data from entering the Silver layer?
+2. **Silver -> Gold gate:** What checks ensure business-ready data quality?
+3. **Gold -> Dashboard gate:** What checks prevent wrong numbers on executive dashboards?
+
+For each gate, specify: the check type, threshold, and action on failure (block, warn, or quarantine).
+
+::: details Solution
+**Bronze -> Silver Gate:**
+- Schema validation: all required columns present, correct types. Action: BLOCK (reject entire batch).
+- Null check: `customer_id` NOT NULL. Action: QUARANTINE (route null-ID records to DLQ, pass valid records).
+- Dedup: no duplicate `customer_id` per batch. Action: AUTO-FIX (keep most recent by updated_at).
+- Freshness: data timestamp within 24 hours of current time. Action: WARN (alert data engineering team).
+
+**Silver -> Gold Gate:**
+- Referential integrity: all `customer_id` in fact table exist in dim_customer. Action: BLOCK (missing dimensions must be resolved first).
+- Statistical checks: row count within 2 standard deviations of 30-day rolling average. Action: WARN (alert if volume anomaly).
+- Business rules: `lifetime_value >= 0`, `signup_date <= current_date`. Action: QUARANTINE (route violations to review).
+- Completeness: key metrics (revenue, count) not null for any required segment. Action: BLOCK.
+
+**Gold -> Dashboard Gate:**
+- Cross-check: total revenue matches finance system to within 0.1%. Action: BLOCK (do not publish to dashboard until reconciled).
+- Trend check: no metric changes more than 50% day-over-day without explanation. Action: WARN (flag for manual review).
+- Timeliness: Gold tables refreshed within SLA (by 8 AM UTC). Action: ALERT (escalate to PagerDuty if SLA breached).
+:::
+
+::: warning Common Misconceptions
+- **"Data quality is the data engineering team's responsibility."** Data quality is a shared responsibility. Producers should validate at the source (data contracts), engineering should validate in the pipeline, and consumers should validate at the point of use.
+- **"100% data quality is achievable."** Real-world data is messy. The goal is to detect and handle issues, not prevent them entirely. Design for graceful degradation, not perfection.
+- **"Schema validation is sufficient for data quality."** Data can have the right schema but wrong values (negative ages, future dates, impossible combinations). Schema validation checks shape; you also need value-level and statistical checks.
+- **"Data quality checks should block the pipeline on any failure."** Minor quality issues (0.1% null rate) should warn, not block. Blocking thresholds should be calibrated to avoid false positives that delay critical pipelines.
+- **"Great Expectations and dbt tests solve the same problem."** dbt tests run inside the warehouse on materialized data. Great Expectations runs anywhere in the pipeline (before load, during transform, in CI/CD). They are complementary.
+:::
+
+::: tip In Production
+- **Airbnb** uses a data quality score (0-100) for every dataset, computed from completeness, accuracy, freshness, and consistency checks. Datasets below 80 are flagged for remediation.
+- **Uber** implements data contracts between producer and consumer teams: the producing team defines and enforces quality SLAs, and any breaking change requires consumer team sign-off.
+- **Netflix** runs statistical anomaly detection on key metrics (viewing hours, signup counts) that automatically flags and quarantines data batches that deviate significantly from historical patterns.
+- **LinkedIn** built their own data quality framework that runs checks at every layer of their medallion architecture, with automated escalation paths based on severity and business impact.
+:::
+
+::: details Quiz
+**1. What is the cost multiplier for fixing data quality issues at each stage?**
+
+A) Cost is the same at every stage
+B) Roughly 10x per stage downstream -- fixing at source costs $1, at ingestion costs $10, at warehouse costs $100, at dashboard costs $1000
+C) Cost decreases as data moves downstream
+D) Cost only matters at the final stage
+
+::: details Answer
+**B)** Fixing bad data at the source is cheapest. Once bad data flows into the warehouse, it contaminates downstream tables. By the time it reaches dashboards and decisions, the cost includes reprocessing, retracting reports, and restoring trust.
+:::
+
+**2. What is a data contract?**
+
+A) A legal agreement about data ownership
+B) A formal specification between data producer and consumer defining schema, quality standards, SLAs, and change management procedures
+C) A database access control policy
+D) A data encryption standard
+
+::: details Answer
+**B)** A data contract defines what the producer promises (schema, freshness, completeness) and what the consumer expects. It includes SLAs (99.9% completeness), change management (30-day notice for breaking changes), and enforcement (automated validation).
+:::
+
+**3. When should a data quality check BLOCK the pipeline vs WARN?**
+
+A) Always block -- data quality is critical
+B) Block when the issue affects data correctness for ALL downstream consumers; warn when the issue is minor or affects only some consumers
+C) Never block -- warnings are sufficient
+D) Block only in production, warn in development
+
+::: details Answer
+**B)** Blocking thresholds should reflect business impact. A null primary key (data correctness issue) should block. A 0.1% increase in null optional fields should warn. Calibrate thresholds to avoid false positives that delay critical pipelines.
+:::
+
+**4. What is statistical anomaly detection in data quality?**
+
+A) Using machine learning to clean data
+B) Comparing current data metrics (row count, null rate, value distribution) against historical baselines and flagging significant deviations
+C) Running statistical tests on SQL queries
+D) Detecting duplicate records
+
+::: details Answer
+**B)** Statistical checks compare current metrics against rolling averages (e.g., 30-day). If today's row count is 3 standard deviations below the average, it is flagged as an anomaly. This catches volume drops, missing sources, and upstream failures automatically.
+:::
+
+**5. How do Great Expectations and dbt tests complement each other?**
+
+A) They are redundant and you should choose one
+B) Great Expectations validates data anywhere in the pipeline (before load, in Python, in CI/CD); dbt tests validate materialized data inside the warehouse
+C) Great Expectations is for streaming; dbt tests are for batch
+D) Great Expectations replaces dbt tests entirely
+
+::: details Answer
+**B)** Great Expectations can validate data in Python scripts, Spark jobs, or CI/CD pipelines before data enters the warehouse. dbt tests validate data after it is materialized in the warehouse (unique, not_null, relationships). Using both provides defense in depth.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Embed data quality checks as gates between pipeline layers -- catch issues at ingestion for $1 instead of at the executive dashboard for $1000.

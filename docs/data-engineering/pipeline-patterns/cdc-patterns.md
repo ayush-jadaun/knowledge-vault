@@ -752,3 +752,112 @@ This allows legacy services to remain unchanged while enabling event-driven patt
 - [Schema Evolution](../data-modeling/schema-evolution.md) — Schema changes in CDC pipelines
 - [Data Quality Checks](./data-quality-checks.md) — Validating CDC data
 - [Slowly Changing Dimensions](../data-modeling/slowly-changing-dimensions.md) — CDC driving SCD updates
+
+---
+
+::: tip Key Takeaway
+- CDC reads from the database's write-ahead log (WAL/binlog) to capture all changes (inserts, updates, deletes) with zero load on the source database.
+- The outbox pattern solves the dual-write problem: write the event to an outbox table in the same transaction as the data change, then CDC captures it from the outbox.
+- Initial snapshot + ongoing CDC streaming provides a complete, continuously updated replica of the source database.
+:::
+
+::: details Exercise
+**Design a CDC Pipeline for Microservices Migration**
+
+Your company is migrating from a monolith (PostgreSQL) to microservices. During the migration, both the monolith and new services need to stay in sync. The monolith has 50 tables, 3 of which are high-traffic (10K writes/sec each).
+
+Design a CDC architecture that:
+1. Streams changes from the monolith to a Kafka topic per table
+2. Handles the initial snapshot of 500M rows across the 50 tables
+3. Maintains ordering guarantees for the 3 high-traffic tables
+4. Supports the new microservices gradually taking over ownership of tables
+
+::: details Solution
+1. **CDC Setup:** Deploy Debezium with PostgreSQL connector using logical replication. One Kafka topic per table with the table's primary key as the Kafka message key (ensures ordering per-key within a partition).
+
+2. **Initial Snapshot:** Use Debezium's snapshot mode = "initial". For the 3 high-traffic tables (large), use "initial_only" mode first to snapshot without CDC, then switch to "always" mode. Snapshot 50 tables in parallel batches of 10 to avoid overwhelming PostgreSQL's replication slots.
+
+3. **Ordering:** Kafka guarantees ordering within a partition. Set the message key to the table's primary key. For the 3 high-traffic tables, use 12 Kafka partitions each (3x the consumer count) to balance throughput while maintaining per-key ordering.
+
+4. **Migration Strategy:**
+   - Phase 1: CDC streams all 50 tables to Kafka. New services consume from Kafka (read-only).
+   - Phase 2: New service takes ownership of one table -- writes go to the new service, which publishes changes to Kafka. Monolith consumes from Kafka to stay in sync (reverse CDC).
+   - Phase 3: Repeat for each table. Decommission monolith tables one by one.
+   - Phase 4: CDC infrastructure becomes the permanent inter-service event bus.
+:::
+
+::: warning Common Misconceptions
+- **"CDC is just another way to do SELECT queries."** CDC reads from the WAL, not the main tables. It captures changes as they happen with zero impact on query performance, unlike polling-based approaches.
+- **"CDC captures everything automatically."** CDC misses DDL changes (schema changes) by default. You must configure schema history topics and handle schema evolution explicitly.
+- **"The outbox pattern is unnecessary if you have CDC."** Without the outbox, you face the dual-write problem: writing data AND publishing an event are two separate operations that can fail independently. The outbox makes them atomic.
+- **"CDC events arrive in global order."** CDC guarantees ordering per-key within a partition, not global ordering. Events from different keys may arrive out of order relative to each other.
+- **"You can CDC any database."** CDC requires the database to expose its change log. Not all databases support this, and those that do have varying levels of capability and performance impact.
+:::
+
+::: tip In Production
+- **Uber** uses Debezium CDC to replicate data from hundreds of microservice databases into their centralized data lake, processing billions of change events daily with exactly-once semantics.
+- **Airbnb** uses CDC with the outbox pattern for their booking system, ensuring that every booking state change is reliably propagated to search indexing, pricing, and analytics services.
+- **Netflix** uses CDC to stream changes from their content metadata database to downstream recommendation and search services with sub-second latency.
+- **LinkedIn** built their own CDC framework (Databus) to replicate changes from their social graph database to read replicas and derived data stores serving 800M+ members.
+:::
+
+::: details Quiz
+**1. What is the fundamental advantage of log-based CDC over query-based change detection?**
+
+A) Log-based CDC is simpler to implement
+B) Log-based CDC captures all changes (including deletes) with zero impact on source database performance
+C) Log-based CDC requires less storage
+D) Log-based CDC works with all database types
+
+::: details Answer
+**B)** Log-based CDC reads from the WAL/binlog, which the database already writes for its own replication and crash recovery. This means zero additional load on the source database, and it captures inserts, updates, AND deletes.
+:::
+
+**2. What problem does the outbox pattern solve?**
+
+A) Performance issues with CDC
+B) The dual-write problem: ensuring data changes and events are produced atomically in a single transaction
+C) Schema evolution in CDC events
+D) Ordering of CDC events
+
+::: details Answer
+**B)** Without the outbox, writing to a database and publishing to Kafka are two separate operations. If the app crashes between them, either the event is lost (data changed but no event) or the event is sent but data was rolled back (phantom event). The outbox table is written in the same transaction as the data change, and CDC captures it reliably.
+:::
+
+**3. Why is Kafka typically used as the transport layer for CDC?**
+
+A) Kafka is the only system that supports CDC
+B) Kafka provides durable, ordered, replayable event streams with configurable retention, enabling consumers to process at their own pace
+C) Kafka is faster than all alternatives
+D) CDC requires exactly-once semantics which only Kafka provides
+
+::: details Answer
+**B)** Kafka's durability (data survives broker failures), ordering (per-partition), replayability (consumers can seek to any offset), and configurable retention (keep events for days/weeks) make it ideal for CDC. Consumers can be added, fail, and catch up independently.
+:::
+
+**4. How does Debezium handle the initial snapshot of existing data?**
+
+A) It reads the WAL from the beginning of time
+B) It performs a consistent snapshot (SELECT * with a lock or consistent read) to capture existing data, then switches to streaming WAL changes
+C) It requires manual data loading before CDC can start
+D) It only captures changes, not existing data
+
+::: details Answer
+**B)** Debezium's "initial" snapshot mode reads all existing data from the source tables using consistent reads (snapshot isolation), publishes them as "read" events (op=r), then transitions to streaming new changes from the WAL.
+:::
+
+**5. What happens if the WAL retention is shorter than a CDC consumer's downtime?**
+
+A) The consumer automatically catches up
+B) CDC events are permanently lost for the gap period, requiring a new initial snapshot to resync
+C) The database automatically extends retention
+D) Debezium buffers the events internally
+
+::: details Answer
+**B)** If the WAL rotates away segments that the CDC consumer has not yet read, those changes are permanently lost. The consumer must perform a new snapshot to re-establish a consistent baseline. Set WAL retention longer than your maximum acceptable downtime.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** CDC captures every database change (insert, update, delete) from the write-ahead log with zero source impact -- pair it with the outbox pattern for reliable event-driven architectures.

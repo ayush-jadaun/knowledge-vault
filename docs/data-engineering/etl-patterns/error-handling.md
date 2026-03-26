@@ -508,4 +508,116 @@ def replay_dlq(pipeline: str, since: datetime, fix_fn=None):
 
 ---
 
+::: tip Key Takeaway
+- Classify errors by category: transient errors get retries with exponential backoff, data quality errors go to a dead letter queue, schema errors fail fast.
+- Dead letter queues preserve bad records for investigation and replay -- never silently drop data.
+- Alerts must be actionable with context, impact assessment, and runbook links; "Pipeline failed" is not an acceptable alert.
+:::
+
+::: details Exercise
+**Design an Error Handling Strategy for a Payment Pipeline**
+
+You are building a pipeline that ingests payment events from Stripe webhooks, enriches them with customer data from a PostgreSQL database, and loads results into a data warehouse.
+
+Design the error handling for:
+1. Stripe API rate limiting (429 responses)
+2. Invalid payment amounts (negative values, amounts over $1M)
+3. Customer lookup failures (customer ID not found in database)
+4. Data warehouse connection timeouts
+5. A new field appearing in Stripe webhook payloads
+
+Specify the retry strategy, DLQ policy, circuit breaker config, and alerting rules for each.
+
+::: details Solution
+1. **Rate limiting (429):** Exponential backoff with jitter, max 5 retries, base delay 2s, max delay 60s. Respect `Retry-After` header if present.
+2. **Invalid amounts:** Route to DLQ with error context. Negative amounts are a data quality issue (DLQ + continue). Amounts over $1M trigger a WARNING alert for manual review but still process.
+3. **Customer lookup failures:** Classify as "late reference" -- buffer the record in a staging table and retry with the next batch. If still missing after 24 hours, route to DLQ.
+4. **Warehouse timeouts:** Retry with exponential backoff (3 retries). Circuit breaker with threshold=5, cooldown=120s. Alert if circuit opens.
+5. **New field in payload:** Log as INFO alert ("schema drift detected"), continue processing. The pipeline should be resilient to new fields (don't fail on unknown keys).
+
+**Alerting rules:**
+- Circuit breaker opens: PagerDuty CRITICAL
+- DLQ rate > 5%: Slack WARNING
+- DLQ records older than 7 days: Slack WARNING
+- Schema drift: Slack INFO (data engineering channel)
+:::
+
+::: warning Common Misconceptions
+- **"Retry everything on failure."** Retrying data quality errors (null fields, invalid formats) is wasteful -- they will fail every time. Only retry transient infrastructure errors.
+- **"Dead letter queues are where data goes to die."** DLQs should be actively monitored with alerts on volume and age. Old DLQ records indicate forgotten failures that need resolution.
+- **"Circuit breakers add unnecessary complexity."** Without them, a failing upstream service gets hammered with retries from every pipeline instance, potentially making the outage worse.
+- **"More retries means more reliability."** Excessive retries delay pipeline completion and can mask persistent issues. Use a retry budget to cap total retry time.
+- **"If the pipeline succeeds, the data is correct."** A pipeline can succeed while silently producing wrong results (wrong joins, stale lookups, dropped records). Monitoring must check data quality, not just pipeline status.
+:::
+
+::: tip In Production
+- **Uber** uses a tiered DLQ system for their trip data pipeline: Level 1 (auto-retry after 1 hour), Level 2 (manual review), Level 3 (permanent quarantine with compliance team notification).
+- **Spotify** implements circuit breakers on all external API calls in their data pipelines, with per-service cooldown periods tuned to each API's typical recovery time.
+- **Netflix** formats all pipeline alerts with runbook links, blast radius (which downstream tables and dashboards are affected), and estimated time to SLA breach.
+- **LinkedIn** uses a replay infrastructure that can re-process any DLQ records through a fixed version of the pipeline, with automated A/B comparison against production output.
+:::
+
+::: details Quiz
+**1. What is the purpose of jitter in exponential backoff?**
+
+A) To make retries faster
+B) To prevent multiple workers from retrying at the same instant (thundering herd)
+C) To reduce network bandwidth
+D) To randomize the order of processing
+
+::: details Answer
+**B)** Without jitter, all workers that failed at the same time will retry at the same time (1s, 2s, 4s, ...), creating load spikes. Jitter adds randomization so retries spread out evenly.
+:::
+
+**2. When should a pipeline fail fast instead of using a dead letter queue?**
+
+A) When any record has a validation error
+B) When the error indicates a schema mismatch or logic bug that will affect all records
+C) When the error rate exceeds 1%
+D) When the pipeline is running in production
+
+::: details Answer
+**B)** Schema mismatches (missing table, type change) and logic errors (bug in transform code) affect ALL records, not just individual ones. Continuing would produce entirely wrong output. Fail fast, fix the code, replay.
+:::
+
+**3. What defines a good alert versus a bad alert?**
+
+A) Good alerts include the pipeline name and error message
+B) Good alerts are actionable: they include context, impact, runbook link, and enough information to diagnose without reading logs
+C) Good alerts are sent to every team member
+D) Good alerts only fire for critical errors
+
+::: details Answer
+**B)** A good alert answers: What failed? What stage? How many records processed? What is downstream impact? When is the SLA? Where are the logs? What is the runbook? "Pipeline failed" without context is not actionable.
+:::
+
+**4. How does a circuit breaker protect upstream services?**
+
+A) It encrypts requests to prevent data leaks
+B) It stops sending requests after consecutive failures, giving the upstream service time to recover
+C) It caches responses to reduce load
+D) It routes traffic to a backup service
+
+::: details Answer
+**B)** After N consecutive failures (threshold), the circuit "opens" and blocks all calls for a cooldown period. After cooldown, it sends a single test request (half-open). If the test succeeds, the circuit closes. If it fails, it reopens.
+:::
+
+**5. What is the three-tier data quarantine pattern?**
+
+A) Three levels of data encryption
+B) Data is classified as valid (continue), fixable (auto-correct with audit trail), or quarantined (isolated for manual review)
+C) Three stages of data processing
+D) Three types of backup storage
+
+::: details Answer
+**B)** Tier 1 (Valid): data passes all checks. Tier 2 (Fixable): data has minor issues that can be auto-corrected (e.g., email format normalization) with an audit trail. Tier 3 (Quarantine): data has critical issues requiring manual investigation.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Classify errors, retry only transient ones, route bad records to a dead letter queue, protect upstreams with circuit breakers, and make every alert actionable.
+
+---
+
 *Next: [Stream Processing →](../stream-processing/index.md)*

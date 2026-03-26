@@ -503,4 +503,119 @@ def sla_miss_callback(dag, task_list, blocking_task_list, slas, blocking_tis):
 
 ---
 
+::: tip Key Takeaway
+- Partition by time for pruning, target 128-256 MB file sizes, and use columnar formats like Parquet for analytics workloads.
+- Implement checkpoint/restart patterns so long-running jobs can recover without reprocessing from scratch.
+- Monitor SLA compliance proactively -- alert at 80% of the deadline, not after it passes.
+:::
+
+::: details Exercise
+**Design a Batch Pipeline for E-Commerce Order Processing**
+
+You receive 50 million order events per day as JSON files landing in S3. Design a batch pipeline that:
+1. Reads the raw JSON, validates records, and writes clean Parquet files partitioned by date
+2. Compacts small files into optimally sized outputs
+3. Handles a failure at 70% completion without reprocessing the entire day
+4. Runs on a schedule with proper SLA monitoring
+
+Draw the DAG and specify the Spark configuration you would use.
+
+::: details Solution
+**DAG:** `extract_json` >> `validate_records` >> `transform_to_parquet` >> `compact_files` >> `update_catalog` >> `notify_success`
+
+**Partitioning:** Partition by `order_date` and `order_hour` for 24 partitions per day. Each partition processes ~2M records independently.
+
+**Checkpoint:** Use the fan-out pattern. Process each hourly partition independently with idempotent overwrites. Track completed partitions in a state table. On restart, skip already-completed partitions.
+
+**Spark config:**
+```python
+spark.executor.memory = "8g"
+spark.executor.cores = 4
+spark.executor.instances = 10
+spark.sql.adaptive.enabled = True
+spark.sql.shuffle.partitions = 120  # 3x total cores
+```
+
+**File sizing:** After transform, coalesce to target 128 MB files: `total_size / 128MB = num_output_files`.
+
+**SLA:** Schedule at 6 AM UTC, SLA deadline 8 AM UTC. Alert at 80% (7:36 AM) if still running.
+:::
+
+::: warning Common Misconceptions
+- **"More partitions always means faster processing."** Over-partitioning creates millions of tiny files, increasing metadata overhead and slowing down queries. Match partition count to query patterns, not data volume.
+- **"Spark's default shuffle partitions (200) are fine."** The default of 200 is arbitrary. Set shuffle partitions to 2-3x your total executor cores for your cluster size.
+- **"CSV and JSON are acceptable at scale."** They lack columnar storage, schema enforcement, and efficient compression. Switch to Parquet or ORC for any dataset over 1 GB.
+- **"Batch processing is being replaced by streaming."** The vast majority of production data pipelines are still batch. Streaming adds complexity that is only justified when sub-minute latency is required.
+:::
+
+::: tip In Production
+- **Uber** processes over 100 PB of batch data using Apache Spark on their internal platform, partitioning ride data by city and time for efficient query pruning.
+- **Netflix** runs thousands of daily batch Spark jobs for content recommendation features, using adaptive query execution and dynamic resource allocation to optimize cluster utilization.
+- **Airbnb** uses Airflow to orchestrate batch pipelines with fan-out/fan-in patterns, processing search and booking data across geographic partitions in parallel.
+- **LinkedIn** processes billions of events daily in batch mode with Spark, using checkpoint/restart patterns to handle failures across their multi-hour ETL windows.
+:::
+
+::: details Quiz
+**1. What is the recommended target file size for Parquet files in a batch pipeline?**
+
+A) 1-10 MB
+B) 128-256 MB
+C) 1-2 GB
+D) 10+ GB
+
+::: details Answer
+**B)** 128-256 MB is the sweet spot. Too small (< 10 MB) creates excessive metadata overhead and slow listing. Too large (> 1 GB) hurts parallelism and makes retries expensive.
+:::
+
+**2. What is the purpose of partition pruning?**
+
+A) Deleting old partitions to save storage
+B) Skipping irrelevant partitions so only matching data is read
+C) Compressing partitions for smaller file sizes
+D) Splitting large partitions into smaller ones
+
+::: details Answer
+**B)** Partition pruning allows the query engine to skip entire partitions that don't match the filter predicate. For example, filtering by `event_date = '2026-03-17'` reads only that day's partition instead of scanning all 365 days.
+:::
+
+**3. Why is the sliding window pattern useful in batch processing?**
+
+A) It processes data faster than other patterns
+B) It handles late-arriving records by reprocessing recent partitions with overlap
+C) It reduces memory usage
+D) It eliminates the need for checkpoints
+
+::: details Answer
+**B)** The sliding window pattern reprocesses a lookback window (e.g., last 3 days) to catch records that arrived after their batch window closed. Combined with idempotent writes, this safely handles late data.
+:::
+
+**4. What does `spark.sql.adaptive.enabled = true` do?**
+
+A) Enables automatic schema detection
+B) Lets Spark auto-tune partition sizes, join strategies, and skew handling at runtime
+C) Enables automatic error recovery
+D) Turns on real-time processing mode
+
+::: details Answer
+**B)** Adaptive Query Execution (AQE) lets Spark dynamically adjust shuffle partition sizes, switch join strategies based on runtime statistics, and handle data skew -- all automatically with no code changes.
+:::
+
+**5. What is the high-water mark pattern used for?**
+
+A) Monitoring memory usage in Spark executors
+B) Tracking the last successfully processed record so jobs can resume after failure
+C) Setting the maximum number of parallel tasks
+D) Measuring network throughput between nodes
+
+::: details Answer
+**B)** The high-water mark tracks the ID or timestamp of the last successfully processed record. On restart, the pipeline queries only records after the HWM, avoiding full reprocessing.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Batch processing wins with good partitioning, right-sized files, checkpoint/restart patterns, and the understanding that most data pipelines do not need real-time.
+
+---
+
 *Next: [Incremental Loads →](incremental-loads.md)*

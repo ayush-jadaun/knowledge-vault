@@ -764,3 +764,124 @@ class StreamingLineageCollector {
 - [Orchestration](./orchestration.md) — Pipeline DAG as lineage source
 - [CDC Patterns](./cdc-patterns.md) — Source lineage from CDC events
 - [Data Vault](../data-modeling/data-vault.md) — Record source as lineage metadata
+
+---
+
+::: tip Key Takeaway
+- Data lineage tracks the complete journey of data from source to destination, answering "where did this data come from?" (upstream) and "what depends on this data?" (downstream).
+- OpenLineage provides a standard API for emitting lineage events from pipelines; Marquez and DataHub serve as lineage metadata stores.
+- Column-level lineage (tracking which source columns flow into which target columns) is the gold standard for impact analysis and debugging.
+:::
+
+::: details Exercise
+**Implement Impact Analysis with Lineage**
+
+A business user reports that the `monthly_revenue` metric on their dashboard is wrong. You have a lineage graph showing:
+
+```
+raw.stripe_payments -> stg_payments -> fct_payments -> rpt_monthly_revenue
+raw.salesforce_deals -> stg_deals -> fct_deals -> rpt_monthly_revenue
+raw.exchange_rates -> stg_exchange_rates -> fct_payments (currency conversion)
+```
+
+Using lineage:
+1. Identify all possible root causes by tracing upstream
+2. Determine the blast radius if `stg_exchange_rates` had a bug
+3. Design a lineage-based alerting rule that would have caught this issue earlier
+
+::: details Solution
+1. **Upstream root causes (tracing backward from `rpt_monthly_revenue`):**
+   - `raw.stripe_payments` -- missing or late payment events from Stripe
+   - `raw.salesforce_deals` -- incorrect deal amounts or stages in Salesforce
+   - `raw.exchange_rates` -- stale or wrong exchange rates
+   - `stg_payments` -- bug in payment cleaning/dedup logic
+   - `stg_deals` -- bug in deal stage mapping
+   - `stg_exchange_rates` -- currency conversion calculation error
+   - `fct_payments` or `fct_deals` -- join logic, aggregation errors
+   - `rpt_monthly_revenue` -- report-level logic (date filtering, currency display)
+
+2. **Blast radius of `stg_exchange_rates` bug (tracing downstream):**
+   - `fct_payments` (uses exchange rates for currency conversion)
+   - `rpt_monthly_revenue` (aggregates from fct_payments)
+   - Any OTHER downstream tables/reports that join with `fct_payments`
+   - Column-level lineage narrows it further: only the `amount_usd` column in `fct_payments` is affected, not `amount_local`.
+
+3. **Lineage-based alerting rule:**
+   - "If any upstream source of `rpt_monthly_revenue` has a data quality failure, freshness breach, or schema change, immediately alert the revenue reporting team with the affected lineage path."
+   - Implementation: register a lineage-aware alert on `rpt_monthly_revenue` that monitors all upstream nodes for quality facets (row count anomalies, freshness SLA breaches, schema drift).
+:::
+
+::: warning Common Misconceptions
+- **"Lineage is just documentation."** Lineage is operational infrastructure. It powers impact analysis (what breaks if I change this table?), root cause analysis (why is this dashboard wrong?), and compliance (where does PII flow?).
+- **"Table-level lineage is sufficient."** Table-level lineage tells you that `table_a` feeds `table_b`, but not which columns. Column-level lineage is essential for precise impact analysis and GDPR compliance (tracking PII flows).
+- **"Lineage is only useful for data engineers."** Data analysts use lineage to understand metric definitions. Compliance teams use it for PII tracking. Platform teams use it for migration planning.
+- **"You need a dedicated lineage tool from day one."** Start with pipeline metadata (Airflow task dependencies) and dbt model references. These provide basic lineage. Add OpenLineage/DataHub when you need cross-platform lineage.
+:::
+
+::: tip In Production
+- **Airbnb** built Dataportal, their internal data discovery and lineage tool, which tracks column-level lineage across thousands of Airflow DAGs and Spark jobs for impact analysis.
+- **Uber** uses their lineage system to power automated impact analysis: before any schema change deploys, the system identifies all downstream consumers and requires acknowledgment.
+- **Netflix** uses lineage metadata to power their data quality alerting: when a source table has a quality issue, all downstream consumers are automatically notified with the full lineage path.
+- **LinkedIn** integrates lineage into their DataHub platform, enabling both upstream "where did this come from?" and downstream "what will break if I change this?" queries across 100K+ datasets.
+:::
+
+::: details Quiz
+**1. What are the two directions of data lineage?**
+
+A) Left and right
+B) Upstream (provenance: where did this data come from?) and downstream (impact: what depends on this data?)
+C) Input and output
+D) Source and sink
+
+::: details Answer
+**B)** Upstream lineage traces data back to its origins (for debugging). Downstream lineage traces forward to find all consumers (for impact analysis). Both directions are essential for production data operations.
+:::
+
+**2. What is the OpenLineage standard?**
+
+A) A database query language
+B) An open API specification for emitting and collecting data lineage events, enabling cross-platform lineage across different tools
+C) A data storage format
+D) A pipeline orchestration framework
+
+::: details Answer
+**B)** OpenLineage defines a standard JSON event format and API for emitting lineage metadata. Producers (Airflow, Spark, dbt) emit events; consumers (Marquez, DataHub) collect and store them. This decouples lineage producers from consumers.
+:::
+
+**3. Why is column-level lineage important for GDPR compliance?**
+
+A) It improves query performance
+B) It tracks exactly which source columns containing PII flow into which downstream tables, enabling precise data subject deletion and access reporting
+C) It reduces storage costs
+D) It is required by the GDPR regulation text
+
+::: details Answer
+**B)** GDPR requires knowing exactly where personal data is stored and how it flows through your systems. Column-level lineage traces PII fields (email, name, address) from source through transformations to every downstream location, enabling complete data subject access requests and right-to-deletion compliance.
+:::
+
+**4. What is a lineage "facet" in OpenLineage?**
+
+A) A type of database index
+B) Additional metadata attached to a lineage event, such as data quality metrics, schema information, or source code location
+C) A visual element in a lineage diagram
+D) A lineage query filter
+
+::: details Answer
+**B)** Facets are extensible metadata attached to lineage events. Examples: schema facet (column names and types), data quality facet (row count, null percentage), source code facet (Git commit, SQL query text). They enrich lineage with operational context.
+:::
+
+**5. How does lineage differ from a pipeline DAG?**
+
+A) They are the same thing
+B) A pipeline DAG shows task execution order; lineage shows data flow across datasets, potentially spanning multiple pipelines and tools
+C) Lineage is more detailed than a DAG
+D) DAGs are for batch; lineage is for streaming
+
+::: details Answer
+**B)** A pipeline DAG (e.g., Airflow) shows task dependencies within one pipeline. Lineage shows how DATA flows across datasets, potentially spanning Airflow, Spark, dbt, and manual processes. Lineage is data-centric; DAGs are task-centric.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Data lineage is your data's GPS trail -- it tells you where data came from, how it was transformed, and what downstream systems will break if something goes wrong.

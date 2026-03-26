@@ -890,3 +890,112 @@ On recovery, operators replay their output logs to reconstruct the downstream st
 - [Windowing](./windowing.md) — Window state in checkpoints
 - [Backpressure](./backpressure.md) — Checkpoint barrier alignment and backpressure
 - [CDC Patterns](../pipeline-patterns/cdc-patterns.md) — Exactly-once with CDC sources
+
+---
+
+::: tip Key Takeaway
+- True exactly-once is "effectively-once": exactly-once state updates (via checkpointing based on Chandy-Lamport snapshots) combined with exactly-once output (via transactional sinks or idempotent writes).
+- Exactly-once in the streaming layer does NOT eliminate the need for sink-level idempotency -- defense in depth is essential.
+- Use incremental checkpoints for state sizes over 1 GB; the savings grow super-linearly as state grows.
+:::
+
+::: details Exercise
+**Design End-to-End Exactly-Once for a Billing Pipeline**
+
+You are building a streaming billing pipeline that:
+- Reads usage events from Kafka (3 partitions, 100K events/sec)
+- Aggregates per-customer usage in 1-hour windows
+- Writes hourly invoices to PostgreSQL
+- Sends invoice notification emails
+
+Design the exactly-once strategy covering:
+1. Checkpoint configuration
+2. Sink strategy (transactional vs idempotent)
+3. How to handle the email side effect
+4. Recovery behavior after a failure
+
+::: details Solution
+1. **Checkpoint config:** Interval = 30 seconds (low state size per window), timeout = 5 minutes, max concurrent = 1, tolerable failures = 3. Use incremental checkpoints with RocksDB state backend.
+
+2. **Sink strategy:** Use idempotent writes to PostgreSQL, NOT two-phase commit. Generate a deterministic invoice ID: `SHA-256(customer_id + window_start + window_end)`. Use `INSERT ... ON CONFLICT (invoice_id) DO UPDATE SET amount = EXCLUDED.amount`. This handles re-runs gracefully.
+
+3. **Email side effect:** Buffer email notifications in the Flink state. Execute them ONLY after the checkpoint containing that window's results is confirmed complete (commit phase). Use a deterministic email dedup key: `invoice-{invoice_id}` so the email provider can deduplicate if the notification is sent twice.
+
+4. **Recovery:** On failure, Flink restores from the last successful checkpoint. Kafka offsets are reset to checkpoint positions. The 1-hour window state is restored. Events between the checkpoint and failure are replayed. The idempotent PostgreSQL sink handles duplicate writes (same invoice_id = no-op update). Emails buffered but not yet sent are re-buffered and sent after the next checkpoint.
+:::
+
+::: warning Common Misconceptions
+- **"Exactly-once means each event is processed exactly one time."** In practice, events ARE reprocessed during recovery. The system ensures the EFFECT is as if each event was processed once (idempotent replay).
+- **"Enabling Flink checkpointing gives you end-to-end exactly-once."** Checkpointing only guarantees consistent internal state. Without transactional or idempotent sinks, external systems will see duplicates on recovery.
+- **"Unaligned checkpoints are always better than aligned."** Unaligned checkpoints avoid blocking but produce larger checkpoint sizes and slower recovery times. Use aligned checkpoints when checkpoint latency is acceptable.
+- **"Exactly-once eliminates the need for idempotency at the sink."** The $2.3M double-charge war story proves otherwise. Always implement sink-level idempotency as defense in depth.
+- **"Shorter checkpoint intervals are always better."** Shorter intervals mean faster recovery but higher overhead. Each checkpoint consumes CPU (serialization), I/O (upload), and network (barrier propagation).
+:::
+
+::: tip In Production
+- **Uber** uses Flink with exactly-once checkpointing for their fare calculation pipeline, with idempotent writes to their ledger database using deterministic transaction IDs derived from trip and fare window identifiers.
+- **Netflix** runs exactly-once streaming pipelines for billing event processing, using incremental checkpoints with RocksDB to handle multi-terabyte state across their subscriber base.
+- **LinkedIn** implements two-phase commit sinks for their Kafka-to-Kafka exactly-once pipelines, using Kafka's transactional producer API with epoch-based fencing to handle zombie transactions.
+- **Airbnb** uses idempotent Elasticsearch sinks (document ID = event ID + window boundaries) instead of two-phase commit, trading slightly higher write volume for simpler infrastructure.
+:::
+
+::: details Quiz
+**1. What does the Chandy-Lamport algorithm achieve in stream processing?**
+
+A) It balances load across worker nodes
+B) It creates a consistent distributed snapshot by injecting barriers into the data stream
+C) It detects network partitions
+D) It optimizes query execution plans
+
+::: details Answer
+**B)** The Chandy-Lamport algorithm injects barrier markers into the data stream. Each operator snapshots its state when it receives barriers from ALL inputs, creating a globally consistent snapshot without pausing processing.
+:::
+
+**2. What is barrier alignment and why does it cause backpressure?**
+
+A) Aligning data records for sorting purposes
+B) When an operator with multiple inputs receives a barrier from one input, it blocks that input until barriers arrive from all other inputs, causing upstream backpressure
+C) Aligning checkpoints across different Flink clusters
+D) Synchronizing clocks between operators
+
+::: details Answer
+**B)** An operator must wait for barriers from ALL inputs before snapshotting. While waiting, it blocks the channel that already sent its barrier (to avoid including post-barrier data in the snapshot). This blocking propagates upstream as backpressure.
+:::
+
+**3. What is the zombie transaction problem?**
+
+A) Transactions that run too slowly
+B) After recovery, pre-committed transactions from the failed epoch may still be pending in external systems
+C) Transactions that consume too much memory
+D) Concurrent write conflicts
+
+::: details Answer
+**B)** Before a failure, a sink may have pre-committed a transaction that was never committed or aborted. After recovery, this "zombie" transaction lingers in the external system. Solution: epoch-based fencing, where a new producer with a higher epoch automatically aborts pending transactions from lower epochs.
+:::
+
+**4. Why are incremental checkpoints critical for large state sizes?**
+
+A) They use less CPU
+B) They only upload state changes since the last checkpoint, reducing upload size from full state to delta
+C) They compress data better
+D) They avoid barrier alignment
+
+::: details Answer
+**B)** A full checkpoint of 100 GB state must upload all 100 GB every time. An incremental checkpoint only uploads the new/modified SST files since the last checkpoint (typically a few hundred MB). The savings grow super-linearly: 100 GB full takes 8 minutes vs 10 seconds incremental.
+:::
+
+**5. How do idempotent sinks achieve exactly-once output?**
+
+A) By using database transactions
+B) By generating deterministic keys from the input data so that re-writing the same data produces the same result (upsert semantics)
+C) By buffering all output until the pipeline completes
+D) By connecting directly to Flink's checkpoint coordinator
+
+::: details Answer
+**B)** Idempotent sinks use deterministic keys (derived from event ID + window boundaries) with upsert semantics (INSERT ON CONFLICT DO UPDATE). Writing the same data twice with the same key is a no-op update, achieving effectively-once output.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Exactly-once is really "effectively-once" -- consistent checkpoints plus idempotent or transactional sinks ensure that failures and replays never produce duplicates or data loss.

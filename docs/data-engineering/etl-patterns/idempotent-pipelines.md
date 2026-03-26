@@ -388,4 +388,138 @@ def load_and_notify(records, run_id: str):
 
 ---
 
+::: tip Key Takeaway
+- An idempotent pipeline produces the same result whether it runs once or ten times -- this is a survival requirement, not a nice-to-have.
+- Use partition overwrites for the simplest idempotency, MERGE/UPSERT on natural keys for incremental loads, and deterministic transforms with no `now()`, `uuid4()`, or `random()`.
+- Always test idempotency explicitly by running the pipeline twice and asserting identical output.
+:::
+
+::: details Exercise
+**Audit a Pipeline for Idempotency Violations**
+
+Review this pipeline code and identify all idempotency violations. Then fix each one.
+
+```python
+def daily_order_pipeline(orders):
+    results = []
+    for order in orders:
+        record = {
+            'id': uuid4().hex,
+            'order_id': order['order_id'],
+            'amount': order['amount'],
+            'processed_at': datetime.now(),
+            'batch_id': random.randint(1, 1000000),
+        }
+        results.append(record)
+    db.execute("INSERT INTO fact_orders VALUES (...)", results)
+    send_slack_notification(f"Processed {len(results)} orders")
+    state.set_hwm('orders', max(o['updated_at'] for o in orders))
+```
+
+::: details Solution
+**Violations found:**
+1. `uuid4().hex` -- generates a new surrogate key on every run (creates duplicates)
+2. `datetime.now()` -- non-deterministic timestamp (output differs per run)
+3. `random.randint()` -- random value (output differs per run)
+4. Bare `INSERT` -- creates duplicates on re-run (should be MERGE/UPSERT)
+5. `send_slack_notification` without dedup key -- duplicate notifications on retry
+6. HWM update is separate from data load -- crash between them causes data loss or duplication
+
+**Fixed version:**
+```python
+def daily_order_pipeline(orders, execution_date: str):
+    results = []
+    for order in orders:
+        record = {
+            'id': hashlib.sha256(f"order:{order['order_id']}".encode()).hexdigest(),
+            'order_id': order['order_id'],
+            'amount': order['amount'],
+            'processed_date': execution_date,
+            'batch_id': hashlib.md5(execution_date.encode()).hexdigest()[:8],
+        }
+        results.append(record)
+    with db.transaction() as tx:
+        tx.execute("MERGE INTO fact_orders ...", results)
+        tx.execute("UPDATE pipeline_state SET hwm = ...", new_hwm)
+    send_slack_notification(f"Processed {len(results)}", dedup_key=f"orders-{execution_date}")
+```
+:::
+
+::: warning Common Misconceptions
+- **"Idempotency only matters for production pipelines."** Development and staging pipelines also get retried. Non-idempotent dev pipelines create confusing test results and unreproducible bugs.
+- **"Using `INSERT ... ON CONFLICT DO NOTHING` is the same as MERGE."** `DO NOTHING` silently discards updates to existing records. Use `DO UPDATE` if source records can be modified.
+- **"Partition overwrite is wasteful because it recomputes everything."** It is the simplest and most reliable idempotency pattern. The compute cost is usually small compared to the debugging cost of duplicate data.
+- **"UUIDs are fine as primary keys in ETL."** Generated UUIDs break idempotency because re-runs create new keys. Derive surrogate keys deterministically from business keys using hashing.
+:::
+
+::: tip In Production
+- **Airbnb** enforces idempotency by convention: every Spark job uses partition overwrite mode, and all incremental pipelines use MERGE with natural keys from the source system.
+- **Uber** tests idempotency as part of their CI pipeline for data jobs -- every new pipeline must pass a "run twice, assert same output" test before deployment.
+- **Netflix** uses the Write-Audit-Publish pattern for critical recommendation pipelines: write to staging, validate, then atomically swap into production.
+- **Spotify** passes execution dates as explicit parameters (never `datetime.now()`) in all Airflow DAGs to ensure deterministic re-runs during backfills.
+:::
+
+::: details Quiz
+**1. What makes a pipeline idempotent?**
+
+A) It runs faster on subsequent executions
+B) It produces the same result whether it runs once or multiple times on the same input
+C) It automatically retries on failure
+D) It uses exactly-once message delivery
+
+::: details Answer
+**B)** Idempotency means running the pipeline N times on the same input produces the exact same output as running it once. No duplicates, no missing data, no changed values.
+:::
+
+**2. Why is `datetime.now()` a violation of idempotency?**
+
+A) It is slow to compute
+B) It produces a different value on each run, making the output non-deterministic
+C) It requires network access
+D) It is not supported in all SQL databases
+
+::: details Answer
+**B)** `datetime.now()` returns the current wall-clock time, which is different on every execution. A re-run produces different `processed_at` values, making the output differ from the first run.
+:::
+
+**3. What is the Write-Audit-Publish pattern?**
+
+A) A logging pattern for data pipelines
+B) A three-phase pattern: write to staging, validate, then atomically swap into production
+C) A notification system for pipeline completion
+D) A version control pattern for SQL queries
+
+::: details Answer
+**B)** Write-Audit-Publish separates writing (to staging), auditing (validation), and publishing (atomic swap to production). Each phase is idempotent: staging is overwritten, publish is atomic, and failure at any phase leaves production unchanged.
+:::
+
+**4. Why should state updates (HWM) be in the same transaction as data loads?**
+
+A) To improve query performance
+B) If they are separate, a crash between data load and state update causes either duplicates or data loss on retry
+C) To reduce storage costs
+D) It is required by the SQL standard
+
+::: details Answer
+**B)** If data loads successfully but HWM update fails (crash between the two), the next run re-extracts and re-loads the same data, creating duplicates. If HWM updates but data load failed, those records are permanently skipped.
+:::
+
+**5. How should you generate surrogate keys in an idempotent pipeline?**
+
+A) Use auto-increment database sequences
+B) Use `uuid4()` for globally unique identifiers
+C) Derive them deterministically from business keys using a hash function
+D) Use the current timestamp combined with a random number
+
+::: details Answer
+**C)** Deterministic hashing (e.g., `SHA-256("source:order_id")`) produces the same key for the same input on every run. Auto-increment, UUID, and random-based keys generate different values on re-runs.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** If running your pipeline twice produces different output, it is broken -- use partition overwrites, natural-key MERGE, and deterministic transforms to make re-runs safe.
+
+---
+
 *Next: [Error Handling →](error-handling.md)*

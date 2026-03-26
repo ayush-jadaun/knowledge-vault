@@ -957,3 +957,106 @@ This is an active area of research and not yet available in mainstream framework
 - [State Management](./state-management.md) — Window state backends
 - [Exactly-Once Processing](./exactly-once-processing.md) — Ensuring window results are not duplicated
 - [Backpressure](./backpressure.md) — What happens when windows accumulate faster than downstream can process
+
+---
+
+::: tip Key Takeaway
+- Windowing slices an infinite stream into finite, computable segments -- tumbling for non-overlapping intervals, sliding for overlapping, and session for activity-based grouping.
+- Triggers determine when window results are emitted; accumulation mode determines how multiple firings relate (discarding, accumulating, or retracting).
+- Never use sliding windows with overlap ratios greater than 100:1 -- the element duplication will destroy throughput and memory.
+:::
+
+::: details Exercise
+**Choose the Right Window for These Scenarios**
+
+For each scenario, choose the window type, specify configuration parameters, and explain why:
+
+1. A dashboard showing "orders per minute" updated every minute
+2. A fraud detection system that needs "transaction count in the last 10 minutes" updated every 30 seconds
+3. A user analytics system tracking "session duration" where a session ends after 30 minutes of inactivity
+4. A system that triggers an alert after receiving 100 error events regardless of time
+5. A financial reporting system computing daily totals from market-hours-only data
+
+::: details Solution
+1. **Tumbling window, 1 minute.** Non-overlapping, each order counted once. Simple and efficient.
+2. **Sliding window, size=10 min, slide=30 sec.** Each element belongs to 20 windows (10min/30sec). Overlap ratio = 20:1, well within the safe limit.
+3. **Session window, gap=30 min.** Data-driven boundaries that merge events close together. Per-key (per-user) windows that close when inactivity exceeds the gap.
+4. **Global window + count trigger (100).** No time boundary -- fires purely based on element count. Use FIRE_AND_PURGE to reset the count after each trigger.
+5. **Custom window assigner (TradingSessionWindow).** Maps events to market-hours windows (e.g., 9:30 AM - 4:00 PM ET). Events outside trading hours are dropped or sent to a side output.
+:::
+
+::: warning Common Misconceptions
+- **"Sliding windows just 'slide' a single window forward."** In reality, each element is duplicated into `ceil(size/slide)` separate windows. A 24-hour window with 1-second slides creates 86,400 copies of each element.
+- **"Session windows are just tumbling windows with dynamic size."** Session windows require a fundamentally different implementation (merging) because window boundaries depend on data, not configuration.
+- **"Triggers only fire once per window."** Triggers can fire multiple times -- early (speculative), on-time (watermark), and late (after watermark). The accumulation mode determines how these multiple firings relate.
+- **"Late data is always dropped."** Late data is only dropped if it arrives after the allowed lateness period. Within the lateness window, it triggers a late firing that updates the result.
+- **"Bigger windows are always better for accuracy."** Larger windows increase latency and memory usage. Choose the smallest window that satisfies your business requirements.
+:::
+
+::: tip In Production
+- **Uber** uses session windows with a 5-minute gap to track rider sessions, merging ride-request events, driver-matching events, and trip events into unified session objects for analytics.
+- **Netflix** uses tumbling 1-minute windows for real-time streaming health metrics, triggering alerts when error rates exceed thresholds within a window.
+- **LinkedIn** uses sliding windows for "trending topics" computation -- 1-hour windows with 5-minute slides provide smooth, continuously updated trending scores.
+- **Spotify** tracks listening sessions with session windows (30-minute gap) per user, computing session-level features like "songs played," "skips," and "genre diversity" for recommendation models.
+:::
+
+::: details Quiz
+**1. How many windows does an element belong to in a sliding window with size=10 min and slide=2 min?**
+
+A) 2
+B) 5
+C) 10
+D) 20
+
+::: details Answer
+**B)** An element belongs to `ceil(size/slide) = ceil(10/2) = 5` windows. Each window overlaps with its neighbors, so a single event at time T is in the 5 windows whose ranges include T.
+:::
+
+**2. What happens when a tumbling window's size equals a sliding window's slide interval?**
+
+A) The system crashes
+B) The sliding window degenerates into a tumbling window (non-overlapping, one window per element)
+C) Elements are dropped
+D) The window size doubles
+
+::: details Answer
+**B)** When `slide == size`, sliding windows become non-overlapping -- each element belongs to exactly one window. This is mathematically identical to a tumbling window.
+:::
+
+**3. Why do session windows require a "merging" implementation?**
+
+A) Because they need to compress data
+B) Because window boundaries are determined by data arrival, and two initially separate sessions may need to merge when a connecting event arrives
+C) Because they use more memory
+D) Because they process events faster
+
+::: details Answer
+**B)** When a new event arrives in the gap between two existing sessions, those sessions must merge into one. Static window assignment cannot handle this -- the system must dynamically merge windows as data arrives.
+:::
+
+**4. What is the difference between FIRE and FIRE_AND_PURGE trigger results?**
+
+A) FIRE is faster than FIRE_AND_PURGE
+B) FIRE emits the window result but keeps state for future firings; FIRE_AND_PURGE emits and clears the state
+C) FIRE_AND_PURGE sends data to a dead letter queue
+D) There is no difference
+
+::: details Answer
+**B)** FIRE emits the current window result while retaining all accumulated elements (useful for accumulating mode). FIRE_AND_PURGE emits and then clears the window state, so the next firing starts fresh (useful for discarding mode).
+:::
+
+**5. What is the throughput multiplier for a sliding window with size=1 hour and slide=1 second?**
+
+A) 1x (no impact)
+B) 60x
+C) 1/3600 of normal throughput
+D) 3600x element duplication, approximately 1/3600 throughput
+
+::: details Answer
+**D)** The overlap ratio is `ceil(3600/1) = 3600`. Each element is duplicated 3600 times -- one copy per window. This creates 3600x state overhead, effectively reducing throughput to 1/3600 of normal. This configuration should never be used in production.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Windowing imposes finite boundaries on infinite streams -- choose tumbling for clean intervals, sliding for rolling metrics, session for user behavior, and never exceed a 100:1 overlap ratio.

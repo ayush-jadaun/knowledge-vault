@@ -1079,3 +1079,112 @@ This is the direction Flink's remote state backend research is heading.
 - [Windowing](./windowing.md) — Window state management
 - [Backpressure](./backpressure.md) — State growth under backpressure
 - [Schema Evolution](../data-modeling/schema-evolution.md) — State schema evolution patterns
+
+---
+
+::: tip Key Takeaway
+- Keyed state is partitioned by key for horizontal scalability; operator state is per-instance for source offsets and buffers.
+- Use HeapStateBackend for state under 2-4 GB; use RocksDB for anything larger due to incremental checkpoints and predictable memory usage.
+- Always configure State TTL to prevent unbounded state growth -- without it, state will grow linearly until checkpoints fail.
+:::
+
+::: details Exercise
+**Diagnose a State Performance Issue**
+
+Your Flink pipeline processes 2M events/second for user session tracking. After switching from HeapStateBackend to RocksDB, throughput dropped from 2M to 500K events/second. The team is considering switching back to heap.
+
+Given:
+- State size: 15 GB (too large for heap)
+- State schema: nested JSON objects with 20+ fields
+- Serialization: Jackson JSON
+- Each event accesses state 3 times (read, modify, write)
+
+Diagnose the root cause and propose a fix without switching back to heap.
+
+::: details Solution
+**Root Cause:** RocksDB serializes/deserializes state on every access. With JSON serialization at ~50us per operation and 3 accesses per event, the serialization overhead is 150us per event. At 2M events/sec, this requires 300 seconds of CPU per second -- impossible.
+
+**Fix (layered):**
+1. **Switch serializer:** Replace Jackson JSON (~50us) with Avro (~2us) or Protobuf (~1.5us). This alone recovers most throughput.
+2. **Flatten state schema:** Nested objects require recursive serialization. Flatten to a single-level struct with primitive fields.
+3. **Batch state access:** Use a local cache (`BatchedStateAccessor`) that reads once from RocksDB, makes all modifications in memory, and writes back once. Reduces RocksDB operations from 3 to 2 per event.
+4. **Tune RocksDB:** Increase block cache to 512 MB for better read hit rate. Set bloom filter bits = 10 for fast negative lookups.
+
+**Expected result:** Avro serialization + batched access should recover throughput to ~1.8M events/sec.
+:::
+
+::: warning Common Misconceptions
+- **"RocksDB is always slower than heap state."** RocksDB is slower per-access (microseconds vs nanoseconds), but it avoids GC pauses, supports incremental checkpoints, and scales to terabytes. For state > 4 GB, RocksDB is actually more stable.
+- **"State TTL handles cleanup instantly."** TTL expiration is lazy -- records are cleaned up during reads, incremental cleanup passes, or RocksDB compaction. Expired state may linger temporarily.
+- **"Increasing parallelism always fixes hot key problems."** If one key receives 50% of traffic, no amount of parallelism helps -- that key's state lives on a single instance. You must split the hot key.
+- **"Queryable state provides real-time reads."** Queryable state reads reflect the state at the last checkpoint, not the current processing position. This means reads can be seconds or minutes stale.
+- **"State schema changes require pipeline restart from scratch."** Versioned state migration (v1 -> v2 -> v3) can be done via savepoints with state schema evolution, preserving all accumulated state.
+:::
+
+::: tip In Production
+- **Uber** splits their streaming state into "hot" (current ride, ~50 GB in Flink) and "cold" (historical data, async writes to DynamoDB), reducing checkpoint duration from 15 minutes to 30 seconds.
+- **Spotify** uses RocksDB with incremental checkpoints for their 500 GB+ real-time listening session state, with per-state TTL of 24 hours to prevent unbounded growth from inactive users.
+- **Netflix** monitors state size growth rate as a key operational metric, with alerts when projected time-to-state-limit drops below 7 days, catching runaway state early.
+- **LinkedIn** implements hot-key detection and automatic key splitting for their high-cardinality feed ranking pipeline, dynamically splitting keys that exceed 10x the average traffic.
+:::
+
+::: details Quiz
+**1. What is the fundamental difference between keyed state and operator state?**
+
+A) Keyed state is faster than operator state
+B) Keyed state is partitioned by key and only accessible when processing elements with that key; operator state is bound to an operator instance
+C) Keyed state uses RocksDB; operator state uses heap
+D) Keyed state is for reads; operator state is for writes
+
+::: details Answer
+**B)** Keyed state is automatically partitioned across parallel instances by key hash, with each key having isolated state. Operator state is per-instance (e.g., Kafka consumer offsets) and not partitioned by data keys.
+:::
+
+**2. When should you choose RocksDB over HeapStateBackend?**
+
+A) When you need the fastest possible state access
+B) When state size exceeds 2-4 GB, or when you need incremental checkpoints
+C) When processing less than 1000 events per second
+D) When using session windows
+
+::: details Answer
+**B)** RocksDB is the right choice when state exceeds what fits comfortably in JVM heap (2-4 GB) because it stores state on disk, supports incremental checkpoints, and avoids GC pressure. The tradeoff is higher per-access latency (microseconds vs nanoseconds).
+:::
+
+**3. What causes "state size explosion" in streaming pipelines?**
+
+A) Too many Kafka partitions
+B) Missing TTL configuration, session windows that never close, or deduplication state without expiry
+C) Using too many operators in the pipeline
+D) High event throughput
+
+::: details Answer
+**B)** State grows without bound when there is no mechanism to remove old entries. Common causes: no TTL configured, bot sessions that keep session windows open indefinitely, and dedup state that tracks every event ID forever.
+:::
+
+**4. How does state rescaling work when changing pipeline parallelism?**
+
+A) All state is discarded and recomputed
+B) Key groups are redistributed across the new number of instances based on hash-modulo assignment
+C) State is copied to every instance
+D) Parallelism changes are not supported
+
+::: details Answer
+**B)** Keys are assigned to key groups via `hash(key) mod max_parallelism`. Key groups are then distributed across instances via `floor(key_group * P / max_parallelism)`. Changing P redistributes key groups without re-hashing keys.
+:::
+
+**5. Why is JSON serialization problematic for RocksDB state?**
+
+A) JSON files are too large
+B) JSON serialization is slow (~50us per object), and RocksDB serializes on every state access, making it the dominant cost per event
+C) JSON does not support nested objects
+D) RocksDB cannot store JSON
+
+::: details Answer
+**B)** RocksDB must serialize state on every read and deserialize on every write (unlike heap, which uses direct object references). At 50us per JSON serialization and multiple state accesses per event, serialization dominates CPU time. Binary formats (Avro: ~2us, Protobuf: ~1.5us) are 25-30x faster.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Managed state colocates data with computation for million-ops-per-second performance -- use heap for small state, RocksDB for large state, and always set TTL to prevent unbounded growth.

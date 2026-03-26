@@ -908,3 +908,112 @@ $$
 - [State Management](./state-management.md) — Watermark state in distributed operators
 - [Backpressure](./backpressure.md) — How backpressure affects watermark propagation
 - [CDC Patterns](../pipeline-patterns/cdc-patterns.md) — Watermarks for CDC sources
+
+---
+
+::: tip Key Takeaway
+- A watermark is a monotonically non-decreasing assertion: "No more events with timestamp less than W will arrive" -- it drives window completion in event-time processing.
+- The bounded out-of-orderness delay `d` is the single most impactful tuning parameter: too low causes data loss, too high causes unnecessary latency.
+- Idle partitions can stall the global watermark; always configure idle source timeouts to exclude stalled partitions from watermark computation.
+:::
+
+::: details Exercise
+**Diagnose a Watermark Problem**
+
+Your Flink streaming pipeline processes clickstream data from 12 Kafka partitions. The operations team reports that real-time dashboards freeze for 10-15 minutes every night around midnight. Your bounded out-of-orderness is set to 30 seconds.
+
+Given these metrics:
+- Partition 0-10: watermark advancing normally (~10:04 PM)
+- Partition 11: watermark stuck at 9:50 PM
+- Traffic drops 95% at midnight but does not go to zero
+- One automated bot system continues generating events
+
+Diagnose the root cause and propose a fix.
+
+::: details Solution
+**Root Cause:** Partition 11 receives events from a bot system with a clock skewed 10+ minutes ahead. At midnight, traffic drops and partition 11's skewed events dominate. The global watermark = `min(all partitions)` = partition 11's watermark, which is stuck 10-15 minutes behind real time.
+
+**Evidence:** The watermark formula `W = min(all partition watermarks)` means a single slow partition holds back all windows across the entire pipeline.
+
+**Fix (layered approach):**
+1. **Immediate:** Add per-partition idle timeout (60 seconds). If partition 11 stops producing events, it is excluded from the global watermark computation.
+2. **Better:** Implement per-source watermark tracking with outlier detection. Sources whose timestamps are more than 2 standard deviations from the median are excluded from watermark computation.
+3. **Root cause:** Fix the bot system's clock synchronization (NTP). Skewed clocks in source systems are a common source of watermark issues.
+4. **Monitoring:** Add alerts for `watermarkLag > 5 minutes` and `watermarkAdvancementRate < 0.5`.
+:::
+
+::: warning Common Misconceptions
+- **"Watermarks guarantee completeness."** Most production watermarks are heuristic, not perfect. Late data can and will arrive after the watermark. You MUST handle late data even with watermarks.
+- **"Setting a larger bounded delay makes the pipeline more correct."** A larger delay improves completeness but increases latency proportionally. The right value is application-specific -- profile your actual data's skew distribution.
+- **"Watermarks are per-event."** Watermarks are emitted periodically (e.g., every 200ms), not per event. Emitting per-event would create enormous overhead.
+- **"A stalled watermark means the pipeline is broken."** It often means an idle partition is holding back the global watermark. This is an infrastructure issue, not a pipeline bug.
+- **"Processing-time watermarks are good enough."** They provide no ordering guarantees and make event-time windowing meaningless. Use processing-time only when event timestamps are unavailable.
+:::
+
+::: tip In Production
+- **Uber** uses adaptive watermarks for their trip data pipeline, automatically adjusting the bounded delay based on observed p99 event-time skew across geographic regions (higher delays for regions with poor connectivity).
+- **Netflix** monitors watermark lag as a top-level SLI for all streaming pipelines, with alerts at 5-minute lag and automatic escalation to PagerDuty at 15-minute lag.
+- **LinkedIn** implements per-source watermark isolation for their multi-tenant streaming platform so that one slow data producer cannot freeze windows for all other tenants.
+- **Spotify** uses punctuation-based watermarks for their internal event bus where producers embed explicit watermark markers, providing more precise completeness signals than heuristic approaches.
+:::
+
+::: details Quiz
+**1. What is the formal definition of a watermark?**
+
+A) The maximum event timestamp seen so far
+B) A monotonically non-decreasing function asserting that no future events will have timestamps below the watermark value
+C) The processing time minus a fixed delay
+D) The average event time across all partitions
+
+::: details Answer
+**B)** A watermark W(t_p) at processing time t_p asserts that all events arriving after t_p will have event times >= W(t_p). It is monotonically non-decreasing (can only advance forward).
+:::
+
+**2. In the bounded out-of-orderness strategy, how is the watermark computed?**
+
+A) `W = current processing time`
+B) `W = max(event timestamps seen) - bounded delay d`
+C) `W = min(event timestamps seen)`
+D) `W = average(event timestamps seen) - d`
+
+::: details Answer
+**B)** The watermark equals the maximum event timestamp observed so far minus the configured bounded delay `d`. This accounts for events that are up to `d` time units out of order.
+:::
+
+**3. How does a multi-input operator compute its output watermark?**
+
+A) Average of all input watermarks
+B) Maximum of all input watermarks
+C) Minimum of all input watermarks
+D) The watermark of the fastest input
+
+::: details Answer
+**C)** The output watermark is the minimum of all input watermarks: `W_out = min(W_input1, W_input2, ...)`. This ensures the output watermark never advances past what ALL inputs can guarantee.
+:::
+
+**4. Why do idle partitions cause watermark problems?**
+
+A) They consume too much memory
+B) Their frozen watermark becomes the global minimum, preventing all windows from firing
+C) They generate too many events
+D) They cause checkpoint failures
+
+::: details Answer
+**B)** Since the global watermark = min(all partition watermarks), a partition that stops producing events has a frozen watermark. This becomes the global minimum, blocking all downstream windows from firing even though other partitions have advanced well past it.
+:::
+
+**5. What is the tradeoff between completeness and latency in watermark configuration?**
+
+A) Higher bounded delay increases both completeness and latency; lower delay decreases both
+B) Higher bounded delay increases completeness but decreases latency
+C) There is no tradeoff -- you can have both
+D) Completeness and latency are independent
+
+::: details Answer
+**A)** Increasing the bounded delay `d` captures more late events (higher completeness) but makes windows fire later (higher latency). Decreasing `d` reduces latency but risks missing late events. The optimal `d` depends on your application's tolerance for each.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Watermarks are the streaming system's best guess at "all data before this time has arrived" -- tune the bounded delay by profiling your actual event-time skew distribution.

@@ -437,4 +437,105 @@ class HybridPipeline:
 
 ---
 
+::: tip Key Takeaway
+- ETL transforms data before it enters the warehouse; ELT loads raw data first and transforms inside the warehouse using SQL/dbt.
+- ELT wins when your team is SQL-proficient and your warehouse is elastic; ETL wins when compliance forbids raw PII in the warehouse.
+- Most mature organizations adopt a hybrid approach -- Spark/Python for heavy lifting, dbt for modeling.
+:::
+
+::: details Exercise
+**Design an ELT Migration Plan**
+
+Your company currently runs 15 ETL pipelines on a self-managed Spark cluster, loading data into PostgreSQL. The CTO wants to migrate to Snowflake with dbt. Three of the pipelines handle HIPAA-regulated patient data.
+
+Design a migration strategy that answers:
+1. Which pipelines migrate to ELT and which stay as ETL?
+2. What is your parallel-run validation strategy?
+3. How do you handle the HIPAA pipelines?
+4. What is the rollback plan if migration fails?
+
+::: details Solution
+1. **Non-HIPAA pipelines (12)** migrate to ELT with Fivetran + dbt. **HIPAA pipelines (3)** stay as ETL with Spark stripping PHI before loading into a separate, access-controlled Snowflake schema.
+2. Run both systems in parallel for 4 weeks. Automated daily comparison: row counts (within 0.1%), key metric sums (exact match), schema diff checks.
+3. HIPAA pipelines use Spark to hash/tokenize identifiers, remove direct PHI fields, and load de-identified data. Column-level masking in Snowflake for remaining quasi-identifiers.
+4. Keep the old Spark cluster running (read-only) for 60 days post-cutover. Fivetran connectors can be paused; Spark pipelines reactivated within hours.
+:::
+
+::: warning Common Misconceptions
+- **"ELT is always cheaper than ETL."** At scale (1+ TB/day), warehouse compute costs can exceed a dedicated Spark cluster. Always run a cost analysis with your actual workload.
+- **"ETL is legacy and should be replaced."** ETL is essential for PII stripping, binary file processing, and complex ML feature engineering that SQL cannot express.
+- **"dbt replaces Spark."** dbt handles SQL transformations inside the warehouse. It cannot read from APIs, process images, or run Python ML code. They solve different problems.
+- **"ELT means no data quality checks."** You still need validation. dbt tests, Great Expectations, and staging-layer checks are critical in ELT pipelines.
+:::
+
+::: tip In Production
+- **Spotify** uses a hybrid approach: Spark-based ETL for audio feature extraction and ML pipelines, BigQuery ELT with dbt for business analytics and reporting.
+- **Airbnb** migrated from a monolithic ETL pipeline to ELT with their internal Minerva metrics layer on top of their data warehouse, dramatically reducing time-to-insight.
+- **GitLab** runs a fully open-source ELT stack: Meltano for extraction, dbt for transformation, Snowflake for warehousing -- all configurations version-controlled in Git.
+- **Netflix** keeps ETL for their massive-scale event processing (Spark/Flink) but uses ELT patterns for business reporting on top of Redshift and internal tools.
+:::
+
+::: details Quiz
+**1. What is the primary architectural difference between ETL and ELT?**
+
+A) ETL uses SQL; ELT uses Python
+B) In ETL, a dedicated engine transforms data before loading; in ELT, the warehouse itself handles transformations after loading
+C) ETL is for batch; ELT is for streaming
+D) ETL stores data on-premise; ELT uses the cloud
+
+::: details Answer
+**B)** In ETL, an external engine (Spark, Python) transforms data before it reaches the warehouse. In ELT, raw data is loaded first and the warehouse's compute engine handles transformations (typically via SQL/dbt).
+:::
+
+**2. When is ETL preferred over ELT for compliance reasons?**
+
+A) When data volumes exceed 1 TB/day
+B) When the team prefers Python over SQL
+C) When sensitive data (PHI/PII) must be stripped before entering the warehouse
+D) When using open-source tools
+
+::: details Answer
+**C)** ETL allows you to strip PHI/PII in the transform step before data ever enters the warehouse. With ELT, raw sensitive data lands in the warehouse, requiring column-level encryption, masking policies, and audit logging.
+:::
+
+**3. In the cost analysis for 500 GB/day, what makes the self-managed Spark ETL option cheaper?**
+
+A) Spark is free software
+B) EC2 compute is cheaper than warehouse compute, though it requires more engineering time for management
+C) Spark does not need storage
+D) Fivetran is always more expensive than custom extraction
+
+::: details Answer
+**B)** The raw compute cost for EC2 instances (~$1,990/month) is lower than Snowflake compute (~$4,630/month), but the self-managed option requires ~8 hrs/week of engineering time vs ~2 hrs/week for the managed ELT stack.
+:::
+
+**4. What does a "Medallion Architecture" refer to in ELT pipelines?**
+
+A) A security certification for data warehouses
+B) A three-layer data organization (Bronze/Silver/Gold) with increasing data quality
+C) A type of database index
+D) A monitoring dashboard pattern
+
+::: details Answer
+**B)** Medallion Architecture organizes data into Bronze (raw, as-is from source), Silver (cleaned, validated, conformed), and Gold (business-level aggregations with logic applied).
+:::
+
+**5. Why do most mature organizations use a hybrid ETL/ELT approach?**
+
+A) It is required by data governance regulations
+B) Different workloads have different requirements -- heavy transforms suit ETL while SQL-based modeling suits ELT
+C) Cloud providers mandate both approaches
+D) Hybrid is cheaper than either approach alone
+
+::: details Answer
+**B)** Heavy transforms (ML features, binary processing, PII stripping) are better handled by ETL with Spark/Python. Light transforms (joins, aggregations, business metrics) are faster to develop and iterate in ELT with dbt/SQL.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** ETL cleans before loading, ELT loads before cleaning -- choose based on compliance needs, team skills, and warehouse elasticity, or use both.
+
+---
+
 *Next: [Batch Processing →](batch-processing.md)*

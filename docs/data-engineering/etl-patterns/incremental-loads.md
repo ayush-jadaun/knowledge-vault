@@ -439,4 +439,105 @@ class ProductionIncrementalPipeline:
 
 ---
 
+::: tip Key Takeaway
+- Timestamp-based incremental loading with a high-water mark is the default strategy -- use `>=` with a safety margin to avoid missing records at boundaries.
+- CDC (Change Data Capture) is the gold standard for capturing all changes including deletes, but requires more infrastructure (Debezium, Kafka).
+- Always update the high-water mark atomically with the data load and use MERGE/UPSERT to handle idempotent re-processing.
+:::
+
+::: details Exercise
+**Build an Incremental Pipeline for a Multi-Source CRM**
+
+Your CRM system has three source tables: `customers` (10M rows, has `updated_at`), `orders` (500M rows, has `updated_at`), and `interactions` (2B rows, no `updated_at`, has auto-increment `id`).
+
+Design an incremental pipeline that:
+1. Chooses the right change detection strategy for each table
+2. Handles late-arriving data for the `orders` table
+3. Detects deletes in the `customers` table
+4. Processes the `interactions` table incrementally without timestamps
+
+::: details Solution
+1. **customers:** Timestamp-based HWM on `updated_at` with 5-minute safety margin. Detect deletes via periodic full-outer-join comparison (weekly) since CDC may not be available.
+2. **orders:** Timestamp-based HWM with a 3-day lookback window. Each run processes `HWM - 3 days` to today, using MERGE to handle idempotent re-processing of overlapping records.
+3. **customers deletes:** Weekly batch job compares source IDs vs target IDs. IDs in target but not in source are soft-deleted (`_is_deleted = TRUE, _deleted_at = NOW()`). For real-time delete detection, add Debezium CDC.
+4. **interactions:** Sequence-number-based HWM on the auto-increment `id`. Query `WHERE id > last_processed_id ORDER BY id ASC`. No safety margin needed since auto-increment IDs are monotonic and gap-free within committed transactions.
+:::
+
+::: warning Common Misconceptions
+- **"Full loads are always simpler than incremental."** Full loads are simpler to implement but become untenable at scale. A 1B-row table taking 4 hours to reload daily is not simpler when it misses SLAs.
+- **"Incremental loads cannot detect deletes."** They can with CDC (captures delete events), hash-based comparison (detects missing rows), or periodic full-outer-join reconciliation.
+- **"Using `>` instead of `>=` for HWM queries is fine."** It is not. If multiple records share the same `updated_at` timestamp at the boundary, `>` will miss records. Always use `>=` and rely on the MERGE to deduplicate.
+- **"Incremental pipelines eliminate the need for full reloads."** You still need full reload capability for initial loads, disaster recovery, and periodic reconciliation to catch drift.
+:::
+
+::: tip In Production
+- **Uber** uses log-based CDC with Debezium to incrementally replicate hundreds of microservice databases into their data lake, processing billions of change events daily.
+- **Spotify** runs timestamp-based incremental loads for their content metadata pipelines, with a 6-hour lookback window to catch late-arriving metadata updates from label systems.
+- **Airbnb** combines CDC for booking data (captures cancellations/deletes) with timestamp-based incremental loads for search impression data (append-only, no deletes).
+- **Netflix** uses hash-based change detection for their content catalog pipeline, where source systems lack reliable `updated_at` columns but data correctness is critical.
+:::
+
+::: details Quiz
+**1. Why should you use `>=` instead of `>` when querying with a high-water mark?**
+
+A) It is faster for the database to execute
+B) It handles ties at the boundary where multiple records share the same timestamp
+C) It reduces network traffic
+D) It is required by the SQL standard
+
+::: details Answer
+**B)** If two records have the same `updated_at` value at the HWM boundary, using `>` would miss the second record. Using `>=` re-reads some records, but the downstream MERGE handles deduplication.
+:::
+
+**2. What is the key advantage of log-based CDC over timestamp-based incremental loading?**
+
+A) It is simpler to implement
+B) It captures all changes including deletes, with zero load on the source database
+C) It requires no infrastructure
+D) It is faster for initial loads
+
+::: details Answer
+**B)** Log-based CDC reads from the database's write-ahead log (WAL), capturing inserts, updates, and deletes without querying the main tables. This eliminates source database load and captures changes that timestamp-based approaches miss.
+:::
+
+**3. What is the purpose of a safety margin on the high-water mark?**
+
+A) To make queries run faster
+B) To account for clock skew and transaction isolation that could cause records to be missed
+C) To reduce storage costs
+D) To handle schema changes
+
+::: details Answer
+**B)** Clock differences between application servers and the database, combined with in-flight transactions at query time, can cause records to have timestamps slightly before the HWM. A 5-minute safety margin re-reads a small overlap to prevent data loss.
+:::
+
+**4. How do soft deletes differ from hard deletes in incremental pipelines?**
+
+A) Soft deletes are faster to execute
+B) Soft deletes mark records as deleted without removing them, preserving history for recovery and auditing
+C) Soft deletes use less storage
+D) Soft deletes are only possible with CDC
+
+::: details Answer
+**B)** Soft deletes add `_is_deleted = TRUE` and `_deleted_at` columns instead of physically removing rows. This preserves the audit trail and makes recovery possible if a delete was incorrect.
+:::
+
+**5. When would you choose hash-based change detection over timestamp-based?**
+
+A) When the source has a reliable `updated_at` column
+B) When the source lacks timestamps and CDC is not available
+C) When processing streaming data
+D) When data volumes exceed 1 TB
+
+::: details Answer
+**B)** Hash-based detection works with any source by computing MD5/SHA-256 hashes of row content and comparing them. It is the fallback when the source has no `updated_at` column and CDC infrastructure is not available.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Incremental loading processes only what changed -- use timestamps with `>=` and a safety margin as the default, CDC when you need deletes, and always MERGE into the target.
+
+---
+
 *Next: [Idempotent Pipelines →](idempotent-pipelines.md)*

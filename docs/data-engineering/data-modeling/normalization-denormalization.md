@@ -811,3 +811,127 @@ JOIN {​{ ref('stg_products') }} p ON oi.product_id = p.product_id
 - [Dimensional Modeling](./dimensional-modeling.md) — How denormalization applies to star schemas
 - [Schema Evolution](./schema-evolution.md) — Evolving normalized and denormalized schemas
 - [Data Quality Checks](../pipeline-patterns/data-quality-checks.md) — Validating integrity constraints
+
+---
+
+::: tip Key Takeaway
+- Normalization (1NF through BCNF) eliminates update, insert, and delete anomalies by ensuring every fact is stored exactly once.
+- Denormalization intentionally reintroduces redundancy for read performance -- precomputing joins into flat tables for analytics workloads.
+- OLTP systems should be normalized (3NF+); OLAP/analytics systems should be denormalized (star schemas); the choice is driven by read vs write patterns.
+:::
+
+::: details Exercise
+**Normalize and Then Strategically Denormalize**
+
+Given this single denormalized table:
+
+```
+OrderDetails(order_id, order_date, customer_id, customer_name, customer_city,
+             product_id, product_name, category_name, unit_price,
+             quantity, discount, salesperson_name, salesperson_region)
+```
+
+1. Identify the functional dependencies
+2. Normalize to 3NF (at least)
+3. Strategically denormalize for a star schema analytics use case
+4. Explain what anomalies the normalization fixes and what performance the denormalization gains
+
+::: details Solution
+**Functional Dependencies:**
+- order_id -> order_date, customer_id, salesperson_name
+- customer_id -> customer_name, customer_city
+- product_id -> product_name, category_name, unit_price
+- salesperson_name -> salesperson_region
+- (order_id, product_id) -> quantity, discount
+
+**3NF Tables:**
+- `Orders(order_id PK, order_date, customer_id FK, salesperson_id FK)`
+- `Customers(customer_id PK, customer_name, customer_city)`
+- `Products(product_id PK, product_name, category_name, unit_price)`
+- `Salespersons(salesperson_id PK, salesperson_name, salesperson_region)`
+- `OrderItems(order_id FK, product_id FK, quantity, discount)` -- composite PK
+
+**Star Schema (Denormalized):**
+- Fact: `fct_order_items(order_id, product_id, customer_key, date_key, salesperson_key, quantity, discount, unit_price, net_amount)`
+- Dim: `dim_customer(customer_key, customer_id, name, city)`
+- Dim: `dim_product(product_key, product_id, name, category_name, unit_price)`
+- Dim: `dim_salesperson(salesperson_key, name, region)`
+- Dim: `dim_date(date_key, date, month, quarter, year)`
+
+**Anomalies fixed:** Updating a customer's city in 3NF = 1 row change. In the original table = potentially thousands of rows. **Performance gained:** Analytics query "revenue by category by quarter" goes from a 5-table join to a 2-table join (fact + dim_product + dim_date).
+:::
+
+::: warning Common Misconceptions
+- **"Normalization always improves performance."** Normalization improves write performance and data integrity but can hurt read performance (more joins). Analytics workloads are read-heavy, so denormalization is appropriate.
+- **"Denormalization is just sloppy design."** Strategic denormalization is a deliberate design choice for read-heavy workloads. It trades storage and write complexity for query simplicity and speed.
+- **"3NF is always sufficient."** 3NF does not eliminate all anomalies. BCNF eliminates anomalies from non-trivial functional dependencies where the determinant is not a superkey.
+- **"You should normalize everything first, then denormalize."** For OLAP systems, start by designing the star schema directly using dimensional modeling principles. Normalization-then-denormalization is an academic exercise, not a practical design process.
+:::
+
+::: tip In Production
+- **Airbnb** maintains normalized operational databases (PostgreSQL) for their booking system while running denormalized star schemas in their data warehouse for analytics -- two different models for two different purposes.
+- **Uber** uses heavily denormalized tables in their analytics warehouse to avoid the latency of multi-table joins across their petabyte-scale datasets.
+- **Spotify** denormalizes listening event data by embedding artist and track attributes directly into the event record for sub-second analytics queries.
+- **LinkedIn** follows a strict normalization policy for their operational databases but builds wide, denormalized tables in their data lake for ML feature engineering.
+:::
+
+::: details Quiz
+**1. What is the primary goal of normalization?**
+
+A) To improve query performance
+B) To eliminate data redundancy and the update, insert, and delete anomalies it causes
+C) To reduce storage costs
+D) To make data easier to understand
+
+::: details Answer
+**B)** Normalization decomposes tables so that each fact is stored exactly once. This eliminates update anomalies (inconsistent changes), insert anomalies (can't add data without unrelated data), and delete anomalies (losing data when deleting unrelated records).
+:::
+
+**2. What distinguishes 3NF from 2NF?**
+
+A) 3NF requires all fields to be atomic
+B) 3NF eliminates transitive dependencies -- non-key attributes must depend on the key directly, not through another non-key attribute
+C) 3NF requires a primary key
+D) 3NF supports multiple tables
+
+::: details Answer
+**B)** In 2NF, `salesperson_region` might depend on `salesperson_name` which depends on `order_id`. This transitive dependency means updating a salesperson's region requires updating every order they are on. 3NF removes this by putting salesperson data in its own table.
+:::
+
+**3. When is denormalization the RIGHT design choice?**
+
+A) When the database is too slow for all workloads
+B) When the workload is read-heavy (analytics/OLAP) and join performance is a bottleneck
+C) When you want to save storage space
+D) When the schema has too many tables
+
+::: details Answer
+**B)** Denormalization precomputes joins by storing redundant data in fewer tables. This trades write complexity and storage for faster reads. It is the standard practice for analytics/data warehouse workloads.
+:::
+
+**4. What is an update anomaly?**
+
+A) A database crash during an update
+B) When changing a fact requires updating multiple rows because the fact is stored redundantly, risking inconsistency if some rows are missed
+C) A slow-running update query
+D) An update that violates a foreign key constraint
+
+::: details Answer
+**B)** If a customer's city is stored in every order row, updating the city requires updating ALL of those rows. If one row is missed, the database contains contradictory information about the customer's city.
+:::
+
+**5. What is BCNF and how does it differ from 3NF?**
+
+A) BCNF is a less strict form of normalization
+B) In BCNF, every determinant (left side of a functional dependency) must be a superkey -- this catches edge cases that 3NF misses
+C) BCNF adds encryption to the schema
+D) BCNF is the same as 3NF with an index
+
+::: details Answer
+**B)** 3NF allows non-key attributes to determine other attributes if they are part of a candidate key. BCNF is stricter: EVERY functional dependency must have a superkey as its determinant. This eliminates subtle anomalies that 3NF permits.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Normalize for correctness in OLTP, denormalize for speed in OLAP -- the right level of normalization depends entirely on whether your workload is write-heavy or read-heavy.

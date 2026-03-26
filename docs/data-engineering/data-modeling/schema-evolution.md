@@ -983,3 +983,124 @@ class SchemaCICheck {
 - [CDC Patterns](../pipeline-patterns/cdc-patterns.md) — Schema evolution in CDC pipelines
 - [Data Quality Checks](../pipeline-patterns/data-quality-checks.md) — Schema validation as quality check
 - [Testing Data Pipelines](../pipeline-patterns/testing-data-pipelines.md) — Schema evolution testing
+
+---
+
+::: tip Key Takeaway
+- Schema evolution requires compatibility guarantees: backward-compatible changes (adding optional fields) are safe; breaking changes (removing fields, changing types) require migration strategies.
+- Schema registries (Confluent, AWS Glue) enforce compatibility rules at write time, preventing producers from breaking consumers.
+- Avro excels at schema evolution (fields matched by name, defaults for missing fields); Protobuf is strong with field numbers; JSON has no built-in evolution support.
+:::
+
+::: details Exercise
+**Plan a Schema Evolution for a Production Event Stream**
+
+Your team produces a `UserSignup` event to Kafka, consumed by 5 different services. The current Avro schema is:
+
+```json
+{"type": "record", "name": "UserSignup", "fields": [
+  {"name": "user_id", "type": "string"},
+  {"name": "email", "type": "string"},
+  {"name": "country", "type": "string"},
+  {"name": "signup_timestamp", "type": "long"}
+]}
+```
+
+You need to make these changes:
+1. Add an optional `referral_code` field
+2. Rename `country` to `country_code`
+3. Change `signup_timestamp` from `long` to `string` (ISO 8601)
+4. Remove the `email` field (GDPR requirement)
+
+Classify each change as backward-compatible, forward-compatible, or breaking. Propose a migration strategy.
+
+::: details Solution
+1. **Add `referral_code` (optional with default):** BACKWARD COMPATIBLE. Old consumers ignore it, new consumers read it. Safe to deploy immediately.
+   ```json
+   {"name": "referral_code", "type": ["null", "string"], "default": null}
+   ```
+
+2. **Rename `country` to `country_code`:** BREAKING. Avro matches fields by name. Renaming is seen as deleting `country` and adding `country_code`. **Strategy:** Use Avro aliases: `{"name": "country_code", "aliases": ["country"]}`. This maintains backward compatibility.
+
+3. **Change `signup_timestamp` type:** BREAKING. Changing `long` to `string` is not compatible. **Strategy:** Add a NEW field `signup_timestamp_iso` (string) while keeping the old `long` field. Deprecate the old field, and remove it after all consumers migrate (may take months).
+
+4. **Remove `email`:** BREAKING for consumers that read `email`. **Strategy:** Phase out over 3 months: (a) Add `email_hash` field, (b) Notify all 5 consumer teams, (c) Set `email` default to empty string, (d) Stop populating `email`, (e) Remove field after all consumers confirm migration.
+
+**Registry config:** Set compatibility level to BACKWARD_TRANSITIVE to prevent accidental breaking changes.
+:::
+
+::: warning Common Misconceptions
+- **"Adding a field is always safe."** Only if the field has a default value. Adding a required field without a default breaks all existing consumers.
+- **"JSON schemas evolve naturally."** JSON has no built-in schema evolution. Adding/removing fields silently succeeds, but consumers crash on unexpected nulls or missing fields at runtime.
+- **"Schema registries are optional overhead."** Without a registry, producers can push any schema change, breaking downstream consumers at runtime. Registries catch incompatible changes at deploy time.
+- **"Renaming a field is a simple change."** In Avro and Protobuf, field identity is by name or number. Renaming is a delete + add, which is a breaking change unless aliases are used.
+- **"You can change a field's type freely."** Type changes (int to string, string to array) are almost always breaking. The safe pattern is to add a new field with the new type and deprecate the old one.
+:::
+
+::: tip In Production
+- **LinkedIn** uses a centralized schema registry (the origin of Confluent Schema Registry) to manage schema evolution across 10,000+ Kafka topics, with BACKWARD_TRANSITIVE compatibility enforced by default.
+- **Uber** uses Protobuf for all internal event schemas with strict field number management -- field numbers are never reused, and deprecated fields are reserved to prevent accidental conflicts.
+- **Netflix** maintains a schema governance process where any schema change to a shared event requires review by both the producing and consuming teams before deployment.
+- **Airbnb** uses Avro with their internal schema evolution tool that auto-generates migration code when schemas change, testing backward and forward compatibility as part of CI/CD.
+:::
+
+::: details Quiz
+**1. What makes a schema change "backward compatible"?**
+
+A) Old producers can write data that new consumers can read
+B) New consumers can read data written by old producers (old data is still valid under the new schema)
+C) Both producers and consumers can be updated simultaneously
+D) The schema change does not require a database migration
+
+::: details Answer
+**B)** Backward compatibility means consumers using the new schema can read data produced with the old schema. Adding optional fields with defaults is backward compatible. Removing required fields is not.
+:::
+
+**2. How does Avro handle missing fields during deserialization?**
+
+A) It throws an error
+B) It uses the default value specified in the reader's schema for fields missing from the writer's data
+C) It fills them with null regardless of type
+D) It skips the entire record
+
+::: details Answer
+**B)** Avro resolves schemas by matching field names between the writer's and reader's schemas. If the reader's schema has a field not in the writer's data, it uses the field's default value. If no default is defined, deserialization fails.
+:::
+
+**3. Why are field numbers important in Protobuf?**
+
+A) They determine sort order
+B) They are the field's identity -- fields are matched by number, not name, so numbers must be stable and never reused
+C) They set the maximum number of fields
+D) They are used for encryption
+
+::: details Answer
+**B)** Protobuf serializes fields by number, not name. Renaming a field is safe (the number stays the same), but reusing a deleted field's number would cause old data to be misinterpreted. Use `reserved` to prevent number reuse.
+:::
+
+**4. What compatibility level should a production schema registry enforce?**
+
+A) NONE (allow any change)
+B) BACKWARD_TRANSITIVE (new schema can read all historical data)
+C) FULL (any version can read any other version)
+D) It depends on the use case
+
+::: details Answer
+**D)** BACKWARD (or BACKWARD_TRANSITIVE) is the most common choice for Kafka consumers. FORWARD compatibility is needed when producers upgrade before consumers. FULL is the safest but most restrictive. The choice depends on your deployment model.
+:::
+
+**5. What is the safe pattern for changing a field's data type?**
+
+A) Modify the field's type in place
+B) Add a new field with the new type, populate both during a transition period, then deprecate the old field
+C) Delete the old field and add a new one with the same name
+D) Type changes are always backward compatible
+
+::: details Answer
+**B)** The dual-field pattern: add `field_v2` with the new type, produce both `field` and `field_v2` during transition, migrate all consumers to `field_v2`, then deprecate `field`. This avoids breaking any consumer.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Schema evolution is the art of changing data structures without breaking producers or consumers -- add fields with defaults, never reuse identifiers, and enforce compatibility with a schema registry.

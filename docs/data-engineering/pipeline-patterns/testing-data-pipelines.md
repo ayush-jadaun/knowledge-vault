@@ -1135,3 +1135,159 @@ interface MutationReport {
 - [Schema Evolution](../data-modeling/schema-evolution.md) — Testing schema changes
 - [Orchestration](./orchestration.md) — CI/CD integration with orchestrators
 - [Data Lineage](./data-lineage.md) — Impact analysis for test prioritization
+
+---
+
+::: tip Key Takeaway
+- Test data pipelines at three levels: unit tests (transform functions in isolation), integration tests (pipeline stages with real/mock data), and data diff tests (compare output against a known-good baseline).
+- dbt tests (unique, not_null, accepted_values, relationships) provide declarative data quality assertions that run as part of the pipeline.
+- CI/CD for data pipelines should include schema validation, transform unit tests, and production data diff comparison before deploying changes.
+:::
+
+::: details Exercise
+**Build a Test Suite for a Revenue Pipeline**
+
+Your revenue pipeline has this flow:
+```
+raw_orders -> stg_orders (clean, dedup) -> fct_orders (business logic, currency conversion) -> rpt_daily_revenue (aggregation)
+```
+
+Design a comprehensive test suite with:
+1. Unit tests for the currency conversion function
+2. Integration test for the stg_orders dedup logic
+3. dbt tests for the fct_orders model
+4. Data diff test for rpt_daily_revenue
+5. A regression test that catches a real-world bug (e.g., negative revenue from incorrect refund handling)
+
+::: details Solution
+1. **Unit test (currency conversion):**
+```python
+def test_convert_to_usd():
+    assert convert_to_usd(100, 'EUR', '2026-03-17') == 108.50  # known rate
+    assert convert_to_usd(100, 'USD', '2026-03-17') == 100.00
+    assert convert_to_usd(0, 'GBP', '2026-03-17') == 0.00
+    with pytest.raises(ValueError):
+        convert_to_usd(100, 'INVALID', '2026-03-17')
+```
+
+2. **Integration test (dedup):**
+```python
+def test_stg_orders_dedup():
+    input_df = create_test_df([
+        {'order_id': 1, 'amount': 100, 'updated_at': '2026-03-17 10:00'},
+        {'order_id': 1, 'amount': 150, 'updated_at': '2026-03-17 11:00'},  # dupe, newer
+    ])
+    result = run_stg_orders(input_df)
+    assert result.count() == 1
+    assert result.first()['amount'] == 150  # keeps newest
+```
+
+3. **dbt tests (fct_orders):**
+```yaml
+models:
+  - name: fct_orders
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
+      - name: amount_usd
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"  # no negative revenue
+      - name: customer_id
+        tests:
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+```
+
+4. **Data diff test:**
+Compare current output against last production run. Flag if daily revenue changes by more than 10% for any date already computed.
+
+5. **Regression test (refund bug):**
+```python
+def test_refund_does_not_create_negative_revenue():
+    orders = [{'order_id': 1, 'amount': 100, 'type': 'sale'},
+              {'order_id': 2, 'amount': -50, 'type': 'refund'}]
+    result = run_fct_orders(orders)
+    # Refunds should be tracked separately, not subtracted from revenue
+    assert result.filter("type = 'sale'").first()['amount_usd'] == 100
+    assert result.filter("type = 'refund'").first()['amount_usd'] == -50
+```
+:::
+
+::: warning Common Misconceptions
+- **"Data pipelines don't need testing."** Untested pipelines silently produce wrong data for weeks. By the time someone notices, the damage is done and backfilling is expensive.
+- **"Row count checks are sufficient testing."** A pipeline can produce the right number of rows with completely wrong values. Test data content, not just shape.
+- **"Testing in production (monitoring) replaces testing in development."** Production monitoring catches issues AFTER they affect users. Pre-deployment tests catch issues BEFORE they reach production. You need both.
+- **"dbt tests replace unit tests."** dbt tests validate data in the warehouse (integration-level). You still need unit tests for complex Python/Spark transform logic that runs outside dbt.
+- **"Testing with production data is always better."** Production data may contain PII, require VPN access, and be too large for local testing. Use synthetic test data with known edge cases for unit tests, production data samples for integration tests.
+:::
+
+::: tip In Production
+- **Airbnb** runs data diff tests comparing every dbt model's output against the previous production version before deploying changes, with automatic rollback if metrics deviate beyond thresholds.
+- **Spotify** has a dedicated "data testing" team that maintains shared test fixtures and reusable validation frameworks used across 200+ data pipeline teams.
+- **Netflix** uses property-based testing for their Spark transforms, generating random input data to verify that invariants (non-negative values, referential integrity) hold across edge cases.
+- **Uber** requires every new data pipeline to include idempotency tests (run twice, assert same output) and schema validation tests as part of their CI/CD approval process.
+:::
+
+::: details Quiz
+**1. What are the three levels of data pipeline testing?**
+
+A) Alpha, beta, production
+B) Unit tests (transform functions), integration tests (pipeline stages), data diff tests (output comparison)
+C) Manual, automated, monitoring
+D) Syntax, logic, performance
+
+::: details Answer
+**B)** Unit tests validate individual transform functions in isolation. Integration tests validate pipeline stages with realistic data. Data diff tests compare pipeline output against a known-good baseline to detect regressions.
+:::
+
+**2. What is a "data diff" test?**
+
+A) A test that checks for differences between two database schemas
+B) A test that compares current pipeline output against a previous known-good output, flagging unexpected changes
+C) A test that measures performance differences
+D) A test that checks for duplicate data
+
+::: details Answer
+**B)** Data diff tests run the pipeline with the same input (or current production input) and compare the output against the last known-good result. Unexpected differences (row count changes, metric deviations) indicate regressions.
+:::
+
+**3. What is the purpose of a dbt `relationships` test?**
+
+A) To test database foreign key constraints
+B) To verify that every value in a column exists in another model's column (referential integrity in the warehouse)
+C) To test joins between tables
+D) To validate one-to-many relationships
+
+::: details Answer
+**B)** `relationships` tests check referential integrity at the data level: every `customer_id` in `fct_orders` should exist in `dim_customers`. This catches broken references from missing dimensions, failed loads, or join issues.
+:::
+
+**4. Why is testing with production data alone insufficient?**
+
+A) Production data is too large
+B) Production data may not contain edge cases (nulls, boundary values, rare states) that your pipeline should handle
+C) Production data changes too frequently
+D) Production data is always clean
+
+::: details Answer
+**B)** Production data reflects normal operation and may not include edge cases like null required fields, maximum-length strings, negative amounts, or timezone boundary conditions. Synthetic test data with deliberate edge cases ensures these paths are tested.
+:::
+
+**5. What should a CI/CD pipeline for data include?**
+
+A) Only code linting and formatting checks
+B) Schema validation, transform unit tests, integration tests, data diff comparison, and lineage impact analysis
+C) Only production deployment
+D) Performance benchmarks
+
+::: details Answer
+**B)** A comprehensive data CI/CD pipeline validates schema compatibility, runs unit tests for transform logic, executes integration tests with sample data, compares output against baselines (data diff), and checks lineage for downstream impact before deploying.
+:::
+:::
+
+---
+
+> **One-Liner Summary:** Test data pipelines like software -- unit test transforms, integration test stages, diff test outputs against baselines, and never deploy a pipeline change without automated validation.

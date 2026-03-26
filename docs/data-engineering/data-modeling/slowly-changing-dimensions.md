@@ -782,3 +782,111 @@ Natural key temporal joins are expensive — they prevent the use of hash joins 
 - [Normalization & Denormalization](./normalization-denormalization.md) — Normal forms and temporal data
 - [Schema Evolution](./schema-evolution.md) — Evolving SCD schemas safely
 - [CDC Patterns](../pipeline-patterns/cdc-patterns.md) — Capturing changes for SCD processing
+
+---
+
+::: tip Key Takeaway
+- SCD Type 1 overwrites old values (current state only), Type 2 adds new rows with date ranges (full history), and Type 3 adds columns for previous values (limited history).
+- The choice of SCD type answers a business question: "When I look at historical facts, do I want the dimension values as they are NOW or as they were THEN?"
+- Type 2 is the most common in practice because business stakeholders almost always eventually need historical attribution -- and retrofitting Type 2 onto a Type 1 dimension is painful.
+:::
+
+::: details Exercise
+**Choose SCD Types for a Retail Data Warehouse**
+
+A retail company has these dimension attributes that change:
+1. Customer's mailing address (used for geographic sales analysis)
+2. Product's list price (used for margin calculations)
+3. Employee's department (used for sales territory attribution)
+4. Store's square footage (updated during renovations)
+5. Product's name (correcting typos)
+
+For each attribute, choose the SCD type, justify your choice, and describe the impact on a historical sales report.
+
+::: details Solution
+1. **Customer address: Type 2.** Geographic sales analysis needs to know where the customer lived WHEN they made the purchase. If a customer moves from California to New York, past California sales should stay in California.
+
+2. **Product list price: Type 2.** Margin calculations require the price at the time of sale. Overwriting with the current price would make historical margin analysis wrong.
+
+3. **Employee department: Type 2 + Type 3 hybrid (Type 6).** Keep full history (Type 2) but also store `current_department` as a Type 1 overwrite column. This supports both "who was in what department when they made the sale" AND "what department are they in now."
+
+4. **Store square footage: Type 1.** Square footage is a physical attribute that analytics rarely segments by historically. Overwrite with current values; past reports don't need "what was the store size 3 years ago."
+
+5. **Product name: Type 1.** Typo corrections should be fixed everywhere. No one wants to see the typo in historical reports. Overwrite immediately.
+:::
+
+::: warning Common Misconceptions
+- **"Type 2 doubles your table size."** In practice, most dimension records change rarely. A 10M customer dimension with 5% annual churn might have 10.5M rows after a year, not 20M.
+- **"Type 1 is simpler, so start there and switch to Type 2 later."** Switching from Type 1 to Type 2 requires backfilling history that was already destroyed. You cannot recover overwritten values. Start with Type 2 if there is any chance you will need historical tracking.
+- **"SCD Type 3 gives you full history."** Type 3 only stores the previous value (one column). It cannot answer "what was the value 3 changes ago." For full history, use Type 2.
+- **"You should use the same SCD type for all attributes."** Different attributes in the same dimension can use different SCD types. A customer's name correction (Type 1) and address change (Type 2) should be handled differently.
+- **"Surrogate keys are optional in Type 2."** Without surrogate keys, fact tables would need to join on business key + date range, which is complex and slow. Surrogate keys are essential for Type 2 dimensions.
+:::
+
+::: tip In Production
+- **Airbnb** uses SCD Type 2 for host and listing dimensions, tracking changes to listing descriptions, pricing tiers, and host verification status with full date-range history.
+- **Uber** implements SCD Type 2 for driver dimensions (city, vehicle type, rating tier) to ensure trip revenue is attributed to the driver's state at the time of the trip.
+- **Netflix** uses SCD Type 2 for member plan dimensions, preserving the exact plan a subscriber was on when they watched specific content for accurate churn and engagement analysis.
+- **Spotify** uses SCD Type 6 (hybrid 1+2+3) for artist dimensions: full history via Type 2 rows, current genre via Type 1 overwrite, and previous genre via Type 3 column for migration analysis.
+:::
+
+::: details Quiz
+**1. What business question does the SCD type choice answer?**
+
+A) How to store data most efficiently
+B) Whether to see dimension values as they are now or as they were at the time of the fact event
+C) How often to run the ETL pipeline
+D) Which database engine to use
+
+::: details Answer
+**B)** SCD Type 1 shows "as-is now" (current state). SCD Type 2 shows "as-was then" (historical state at the time of the associated fact). This is the fundamental business decision.
+:::
+
+**2. In SCD Type 2, what do the `effective_start_date` and `effective_end_date` columns represent?**
+
+A) When the ETL pipeline ran
+B) The date range during which that version of the dimension record was the current/active version
+C) The date range of the source data
+D) The date range for data retention
+
+::: details Answer
+**B)** `effective_start_date` is when this version became active, `effective_end_date` is when it was superseded by a new version (or NULL/9999-12-31 for the current active version). Fact tables join to the dimension row whose date range encompasses the fact event date.
+:::
+
+**3. What is a Type 6 SCD?**
+
+A) A combination of Types 1, 2, and 3 -- new rows for history (Type 2), overwrite column for current value (Type 1), and previous value column (Type 3)
+B) A new type that replaces all others
+C) A type that stores 6 historical versions
+D) A type specific to date dimensions
+
+::: details Answer
+**A)** Type 6 (sometimes written as 1+2+3) combines all three approaches: Type 2 rows for full history, a Type 1 overwrite column showing the current value on every row, and a Type 3 column showing the immediately previous value.
+:::
+
+**4. Why are surrogate keys essential in SCD Type 2?**
+
+A) They compress better than natural keys
+B) Because the same business key can have multiple active versions (rows), surrogate keys provide a unique identifier for each version
+C) They are required by database constraints
+D) They improve query performance by 10x
+
+::: details Answer
+**B)** In Type 2, a customer with business key "CUST-42" may have 5 rows representing 5 versions. Fact tables need to reference the specific version that was active at the time of the fact, which requires a unique surrogate key per version.
+:::
+
+**5. When should you NOT use SCD Type 2?**
+
+A) When historical tracking is important
+B) When the attribute changes are corrections (typos), not meaningful business changes
+C) When you have a large dimension table
+D) When using a cloud data warehouse
+
+::: details Answer
+**B)** Typo corrections, data quality fixes, and formatting changes should use Type 1 (overwrite). Historical reports should not show the typo -- they should show the corrected value. Type 2 is for meaningful business changes (address moved, price changed, status upgraded).
+:::
+:::
+
+---
+
+> **One-Liner Summary:** SCD Type determines whether historical reports see dimensions as they are now (Type 1) or as they were then (Type 2) -- choose Type 2 by default because you cannot recover destroyed history.
