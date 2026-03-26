@@ -725,3 +725,97 @@ pyarrow>=14.0
 streamlit>=1.30
 plotly>=5.18
 ```
+
+---
+
+::: tip Key Takeaway
+- An end-to-end pipeline has distinct stages (ingestion, raw storage, preprocessing, clean storage, analysis, dashboard) with checkpoints between each.
+- Raw data should be stored in its original format before any transformation, enabling re-processing without re-fetching.
+- A Streamlit dashboard turns cleaned data into interactive business insights that non-technical stakeholders can explore.
+:::
+
+::: details Exercise
+**Extend the E-Commerce Pipeline**
+
+Add the following to the existing pipeline:
+1. A data quality gate after preprocessing that rejects batches with > 10% null prices.
+2. A deduplication step that uses `product_id` for products and `order_id` for orders.
+3. A daily aggregation step that computes revenue by category and day.
+4. An anomaly detection step that flags days where revenue is > 2 standard deviations from the 30-day rolling mean.
+5. Export the anomalies as a separate Parquet file for investigation.
+
+**Solution Sketch**
+
+```python
+import pandas as pd, numpy as np
+
+def quality_gate(df, col="price", max_null_rate=0.10):
+    null_rate = df[col].isnull().mean()
+    if null_rate > max_null_rate:
+        raise ValueError(f"Null rate {null_rate:.1%} exceeds {max_null_rate:.1%}")
+    return df
+
+def deduplicate(df, key_col):
+    return df.drop_duplicates(subset=[key_col], keep="last")
+
+def daily_revenue(orders_df):
+    orders_df["date"] = pd.to_datetime(orders_df["created_at"]).dt.date
+    return orders_df.groupby(["date", "category"])["total"].sum().reset_index()
+
+def detect_anomalies(daily_df, window=30, threshold=2):
+    daily_df = daily_df.sort_values("date")
+    daily_df["rolling_mean"] = daily_df.groupby("category")["total"].transform(
+        lambda x: x.rolling(window, min_periods=7).mean())
+    daily_df["rolling_std"] = daily_df.groupby("category")["total"].transform(
+        lambda x: x.rolling(window, min_periods=7).std())
+    daily_df["is_anomaly"] = abs(daily_df["total"] - daily_df["rolling_mean"]) > threshold * daily_df["rolling_std"]
+    return daily_df[daily_df["is_anomaly"]]
+```
+:::
+
+::: details Debugging Scenario
+**Your e-commerce dashboard shows revenue doubled overnight. The pipeline ran successfully, no errors in logs, and the source API returned normal data.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The most likely cause is **duplicate order processing**. Scenarios:
+
+1. **Idempotency failure**: the pipeline ran twice (e.g., manual trigger + scheduled run) and appended orders instead of upserting, doubling the count.
+2. **Join multiplication**: a new many-to-many relationship in the data caused a join to produce multiple rows per order. Check that `order_id` is still unique after all joins.
+3. **Missing deduplication**: the API returned overlapping data between pagination windows, and the pipeline did not deduplicate by `order_id`.
+
+Fix: add `assert df["order_id"].is_unique` after every join and transformation step. Use upsert logic (`INSERT ON CONFLICT DO UPDATE`) at the warehouse load step. Add a pipeline-level row count check comparing source API count with loaded count.
+:::
+
+::: warning Common Misconceptions
+- **"A working script is a pipeline."** A script has no error recovery, no checkpoints, no monitoring, and no idempotency. A pipeline is a system that handles all of these.
+- **"Raw data storage is wasted disk space."** Raw data is your insurance policy. When a transformation bug is discovered, you re-process from raw without re-ingesting.
+- **"Streamlit dashboards are not production-grade."** Streamlit is perfectly suitable for internal dashboards serving dozens of users. It is not suitable for public-facing applications with thousands of concurrent users.
+- **"EDA is a one-time activity."** Automated EDA that runs after every pipeline execution catches data drift and distribution changes that manual analysis misses.
+:::
+
+::: details Quiz
+**1. Why should raw data be stored before any transformation?**
+
+> Raw data is immutable evidence of what the source system provided. If a transformation bug is discovered later, you can re-process from raw data without re-fetching from the API.
+
+**2. What is the difference between a staging table and a production table in a warehouse?**
+
+> A staging table holds freshly loaded data that has not been validated. A production table contains validated, deduplicated data served to dashboards and reports. Data moves from staging to production after passing quality gates.
+
+**3. Why use Parquet instead of CSV for intermediate pipeline stages?**
+
+> Parquet preserves data types (dates, integers, categories), compresses 5-10x better than CSV, and supports columnar reads for faster analytics.
+
+**4. What should a data quality gate check?**
+
+> Null rates, row counts, value ranges, uniqueness constraints, and distributional statistics. It should block loading if any critical check fails.
+
+**5. How do you make a pipeline idempotent?**
+
+> Use deterministic output paths (based on date or input hash), overwrite rather than append, deduplicate by primary key, and ensure that running twice produces the same result.
+:::
+
+> **One-Liner Summary:** An e-commerce data pipeline transforms raw API data into interactive business insights through staged preprocessing, quality gates, and a Streamlit dashboard -- every step checkpointed and idempotent.

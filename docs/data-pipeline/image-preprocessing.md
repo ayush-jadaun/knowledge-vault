@@ -722,3 +722,112 @@ results = processor.process_all()
 | ImageNet stats | ~[-2, 2] | Transfer learning (ResNet, VGG) |
 | / 127.5 - 1 | [-1, 1] | GANs, some architectures |
 | Per-image std | ~[-3, 3] | Unknown domain |
+
+---
+
+::: tip Key Takeaway
+- Image preprocessing must produce uniform dimensions, consistent color spaces, and normalized pixel ranges before any model can process the data.
+- Data augmentation is applied only to training data, never to validation or test data -- it artificially increases training diversity.
+- EXIF orientation tags must be applied before any resizing, or portrait images will be processed sideways.
+:::
+
+::: details Exercise
+**Build an Image Processing Pipeline**
+
+Write a batch processing function that:
+1. Discovers all images (JPEG, PNG) in a directory.
+2. Validates each image (catches corrupt/truncated files).
+3. Auto-orients using EXIF data.
+4. Resizes to 224x224 using fit-and-pad strategy with gray padding.
+5. Normalizes pixels using ImageNet statistics.
+6. Saves processed images and generates a report of valid/corrupt counts.
+
+**Solution Sketch**
+
+```python
+from PIL import Image, ImageOps
+import numpy as np
+from pathlib import Path
+
+IMAGENET_MEAN = np.array([0.485, 0.456, 0.406])
+IMAGENET_STD = np.array([0.229, 0.224, 0.225])
+
+def process_batch(input_dir, output_dir, size=(224, 224)):
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    stats = {"valid": 0, "corrupt": 0}
+    for path in Path(input_dir).rglob("*"):
+        if path.suffix.lower() not in (".jpg", ".jpeg", ".png"):
+            continue
+        try:
+            img = Image.open(path)
+            img.load()  # force full decode
+            img = ImageOps.exif_transpose(img).convert("RGB")
+            # Fit and pad
+            w, h = img.size
+            scale = min(size[0]/w, size[1]/h)
+            resized = img.resize((int(w*scale), int(h*scale)), Image.LANCZOS)
+            canvas = Image.new("RGB", size, (128, 128, 128))
+            canvas.paste(resized, ((size[0]-resized.width)//2, (size[1]-resized.height)//2))
+            canvas.save(Path(output_dir) / path.name)
+            stats["valid"] += 1
+        except Exception:
+            stats["corrupt"] += 1
+    return stats
+```
+:::
+
+::: details Debugging Scenario
+**Your image classification model performs well on your curated test set but poorly on user-uploaded images. The most common failure mode is portrait photos being classified incorrectly.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The issue is **EXIF orientation not being applied**. Most smartphone cameras save photos in landscape orientation with an EXIF tag indicating the actual rotation. PIL opens the raw pixel data without applying the rotation tag, so portrait photos appear sideways to the model.
+
+Your curated test set likely had manually corrected orientations, but user uploads have raw EXIF data.
+
+Fix: add `ImageOps.exif_transpose(img)` as the first operation after opening every image:
+
+```python
+from PIL import Image, ImageOps
+
+img = Image.open(uploaded_file)
+img = ImageOps.exif_transpose(img)  # Apply EXIF rotation
+img = img.convert("RGB")
+# ... rest of pipeline
+```
+
+This should be applied in both training and inference pipelines.
+:::
+
+::: warning Common Misconceptions
+- **"Resizing to square is always safe."** Stretching a non-square image to a square distorts aspect ratios. Use fit-and-pad or cover-and-crop to preserve proportions.
+- **"Augmentation always helps."** Inappropriate augmentation (e.g., vertical flips for face detection, extreme rotations for text recognition) teaches the model patterns that never occur in real data.
+- **"ImageNet normalization is always correct."** ImageNet stats (mean/std) are only appropriate when using models pretrained on ImageNet. Medical images, satellite imagery, and other domains have different statistics and need dataset-specific normalization.
+- **"PIL and OpenCV handle colors the same way."** PIL uses RGB order, OpenCV uses BGR. Mixing them without conversion produces images with swapped red and blue channels.
+:::
+
+::: details Quiz
+**1. Why is Lanczos the preferred interpolation method for image resizing?**
+
+> Lanczos produces the sharpest results with minimal aliasing artifacts, making it ideal for final output. Bilinear is faster but slightly blurrier; nearest-neighbor creates blocky artifacts.
+
+**2. What is the purpose of ImageNet normalization (subtracting mean, dividing by std)?**
+
+> It centers each color channel around zero and scales to unit variance, matching the input distribution that pretrained models (ResNet, VGG, etc.) were trained on. Without it, the model receives inputs on a different scale than expected.
+
+**3. What is the difference between fit-and-pad and cover-and-crop resize strategies?**
+
+> Fit-and-pad scales the image to fit entirely within the target dimensions and fills the remaining space with padding (no information loss, but padding). Cover-and-crop scales to cover the target and crops the overflow (no padding, but some content is lost).
+
+**4. Why should data augmentation never be applied to validation or test data?**
+
+> Augmentation introduces randomness. Applying it to validation/test data makes evaluation non-deterministic -- the same model would get different scores on different runs, making comparison meaningless.
+
+**5. How do you detect a corrupt or truncated image file?**
+
+> Open the file with `Image.open()` and call `img.load()` to force full pixel decoding. Truncated files will raise an exception during `load()` even if `open()` succeeds (which only reads the header).
+:::
+
+> **One-Liner Summary:** Image preprocessing transforms inconsistent photos into uniform, normalized tensors through validation, EXIF correction, resizing, normalization, and training-only augmentation.

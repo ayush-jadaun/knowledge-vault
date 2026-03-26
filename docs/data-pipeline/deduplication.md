@@ -803,3 +803,116 @@ unified = cross_source_deduplicate(
 | Zip code prefix | 10-1000x | Address matching |
 | Year-month | 12x | Temporal data |
 | Email domain | 5-50x | Contact deduplication |
+
+---
+
+::: tip Key Takeaway
+- Exact deduplication (`drop_duplicates`) only catches identical rows; real-world duplicates like "J. Smith" and "John Smith" require fuzzy matching.
+- Blocking reduces the O(n^2) comparison problem by only comparing records within the same block (e.g., same zip code prefix), making million-row deduplication feasible.
+- MinHash/LSH enables near-linear-time approximate duplicate detection for text documents, trading perfect recall for massive speed gains.
+:::
+
+::: details Exercise
+**Build a Customer Deduplication Pipeline**
+
+Given a customer DataFrame with `name`, `email`, `phone`, and `address`:
+1. Remove exact duplicates by email.
+2. Implement blocking on the first 3 characters of the last name.
+3. Compute weighted similarity (name 40%, email 30%, phone 20%, address 10%) for each candidate pair.
+4. Merge duplicate groups using connected components, keeping the most complete record.
+5. Report how many duplicates were found and merged.
+
+**Solution Sketch**
+
+```python
+from rapidfuzz import fuzz
+from collections import defaultdict, deque
+import pandas as pd
+
+def deduplicate_customers(df, threshold=0.85):
+    # Step 1: exact dedup
+    df = df.drop_duplicates(subset=["email"], keep="last")
+
+    # Step 2: blocking
+    df["_block"] = df["name"].str.split().str[-1].str[:3].str.lower()
+    blocks = df.groupby("_block").apply(lambda g: g.index.tolist()).to_dict()
+
+    # Step 3: pairwise scoring
+    matches = []
+    for indices in blocks.values():
+        if len(indices) < 2 or len(indices) > 100:
+            continue
+        for i, idx1 in enumerate(indices):
+            for idx2 in indices[i+1:]:
+                score = (0.4 * fuzz.token_sort_ratio(str(df.loc[idx1,"name"]), str(df.loc[idx2,"name"])) +
+                         0.3 * fuzz.ratio(str(df.loc[idx1,"email"]), str(df.loc[idx2,"email"])) +
+                         0.2 * fuzz.ratio(str(df.loc[idx1,"phone"]), str(df.loc[idx2,"phone"])) +
+                         0.1 * fuzz.partial_ratio(str(df.loc[idx1,"address"]), str(df.loc[idx2,"address"]))) / 100
+                if score >= threshold:
+                    matches.append((idx1, idx2))
+
+    # Step 4: connected components, keep most complete
+    graph = defaultdict(set)
+    for a, b in matches:
+        graph[a].add(b); graph[b].add(a)
+    visited, to_drop = set(), set()
+    for node in graph:
+        if node in visited: continue
+        group, queue = [], deque([node])
+        while queue:
+            cur = queue.popleft()
+            if cur in visited: continue
+            visited.add(cur); group.append(cur)
+            queue.extend(graph[cur] - visited)
+        best = max(group, key=lambda i: df.loc[i].notna().sum())
+        to_drop.update(set(group) - {best})
+
+    return df.drop(index=to_drop).drop(columns=["_block"])
+```
+:::
+
+::: details Debugging Scenario
+**Your deduplication pipeline runs daily, but the number of "unique" customers keeps growing even though no new customers are being added. After investigation, you find that the same customer keeps getting re-added.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The pipeline is not **idempotent with respect to deduplication state**. Each run deduplicates within the current batch but does not check against previously deduplicated records. If the source system has duplicates across batches (e.g., a customer appears in Monday's extract and Tuesday's extract with slightly different data), each batch passes deduplication independently.
+
+Fixes:
+1. **Cross-batch deduplication**: maintain a master entity table and deduplicate new records against it, not just within the batch.
+2. **Stable entity IDs**: assign a deterministic entity ID based on matching keys (e.g., hash of normalized email), so the same customer always maps to the same ID regardless of when they are processed.
+3. **Upsert pattern**: use `INSERT ... ON CONFLICT (entity_id) DO UPDATE` at the destination to merge rather than append.
+:::
+
+::: warning Common Misconceptions
+- **"drop_duplicates() handles deduplication."** It only catches exact row matches. Real duplicates have spelling variations, formatting differences, and missing fields.
+- **"Fuzzy matching is O(n^2) and therefore impractical."** With blocking, you compare only within blocks, reducing complexity to O(n * average_block_size). Million-row deduplication takes minutes, not years.
+- **"MinHash gives exact Jaccard similarity."** MinHash is an approximation. With 128 permutations, the estimate has roughly 9% standard error. Increase permutations for better accuracy at the cost of memory.
+- **"ML entity resolution is always better than rule-based."** ML needs labeled training data (matched/unmatched pairs). Without it, well-tuned rule-based systems with domain-specific weights often outperform.
+:::
+
+::: details Quiz
+**1. What is the difference between deduplication and entity resolution?**
+
+> Deduplication finds duplicate records within a single dataset. Entity resolution matches records across multiple datasets (e.g., matching CRM customers with billing records) to determine which records refer to the same real-world entity.
+
+**2. How does blocking reduce the computational cost of fuzzy deduplication?**
+
+> Instead of comparing every pair (O(n^2)), blocking groups records by a coarse key (e.g., first 3 characters of name) and only compares records within the same block. This reduces comparisons by 10-1000x.
+
+**3. What is MinHash, and how does it estimate Jaccard similarity?**
+
+> MinHash creates a fixed-size signature (fingerprint) for each document by applying multiple hash functions to its shingles. The probability that two signatures agree at a position equals the Jaccard similarity of the original sets, enabling fast approximate matching.
+
+**4. Why is connected components used to merge duplicate groups?**
+
+> If A matches B and B matches C, then A, B, and C are all the same entity even if A and C do not directly match. Connected components in a graph of match pairs correctly identifies these transitive groups.
+
+**5. What is a Soundex blocking key, and when is it useful?**
+
+> Soundex maps names to a phonetic code based on consonant sounds ("Smith" and "Smyth" both map to "S530"). It is useful when name variants are phonetic (different spellings of the same pronunciation) rather than typographic.
+:::
+
+> **One-Liner Summary:** Deduplication is the spectrum from trivial `drop_duplicates()` to ML-powered entity resolution, where blocking makes fuzzy matching scalable and connected components merge transitive matches.

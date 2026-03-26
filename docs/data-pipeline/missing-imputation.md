@@ -733,3 +733,102 @@ def recommend_imputation(
 | Mean shift | Bias in imputed distribution | < 0.1 |
 | Variance ratio | Preservation of spread | 0.8 - 1.2 |
 | Correlation preservation | Relationship maintenance | > 0.9 |
+
+---
+
+::: tip Key Takeaway
+- Mean imputation preserves the mean but destroys variance, correlations, and distributional shape -- it is almost never the right choice for more than 5% missing data.
+- MICE (Multiple Imputation by Chained Equations) is the gold standard for MAR data because it models inter-column relationships and can quantify imputation uncertainty.
+- Before choosing an imputation method, determine why data is missing (MCAR, MAR, MNAR) -- MNAR data cannot be safely imputed without domain-specific models.
+:::
+
+::: details Exercise
+**Compare Imputation Methods**
+
+Given a complete DataFrame, artificially mask 20% of values in 3 numeric columns, then:
+1. Impute using mean, median, KNN (k=5), and MICE (BayesianRidge).
+2. For each method, compute NRMSE (normalized root mean squared error) against the true values.
+3. Compare the variance ratio (imputed variance / original variance) for each method.
+4. Determine which method best preserves the correlation structure.
+
+**Solution Sketch**
+
+```python
+import numpy as np, pandas as pd
+from sklearn.impute import SimpleImputer, KNNImputer
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+from sklearn.metrics import mean_squared_error
+
+np.random.seed(42)
+df = pd.DataFrame({"a": np.random.randn(1000), "b": np.random.randn(1000)*2+5, "c": np.random.randn(1000)*0.5})
+# Mask 20%
+mask = np.random.random(df.shape) < 0.2
+df_masked = df.copy()
+df_masked[mask] = np.nan
+
+methods = {
+    "mean": SimpleImputer(strategy="mean"),
+    "median": SimpleImputer(strategy="median"),
+    "knn_5": KNNImputer(n_neighbors=5),
+    "mice": IterativeImputer(max_iter=10, random_state=42),
+}
+
+for name, imp in methods.items():
+    filled = pd.DataFrame(imp.fit_transform(df_masked), columns=df.columns)
+    nrmse = np.sqrt(mean_squared_error(df[mask], filled[mask])) / df.std().mean()
+    var_ratio = filled.var().mean() / df.var().mean()
+    print(f"{name:8s}: NRMSE={nrmse:.4f}, VarRatio={var_ratio:.3f}")
+```
+:::
+
+::: details Debugging Scenario
+**After imputing missing values in your dataset, your linear regression model's R-squared drops from 0.85 to 0.60. The number of missing values was only 8%.**
+
+Diagnose and fix it.
+
+**Answer**
+
+Mean imputation is the most likely culprit. When 8% of values are replaced with the column mean:
+1. **Variance shrinks**: the imputed values cluster at the mean, reducing the column's spread.
+2. **Correlations weaken**: imputed values have no relationship to other columns, diluting genuine correlations that the regression relies on.
+3. **Artificial spike**: the distribution gains an artificial spike at the mean, violating the normality assumption.
+
+Fix:
+1. **Use MICE or KNN imputation** which model inter-column relationships, preserving correlations.
+2. **Add a missing indicator** column (`column_is_missing`) so the model can learn that imputed rows behave differently.
+3. **Evaluate imputation quality** by comparing variance ratios and correlations before and after imputation.
+4. **If doing statistical inference**, use multiple imputation with Rubin's rules to get correct standard errors and confidence intervals.
+:::
+
+::: warning Common Misconceptions
+- **"Mean imputation is simple and harmless."** It destroys variance, attenuates correlations, and biases every statistical test. It is only acceptable for trivially small missing rates (< 2%).
+- **"KNN imputation is always better than MICE."** KNN is O(n^2), struggles with high-dimensional data, and does not handle categorical variables natively. MICE scales better and handles mixed types.
+- **"If data is MNAR, you should still impute."** MNAR means the missingness depends on the missing value itself (e.g., high-income people skip the income question). Standard imputation methods produce biased results for MNAR data.
+- **"One imputed dataset is sufficient."** Single imputation underestimates uncertainty. Multiple imputation creates several datasets, analyzes each separately, and pools results using Rubin's rules for correct inference.
+- **"MissForest is always the best imputation method."** MissForest is the most flexible but also the slowest. For purely numeric datasets with linear relationships, MICE with BayesianRidge is faster and equally accurate.
+:::
+
+::: details Quiz
+**1. What are the three missing data mechanisms (MCAR, MAR, MNAR)?**
+
+> MCAR: missingness is completely random (sensor failure). MAR: missingness depends on observed variables (high-income people skip income question, but we know their education). MNAR: missingness depends on the missing value itself (depressed patients skip depression scores).
+
+**2. Why does mean imputation destroy variance?**
+
+> All imputed values are identical (the mean), creating a spike in the distribution that shrinks the overall spread. The standard deviation decreases artificially, making the data appear more concentrated than it truly is.
+
+**3. How does MICE differ from single regression imputation?**
+
+> Single regression imputes each column once using other columns as predictors. MICE iterates: it imputes column 1, then uses the imputed column 1 to improve column 2's imputation, then re-imputes column 1 using the improved column 2, repeating until convergence. This captures inter-column dependencies more accurately.
+
+**4. What is Rubin's rules, and when do you need it?**
+
+> Rubin's rules combine estimates from multiple imputed datasets into a single pooled estimate with correct standard errors. You need it when doing statistical inference (hypothesis tests, confidence intervals) with multiply imputed data.
+
+**5. When should you drop a column instead of imputing it?**
+
+> When more than 70% of values are missing. At that point, any imputation method is essentially fabricating the majority of the column, and the imputed values carry little genuine information. Add a binary "was_present" indicator before dropping.
+:::
+
+> **One-Liner Summary:** Mean imputation is a statistically destructive lie; production pipelines use MICE, KNN, or MissForest to preserve variance, correlations, and distributional shape while quantifying imputation uncertainty.

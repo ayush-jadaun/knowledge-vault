@@ -716,3 +716,97 @@ else:
 | `object` for booleans | No boolean logic | Cast with explicit true/false mapping |
 | `float64` for all floats | Wastes 4 bytes per value | Downcast to `float32` if range allows |
 | `object` for categories | High memory for repeated values | Convert to `category` dtype |
+
+---
+
+::: tip Key Takeaway
+- Pandas default type inference is wrong more often than it is right: leading zeros vanish, nulls promote integers to floats, and booleans stay as strings.
+- Systematic type detection followed by automated casting can reduce DataFrame memory usage by 50-80% with zero data loss.
+- Schema enforcement at the pipeline boundary catches type drift before it corrupts downstream analysis.
+:::
+
+::: details Exercise
+**Build a Type Optimizer**
+
+Write a function `optimize_dataframe(df)` that:
+1. Detects all columns where the current dtype is suboptimal.
+2. Downcasts integers and floats to the smallest type that fits the range.
+3. Converts low-cardinality string columns (fewer than 50% unique values) to `category`.
+4. Detects and parses date-like string columns using regex patterns.
+5. Reports the memory savings achieved.
+
+**Solution Sketch**
+
+```python
+import pandas as pd, numpy as np
+
+def optimize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    start_mem = df.memory_usage(deep=True).sum()
+    result = df.copy()
+    for col in result.columns:
+        if result[col].dtype == "object":
+            if result[col].nunique() / len(result) < 0.5:
+                result[col] = result[col].astype("category")
+        elif result[col].dtype == np.int64:
+            c_min, c_max = result[col].min(), result[col].max()
+            if c_min >= 0 and c_max <= 255:
+                result[col] = result[col].astype(np.uint8)
+            elif c_min >= -128 and c_max <= 127:
+                result[col] = result[col].astype(np.int8)
+        elif result[col].dtype == np.float64:
+            result[col] = pd.to_numeric(result[col], downcast="float")
+    end_mem = result.memory_usage(deep=True).sum()
+    print(f"Memory: {start_mem/1e6:.1f}MB -> {end_mem/1e6:.1f}MB ({(1-end_mem/start_mem)*100:.0f}% saved)")
+    return result
+```
+:::
+
+::: details Debugging Scenario
+**You load a CSV with a `quantity` column that should be integer. After loading, some rows show `5.0` instead of `5`, and your integer validation fails.**
+
+Diagnose and fix it.
+
+**Answer**
+
+This is the classic **NaN promotes int to float** problem in pandas. If even one value in the column is missing (NaN), pandas cannot store the column as `int64` because NumPy integers have no NaN representation. The entire column is silently promoted to `float64`.
+
+Fix: use pandas' **nullable integer type** `Int64` (capital I) instead of `int64`:
+
+```python
+df["quantity"] = pd.to_numeric(df["quantity"], errors="coerce").astype("Int64")
+```
+
+`Int64` uses pandas' extension array system that supports `pd.NA` natively, keeping the column as integers while allowing missing values.
+:::
+
+::: warning Common Misconceptions
+- **"Pandas correctly infers types from CSV files."** Pandas guesses, and it guesses wrong on leading zeros, mixed-case booleans, mixed date formats, and columns with a single NaN.
+- **"int64 is the right default for integers."** Most integer columns fit in `int8` (range -128 to 127) or `int16`. Using `int64` for everything wastes 4-7 bytes per value.
+- **"Float columns should stay float64."** `float32` has 7 digits of precision, which is sufficient for prices, measurements, and most real-world values. Downcasting halves memory usage.
+- **"Category dtype is only for ML encoding."** Category dtype is a general memory optimization: a column with 5 unique values across 1M rows uses ~4MB as `object` but ~1MB as `category`.
+- **"Type casting is a nice-to-have optimization."** Wrong types cause wrong arithmetic (string "5" + string "3" = "53"), broken comparisons, and silent data corruption. It is a correctness requirement, not an optimization.
+:::
+
+::: details Quiz
+**1. Why does a single NaN in an integer column cause pandas to use float64?**
+
+> NumPy's integer types have no native representation for missing values. When pandas encounters a NaN, it promotes the entire column to float64, which does support NaN. The fix is to use nullable integer types like `Int64`.
+
+**2. What is the difference between `int64` and `Int64` in pandas?**
+
+> `int64` (lowercase) is the NumPy integer type that cannot hold NaN values. `Int64` (uppercase) is pandas' nullable integer extension type that supports `pd.NA` for missing values.
+
+**3. When should you use the `category` dtype?**
+
+> When a string column has low cardinality (many repeated values relative to unique values), typically a ratio below 50%. It saves memory by storing an integer lookup table instead of repeating strings.
+
+**4. What does `pd.to_numeric(series, errors="coerce")` do with non-numeric values?**
+
+> It converts valid values to numbers and replaces non-numeric values (like "N/A" or "unknown") with `NaN` instead of raising an error.
+
+**5. How can you detect that a float column actually contains only integer values?**
+
+> Check `series.dropna().apply(float.is_integer).all()`. If True, the column was promoted from integer due to NaN values and can be safely cast to a nullable integer type.
+:::
+
+> **One-Liner Summary:** Pandas type inference is a well-meaning guess that routinely destroys leading zeros, promotes integers to floats, and wastes 80% of memory -- explicit type casting is a correctness requirement, not an optimization.

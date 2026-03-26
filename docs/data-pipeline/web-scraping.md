@@ -1307,3 +1307,113 @@ asyncio.run(main())
 | Legacy browser automation | Selenium | Wide browser support, mature ecosystem |
 | Login-protected pages | Playwright or Selenium | Can fill forms, handle cookies |
 | API exists alongside website | requests (API) | Always prefer the API |
+
+---
+
+::: tip Key Takeaway
+- Always prefer an API over scraping; when scraping is necessary, choose the lightest tool that works (requests > Scrapy > Playwright).
+- Production scrapers must handle rate limiting, retries, IP rotation, and anti-bot detection or they will fail within days.
+- Store raw HTML alongside extracted data so you can re-parse without re-scraping when your selectors inevitably break.
+:::
+
+::: details Exercise
+**Build a Robust News Headline Scraper**
+
+Pick a news site with server-rendered HTML. Write a scraper that:
+1. Extracts the top 20 headlines, their URLs, and publication dates.
+2. Implements polite rate limiting (at least 2 seconds between requests).
+3. Retries on transient errors (5xx, connection timeout) with exponential backoff.
+4. Saves results as both JSON (raw) and Parquet (structured).
+5. Runs idempotently: if run twice for the same date, it does not create duplicates.
+
+**Solution Sketch**
+
+```python
+import requests, time, json, hashlib
+from bs4 import BeautifulSoup
+import pandas as pd
+from pathlib import Path
+from datetime import date
+
+def scrape_headlines(url: str, output_dir: str = "./scraped"):
+    Path(output_dir).mkdir(exist_ok=True)
+    today = date.today().isoformat()
+    out_path = Path(output_dir) / f"headlines_{today}.parquet"
+
+    if out_path.exists():
+        return pd.read_parquet(out_path)  # idempotent
+
+    for attempt in range(3):
+        try:
+            resp = requests.get(url, timeout=15,
+                                headers={"User-Agent": "HeadlineScraper/1.0"})
+            resp.raise_for_status()
+            break
+        except requests.RequestException:
+            time.sleep(2 ** attempt)
+    else:
+        raise RuntimeError("All retries exhausted")
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    articles = soup.select("article h2 a")[:20]
+    rows = [{"title": a.text.strip(), "url": a.get("href", ""),
+             "scraped_at": today} for a in articles]
+
+    df = pd.DataFrame(rows)
+    df["id"] = df["url"].apply(lambda u: hashlib.md5(u.encode()).hexdigest())
+    df.to_parquet(out_path, index=False)
+    return df
+```
+:::
+
+::: details Debugging Scenario
+**Your Scrapy spider worked yesterday but today every request returns empty HTML with a 200 status.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The site likely started requiring JavaScript rendering or deployed an anti-bot challenge (Cloudflare, Akamai). Steps to diagnose:
+
+1. **Inspect the response body** -- if it contains a `<noscript>` tag or JavaScript redirect, the page is JS-rendered.
+2. **Check response headers** for `cf-ray` (Cloudflare) or similar bot-protection headers.
+3. **Compare User-Agent** -- the site may be blocking your default UA string. Try a real browser UA.
+4. **Test in a browser with DevTools** -- if the HTML is present in the initial response there, your headers or cookies are the problem.
+
+Fixes:
+- Switch from `requests` to **Playwright** for JS-rendered pages.
+- Add realistic headers (`User-Agent`, `Accept-Language`, `Referer`).
+- If Cloudflare-protected, consider **undetected-chromedriver** or a proxy service with built-in challenge solving.
+- Always log and inspect the first N bytes of every response so you catch this class of error immediately.
+:::
+
+::: warning Common Misconceptions
+- **"Scraping is always legal."** It depends on the jurisdiction, the site's ToS, and whether data is copyrighted or personal. Always check `robots.txt` and legal constraints.
+- **"If the page loads in a browser, requests can get it."** Many modern sites are SPAs that render content via JavaScript after the initial HTML load; `requests` only sees the skeleton.
+- **"Faster is better."** Hammering a server with rapid requests gets you IP-banned and may violate computer fraud laws. Polite scraping with delays is both more ethical and more reliable.
+- **"CSS selectors are stable."** Sites redesign constantly. Hard-coded selectors break; build monitoring to detect when extraction returns empty results.
+:::
+
+::: details Quiz
+**1. What is the main advantage of Scrapy over requests + BeautifulSoup for large crawls?**
+
+> Scrapy provides built-in async concurrency, middleware hooks, item pipelines, and crawl scheduling out of the box, whereas requests + BS4 requires you to build all of that manually.
+
+**2. When should you use Playwright instead of Scrapy?**
+
+> When the page content is rendered client-side with JavaScript (SPAs, React/Vue apps) and is not present in the initial HTML response.
+
+**3. What does `robots.txt` control, and is it legally binding?**
+
+> `robots.txt` tells crawlers which paths they should not access. It is not legally binding by itself, but ignoring it can be used as evidence of bad faith in legal disputes and violates industry norms.
+
+**4. How does a rotating proxy pool help at scale?**
+
+> It distributes requests across many IP addresses, preventing any single IP from being rate-limited or banned by the target server.
+
+**5. Why should you store raw HTML in addition to extracted data?**
+
+> If your parsing logic has a bug or the extraction selectors change, you can re-parse the stored HTML without re-scraping, which saves time and avoids hitting the server again.
+:::
+
+> **One-Liner Summary:** Web scraping turns unstructured HTML into structured data, but production scrapers are distributed systems that must handle rate limits, bans, JS rendering, and legal constraints to stay reliable.

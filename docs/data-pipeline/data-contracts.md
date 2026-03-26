@@ -635,3 +635,125 @@ class TestOrdersContract:
 | Soda | Platform | SQL-first, cloud-native |
 | dbt contracts | Built-in | Integrated with dbt models |
 | Protobuf/Avro | Schema | Cross-language, schema registry |
+
+---
+
+::: tip Key Takeaway
+- A data contract is a formal agreement between producer and consumer about schema, quality, SLA, and semantics -- it makes implicit dependencies explicit and testable.
+- Breaking changes (column removal, type change) require consumer coordination and deprecation periods; backward-compatible changes (adding nullable columns) do not.
+- Contract testing in CI/CD catches breaking changes before they reach production, preventing the 2 AM dashboard failure.
+:::
+
+::: details Exercise
+**Define and Test a Data Contract**
+
+Create a data contract for an `orders` table that specifies:
+1. Schema: 5 columns with types and nullability constraints.
+2. SLA: data must be available by 6 AM UTC daily.
+3. Quality: null rate below 5%, row count between 1K and 1M.
+4. Semantic: `status` values and their business meaning.
+5. Write a contract test that validates a DataFrame against this contract and reports violations.
+
+**Solution Sketch**
+
+```python
+from dataclasses import dataclass
+from datetime import time
+import pandas as pd
+
+@dataclass
+class ColumnContract:
+    name: str
+    dtype: str
+    nullable: bool = True
+
+@dataclass
+class DataContract:
+    name: str
+    columns: list[ColumnContract]
+    sla_time_utc: time
+    min_rows: int
+    max_rows: int
+    max_null_rate: float
+
+    def validate(self, df: pd.DataFrame) -> list[str]:
+        errors = []
+        # Schema
+        for col in self.columns:
+            if col.name not in df.columns:
+                errors.append(f"Missing column: {col.name}")
+            elif not col.nullable and df[col.name].isnull().any():
+                errors.append(f"Null values in non-nullable column: {col.name}")
+        # Volume
+        if not (self.min_rows <= len(df) <= self.max_rows):
+            errors.append(f"Row count {len(df)} outside [{self.min_rows}, {self.max_rows}]")
+        # Quality
+        null_rate = df.isnull().mean().max()
+        if null_rate > self.max_null_rate:
+            errors.append(f"Null rate {null_rate:.1%} exceeds {self.max_null_rate:.1%}")
+        return errors
+
+contract = DataContract(
+    name="orders",
+    columns=[
+        ColumnContract("order_id", "int64", nullable=False),
+        ColumnContract("total", "float64", nullable=False),
+        ColumnContract("status", "string", nullable=False),
+    ],
+    sla_time_utc=time(6, 0),
+    min_rows=1000, max_rows=1_000_000,
+    max_null_rate=0.05,
+)
+
+violations = contract.validate(df)
+assert not violations, f"Contract violations: {violations}"
+```
+:::
+
+::: details Debugging Scenario
+**A downstream ML team's model accuracy drops by 15%. Investigation reveals that an upstream team renamed a column from `user_age` to `customer_age` two weeks ago. No one was notified.**
+
+Diagnose and fix it.
+
+**Answer**
+
+This is the exact problem data contracts solve. Without a contract, the upstream team had no way to know who depended on `user_age` and no obligation to notify anyone before changing it.
+
+Fix:
+1. **Define a data contract** for the shared table that lists all columns, their types, and their semantic meaning.
+2. **Add breaking change detection** to the producer's CI/CD pipeline: compare the current schema against the contract and block deployment if columns are removed or renamed.
+3. **Implement a consumer registry**: every downstream consumer registers their dependency. Before any breaking change, the producer must notify all registered consumers and agree on a migration timeline.
+4. **Add a deprecation period**: new column `customer_age` is added alongside `user_age`. The old column is marked deprecated for 30 days, giving consumers time to migrate. After 30 days, the old column is removed.
+5. **Contract tests**: both producer and consumer CI pipelines validate against the contract, catching mismatches before deployment.
+:::
+
+::: warning Common Misconceptions
+- **"Data contracts are just documentation."** Documentation describes intent; contracts are enforceable through automated testing. A contract test that fails blocks deployment.
+- **"Only external data needs contracts."** Internal data between teams is the most common source of breaking changes, precisely because it feels "safe" and changes happen without coordination.
+- **"Schema is enough."** Schema defines structure, but a contract also covers quality (null rates, distributions), SLA (delivery time), and semantics (what values mean). Schema alone does not prevent silent data quality degradation.
+- **"Adding a column is always backward compatible."** Adding a non-nullable column is a breaking change because existing consumers may not provide values for it. Only nullable columns with defaults are truly backward compatible.
+:::
+
+::: details Quiz
+**1. What are the main components of a data contract?**
+
+> Schema (columns, types, constraints), SLA (delivery time, availability), Quality (null rates, row counts, distributions), Semantics (business meaning of values), and Versioning (change management, deprecation policy).
+
+**2. What is the difference between a backward-compatible and a breaking change?**
+
+> Backward-compatible changes (adding a nullable column, adding a new allowed value) do not require consumer updates. Breaking changes (removing a column, changing a type, making a nullable column required) force all consumers to update.
+
+**3. How do contract tests integrate into CI/CD?**
+
+> Both producer and consumer CI pipelines validate against the shared contract. Producer CI blocks deployment if a change violates the contract. Consumer CI blocks if the code references columns that no longer exist in the contract.
+
+**4. What is a deprecation period in data contracts?**
+
+> A time window (e.g., 30 days) during which a deprecated field is still available but marked for removal. It gives consumers time to migrate before the breaking change takes effect.
+
+**5. Why is semantic documentation important in data contracts?**
+
+> Two teams may interpret the same column differently. Documenting that `status='active'` means "currently available for purchase" (not "recently logged in") prevents semantic misalignment that causes business logic errors.
+:::
+
+> **One-Liner Summary:** Data contracts turn implicit assumptions between teams into explicit, testable, enforceable agreements about schema, quality, SLA, and semantics -- preventing the 2 AM surprise when someone renames a column.

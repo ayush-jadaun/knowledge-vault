@@ -1385,3 +1385,104 @@ asyncio.run(main())
 | Token bucket | Burst-friendly, configurable rate |
 | Exponential backoff | On 429 errors, double wait time |
 | Key rotation | Spread load across multiple API keys |
+
+---
+
+::: tip Key Takeaway
+- Always handle pagination to completion -- partial ingestion is worse than no ingestion because downstream systems assume the data is complete.
+- Implement automatic retry with exponential backoff for transient errors (429, 5xx) and fail-fast for permanent errors (401, 404).
+- Store raw API responses before transformation so you can re-process without re-fetching when business logic changes.
+:::
+
+::: details Exercise
+**Build a Paginated API Ingestion Pipeline**
+
+Use a public API (e.g., the GitHub REST API) to build an ingestion pipeline that:
+1. Fetches all repositories for a given organization using cursor-based pagination.
+2. Handles rate limiting by reading `X-RateLimit-Remaining` headers and sleeping when near the limit.
+3. Stores raw JSON responses to disk and converts the final dataset to Parquet.
+4. Implements a watermark so re-running only fetches repos updated since the last run.
+
+**Solution Sketch**
+
+```python
+import requests, json, time
+import pandas as pd
+from pathlib import Path
+
+def ingest_repos(org: str, token: str, state_file: str = "watermark.json"):
+    headers = {"Authorization": f"token {token}"}
+    state = json.loads(Path(state_file).read_text()) if Path(state_file).exists() else {}
+    since = state.get("last_updated", "1970-01-01T00:00:00Z")
+
+    repos, page = [], 1
+    while True:
+        resp = requests.get(
+            f"https://api.github.com/orgs/{org}/repos",
+            headers=headers, params={"page": page, "per_page": 100,
+                                     "sort": "updated", "direction": "desc"},
+        )
+        remaining = int(resp.headers.get("X-RateLimit-Remaining", 100))
+        if remaining < 5:
+            time.sleep(60)
+        resp.raise_for_status()
+        batch = resp.json()
+        if not batch:
+            break
+        repos.extend(batch)
+        page += 1
+
+    df = pd.DataFrame(repos)
+    df.to_parquet(f"{org}_repos.parquet", index=False)
+    if len(df):
+        state["last_updated"] = df["updated_at"].max()
+        Path(state_file).write_text(json.dumps(state))
+    return df
+```
+:::
+
+::: details Debugging Scenario
+**Your pipeline ingests data from an API nightly, but after a month you discover that 15% of records are missing. The API returns 200 OK for every request, and no errors appear in logs.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The most likely cause is **incomplete pagination**. Common root causes:
+
+1. **Offset-based pagination with concurrent writes**: new records inserted between paginated requests shift data, causing some records to appear on no page and others to appear twice. Fix: switch to **cursor/keyset pagination** if the API supports it.
+2. **Silent last-page detection failure**: your loop stops when a page returns fewer results than `per_page`, but one intermediate page legitimately had fewer results due to deletions. Fix: stop only when the page is **empty**, not when it has fewer than `per_page` results.
+3. **API rate limiting returning truncated responses**: some APIs return partial results when under load rather than a 429. Fix: validate that each page has the expected schema and row count, and log page-level metrics.
+4. **Timezone mismatch in watermark**: your incremental filter uses `updated_at > last_watermark`, but the API and your pipeline use different timezones. Fix: always store and query watermarks in UTC.
+:::
+
+::: warning Common Misconceptions
+- **"A 200 OK means the response is correct."** Many APIs return 200 with an error body, empty data, or partial results. Always validate the response schema.
+- **"Offset pagination is fine for large datasets."** Offset pagination suffers from skipped/duplicated records on mutable datasets. Cursor or keyset pagination is strictly superior.
+- **"Rate limits only matter when you hit 429."** Many APIs silently degrade response quality or latency before returning 429. Proactively reading rate limit headers avoids this.
+- **"OAuth tokens last forever."** Access tokens expire. Your pipeline must refresh tokens automatically or it will silently fail at 2 AM.
+:::
+
+::: details Quiz
+**1. What is the fundamental difference between offset pagination and cursor pagination?**
+
+> Offset pagination uses a numeric offset (skip N records), which breaks when records are inserted or deleted during iteration. Cursor pagination uses an opaque token pointing to a specific position, making it stable across concurrent writes.
+
+**2. Why should you implement exponential backoff instead of a fixed sleep on 429 errors?**
+
+> Exponential backoff progressively increases the wait time, preventing a thundering herd when the API recovers, and adapts to varying recovery times.
+
+**3. What is a high-water mark in the context of API ingestion?**
+
+> A high-water mark is a saved state value (like the latest `updated_at` timestamp) that tracks the last successfully ingested record, enabling incremental ingestion on subsequent runs.
+
+**4. When should you use async HTTP (aiohttp/httpx) over synchronous requests?**
+
+> When you need to ingest from multiple endpoints concurrently or handle many slow API calls. Async allows overlapping I/O waits without threads.
+
+**5. Why is it important to store raw API responses before transforming them?**
+
+> Raw responses let you re-process data when business logic changes, debug transformation errors, and audit data lineage -- all without making additional API calls.
+:::
+
+> **One-Liner Summary:** Production API ingestion requires correct pagination, automatic retries with backoff, token refresh, and raw response storage -- a 200 OK alone tells you nothing about data completeness.

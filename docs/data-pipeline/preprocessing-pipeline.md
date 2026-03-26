@@ -863,3 +863,90 @@ df_clean = pipeline.apply_with_quarantine(
 | Staged | Parquet | Fast reads, type preservation |
 | Clean | Parquet | Analytics-ready |
 | Feature-ready | Parquet or Feather | ML framework compatibility |
+
+---
+
+::: tip Key Takeaway
+- A preprocessing pipeline has four stages (Raw, Staged, Clean, Feature-ready), each acting as a checkpoint so failures at any stage do not require starting from scratch.
+- Idempotent transformations are non-negotiable: running the same pipeline twice on the same input must produce identical output.
+- Configuration-driven pipelines decouple what to preprocess from how, making changes possible without code deployments.
+:::
+
+::: details Exercise
+**Build a Checkpointed Pipeline**
+
+Create a `PreprocessingDAG` that:
+1. Validates required columns exist (no checkpoint).
+2. Removes duplicates by `id` column (checkpoint to Parquet).
+3. Casts `price` to float and `created_at` to datetime (checkpoint).
+4. Fills missing `category` with "unknown" (checkpoint).
+5. Supports resuming from any checkpoint if a later step fails.
+
+Test it by intentionally raising an error in step 4, then resuming from the step 3 checkpoint.
+
+**Solution Sketch**
+
+```python
+pipeline = PreprocessingDAG(name="test_pipeline")
+pipeline.add_step("validate", validate_schema, checkpoint=False)
+pipeline.add_step("dedup", remove_duplicates, depends_on=["validate"])
+pipeline.add_step("cast", cast_types, depends_on=["dedup"])
+pipeline.add_step("fill_missing", handle_missing, depends_on=["cast"])
+
+# First run -- step 4 fails
+try:
+    result = pipeline.run(df_raw, force_rerun=True)
+except Exception:
+    pass
+
+# Resume from last successful checkpoint
+result = pipeline.run(df_raw, resume_from="cast")
+```
+:::
+
+::: details Debugging Scenario
+**Your pipeline runs nightly. Monday it produces 100K rows. Tuesday you re-deploy and it produces 200K rows for the same input data. Wednesday it produces 200K rows again.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The pipeline is **not idempotent**. The duplication on Tuesday indicates the pipeline appended to an existing output instead of overwriting it. Root causes:
+
+1. **Append mode instead of overwrite**: the output step uses `mode="append"` or `if_exists="append"` instead of writing to a date-partitioned path or overwriting.
+2. **Missing checkpoint cleanup**: old checkpoint files from Monday contain results that get concatenated with Tuesday's fresh processing.
+3. **Non-deterministic step**: a step generates random IDs or timestamps that differ between runs, creating "new" rows from the same input.
+
+Fix: ensure every output write uses a deterministic path (e.g., based on input hash or execution date) and overwrites rather than appends. Add an idempotency check: hash the input DataFrame and skip processing if the output for that hash already exists.
+:::
+
+::: warning Common Misconceptions
+- **"Scripts are fine for preprocessing."** Scripts have no checkpoints, no logging, no recovery, and no observability. They break at 3 AM and nobody knows why.
+- **"Checkpointing wastes disk space."** Parquet checkpoints are heavily compressed. The disk cost is negligible compared to the time cost of reprocessing from scratch after a failure.
+- **"Idempotency does not matter for one-off pipelines."** Every "one-off" pipeline runs at least twice: once with bugs and once correctly. Idempotency prevents the buggy run from corrupting the correct run's data.
+- **"Quarantine is overkill."** Without quarantine, a single malformed record crashes the entire pipeline. With quarantine, 99.9% of your data processes successfully while bad records are isolated for manual review.
+:::
+
+::: details Quiz
+**1. What are the four stages of data maturity in a preprocessing pipeline?**
+
+> Raw (untouched source), Staged (validated and deduplicated), Clean (typed and normalized), and Feature-ready (encoded, scaled, engineered).
+
+**2. Why should checkpoints be saved as Parquet rather than CSV?**
+
+> Parquet preserves data types (dates, integers, categories) exactly, is faster to read/write, and uses much less disk space due to compression.
+
+**3. What does it mean for a transformation to be idempotent?**
+
+> Running the transformation multiple times on the same input always produces the same output, with no side effects like duplicated records or accumulated state.
+
+**4. What is the quarantine pattern, and when should it be used?**
+
+> The quarantine pattern isolates records that fail processing into a separate file rather than crashing the entire pipeline. It should be used when dealing with messy real-world data where a small percentage of records are expected to be malformed.
+
+**5. What is the advantage of a configuration-driven pipeline over a code-driven one?**
+
+> Configuration-driven pipelines let non-developers modify preprocessing steps (e.g., change imputation strategy) without changing code, and changes can be reviewed as data rather than code diffs.
+:::
+
+> **One-Liner Summary:** A production preprocessing pipeline is a DAG with checkpoints, idempotent transforms, quarantine for bad records, and structured logging -- not a script.

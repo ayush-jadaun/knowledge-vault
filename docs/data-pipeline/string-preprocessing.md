@@ -753,3 +753,105 @@ df["name_clean"] = product_name_cleaner.process_series(df["name"])
 | "Last, First" names | Name parser | Split on comma, reorder |
 | Embedded HTML | Tag stripping | `re.sub(r"<[^>]+>", "", text)` |
 | Control characters | Unicode category filter | Check `unicodedata.category()` |
+
+---
+
+::: tip Key Takeaway
+- Two strings can look identical to the human eye but differ at the byte level due to Unicode normalization forms; always normalize with NFKC before comparing.
+- Phone numbers, emails, and names each require domain-specific normalization -- generic `str.lower().strip()` is never enough for matching.
+- Fuzzy deduplication with rapidfuzz finds near-duplicate strings (e.g., "Microsoft Corp" and "MICROSOFT CORPORATION") that exact matching misses entirely.
+:::
+
+::: details Exercise
+**Build a Contact Normalizer**
+
+Write a function that takes a DataFrame with `name`, `email`, and `phone` columns and:
+1. Normalizes names to "First Last" format (handles "Last, First" and title case).
+2. Normalizes emails (lowercase, Gmail dot removal, plus-addressing removal).
+3. Normalizes phones to E.164 format (+1XXXXXXXXXX).
+4. Creates a `match_key` column by concatenating the normalized name and email domain for deduplication.
+
+**Solution Sketch**
+
+```python
+import re, pandas as pd
+
+def normalize_contacts(df: pd.DataFrame) -> pd.DataFrame:
+    result = df.copy()
+    # Name: handle "Last, First" -> "First Last"
+    def norm_name(n):
+        if not isinstance(n, str): return ""
+        if "," in n:
+            parts = n.split(",", 1)
+            n = f"{parts[1].strip()} {parts[0].strip()}"
+        return " ".join(n.split()).strip().title()
+
+    # Email: lowercase, strip dots for Gmail
+    def norm_email(e):
+        if not isinstance(e, str): return ""
+        e = e.strip().lower()
+        local, domain = e.rsplit("@", 1) if "@" in e else (e, "")
+        if domain in ("gmail.com", "googlemail.com"):
+            local = local.replace(".", "").split("+")[0]
+        return f"{local}@{domain}"
+
+    # Phone: digits only -> E.164
+    def norm_phone(p):
+        digits = re.sub(r"[^\d]", "", str(p))
+        if len(digits) == 10: return f"+1{digits}"
+        if len(digits) == 11 and digits[0] == "1": return f"+{digits}"
+        return None
+
+    result["name_clean"] = result["name"].apply(norm_name)
+    result["email_clean"] = result["email"].apply(norm_email)
+    result["phone_clean"] = result["phone"].apply(norm_phone)
+    result["match_key"] = result["name_clean"].str.lower() + "|" + result["email_clean"].str.split("@").str[1]
+    return result
+```
+:::
+
+::: details Debugging Scenario
+**Your deduplication pipeline matches customers by normalized name, but it is merging "John Smith" the plumber in Texas with "John Smith" the accountant in New York as the same person.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The matching key is too broad. Name alone is not a sufficient entity identifier because names are not unique. Fixes:
+
+1. **Compound matching key**: combine name + email domain, or name + zip code, or name + phone. Two "John Smiths" with different email domains are different people.
+2. **Multi-field weighted scoring**: instead of a binary match on name, compute a weighted similarity across name (40%), email (30%), address (20%), phone (10%) and require a threshold of 85%+.
+3. **Blocking strategy**: only compare records within the same geographic block (zip code prefix) to reduce false positives from common names in distant locations.
+4. **Active learning**: flag low-confidence matches for human review and feed decisions back into the model.
+:::
+
+::: warning Common Misconceptions
+- **"`str.lower().strip()` is sufficient string normalization."** It misses Unicode variants, full-width characters, control characters, inconsistent whitespace, and encoding artifacts.
+- **"Two strings that look identical are equal."** Unicode has multiple ways to represent the same visual character (e.g., "e" + combining accent vs. pre-composed "e"). Without NFKC normalization, equality checks fail on visually identical strings.
+- **"Fuzzy matching is slow."** Modern libraries like rapidfuzz are implemented in C++ and can compare millions of string pairs per second. With blocking, even million-row datasets are feasible.
+- **"Email addresses are case-sensitive."** The local part is technically case-sensitive per RFC 5321, but virtually no email provider enforces this. Always lowercase for matching.
+:::
+
+::: details Quiz
+**1. What is mojibake, and how do you fix it?**
+
+> Mojibake occurs when text encoded in one character set (e.g., UTF-8) is decoded using a different one (e.g., Latin-1), producing garbled characters like "cafÃ©" instead of "cafe". The `ftfy` library automatically detects and fixes most mojibake patterns.
+
+**2. Why is NFKC the recommended Unicode normalization form for data pipelines?**
+
+> NFKC (Compatibility Composition) normalizes full-width characters, expands ligatures, and composes characters into their canonical forms, handling the widest range of invisible string differences.
+
+**3. What is E.164 phone number format?**
+
+> E.164 is the international standard: a plus sign followed by country code and subscriber number with no spaces or punctuation, e.g., "+15551234567". It enables consistent storage and comparison.
+
+**4. How does rapidfuzz's `token_sort_ratio` differ from `ratio`?**
+
+> `ratio` compares strings character-by-character in order. `token_sort_ratio` splits both strings into tokens, sorts them alphabetically, then compares. This makes "John Smith" and "Smith, John" score 100% instead of a low score.
+
+**5. Why should Gmail email normalization remove dots from the local part?**
+
+> Gmail ignores dots in email addresses: `john.smith@gmail.com` and `johnsmith@gmail.com` deliver to the same inbox. Without dot removal, you treat one person as two separate contacts.
+:::
+
+> **One-Liner Summary:** String preprocessing is the art of making "JOHN SMITH", "Smith, John", and "john  smith" resolve to the same entity through Unicode normalization, domain-specific rules, and fuzzy matching.

@@ -1008,3 +1008,98 @@ if not changes:
 | `inspect(engine)` | Schema discovery |
 | `pool_pre_ping=True` | Auto-reconnect on stale connections |
 | `text()` | Raw SQL with parameter binding |
+
+---
+
+::: tip Key Takeaway
+- Choose your extraction strategy based on table size, change frequency, and latency requirements -- never default to full extracts on large tables.
+- CDC (Change Data Capture) is the gold standard for real-time sync because it reads the database WAL with zero query load on the source.
+- Always track schema changes between extraction runs; a silently dropped column corrupts every downstream consumer.
+:::
+
+::: details Exercise
+**Build an Incremental Extractor with Watermark Persistence**
+
+Write a Python class that:
+1. Extracts records from a PostgreSQL table where `updated_at > last_watermark`.
+2. Persists the watermark to a JSON file after each successful extraction.
+3. Handles the first-run case (no watermark file exists = extract everything).
+4. Saves output as Parquet with a timestamp in the filename.
+5. Logs the number of records extracted and the new watermark value.
+
+**Solution Sketch**
+
+```python
+import json, logging
+from datetime import datetime
+from pathlib import Path
+import pandas as pd
+from sqlalchemy import create_engine, text
+
+class IncrementalExtractor:
+    def __init__(self, engine, state_path="watermark.json"):
+        self.engine = engine
+        self.state_path = Path(state_path)
+
+    def extract(self, table: str, ts_col: str = "updated_at"):
+        state = json.loads(self.state_path.read_text()) if self.state_path.exists() else {}
+        wm = state.get(table, "1970-01-01T00:00:00")
+        with self.engine.connect() as conn:
+            df = pd.read_sql(text(
+                f"SELECT * FROM {table} WHERE {ts_col} > :wm ORDER BY {ts_col}"
+            ), conn, params={"wm": wm})
+        if not df.empty:
+            new_wm = str(df[ts_col].max())
+            state[table] = new_wm
+            self.state_path.write_text(json.dumps(state))
+            out = f"{table}_{datetime.utcnow():%Y%m%d_%H%M%S}.parquet"
+            df.to_parquet(out, index=False)
+            logging.info(f"Extracted {len(df)} rows, watermark: {new_wm}")
+        return df
+```
+:::
+
+::: details Debugging Scenario
+**Your incremental extraction pipeline has been running for weeks, but a data analyst reports that updated records are missing from the warehouse. The watermark is advancing correctly.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The most common cause is **clock skew or transaction visibility**. Scenarios:
+
+1. **Transaction commits after the watermark read**: a long-running transaction updates `updated_at` to 10:00:05 but commits at 10:00:30. Your extraction at 10:00:15 sets the watermark to 10:00:15, and the record with `updated_at = 10:00:05` is never picked up because it was invisible during the query but its timestamp is below the watermark. Fix: subtract a **safety overlap** (e.g., 5 minutes) from the watermark and use `DISTINCT` or upsert logic at the destination to handle duplicates.
+2. **Rows updated without modifying `updated_at`**: some application paths or bulk SQL updates skip the trigger that sets `updated_at`. Fix: audit all write paths or switch to CDC which captures all changes regardless of application behavior.
+3. **Timezone mismatch**: the application writes UTC but the extraction reads in local time (or vice versa). Fix: always use `AT TIME ZONE 'UTC'` in your extraction query and store watermarks in UTC.
+:::
+
+::: warning Common Misconceptions
+- **"Full extracts are the safe choice."** Full extracts crush the source database and scale linearly with table size, not change volume. They are only appropriate for small reference tables.
+- **"Incremental extraction by timestamp catches everything."** It misses records from in-flight transactions and rows where `updated_at` is not reliably maintained. CDC is the only method that truly catches 100% of changes.
+- **"CDC is too complex for my use case."** Managed CDC tools (Debezium, AWS DMS, Fivetran) have dramatically reduced setup complexity. The operational cost of missed records often exceeds the setup cost of CDC.
+- **"`SELECT *` is fine for extraction."** Selecting all columns couples your pipeline to schema changes. Explicitly list columns or implement schema change detection.
+:::
+
+::: details Quiz
+**1. What does CDC stand for, and how does it differ from incremental timestamp extraction?**
+
+> CDC stands for Change Data Capture. It reads the database's write-ahead log (WAL) to capture every INSERT, UPDATE, and DELETE as it happens, whereas timestamp extraction queries the table for rows with `updated_at` greater than a watermark and can miss in-flight transactions.
+
+**2. Why is `pool_pre_ping=True` important for extraction pipelines?**
+
+> It verifies that a connection is still alive before using it, preventing failures from stale connections that were dropped by the database server during idle periods.
+
+**3. What is a replication slot in PostgreSQL CDC?**
+
+> A replication slot is a server-side cursor into the WAL that tracks how far a consumer has read, ensuring no changes are lost even if the consumer is temporarily offline.
+
+**4. When should you use server-side cursors (`stream_results=True`)?**
+
+> When extracting large tables that do not fit in memory. Server-side cursors let the database send results in batches rather than loading the entire result set into Python at once.
+
+**5. What is the risk of using `chunksize` in pandas without server-side cursors?**
+
+> Without server-side cursors, pandas still fetches the entire result set from the database into the client driver's memory, then yields chunks from that buffer. The memory savings are illusory -- true streaming requires server-side cursors.
+:::
+
+> **One-Liner Summary:** Database extraction at scale requires choosing between full, incremental, and CDC strategies based on table size and freshness needs, while guarding against schema drift and transaction visibility gaps.

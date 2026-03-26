@@ -693,3 +693,108 @@ df = calendar.add_fiscal_columns(df, "transaction_date")
 | Cyclical encoding | sin/cos pairs | Distance-based models |
 | Days since epoch | Single numeric | Linear trend modeling |
 | Fiscal periods | FY, quarter, period | Business reporting |
+
+---
+
+::: tip Key Takeaway
+- A timestamp without timezone information is ambiguous and unreliable -- always localize naive timestamps and convert to UTC for storage.
+- Daylight Saving Time creates nonexistent times (spring forward) and ambiguous times (fall back) that crash naive datetime code.
+- Cyclical encoding (sin/cos) is essential for time features in distance-based models because midnight (hour 0) and 11 PM (hour 23) are 1 hour apart, not 23.
+:::
+
+::: details Exercise
+**Build a Timezone-Aware Feature Extractor**
+
+Write a function that:
+1. Parses a date column with mixed formats (ISO 8601, US, European).
+2. Localizes all timestamps to a specified source timezone, then converts to UTC.
+3. Extracts: year, month, day_of_week, hour, is_weekend, is_holiday (US).
+4. Adds cyclical encoding for month and hour (sin/cos pairs).
+5. Handles DST transitions without errors.
+
+**Solution Sketch**
+
+```python
+import pandas as pd, numpy as np
+from dateutil import parser as dateutil_parser
+import holidays
+
+def extract_features(df, col, source_tz="US/Eastern"):
+    result = df.copy()
+    # Parse mixed formats
+    result[col] = result[col].apply(
+        lambda x: dateutil_parser.parse(str(x), fuzzy=True) if pd.notna(x) else pd.NaT
+    )
+    ts = pd.to_datetime(result[col])
+    # Localize and convert
+    ts = ts.dt.tz_localize(source_tz, ambiguous="NaT", nonexistent="shift_forward")
+    ts = ts.dt.tz_convert("UTC")
+    result[col] = ts
+    # Features
+    result[f"{col}_year"] = ts.dt.year
+    result[f"{col}_month"] = ts.dt.month
+    result[f"{col}_dow"] = ts.dt.dayofweek
+    result[f"{col}_hour"] = ts.dt.hour
+    result[f"{col}_is_weekend"] = ts.dt.dayofweek >= 5
+    us_holidays = holidays.US()
+    result[f"{col}_is_holiday"] = ts.dt.date.apply(lambda d: d in us_holidays if pd.notna(d) else False)
+    # Cyclical
+    result[f"{col}_month_sin"] = np.sin(2 * np.pi * ts.dt.month / 12)
+    result[f"{col}_month_cos"] = np.cos(2 * np.pi * ts.dt.month / 12)
+    result[f"{col}_hour_sin"] = np.sin(2 * np.pi * ts.dt.hour / 24)
+    result[f"{col}_hour_cos"] = np.cos(2 * np.pi * ts.dt.hour / 24)
+    return result
+```
+:::
+
+::: details Debugging Scenario
+**Your pipeline processes hourly data and works fine all year, but every March it produces duplicate records for one hour and every November it drops records for one hour.**
+
+Diagnose and fix it.
+
+**Answer**
+
+This is a **Daylight Saving Time** issue:
+
+- **March (spring forward)**: 2:00 AM jumps to 3:00 AM. If your pipeline generates hourly timestamps using `pd.date_range` with a local timezone, the 2:00 AM slot is **nonexistent**, and depending on configuration, it may either be skipped (missing data) or shifted, causing misalignment.
+- **November (fall back)**: 1:00 AM occurs **twice**. Your pipeline produces records for both occurrences of 1 AM but deduplicates by timestamp string, keeping only one (lost data), or keeps both (apparent duplicates).
+
+Fix: always generate time ranges in **UTC** and convert to local timezone only for display:
+```python
+# Generate in UTC (no DST transitions)
+rng = pd.date_range("2024-01-01", "2024-12-31", freq="h", tz="UTC")
+# Convert to local only for display
+local = rng.tz_convert("US/Eastern")
+```
+:::
+
+::: warning Common Misconceptions
+- **"Timezone-naive timestamps are in UTC."** They are in *nothing* -- you are assuming a timezone that may be wrong. Always localize explicitly.
+- **"DST only affects display, not data."** DST creates nonexistent and ambiguous times that cause real data loss and duplication if not handled programmatically.
+- **"Encoding hour as an integer (0-23) is fine for ML models."** Linear and distance-based models see hour 0 and hour 23 as maximally distant (23 units apart). Cyclical encoding with sin/cos makes them 1 unit apart, reflecting reality.
+- **"01/02/2024 is January 2nd."** In the US, yes. In Europe, it is February 1st. Date format is locale-dependent and must be detected or explicitly specified.
+:::
+
+::: details Quiz
+**1. What is the difference between `tz_localize` and `tz_convert` in pandas?**
+
+> `tz_localize` assigns a timezone to a naive (timezone-unaware) timestamp: "this timestamp was recorded in US/Eastern." `tz_convert` changes a timezone-aware timestamp to a different timezone: "show me this UTC time in US/Pacific."
+
+**2. Why does cyclical encoding use both sine and cosine?**
+
+> A single sine function is ambiguous: sin(January) equals sin(November). Using both sine and cosine creates a unique (x, y) coordinate on the unit circle for each time point, making all months/hours distinguishable.
+
+**3. What does `nonexistent="shift_forward"` do during DST spring-forward?**
+
+> It shifts nonexistent times (e.g., 2:30 AM during spring-forward) to the next valid time (3:00 AM) instead of raising an error or producing NaT.
+
+**4. What is a fiscal calendar, and why does it matter for data pipelines?**
+
+> A fiscal calendar defines financial year boundaries that differ from the calendar year (e.g., April-March for many companies). Pipelines feeding financial reports must align dates to fiscal periods, not calendar months.
+
+**5. How do you detect whether a date column uses day-first or month-first format?**
+
+> Examine the data statistically: if values in the first position exceed 12, they must be days (day-first). If both positions stay below 13, analyze the distribution spread -- days have a wider range (1-31) than months (1-12).
+:::
+
+> **One-Liner Summary:** Datetime preprocessing is the discipline of turning ambiguous, timezone-naive, format-inconsistent time strings into reliable UTC timestamps with rich cyclical features.

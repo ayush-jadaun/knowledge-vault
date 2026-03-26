@@ -743,3 +743,122 @@ iot-pipeline/
 | Data volume (millions/day) | Parquet partitioning by date, window aggregation |
 | Alert fatigue | Severity levels (warning vs critical) |
 | Battery degradation | Threshold monitoring with early warning |
+
+---
+
+::: tip Key Takeaway
+- IoT anomaly detection must distinguish sensor malfunctions (sudden spikes) from genuine equipment issues (gradual drift) using different algorithms for each.
+- Rolling window statistics are essential for streaming data: raw values are meaningless without context of the recent trend.
+- Partitioned time-series storage (by date) enables efficient queries over large datasets while supporting continuous data ingestion.
+:::
+
+::: details Exercise
+**Build a Sensor Anomaly Detector**
+
+Create a class that processes a stream of sensor readings and:
+1. Maintains a rolling window of the last 60 readings per sensor.
+2. Detects spikes using Z-score (> 3 sigma from rolling mean).
+3. Detects drift using CUSUM (cumulative sum of deviations from baseline).
+4. Detects flatline (near-zero variance over the window, indicating a stuck sensor).
+5. Returns an alert with severity ("warning" for drift, "critical" for spikes/flatline).
+
+**Solution Sketch**
+
+```python
+import numpy as np
+from collections import deque
+
+class SensorAnomalyDetector:
+    def __init__(self, window_size=60, spike_threshold=3.0, drift_threshold=5.0):
+        self.windows = {}
+        self.window_size = window_size
+        self.spike_threshold = spike_threshold
+        self.drift_threshold = drift_threshold
+        self.cusum = {}
+
+    def process(self, sensor_id: str, value: float) -> dict | None:
+        if sensor_id not in self.windows:
+            self.windows[sensor_id] = deque(maxlen=self.window_size)
+            self.cusum[sensor_id] = 0.0
+
+        w = self.windows[sensor_id]
+        w.append(value)
+
+        if len(w) < 10:
+            return None
+
+        arr = np.array(w)
+        mean, std = arr.mean(), arr.std()
+
+        # Spike detection
+        if std > 0 and abs(value - mean) / std > self.spike_threshold:
+            return {"sensor": sensor_id, "type": "spike", "severity": "critical",
+                    "value": value, "mean": mean, "std": std}
+
+        # Flatline detection
+        if std < 0.001:
+            return {"sensor": sensor_id, "type": "flatline", "severity": "critical",
+                    "message": "Near-zero variance -- sensor may be stuck"}
+
+        # Drift detection (CUSUM)
+        self.cusum[sensor_id] = max(0, self.cusum[sensor_id] + (value - mean) - 0.5 * std)
+        if self.cusum[sensor_id] > self.drift_threshold * std:
+            self.cusum[sensor_id] = 0
+            return {"sensor": sensor_id, "type": "drift", "severity": "warning",
+                    "message": "Gradual upward drift detected"}
+
+        return None
+```
+:::
+
+::: details Debugging Scenario
+**Your IoT pipeline processes 10 sensors at 1 Hz. After a few hours, anomaly alerts start firing for ALL sensors simultaneously, even though the physical equipment is operating normally.**
+
+Diagnose and fix it.
+
+**Answer**
+
+Simultaneous alerts across all sensors indicate a **systemic issue** rather than individual sensor problems:
+
+1. **Clock drift**: the sensor gateway's clock drifted, causing all timestamps to shift. The pipeline interprets the shifted timestamps as out-of-order data, corrupting rolling window calculations.
+2. **Network interruption**: a brief network outage caused a batch of buffered readings to arrive at once. The sudden batch changes the rolling window statistics, triggering false spikes.
+3. **Baseline staleness**: the anomaly detection baseline was computed months ago. Seasonal changes (e.g., temperature rising in summer) cause all sensors to drift relative to the stale baseline.
+4. **Pipeline restart**: the pipeline restarted with empty windows. The first readings after restart are compared against insufficient history, producing unreliable Z-scores.
+
+Fix:
+- Require a **minimum window fill** before alerting (e.g., 30 readings before any anomaly checks).
+- Use **adaptive baselines** that update weekly or monthly to account for seasonal trends.
+- Implement a **correlation check**: if > 50% of sensors alert simultaneously, suppress individual alerts and raise a single "systemic anomaly" alert.
+- Add a **warm-up period** after pipeline restarts where alerts are suppressed.
+:::
+
+::: warning Common Misconceptions
+- **"A sensor reading of 500 degrees is an outlier."** It is a broken sensor, not an outlier. Real anomalies are often subtle (2-degree drift over a week) while sensor malfunctions produce obviously impossible values.
+- **"Z-score works for all anomaly detection."** Z-score assumes a normal distribution and detects point anomalies. Gradual drift, seasonal patterns, and contextual anomalies require specialized algorithms (CUSUM, STL decomposition, isolation forest).
+- **"Real-time means processing every reading instantly."** For most IoT use cases, near-real-time (processing every 5-30 seconds in micro-batches) is sufficient and much simpler to implement than true event-at-a-time streaming.
+- **"More sensors means more data quality."** More sensors means more noise, more calibration issues, more missing readings, and more cross-sensor correlation to manage.
+:::
+
+::: details Quiz
+**1. Why is rolling window statistics better than global statistics for IoT anomaly detection?**
+
+> Sensor behavior changes over time (seasonal trends, equipment aging). Rolling window statistics adapt to recent behavior, while global statistics use stale baselines that produce false positives as conditions change.
+
+**2. What is CUSUM, and what type of anomaly does it detect?**
+
+> CUSUM (Cumulative Sum) accumulates small deviations from the expected mean. It detects gradual drift that Z-score misses because each individual reading may be within normal bounds, but the cumulative trend indicates a shift.
+
+**3. How do you detect a stuck/broken sensor (flatline)?**
+
+> Monitor the variance of the rolling window. If variance drops to near-zero (all readings are identical or nearly identical), the sensor is likely stuck and should be flagged immediately.
+
+**4. Why should IoT time-series data be partitioned by date?**
+
+> Partitioning enables efficient queries (only scan relevant date partitions), supports data retention policies (drop old partitions), and allows concurrent ingestion and querying without contention.
+
+**5. What is the difference between a point anomaly and a contextual anomaly?**
+
+> A point anomaly is a single reading that is extreme in any context (500 degrees). A contextual anomaly is a reading that is normal in one context but abnormal in another (25 degrees is normal at noon but anomalous at midnight in winter).
+:::
+
+> **One-Liner Summary:** IoT pipelines must distinguish sensor malfunctions from real equipment anomalies using windowed statistics, CUSUM drift detection, and flatline monitoring -- all while handling continuous ingestion at scale.

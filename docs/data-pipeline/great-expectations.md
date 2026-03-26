@@ -621,3 +621,96 @@ if __name__ == "__main__":
 | Profiler | Auto-generate expectations from data |
 | Store | Persist validation results |
 | Action | What to do after validation (alert, report) |
+
+---
+
+::: tip Key Takeaway
+- Great Expectations validates data against declarative rules (expectations) and generates rich HTML reports showing exactly what passed and what failed.
+- Checkpoints bundle data + expectations + actions into a single executable validation step that integrates into CI/CD and orchestration.
+- Auto-profiling generates a starting set of expectations from existing data, which you then refine with domain knowledge.
+:::
+
+::: details Exercise
+**Create a Validation Suite for an Orders Table**
+
+Define a Great Expectations suite that validates:
+1. The table has between 100 and 1,000,000 rows.
+2. `order_id` is never null and is unique.
+3. `total_amount` is between 0 and 100,000.
+4. `status` is one of: "pending", "completed", "cancelled", "refunded".
+5. `created_at` is a valid datetime that is not in the future.
+6. The overall null rate across all columns is below 5%.
+
+Then run the suite against a sample DataFrame and check the validation result.
+
+**Solution Sketch**
+
+```python
+import great_expectations as gx
+import pandas as pd
+from datetime import datetime
+
+context = gx.get_context()
+ds = context.sources.add_pandas("orders_source")
+asset = ds.add_dataframe_asset("orders")
+
+batch = asset.build_batch_request(dataframe=df)
+validator = context.get_validator(batch_request=batch, expectation_suite_name="orders_suite")
+
+validator.expect_table_row_count_to_be_between(100, 1_000_000)
+validator.expect_column_values_to_not_be_null("order_id")
+validator.expect_column_values_to_be_unique("order_id")
+validator.expect_column_values_to_be_between("total_amount", 0, 100_000)
+validator.expect_column_values_to_be_in_set("status", ["pending", "completed", "cancelled", "refunded"])
+validator.expect_column_values_to_not_be_null("created_at")
+
+result = validator.validate()
+print(f"Success: {result.success}, Results: {len(result.results)}")
+```
+:::
+
+::: details Debugging Scenario
+**Your Great Expectations checkpoint passes in CI but fails in production with "column not found" errors, even though the same data source is used.**
+
+Diagnose and fix it.
+
+**Answer**
+
+Common causes:
+
+1. **Schema evolution**: the production database had a column renamed or removed after the expectations were written. The CI test uses a static fixture that still has the old schema. Fix: run schema discovery before validation and update expectations when schema changes are detected.
+2. **Case sensitivity**: the expectation references `Order_ID` but the production database returns `order_id`. Fix: normalize column names to lowercase in the pipeline before validation.
+3. **Different data source versions**: CI connects to a test database with a different schema version than production. Fix: use the same connection configuration and run validation against a sample of production data in CI.
+4. **Column ordering**: some backends return columns in different orders, and expectations reference columns by position rather than name. Fix: always reference columns by name, never by position.
+:::
+
+::: warning Common Misconceptions
+- **"Great Expectations replaces unit tests."** GX validates data, not code. You still need unit tests for your transformation functions. GX and pytest serve different purposes.
+- **"Auto-profiling gives production-ready expectations."** Auto-profiling creates expectations based on the current data snapshot. It may encode data bugs as "expected behavior" and set overly tight bounds. Always review and adjust auto-generated expectations.
+- **"Validation should block the pipeline on any failure."** Some expectations are warnings (null rate slightly above normal), not blockers. Use `mostly` parameter (e.g., `mostly=0.95` for 95% compliance) and severity levels.
+- **"One expectation suite per table is sufficient."** Different consumers need different validation levels. A dashboard may tolerate 5% nulls while an ML model needs zero nulls. Create consumer-specific suites.
+:::
+
+::: details Quiz
+**1. What is the difference between an Expectation and a Checkpoint in Great Expectations?**
+
+> An Expectation is a single validation rule (e.g., "column X should not be null"). A Checkpoint bundles a data source, an expectation suite, and actions (report, alert) into a single executable validation step.
+
+**2. What does the `mostly` parameter do?**
+
+> It allows partial compliance. `expect_column_values_to_not_be_null("email", mostly=0.95)` passes if at least 95% of values are non-null, rather than requiring 100%.
+
+**3. What are Data Docs?**
+
+> Auto-generated HTML reports that show validation results, expectation definitions, and data statistics. They serve as living documentation of data quality.
+
+**4. How does auto-profiling work?**
+
+> GX analyzes a sample of data and generates expectations based on observed patterns (value ranges, null rates, unique counts, distributions). These serve as a starting point for manual refinement.
+
+**5. How do you integrate GX into a CI/CD pipeline?**
+
+> Run a Checkpoint as a step in CI/CD (e.g., `context.run_checkpoint("my_checkpoint")`). If validation fails, the CI step fails and blocks deployment. Store Data Docs as build artifacts.
+:::
+
+> **One-Liner Summary:** Great Expectations is a data validation platform that defines expectations as declarative rules, runs them via checkpoints, and generates HTML reports showing exactly what passed and failed.

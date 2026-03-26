@@ -800,3 +800,109 @@ router.send(Alert(
 | WARNING | Investigate today | Slack + email |
 | ERROR | Fix within hours | Slack + email + ticket |
 | CRITICAL | Wake someone up | PagerDuty + phone call |
+
+---
+
+::: tip Key Takeaway
+- The five pillars of pipeline monitoring are freshness, volume, schema, distribution, and SLA -- any pillar left unmonitored will eventually produce a silent data incident.
+- The most dangerous pipeline failure is not a crash but a silent data quality degradation where wrong data is served to dashboards and models for weeks.
+- Alert routing by severity prevents alert fatigue: INFO goes to Slack, WARNING goes to email, CRITICAL pages the on-call engineer.
+:::
+
+::: details Exercise
+**Build a Data Quality Monitor**
+
+Create a monitoring class that for a given DataFrame:
+1. Checks freshness (latest timestamp must be within N hours of now).
+2. Checks volume (row count must be within 50% of a historical baseline).
+3. Checks schema (columns must match expected list).
+4. Checks distribution (mean/std of numeric columns must be within 3 sigma of baseline).
+5. Returns a list of alerts with severity levels.
+
+**Solution Sketch**
+
+```python
+from datetime import datetime, timedelta
+import pandas as pd, numpy as np
+
+class DataMonitor:
+    def __init__(self, baseline: dict):
+        self.baseline = baseline  # {"row_count": 10000, "columns": [...], "stats": {...}}
+
+    def check_all(self, df, ts_col=None, freshness_hours=6):
+        alerts = []
+        # Freshness
+        if ts_col and ts_col in df.columns:
+            latest = pd.to_datetime(df[ts_col]).max()
+            if (datetime.utcnow() - latest) > timedelta(hours=freshness_hours):
+                alerts.append(("CRITICAL", f"Data is stale: latest = {latest}"))
+        # Volume
+        ratio = len(df) / self.baseline["row_count"]
+        if ratio < 0.5:
+            alerts.append(("ERROR", f"Row count {len(df)} is {ratio:.0%} of baseline"))
+        elif ratio < 0.8:
+            alerts.append(("WARNING", f"Row count {len(df)} is {ratio:.0%} of baseline"))
+        # Schema
+        missing = set(self.baseline["columns"]) - set(df.columns)
+        if missing:
+            alerts.append(("ERROR", f"Missing columns: {missing}"))
+        # Distribution
+        for col, stats in self.baseline.get("stats", {}).items():
+            if col in df.columns and pd.api.types.is_numeric_dtype(df[col]):
+                current_mean = df[col].mean()
+                if abs(current_mean - stats["mean"]) > 3 * stats["std"]:
+                    alerts.append(("WARNING", f"{col} mean ({current_mean:.2f}) outside 3-sigma"))
+        return alerts
+```
+:::
+
+::: details Debugging Scenario
+**Your pipeline monitoring shows all green (freshness OK, volume OK, schema OK), but business users report that revenue numbers are 2x higher than expected. No alerts fired.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The monitoring checks structural health but not **semantic correctness**. The pipeline may have:
+
+1. **Duplicated records**: volume checks passed because the count is correct, but records were processed twice (e.g., a retry without deduplication).
+2. **Currency conversion error**: prices stored in cents were interpreted as dollars, doubling apparent revenue.
+3. **Join explosion**: a one-to-many join produced more rows than expected, but the volume check used an absolute threshold rather than checking against the source count.
+4. **Missing WHERE clause**: an incremental query extracted all-time data instead of just the day's data.
+
+Fix: add **business logic monitors** beyond structural checks:
+- Compare aggregated metrics (sum of revenue, count of distinct customers) against known benchmarks.
+- Add uniqueness constraints on primary keys.
+- Implement row-level checksums between source and destination.
+:::
+
+::: warning Common Misconceptions
+- **"If the pipeline completes without errors, the data is correct."** A pipeline can produce 100% wrong data with zero errors. Monitoring must check data content, not just execution status.
+- **"Monitoring every column is overkill."** Monitor key business columns (revenue, user counts, prices) tightly and use lighter checks (null rates, type consistency) for the rest.
+- **"Anomaly detection catches everything."** Statistical anomaly detection misses gradual drift (the "boiling frog" problem). Supplement with absolute thresholds and business rule checks.
+- **"Alert on everything, filter later."** Alert fatigue is real. Engineers who receive 50 alerts daily start ignoring all of them. Route by severity and only page for genuine emergencies.
+:::
+
+::: details Quiz
+**1. What are the five pillars of pipeline monitoring?**
+
+> Freshness (is data arriving?), Volume (is the right amount arriving?), Schema (is the structure correct?), Distribution (are values statistically normal?), and SLA (is it on time?).
+
+**2. What is data freshness monitoring?**
+
+> Checking that the most recent data timestamp is within an expected recency window (e.g., last 2 hours). Stale data indicates the pipeline has stopped or is delayed.
+
+**3. How should alerts be routed by severity?**
+
+> INFO: log-only or low-priority Slack channel. WARNING: Slack + email, investigate today. ERROR: Slack + email + ticket, fix within hours. CRITICAL: PagerDuty + phone, wake someone up immediately.
+
+**4. What is schema drift detection?**
+
+> Automatically comparing the current data schema (column names, types) against a saved baseline and alerting when columns are added, removed, or have their types changed.
+
+**5. Why is volume monitoring important even when the pipeline succeeds?**
+
+> A pipeline can succeed but produce zero rows (empty source), half the expected rows (broken pagination), or double the rows (duplicate processing). Volume anomaly detection catches these issues before they corrupt reports.
+:::
+
+> **One-Liner Summary:** Pipeline monitoring must check data content (freshness, volume, schema, distribution, SLA), not just execution status, because the worst failures are silent ones that produce wrong data without any error.

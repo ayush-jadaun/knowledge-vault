@@ -920,3 +920,97 @@ converter.csv_to_parquet(
 | Avro | Fast | Fast | Good | No | Kafka, schema evolution |
 | Feather | Fastest | Fastest | Good | Yes | Pipeline intermediates |
 | HDF5 | Fast | Fast | Good | Partial | Scientific, ML tensors |
+
+---
+
+::: tip Key Takeaway
+- Parquet is the default choice for analytics and ML pipelines because of columnar reads, excellent compression, and embedded schema.
+- CSV is a universal footgun: no schema, no types, encoding ambiguity, and silent data corruption from leading zeros and embedded newlines.
+- Choose the format based on read pattern (columnar vs row), schema needs, and whether humans need to inspect the data.
+:::
+
+::: details Exercise
+**Format Benchmark and Migration**
+
+1. Generate a DataFrame with 1M rows and 10 columns (mix of int, float, string, datetime, boolean).
+2. Write it in CSV, JSON, JSONL, Parquet (snappy), Parquet (zstd), and Feather.
+3. Measure and compare: file size, write time, full-read time, and 2-column read time.
+4. Write a `convert_to_parquet(input_path)` function that auto-detects CSV/JSON/JSONL and converts to Parquet with explicit dtypes.
+
+**Solution Sketch**
+
+```python
+import pandas as pd, numpy as np, time
+from pathlib import Path
+
+np.random.seed(42)
+n = 1_000_000
+df = pd.DataFrame({
+    "id": np.arange(n), "value": np.random.randn(n),
+    "cat": np.random.choice(["A","B","C"], n),
+    "ts": pd.date_range("2024-01-01", periods=n, freq="s"),
+    "flag": np.random.choice([True, False], n),
+})
+
+formats = {
+    "csv": lambda p: df.to_csv(p, index=False),
+    "parquet_snappy": lambda p: df.to_parquet(p, compression="snappy"),
+    "parquet_zstd": lambda p: df.to_parquet(p, compression="zstd"),
+    "feather": lambda p: df.to_feather(p),
+}
+
+for name, writer in formats.items():
+    path = f"/tmp/bench.{name}"
+    t0 = time.time()
+    writer(path)
+    print(f"{name}: write={time.time()-t0:.2f}s, size={Path(path).stat().st_size/1e6:.1f}MB")
+```
+:::
+
+::: details Debugging Scenario
+**Your pipeline reads a CSV file daily. One day, the row count drops by 40% with no errors. The source confirms they sent the same number of records.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The most likely cause is **embedded newlines in quoted fields** combined with a misconfigured CSV reader. When a field contains a literal newline (e.g., a product description with line breaks) and the parser does not handle quoting correctly, it splits one logical row into multiple rows, some of which fail silently or are dropped.
+
+Diagnosis steps:
+1. Compare raw file line count (`wc -l`) with expected row count -- if line count is much higher than row count, embedded newlines are present.
+2. Open the file in a hex editor or use `python -c "import csv; print(sum(1 for _ in csv.reader(open('file.csv'))))"` which handles quoting correctly.
+3. Check if the source system changed its CSV quoting style (e.g., removed `QUOTE_ALL`).
+
+Fix: use `pd.read_csv()` with `quoting=csv.QUOTE_ALL` and `engine="python"` for maximum compatibility, or better yet, ask the source to switch to Parquet which has no ambiguity.
+:::
+
+::: warning Common Misconceptions
+- **"CSV is a simple, safe format."** CSV has no formal standard, no types, no schema, and dozens of edge cases (encoding, quoting, delimiters, newlines) that silently corrupt data.
+- **"JSON is efficient for large datasets."** JSON is verbose, slow to parse, and cannot be partially read. For datasets over 100MB, Parquet or Feather is 5-20x more efficient.
+- **"Parquet files are immutable and append-unfriendly."** You cannot append to a single Parquet file, but you can use partitioned datasets (one file per partition) for append-like workflows.
+- **"Feather is just fast Parquet."** Feather (Arrow IPC) is optimized for speed, not compression. It is best for intermediate pipeline stages and inter-language data sharing, not long-term storage.
+:::
+
+::: details Quiz
+**1. Why does Parquet achieve much better compression than CSV for the same data?**
+
+> Parquet stores data in columnar layout, so values of the same type and distribution are adjacent. This enables run-length encoding, dictionary encoding, and delta encoding that exploit data homogeneity -- impossible in row-oriented CSV.
+
+**2. What is the difference between Avro and Parquet, and when would you choose each?**
+
+> Avro is row-oriented with an embedded schema, optimized for write-heavy streaming (Kafka). Parquet is columnar, optimized for read-heavy analytics queries. Use Avro for message serialization and Parquet for data lakes.
+
+**3. What happens when you read a CSV with `pd.read_csv()` and a column contains "NA" as a valid value?**
+
+> Pandas interprets "NA" as a missing value (`NaN`) by default. Fix with `keep_default_na=False` or by specifying `na_values` explicitly.
+
+**4. What is predicate pushdown in Parquet?**
+
+> Predicate pushdown filters rows at the storage layer using row group statistics (min/max values), so only relevant row groups are read from disk. This dramatically speeds up filtered queries.
+
+**5. Why is Feather faster than Parquet for read/write but not recommended for long-term storage?**
+
+> Feather uses Arrow's IPC format with minimal encoding overhead, making serialization near-instant. However, it lacks Parquet's advanced compression, partitioning, and ecosystem support for data lake storage.
+:::
+
+> **One-Liner Summary:** Parquet is the safe default for analytics pipelines; CSV is for human exchange only; Avro is for streaming; and choosing wrong silently wastes storage, corrupts types, or makes queries 10x slower.

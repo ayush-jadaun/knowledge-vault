@@ -569,3 +569,125 @@ if __name__ == "__main__":
 | `prefect flow-run create` | Trigger a flow run |
 | `prefect work-pool create` | Create a work pool |
 | `prefect worker start` | Start a worker for a pool |
+
+---
+
+::: tip Key Takeaway
+- Prefect treats flows as normal Python functions: any Python code can become a pipeline with a `@flow` decorator, with zero boilerplate.
+- Task caching with `task_input_hash` skips re-computation when inputs have not changed, saving hours on expensive transformations.
+- Subflows enable composable pipeline architecture where each component is independently testable, deployable, and observable.
+:::
+
+::: details Exercise
+**Build a Cached, Retryable ETL Flow**
+
+Create a Prefect flow that:
+1. Extracts data from a mock API endpoint with 3 retries and exponential backoff.
+2. Transforms the data (cleaning, type casting) with input-based caching (1 hour expiry).
+3. Validates the output (row count, null checks, value ranges).
+4. Saves to Parquet and creates a Markdown artifact summarizing the run.
+5. Test it locally by running `python my_flow.py`.
+
+**Solution Sketch**
+
+```python
+from prefect import flow, task, get_run_logger
+from prefect.tasks import task_input_hash
+from prefect.artifacts import create_markdown_artifact
+from datetime import timedelta
+import pandas as pd
+
+@task(retries=3, retry_delay_seconds=[10, 30, 60])
+def extract(url: str) -> list[dict]:
+    import requests
+    resp = requests.get(url, timeout=30)
+    resp.raise_for_status()
+    return resp.json()["data"]
+
+@task(cache_key_fn=task_input_hash, cache_expiration=timedelta(hours=1))
+def transform(records: list[dict]) -> pd.DataFrame:
+    df = pd.DataFrame(records)
+    df["name"] = df["name"].str.strip().str.title()
+    df["price"] = pd.to_numeric(df["price"], errors="coerce")
+    return df.dropna(subset=["name", "price"])
+
+@task
+def validate(df: pd.DataFrame) -> pd.DataFrame:
+    assert len(df) > 0
+    assert df["price"].min() >= 0
+    return df
+
+@task
+def save(df: pd.DataFrame, path: str):
+    df.to_parquet(path, index=False)
+    create_markdown_artifact(key="etl-summary",
+        markdown=f"## ETL Summary\\n- Rows: {len(df)}\\n- Columns: {list(df.columns)}")
+
+@flow(name="cached-etl")
+def etl_pipeline(url: str = "https://api.example.com/data"):
+    raw = extract(url)
+    clean = transform(raw)
+    valid = validate(clean)
+    save(valid, "./output.parquet")
+
+if __name__ == "__main__":
+    etl_pipeline()
+```
+:::
+
+::: details Debugging Scenario
+**Your Prefect flow works locally but fails when deployed. The error says "No module named 'pandas'" even though pandas is installed on your machine.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The deployment runs on a different worker environment (different machine, Docker container, or virtual environment) that does not have the same packages installed. Prefect separates the flow definition from the execution environment.
+
+Fixes:
+1. **Pin dependencies**: create a `requirements.txt` or `pyproject.toml` and configure the deployment to install them.
+2. **Docker-based work pool**: build a Docker image with all dependencies and configure the work pool to use it.
+3. **Prefect Cloud infrastructure blocks**: define an infrastructure block that specifies the Python environment, packages, and runtime configuration.
+4. **Use `prefect.yaml` pip requirements**:
+   ```yaml
+   deployments:
+     - name: my-flow
+       entrypoint: flow.py:etl_pipeline
+       work_pool:
+         name: default
+       pull:
+         - prefect.deployments.steps.pip_install_requirements:
+             requirements_file: requirements.txt
+   ```
+:::
+
+::: warning Common Misconceptions
+- **"Prefect is just a simpler Airflow."** Prefect has a fundamentally different architecture: it is code-first (not config-first), supports local execution without infrastructure, and passes data natively through Python return values.
+- **"Task caching means I never need to worry about reprocessing."** Caching is based on input hash and has an expiration. If the underlying data changes but the function inputs do not, the cache serves stale results. Use content-aware cache keys.
+- **"Subflows are just function calls."** Subflows create separate flow runs in the Prefect UI with their own logs, state tracking, and retry behavior. They are more than function calls -- they are observable pipeline components.
+- **"Prefect replaces Airflow in all cases."** For large organizations with complex scheduling, extensive operator ecosystems, and mature Airflow infrastructure, migration may not be worth it. Prefect excels for new projects and smaller teams.
+:::
+
+::: details Quiz
+**1. How does Prefect's data passing differ from Airflow's XCom?**
+
+> Prefect tasks pass data through native Python return values and function arguments. There is no size limit or serialization overhead like Airflow's XCom, which stores values in a metadata database.
+
+**2. What does `task_input_hash` do as a cache key function?**
+
+> It hashes the task's input parameters to create a cache key. If the same task is called with the same inputs within the cache expiration period, the cached result is returned without re-executing the task.
+
+**3. How does `.map()` work in Prefect?**
+
+> `.map()` takes a list and runs the task concurrently for each element, similar to Python's `multiprocessing.Pool.map()`. It creates one task run per input item, all running in parallel.
+
+**4. What is a Prefect Block?**
+
+> A Block is a reusable, named configuration object stored in Prefect (e.g., database credentials, cloud storage configuration, webhook URLs). Blocks provide a secure way to manage secrets and infrastructure configuration.
+
+**5. Can Prefect flows be tested without a Prefect server?**
+
+> Yes. Prefect flows are normal Python functions that can be called directly: `python my_flow.py` runs the flow locally without any server, scheduler, or infrastructure setup.
+:::
+
+> **One-Liner Summary:** Prefect turns any Python function into an observable, retryable, cacheable pipeline with a `@flow` decorator -- no infrastructure required for development, production-ready when deployed.

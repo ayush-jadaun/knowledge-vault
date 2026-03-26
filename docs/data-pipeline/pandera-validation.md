@@ -587,3 +587,102 @@ class TestProductSchema:
 | Output validation | `@pa.check_output(Schema)` |
 | YAML export | `schema.to_yaml()` |
 | Schema inference | `pa.infer_schema(df)` |
+
+---
+
+::: tip Key Takeaway
+- Pandera embeds validation directly in Python code with decorators and type annotations, making schemas part of the function signature rather than external configuration.
+- Lazy validation (`lazy=True`) collects all errors in one pass instead of failing on the first violation, making debugging faster.
+- Schema inference generates a starting schema from a DataFrame sample, which you then tighten with domain-specific constraints.
+:::
+
+::: details Exercise
+**Create a Pandera Schema for Customer Data**
+
+Define a Pandera `DataFrameModel` that validates:
+1. `customer_id`: positive integer, unique, not nullable.
+2. `email`: string matching a basic email regex, not nullable.
+3. `age`: integer between 18 and 120, nullable.
+4. `signup_date`: datetime, not nullable, must be in the past.
+5. `tier`: one of "free", "basic", "premium", "enterprise".
+6. DataFrame-level check: `email` must contain no duplicates.
+
+Test it by creating a DataFrame with intentional violations and using `lazy=True` to see all errors.
+
+**Solution Sketch**
+
+```python
+import pandera as pa
+from pandera import Column, Check, DataFrameSchema
+import pandas as pd
+from datetime import datetime
+
+schema = DataFrameSchema({
+    "customer_id": Column(int, [Check.gt(0), Check.unique()], nullable=False),
+    "email": Column(str, Check.str_matches(r".+@.+\..+"), nullable=False),
+    "age": Column(int, Check.in_range(18, 120), nullable=True, coerce=True),
+    "signup_date": Column("datetime64[ns]", Check(lambda s: s <= datetime.now()), nullable=False),
+    "tier": Column(str, Check.isin(["free", "basic", "premium", "enterprise"])),
+})
+
+# Test with bad data
+bad_df = pd.DataFrame({
+    "customer_id": [1, 1, -3],  # duplicate, negative
+    "email": ["good@test.com", "bad", "ok@test.com"],  # invalid email
+    "age": [25, 200, None],  # out of range
+    "signup_date": pd.to_datetime(["2024-01-01", "2030-01-01", "2024-06-01"]),  # future
+    "tier": ["free", "invalid", "premium"],  # invalid tier
+})
+
+try:
+    schema.validate(bad_df, lazy=True)
+except pa.errors.SchemaErrors as e:
+    print(e.failure_cases)
+```
+:::
+
+::: details Debugging Scenario
+**Your Pandera schema validation passes in tests but fails in production with `SchemaError: expected int64 but got object` on a column that contains integers.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The production data is loaded from a CSV, and pandas inferred the column as `object` (string) because one or more values are non-numeric (e.g., "N/A", empty string, or a header row mixed into data). In tests, you construct the DataFrame with explicit integer values.
+
+Fixes:
+1. **Enable coercion**: add `coerce=True` to the Column definition or in the schema Config. Pandera will attempt to cast the column to the expected type before validation.
+2. **Clean before validation**: ensure the pipeline casts types (`pd.to_numeric(col, errors="coerce")`) before Pandera validation runs.
+3. **Use nullable integer**: if the column can have NaN, use `pa.Int64` (nullable integer) instead of `int`, since NaN forces pandas to use `float64` or `object`.
+:::
+
+::: warning Common Misconceptions
+- **"Pandera replaces Great Expectations."** Pandera is a code-level validation library. Great Expectations is a validation platform with reporting, checkpoints, and alerting. They serve different scales and use cases.
+- **"Schema inference gives a production-ready schema."** Inferred schemas describe what the data looks like now, not what it should look like. They may encode current bugs as valid patterns and set bounds too tightly.
+- **"`coerce=True` fixes all type issues."** Coercion silently converts values, potentially losing information (e.g., "123abc" coerced to NaN). Always validate after coercion to catch unexpected conversions.
+- **"Pandera only works with pandas."** Pandera supports pandas, Polars, Spark DataFrames (via pyspark), and Modin, making it usable across the Python data ecosystem.
+:::
+
+::: details Quiz
+**1. What is the difference between `Check.gt(0)` and `Check.ge(0)`?**
+
+> `Check.gt(0)` requires values to be strictly greater than 0 (excludes 0). `Check.ge(0)` requires values to be greater than or equal to 0 (includes 0).
+
+**2. What does `lazy=True` do in Pandera validation?**
+
+> Instead of stopping at the first validation error, lazy validation collects all errors across all columns and returns them together in a `SchemaErrors` exception, making it easier to see every issue at once.
+
+**3. How does `@pa.check_input` differ from calling `schema.validate()`?**
+
+> `@pa.check_input(Schema)` is a decorator that automatically validates the function's input DataFrame before the function executes. It integrates validation into the function signature rather than requiring explicit validation calls.
+
+**4. What is schema inference, and how do you use it?**
+
+> `pa.infer_schema(df)` examines a DataFrame and generates a schema with detected types, ranges, and null patterns. Use it as a starting point, then manually tighten constraints based on domain knowledge.
+
+**5. Can Pandera validate relationships between columns?**
+
+> Yes, using `@pa.dataframe_check` decorators in `DataFrameModel` classes or `Check` objects with multi-column lambda functions. For example, verifying that `end_date > start_date`.
+:::
+
+> **One-Liner Summary:** Pandera is the fastest path from "no validation" to "validated pipeline" -- define schemas as Python code, validate with decorators, and catch every error with lazy mode.

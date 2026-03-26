@@ -791,3 +791,103 @@ if result["is_ordinal"]:
 | Target encoding | When rare categories have meaningful signal |
 | Drop rows | When rare categories are errors |
 | Frequency encoding | When rarity itself is the signal |
+
+---
+
+::: tip Key Takeaway
+- Categorical columns must be cleaned (case, whitespace, fuzzy duplicates) before encoding, or you create separate features for "Electronics" and "electronics".
+- Encoding choice depends on cardinality, model type, and whether the variable is ordinal or nominal -- there is no universal best encoding.
+- Rare categories should be grouped or merged before encoding; a category appearing 3 times in 1M rows adds noise, not signal.
+:::
+
+::: details Exercise
+**Clean and Encode a Product Category Column**
+
+Given a DataFrame with a messy `category` column containing values like "Electronics", "electronics", "ELECTRONICS", "Elec.", "Clothing", "clothes", and 500 rare categories each appearing once:
+1. Fix case inconsistencies (lowercase all).
+2. Merge fuzzy duplicates using rapidfuzz with an 80% threshold.
+3. Group rare categories (fewer than 10 occurrences) into "Other".
+4. Detect if the column is ordinal using known patterns.
+5. Apply the appropriate encoding (one-hot for < 10 categories, target encoding otherwise).
+
+**Solution Sketch**
+
+```python
+from rapidfuzz import fuzz, process
+import pandas as pd
+
+def clean_and_encode(df, col, target_col=None):
+    result = df.copy()
+    # Step 1: lowercase
+    result[col] = result[col].str.lower().str.strip()
+    # Step 2: fuzzy merge
+    uniques = result[col].dropna().unique().tolist()
+    mapping = {}
+    for val in sorted(uniques, key=len, reverse=True):
+        if val not in mapping:
+            matches = process.extract(val, uniques, scorer=fuzz.token_sort_ratio, score_cutoff=80)
+            canonical = max([m[0] for m in matches], key=len)
+            for m in matches:
+                mapping[m[0]] = canonical
+    result[col] = result[col].map(mapping)
+    # Step 3: group rare
+    counts = result[col].value_counts()
+    rare = counts[counts < 10].index
+    result.loc[result[col].isin(rare), col] = "other"
+    # Step 5: encode
+    n_unique = result[col].nunique()
+    if n_unique < 10:
+        result = pd.get_dummies(result, columns=[col], drop_first=True, dtype=int)
+    elif target_col:
+        means = result.groupby(col)[target_col].mean()
+        result[f"{col}_encoded"] = result[col].map(means)
+    return result
+```
+:::
+
+::: details Debugging Scenario
+**Your target encoding produces a perfect-looking model on training data but terrible performance on the test set.**
+
+Diagnose and fix it.
+
+**Answer**
+
+This is **target leakage** through target encoding. When you compute the mean target per category on the training set, each row's own target value influences the encoding it receives. Rare categories with 1-2 rows get an encoding that perfectly matches their target value.
+
+Fixes:
+1. **Leave-one-out encoding**: for each row, compute the category mean excluding that row's target value.
+2. **K-fold target encoding**: split the training data into K folds and compute category means using only the out-of-fold data.
+3. **Smoothing**: blend the category mean with the global mean, weighting by category frequency. Low-frequency categories get pulled toward the global mean: `(count * cat_mean + smoothing * global_mean) / (count + smoothing)`.
+4. **Add noise**: add random Gaussian noise to encoded values during training to reduce overfitting.
+:::
+
+::: warning Common Misconceptions
+- **"One-hot encoding works for any categorical variable."** With 1,000 categories, one-hot creates 1,000 sparse columns that slow training and add noise. Use target or hash encoding for high cardinality.
+- **"Label encoding (0, 1, 2, ...) is fine for nominal variables."** Linear models interpret label-encoded nominals as having an order (3 > 2 > 1), creating false relationships. Only use for tree-based models or true ordinals.
+- **"Target encoding always leaks information."** Properly implemented target encoding (with smoothing, k-fold, or leave-one-out) avoids leakage. Naive implementation (global mean per category on the full training set) is the leaky version.
+- **"Rare categories are harmless."** A category with 2 observations creates an encoding based on 2 data points -- essentially noise. Models memorize these, hurting generalization.
+:::
+
+::: details Quiz
+**1. What is the difference between ordinal and nominal categorical variables?**
+
+> Ordinal variables have a meaningful order (e.g., Low < Medium < High). Nominal variables have no inherent order (e.g., Red, Blue, Green). Ordinal encoding preserves order; one-hot encoding treats all categories as equidistant.
+
+**2. Why should you use `drop_first=True` in one-hot encoding?**
+
+> Dropping one column avoids multicollinearity (the dummy variable trap). The dropped category is implicitly represented when all other dummy columns are 0.
+
+**3. What is binary encoding, and when is it better than one-hot?**
+
+> Binary encoding maps each category to an integer, then represents that integer in binary (e.g., category 5 becomes columns 1-0-1). It creates log2(N) columns instead of N, useful for medium cardinality (10-50 categories).
+
+**4. How does frequency encoding work?**
+
+> Each category is replaced by its relative frequency (count / total rows) in the training data. It captures rarity as a signal without creating new columns.
+
+**5. When should you use hash encoding?**
+
+> When cardinality exceeds 50-100 categories and no target variable is available. Hash encoding maps categories to a fixed number of columns (e.g., 8) using a hash function, with the trade-off of information loss from hash collisions.
+:::
+
+> **One-Liner Summary:** Categorical preprocessing is the pipeline from messy strings ("Electronics", "elec.", "ELECTRONICS") to model-ready features, where the right encoding depends on cardinality, variable type, and downstream model.

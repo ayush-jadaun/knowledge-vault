@@ -716,4 +716,119 @@ backfill_safe()
 | `@daily` | `0 0 * * *` | Midnight daily |
 | `@weekly` | `0 0 * * 0` | Midnight Sunday |
 | `@monthly` | `0 0 1 * *` | First of month |
-| `None` | — | Trigger only (no schedule) |
+| `None` | --- | Trigger only (no schedule) |
+
+---
+
+::: tip Key Takeaway
+- Airflow orchestrates when and in what order tasks execute -- it does not move or process data itself; tasks call external systems.
+- The TaskFlow API (Airflow 2+) eliminates XCom boilerplate by letting tasks pass data through Python return values.
+- Every DAG must be idempotent and backfill-safe: running the same execution date twice should produce identical results.
+:::
+
+::: details Exercise
+**Design a Multi-Source ETL DAG**
+
+Create an Airflow DAG using the TaskFlow API that:
+1. Extracts data from 3 tables in parallel using dynamic task generation.
+2. Transforms each table's data (cleaning, type casting).
+3. Validates each table's quality (null checks, row count assertions).
+4. Merges all tables into a single dataset and loads to a warehouse.
+5. Sends a Slack notification on success or failure.
+
+Use `@task` decorators and natural Python data flow.
+
+**Solution Sketch**
+
+```python
+from airflow.decorators import dag, task
+from datetime import datetime
+
+TABLES = ["orders", "products", "customers"]
+
+@dag(dag_id="multi_source_etl", schedule="@daily",
+     start_date=datetime(2024, 1, 1), catchup=False)
+def multi_source_etl():
+
+    @task()
+    def extract(table: str) -> dict:
+        import pandas as pd
+        df = pd.read_parquet(f"/data/raw/{table}.parquet")
+        path = f"/data/staged/{table}.parquet"
+        df.to_parquet(path, index=False)
+        return {"table": table, "path": path, "rows": len(df)}
+
+    @task()
+    def validate(result: dict) -> dict:
+        import pandas as pd
+        df = pd.read_parquet(result["path"])
+        assert len(df) > 0, f"{result['table']} is empty"
+        assert df.isnull().mean().max() < 0.2
+        return result
+
+    @task()
+    def merge_and_load(results: list[dict]):
+        import pandas as pd
+        dfs = [pd.read_parquet(r["path"]) for r in results]
+        # Merge logic here...
+        total = sum(r["rows"] for r in results)
+        print(f"Loaded {total} total rows from {len(results)} tables")
+
+    validated = []
+    for table in TABLES:
+        raw = extract(table)
+        valid = validate(raw)
+        validated.append(valid)
+    merge_and_load(validated)
+
+multi_source_etl()
+```
+:::
+
+::: details Debugging Scenario
+**Your Airflow DAG ran successfully for months. After upgrading Airflow, the DAG starts failing with `XComArg` serialization errors on the `merge_and_load` task.**
+
+Diagnose and fix it.
+
+**Answer**
+
+Airflow serializes XCom values to the metadata database. Common causes of serialization failures after upgrades:
+
+1. **Large XCom values**: the task returns a DataFrame or large dict that exceeds the XCom size limit (default 48KB in the metadata DB). Fix: return only file paths and metadata, not data itself.
+2. **Custom objects in XCom**: returning objects that are not JSON-serializable (e.g., `Path` objects, numpy arrays). Fix: convert all return values to basic Python types (str, int, dict, list).
+3. **XCom backend change**: the upgrade may have switched from database XCom to a custom backend. Fix: check `airflow.cfg` for `xcom_backend` setting.
+4. **Pickling disabled**: newer Airflow versions disable pickle serialization by default for security. Fix: ensure all XCom values are JSON-serializable or set `enable_xcom_pickling = True` (not recommended).
+
+Best practice: tasks should communicate via file paths on shared storage, not via XCom data.
+:::
+
+::: warning Common Misconceptions
+- **"Airflow processes data."** Airflow is an orchestrator, not a processing engine. It schedules tasks that call Spark, Python scripts, SQL, or APIs to do the actual work.
+- **"XCom is for passing datasets between tasks."** XCom stores values in the metadata database (usually PostgreSQL). It is designed for small values like file paths, row counts, and status flags -- not DataFrames.
+- **"catchup=True means my DAG is backfill-safe."** Enabling catchup runs the DAG for all missed dates, but the DAG must be idempotent (overwrite, not append) to produce correct results.
+- **"More retries are always safer."** Retrying a non-idempotent task that partially succeeded can create duplicates. Fix the root cause rather than adding retries.
+:::
+
+::: details Quiz
+**1. What is the difference between an Operator and a Sensor in Airflow?**
+
+> An Operator executes an action (run Python code, execute SQL, call an API). A Sensor waits for a condition to be true (file exists, API is healthy, upstream DAG completed) before the pipeline continues.
+
+**2. What does `mode="reschedule"` do for sensors?**
+
+> Instead of occupying a worker slot while polling, the sensor releases the slot between pokes and is rescheduled by the scheduler. This prevents sensors from blocking workers during long waits.
+
+**3. Why should Airflow DAGs be idempotent?**
+
+> Because DAGs are re-run for failed dates, backfills, and testing. An idempotent DAG produces the same output regardless of how many times it runs for the same execution date, preventing duplicate or inconsistent data.
+
+**4. What is the purpose of `max_active_runs=1` on a DAG?**
+
+> It prevents multiple concurrent runs of the same DAG, which is critical for pipelines that write to shared resources (databases, files) where concurrent writes would cause conflicts or corruption.
+
+**5. How does the TaskFlow API improve over the traditional Operator approach?**
+
+> TaskFlow uses `@task` decorators that let you write normal Python functions and pass data via return values. It eliminates XCom boilerplate, reduces code by 40-60%, and makes the data flow explicit in the code.
+:::
+
+> **One-Liner Summary:** Airflow is an orchestrator that tells tasks when to run and in what order, not a data processor -- and every DAG must be idempotent, backfill-safe, and observable.

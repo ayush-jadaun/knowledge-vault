@@ -523,3 +523,100 @@ python price_analysis.py
 | Outlier prices | Remove below $50K and above $20M |
 | Mixed date formats | pandas `format="mixed"` with `errors="coerce"` |
 | High-cardinality addresses | Bin into price buckets for analysis |
+
+---
+
+::: tip Key Takeaway
+- Real estate data is a masterclass in messy data: prices in 5+ formats, inconsistent addresses, duplicated listings, and mixed units require domain-specific preprocessing.
+- Fuzzy deduplication on addresses is essential because the same property appears across multiple listing sources with slightly different descriptions.
+- Missing data should not be imputed blindly; missing square footage genuinely indicates unavailable information and should remain null with price_per_sqft excluded for those rows.
+:::
+
+::: details Exercise
+**Build a Price Normalizer**
+
+Write a function that handles all common real estate price formats:
+1. `"$1,200,000"` -- standard US format
+2. `"$1.2M"` -- abbreviated millions
+3. `"$850K"` -- abbreviated thousands
+4. `"1200000"` -- raw number
+5. `"$1,200,000.00"` -- with cents
+6. Return `None` for unparseable values.
+
+**Solution Sketch**
+
+```python
+import re
+
+def normalize_price(price_str: str) -> float | None:
+    if not isinstance(price_str, str):
+        try: return float(price_str)
+        except: return None
+    s = price_str.strip().upper().replace("$", "").replace(",", "")
+    multipliers = {"K": 1_000, "M": 1_000_000, "B": 1_000_000_000}
+    for suffix, mult in multipliers.items():
+        if s.endswith(suffix):
+            try: return float(s[:-1]) * mult
+            except: return None
+    try: return float(s)
+    except: return None
+
+# Tests
+assert normalize_price("$1,200,000") == 1200000
+assert normalize_price("$1.2M") == 1200000
+assert normalize_price("$850K") == 850000
+assert normalize_price("1200000") == 1200000
+```
+:::
+
+::: details Debugging Scenario
+**Your real estate pipeline reports an average home price of $50M, which is clearly wrong. The median is $350K, which looks correct.**
+
+Diagnose and fix it.
+
+**Answer**
+
+A few outlier records with erroneously high prices are pulling the mean up massively while leaving the median unaffected. Common causes:
+
+1. **Unit confusion**: some listings have prices in cents rather than dollars (a $350K house listed as 35000000 cents).
+2. **Commercial properties mixed in**: a few commercial or multi-family properties worth $50M+ are in the residential dataset.
+3. **Price parsing error**: a listing price of "$350,000" had its comma stripped and the period from "$350.000" (European format) was treated as a decimal, producing $350.
+4. **Data entry errors**: listings with placeholder prices like $99,999,999.
+
+Fix:
+- Add domain-specific outlier detection: filter prices between $50K and $20M for residential properties.
+- Add a `property_type` filter to exclude commercial listings.
+- Log and quarantine price outliers rather than silently including them.
+- Always report median alongside mean for price columns.
+:::
+
+::: warning Common Misconceptions
+- **"Address standardization is optional."** Without standardization, "123 Main Street Apt 4" and "123 Main St #4" are treated as different properties, creating duplicates and wrong counts.
+- **"Geocoding is always accurate."** Geocoding services return approximate coordinates, especially for rural addresses or newly built developments. Always validate geocoded results against known bounds.
+- **"Price per square foot is universally comparable."** It varies dramatically by room type (finished basement vs above-grade), lot size, and whether the garage is included. Document your calculation assumptions.
+- **"Removing outliers is always correct."** A $50M listing might be a legitimate luxury property. Domain expertise is needed to distinguish data errors from genuinely extreme but valid values.
+:::
+
+::: details Quiz
+**1. Why is fuzzy deduplication necessary for real estate data?**
+
+> The same property appears across multiple listing services with different formatting ("123 Main St" vs "123 Main Street"), different descriptions, and slightly different prices. Exact matching misses these duplicates.
+
+**2. What challenges does address parsing face?**
+
+> Inconsistent abbreviations (Street/St/Str), missing unit numbers, non-standard formats, directional prefixes/suffixes (N, S, E, W), and compound street names (Martin Luther King Jr Blvd).
+
+**3. Why should you use median instead of mean for real estate prices?**
+
+> Real estate prices are right-skewed (a few luxury properties have extremely high prices). The median is robust to outliers, while the mean is heavily influenced by them.
+
+**4. When is it appropriate to leave missing values as null instead of imputing?**
+
+> When the missing value represents genuinely unavailable information (e.g., square footage not disclosed) rather than a data collection error. Imputing would create false precision.
+
+**5. How do you handle prices in multiple formats ("$1.2M", "$850K", "1200000")?**
+
+> Build a format-aware parser that detects multiplier suffixes (K, M, B), removes currency symbols and commas, and converts everything to a standard numeric format. Always validate the output range.
+:::
+
+> **One-Liner Summary:** Real estate pipelines are a masterclass in messy data: prices in 5 formats, addresses with 10 abbreviation variants, and cross-source duplicates that only fuzzy matching can catch.

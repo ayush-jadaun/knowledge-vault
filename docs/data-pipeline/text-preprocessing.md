@@ -650,3 +650,99 @@ df["text_clean"] = classifier_pipeline.process_series(df["text"])
 | Snowball Stemming | Fast | Medium | No |
 | WordNet Lemmatization | Medium | High | Yes |
 | spaCy Lemmatization | Slow | Highest | Yes |
+
+---
+
+::: tip Key Takeaway
+- The right preprocessing depends entirely on the NLP task: sentiment analysis needs punctuation and negations, while topic modeling aggressively removes everything but content words.
+- Lemmatization produces real words and is more accurate than stemming, but stemming is 10x faster and sufficient for information retrieval tasks.
+- Transformer-based models (BERT, GPT) need minimal preprocessing -- they were trained on raw text with casing and punctuation, so aggressive cleaning degrades their performance.
+:::
+
+::: details Exercise
+**Build Task-Specific Text Preprocessors**
+
+Create three preprocessing pipelines and compare their output on the sentence: `"<p>I can't believe it's NOT working! Check https://help.com for $50 off.</p>"`:
+1. **Sentiment analysis pipeline**: keep negations and emphasis, remove HTML and URLs.
+2. **Search index pipeline**: lowercase, remove special characters, keep hyphens.
+3. **Topic modeling pipeline**: remove everything except meaningful words longer than 2 characters.
+
+**Solution Sketch**
+
+```python
+import re
+from html import unescape
+
+text = "<p>I can't believe it's NOT working! Check https://help.com for $50 off.</p>"
+
+# Sentiment: keep negation, emphasis
+sent = re.sub(r"<[^>]+>", " ", text)
+sent = re.sub(r"https?://\S+", "", sent)
+sent = re.sub(r"\s+", " ", sent).strip()
+# "I can't believe it's NOT working! Check for $50 off."
+
+# Search: lowercase, remove special
+search = re.sub(r"<[^>]+>", " ", text)
+search = search.lower()
+search = re.sub(r"[^\w\s\-]", " ", search)
+search = re.sub(r"\s+", " ", search).strip()
+# "i can t believe it s not working check https help com for 50 off"
+
+# Topic: only long meaningful words
+topic = re.sub(r"<[^>]+>", " ", text)
+topic = re.sub(r"https?://\S+", "", topic)
+topic = topic.lower()
+topic = re.sub(r"[^\w\s]", "", topic)
+topic = " ".join(w for w in topic.split() if len(w) > 2)
+# "can believe not working check for off"
+```
+:::
+
+::: details Debugging Scenario
+**Your sentiment classifier achieves 95% accuracy in development but only 60% in production. The production text contains HTML email content with inline CSS and base64 images.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The model was trained on clean text but production data contains raw HTML that was not stripped. The HTML tags, CSS, and base64 strings are treated as "words" by the tokenizer, drowning out the actual text content.
+
+Fix:
+1. **Add HTML stripping to the production preprocessing pipeline**: use `BeautifulSoup(text, "html.parser").get_text(separator=" ")` followed by `html.unescape()`.
+2. **Remove base64 content**: `re.sub(r"data:[^;]+;base64,[A-Za-z0-9+/=]+", "", text)`.
+3. **Strip inline CSS**: `re.sub(r"style=\"[^\"]*\"", "", text)` before HTML parsing.
+4. **Retrain or fine-tune** the model on data preprocessed with the production pipeline to ensure train-time and inference-time preprocessing match exactly.
+
+The root cause is **training-serving skew**: the preprocessing pipeline used during training differed from production.
+:::
+
+::: warning Common Misconceptions
+- **"Removing stopwords always improves NLP models."** Removing "not" from "not good" flips the sentiment. Keep negation words for sentiment tasks. For topic modeling, removing stopwords is essential.
+- **"Stemming and lemmatization are interchangeable."** Stemming produces non-words ("studies" becomes "studi"), which is acceptable for search but breaks readability. Lemmatization produces real base forms ("studies" becomes "study").
+- **"Transformers do not need any preprocessing."** Transformers need minimal preprocessing, but HTML tags, base64 content, and excessive whitespace should still be removed. Over-cleaning (lowercasing, removing punctuation) hurts transformer performance.
+- **"Spell correction improves all NLP tasks."** Spell correction changes domain-specific terms, product names, and intentional misspellings (slang). Only use it when misspelling genuinely introduces noise.
+:::
+
+::: details Quiz
+**1. Why should you keep punctuation for sentiment analysis but remove it for topic modeling?**
+
+> Punctuation carries emotional signal in sentiment ("amazing!!!" vs "amazing"), but adds noise in topic modeling where only content words matter for identifying themes.
+
+**2. What is the difference between character n-grams and word n-grams?**
+
+> Character n-grams are substrings of N characters ("hello" with n=3 produces "hel", "ell", "llo"). Word n-grams are sequences of N consecutive words. Character n-grams are useful for language detection and fuzzy matching; word n-grams capture phrases.
+
+**3. Why does spaCy's lemmatizer outperform WordNet's?**
+
+> spaCy uses trained statistical models that understand context, so "better" as an adjective lemmatizes to "good" but "better" as a verb lemmatizes to "better." WordNet relies on explicit POS tags that may be wrong.
+
+**4. When should you use subword tokenization (BPE) instead of word tokenization?**
+
+> When handling out-of-vocabulary words, morphologically rich languages, or training/using transformer models. BPE splits unknown words into known subword pieces, ensuring every input can be tokenized.
+
+**5. Why is `langdetect` unreliable on short texts?**
+
+> Language detection relies on character n-gram frequency distributions, which need enough text to produce stable statistics. Short texts (under 20 characters) have too few n-grams for reliable classification.
+:::
+
+> **One-Liner Summary:** Text preprocessing is task-dependent: sentiment analysis needs negations and emphasis, topic modeling needs only content words, and transformers need almost nothing -- the wrong pipeline for the wrong task silently destroys model performance.

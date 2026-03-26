@@ -809,3 +809,113 @@ class DomainNormalizer:
 | sqrt(x) | Yes | No | Mild skew reduction |
 | Box-Cox | No | No | Optimal power transform |
 | Yeo-Johnson | Yes | Yes | Generalized power transform |
+
+---
+
+::: tip Key Takeaway
+- Outlier handling is a decision, not a default: removing, capping, transforming, or flagging outliers depends on whether they are errors or genuine extreme values.
+- Always fit scalers on training data only and transform both train and test with the same fitted scaler to prevent data leakage.
+- Skewed distributions should be transformed (log, Box-Cox, Yeo-Johnson) before scaling, because mean and standard deviation are meaningless on heavily skewed data.
+:::
+
+::: details Exercise
+**Outlier Detection and Scaling Pipeline**
+
+Given a DataFrame with columns `price`, `quantity`, and `rating`:
+1. Detect outliers in `price` using both IQR and Modified Z-score methods.
+2. Compare the number of outliers detected by each method.
+3. Winsorize `price` at the 1st and 99th percentiles.
+4. Apply Yeo-Johnson transform to `price` to reduce skewness.
+5. Scale all three columns using RobustScaler and verify that the output mean is near 0.
+
+**Solution Sketch**
+
+```python
+import pandas as pd, numpy as np
+from sklearn.preprocessing import RobustScaler, PowerTransformer
+
+df = pd.DataFrame({
+    "price": np.concatenate([np.random.lognormal(4, 1, 950), [100000, 200000]*25]),
+    "quantity": np.random.randint(1, 100, 1000),
+    "rating": np.random.uniform(1, 5, 1000),
+})
+
+# IQR outliers
+Q1, Q3 = df["price"].quantile([0.25, 0.75])
+iqr_mask = (df["price"] < Q1 - 1.5*(Q3-Q1)) | (df["price"] > Q3 + 1.5*(Q3-Q1))
+
+# Modified Z-score outliers
+median = df["price"].median()
+mad = np.median(np.abs(df["price"] - median))
+mz_mask = np.abs(0.6745 * (df["price"] - median) / mad) > 3.5
+
+print(f"IQR: {iqr_mask.sum()}, Modified Z: {mz_mask.sum()}")
+
+# Winsorize
+df["price_w"] = df["price"].clip(*df["price"].quantile([0.01, 0.99]))
+
+# Yeo-Johnson
+pt = PowerTransformer(method="yeo-johnson")
+df["price_yj"] = pt.fit_transform(df[["price_w"]])
+
+# Scale
+scaler = RobustScaler()
+cols = ["price_yj", "quantity", "rating"]
+df[cols] = scaler.fit_transform(df[cols])
+```
+:::
+
+::: details Debugging Scenario
+**Your ML model performs well on training data but poorly on test data. You discover that the test set has different scaling than the training set.**
+
+Diagnose and fix it.
+
+**Answer**
+
+This is a classic **data leakage through scaling** bug. The scaler was fit on the entire dataset (train + test) or separately on train and test, rather than being fit on training data only and then applied to both.
+
+When you fit `StandardScaler()` on the combined data, the test set's statistics influence the scaling parameters, giving the model information about the test set during training. When you fit separate scalers, the test set has a different mean/std, making predictions inconsistent.
+
+Fix:
+```python
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)  # fit + transform
+X_test_scaled = scaler.transform(X_test)         # transform only
+```
+
+The scaler must be serialized (pickled) and reused at inference time. Never call `fit()` or `fit_transform()` on test or production data.
+:::
+
+::: warning Common Misconceptions
+- **"Outliers should always be removed."** Domain-dependent. A $10M transaction at a bank is a real outlier, not an error. Removing it biases your fraud detection model.
+- **"StandardScaler makes data normal."** StandardScaler shifts mean to 0 and std to 1 but does not change the distribution shape. Skewed data remains skewed after scaling.
+- **"MinMaxScaler is safe for most use cases."** A single extreme outlier compresses the entire rest of the data into a tiny range. RobustScaler is almost always a better default.
+- **"Binning continuous variables is always information loss."** For tree-based models, binning provides no benefit (trees bin internally). For linear models, intelligent binning can capture non-linear relationships.
+- **"Scaling does not matter for tree-based models."** Correct for decision trees, random forests, and gradient boosting. But if you ensemble trees with linear models or use distance-based features, scaling matters.
+:::
+
+::: details Quiz
+**1. Why is Modified Z-score more robust than standard Z-score for outlier detection?**
+
+> Modified Z-score uses the median and MAD (Median Absolute Deviation) instead of mean and standard deviation. Since median and MAD are not influenced by extreme values, the method does not mask outliers the way mean/std-based Z-score can.
+
+**2. What is winsorization, and how does it differ from trimming?**
+
+> Winsorization caps extreme values at percentile boundaries (e.g., values above the 99th percentile are set to the 99th percentile value). Trimming removes those rows entirely. Winsorization preserves row count while reducing outlier influence.
+
+**3. When should you use Yeo-Johnson instead of Box-Cox?**
+
+> Use Yeo-Johnson when your data contains zero or negative values. Box-Cox requires strictly positive values. Yeo-Johnson is a generalized version that handles the full real number line.
+
+**4. What does `RobustScaler` use instead of mean and standard deviation?**
+
+> RobustScaler uses the median for centering and the interquartile range (IQR) for scaling, making it resistant to outliers.
+
+**5. Why is it important to apply the same scaler to both training and test data?**
+
+> If different scaling parameters are used, the model sees test data on a different scale than what it was trained on, leading to degraded predictions. The scaler fitted on training data encodes the expected data distribution.
+:::
+
+> **One-Liner Summary:** Numerical preprocessing is the art of detecting outliers without bias, scaling features without leakage, and transforming distributions without destroying information.

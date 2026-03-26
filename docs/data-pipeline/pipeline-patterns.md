@@ -690,3 +690,111 @@ def stamp_output(
 | Dead Letter Queue | Single bad record crashes batch | Messy external data |
 | Pipeline Versioning | Cannot reproduce old results | Regulated / ML pipelines |
 | Retry with Backoff | Transient external failures | API calls, DB connections |
+
+---
+
+::: tip Key Takeaway
+- Every production pipeline needs idempotent processing, checkpointing, and dead letter queues -- these three patterns prevent 90% of pipeline failures from becoming data incidents.
+- Fan-out/fan-in parallelism speeds up CPU-bound processing, but only when chunks are truly independent; shared state requires coordination.
+- Schema and quality gates at pipeline boundaries are the only reliable way to prevent bad data from propagating downstream.
+:::
+
+::: details Exercise
+**Implement a Dead Letter Queue Pipeline**
+
+Build a pipeline that:
+1. Reads records from a JSON file.
+2. Applies a transformation that may fail on individual records (e.g., parsing a price field).
+3. Routes failed records to a "dead letter" Parquet file with the error message and timestamp.
+4. Halts processing if more than 10% of records fail (systematic error detection).
+5. Produces a summary report of processed vs failed records.
+
+**Solution Sketch**
+
+```python
+import pandas as pd, json
+from datetime import datetime
+from pathlib import Path
+
+def pipeline_with_dlq(input_path, output_path, dlq_path, threshold=0.1):
+    with open(input_path) as f:
+        records = json.load(f)
+
+    good, bad = [], []
+    for r in records:
+        try:
+            r["price"] = float(str(r["price"]).replace("$", "").replace(",", ""))
+            good.append(r)
+        except (ValueError, KeyError) as e:
+            r["_error"] = str(e)
+            r["_failed_at"] = datetime.utcnow().isoformat()
+            bad.append(r)
+
+    failure_rate = len(bad) / len(records) if records else 0
+    if failure_rate > threshold:
+        raise RuntimeError(f"Failure rate {failure_rate:.1%} exceeds {threshold:.1%}")
+
+    pd.DataFrame(good).to_parquet(output_path, index=False)
+    if bad:
+        pd.DataFrame(bad).to_parquet(dlq_path, index=False)
+
+    return {"processed": len(good), "failed": len(bad), "rate": failure_rate}
+```
+:::
+
+::: details Debugging Scenario
+**Your pipeline processes data in 3 steps. Step 2 fails midway, but when you restart the pipeline, step 1 runs again (taking 45 minutes) even though its output is already correct.**
+
+Diagnose and fix it.
+
+**Answer**
+
+The pipeline lacks **checkpointing**. Without checkpoints, every restart begins from scratch because there is no record of which steps completed successfully.
+
+Fix: implement checkpoint-resume:
+1. After each step completes, save its output to a checkpoint file (Parquet).
+2. Before running a step, check if its checkpoint exists. If so, load it and skip execution.
+3. Add a `--force` flag to ignore checkpoints when you need a clean re-run.
+4. Include input hashing: checkpoint is valid only if the input data has not changed.
+
+```python
+def run_step(name, fn, df, checkpoint_dir):
+    checkpoint = Path(checkpoint_dir) / f"{name}.parquet"
+    if checkpoint.exists():
+        return pd.read_parquet(checkpoint)
+    result = fn(df)
+    result.to_parquet(checkpoint, index=False)
+    return result
+```
+:::
+
+::: warning Common Misconceptions
+- **"Retry solves all failures."** Retrying a non-idempotent step that partially succeeded creates duplicates. The step must be idempotent before retries are safe.
+- **"Checkpointing is only for long pipelines."** Even a 5-minute pipeline benefits from checkpoints during development and debugging. The cost is a few Parquet writes; the savings are hours of re-processing.
+- **"Schema validation is overkill for internal data."** Internal services change schemas without notice more often than external APIs. A schema gate catches a renamed column before it produces wrong results.
+- **"Dead letter queues lose data."** The opposite -- without a DLQ, a single bad record crashes the entire batch and loses everything. DLQs preserve bad records for investigation while allowing the pipeline to continue.
+:::
+
+::: details Quiz
+**1. What does it mean for a pipeline to be idempotent?**
+
+> Running the pipeline multiple times with the same input produces the same output, with no side effects like duplicated rows or accumulated state. This is essential for safe retries and backfills.
+
+**2. What is a dead letter queue (DLQ) in data pipelines?**
+
+> A DLQ is a separate storage location where records that fail processing are saved with error metadata, allowing the pipeline to continue processing valid records while preserving failed ones for investigation.
+
+**3. How does fan-out/fan-in parallelism work?**
+
+> Data is split into independent chunks (fan-out), each chunk is processed in parallel by separate workers, and results are merged back together (fan-in). It is effective when processing is CPU-bound and chunks do not depend on each other.
+
+**4. What is a quality gate, and where should it be placed?**
+
+> A quality gate validates statistical properties of data (row counts, null rates, value distributions) and blocks the pipeline if quality falls below thresholds. Place gates at pipeline boundaries: after extraction, after transformation, and before loading.
+
+**5. Why is pipeline versioning important?**
+
+> It enables reproducibility (re-running a pipeline from 6 months ago produces the same results) and debugging (comparing outputs between versions to find when a regression was introduced).
+:::
+
+> **One-Liner Summary:** Production pipeline reliability comes from five patterns: idempotent processing, checkpoint-resume, dead letter queues, schema/quality gates, and retry with backoff.
