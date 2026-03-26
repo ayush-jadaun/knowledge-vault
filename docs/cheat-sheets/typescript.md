@@ -489,3 +489,48 @@ function handle(shape: Shape) {
 | Null check | `!` (non-null assertion) | Proper null check | 100% certain, testing | Production code |
 | Generic default | `T = unknown` | No default | Library API, optional generic | Internal code |
 | Import | `import type` | `import` | Type only, no runtime | Need the value at runtime |
+
+---
+
+::: details Test Yourself
+1. **What utility type makes all properties of a type optional?**
+   `Partial<T>`
+
+2. **How do you create a type that picks only the `id` and `name` properties from `User`?**
+   `Pick<User, 'id' | 'name'>`
+
+3. **What keyword extracts the inner type from a `Promise<T>` in a conditional type?**
+   `infer` (e.g., `T extends Promise<infer U> ? U : T`)
+
+4. **How do you write a custom type guard function that checks if a value is a `Cat`?**
+   `function isCat(animal: Cat | Dog): animal is Cat`
+
+5. **What is the zero-runtime alternative to TypeScript enums?**
+   Union types: `type Direction = 'UP' | 'DOWN'`
+
+6. **What `tsconfig` option makes array/object indexing return `T | undefined`?**
+   `noUncheckedIndexedAccess`
+
+7. **How do you get the return type of a function?**
+   `ReturnType<typeof fn>`
+
+8. **What type should you use instead of `any` for safe unknown data?**
+   `unknown` -- it forces you to narrow the type before using it.
+
+9. **What is a branded type used for?**
+   Preventing accidental mixing of primitive types that are structurally identical (e.g., `UserId` vs `OrderId`).
+
+10. **What is the difference between `interface` and `type` in TypeScript?**
+    `interface` is best for object shapes and `extends`; `type` is best for unions, intersections, and mapped types.
+:::
+
+::: danger Common Gotchas
+- **Using `any` instead of `unknown`.** `any` disables all type checking. Use `unknown` and narrow with type guards.
+- **Non-null assertion `!` in production code.** It tells the compiler "trust me, this is not null" -- but at runtime it can absolutely be null. Use proper null checks.
+- **Enums generate runtime code.** Prefer union types (`type Status = 'active' | 'inactive'`) for zero-runtime overhead.
+- **Forgetting `as const` for literal types.** Without it, `const arr = [1, 2, 3]` is typed as `number[]`, not `readonly [1, 2, 3]`.
+:::
+
+## One-Liner Summary
+
+TypeScript adds a compile-time type system to JavaScript -- master utility types, generics, discriminated unions, and type guards to catch bugs before they reach production.

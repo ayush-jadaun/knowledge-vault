@@ -500,3 +500,48 @@ sum(rate(errors[5m])) / (sum(rate(total[5m])) > 0)
 | Percentile | `histogram_quantile` | `quantile` | Histogram metric (buckets) | Across existing series |
 | Missing data | `absent()` | `up == 0` | Metric disappeared entirely | Target is down |
 | Time window | Short `[1m]` | Long `[15m]` | High-resolution, volatile | Smooth, stable for alerts |
+
+---
+
+::: details Test Yourself
+1. **What function should you always apply to a counter before aggregation?**
+   `rate()` or `increase()`
+
+2. **How do you calculate the p99 latency from a histogram?**
+   `histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))`
+
+3. **What is the difference between `by` and `without` in aggregation?**
+   `by` keeps only the listed labels; `without` removes the listed labels and keeps everything else.
+
+4. **How do you provide a default value of 0 when a series does not exist?**
+   Append `or vector(0)` to the query.
+
+5. **What function predicts a future value based on linear regression?**
+   `predict_linear(v[t], seconds_ahead)`
+
+6. **What is the naming convention for recording rules?**
+   `level:metric:operations` (e.g., `job:http_requests:rate5m`)
+
+7. **How do you get the value of a metric from 1 hour ago?**
+   `metric_name offset 1h`
+
+8. **What modifier returns 0 or 1 instead of filtering in comparison operators?**
+   `bool` (e.g., `http_requests_total > bool 100`)
+
+9. **How do you calculate CPU utilization from `node_cpu_seconds_total`?**
+   `100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)`
+
+10. **What function detects that a metric has completely disappeared?**
+    `absent(metric_name)`
+:::
+
+::: danger Common Gotchas
+- **Aggregating raw counters without `rate()`.** Counters only go up and reset on restart. Summing raw counters hides resets and gives meaningless numbers.
+- **Forgetting `le` in `by()` for `histogram_quantile`.** Without the `le` label, the function cannot compute quantiles and returns garbage.
+- **Using `irate()` in alerting rules.** `irate` uses only the last two data points and is too volatile for stable alerts. Use `rate()` for alerts and recording rules.
+- **High-cardinality labels (user IDs, request paths).** Each unique label combination creates a new time series. Unbounded labels cause memory explosions in Prometheus.
+:::
+
+## One-Liner Summary
+
+PromQL is Prometheus's query language for slicing time-series metrics -- master `rate()`, `histogram_quantile()`, and aggregation operators to build dashboards and alerts that actually catch production issues.

@@ -485,3 +485,48 @@ public class GlobalExceptionHandler {
 - **[Core Concepts](../spring-boot/core-concepts)** — IoC, DI, and bean lifecycle
 - **[REST API Development](../spring-boot/rest-api)** — Building production APIs
 - **[Best Practices](../spring-boot/best-practices)** — Patterns and anti-patterns
+
+---
+
+::: details Test Yourself
+1. **What annotation combines `@Controller` and `@ResponseBody`?**
+   `@RestController`
+
+2. **How do you inject a property value from `application.yml` into a field?**
+   `@Value("${property.key}")`
+
+3. **What annotation activates a bean only in a specific profile?**
+   `@Profile("dev")`
+
+4. **What is the default fetch type for `@ManyToOne` in JPA, and why is it problematic?**
+   EAGER -- it loads the related entity on every query, causing N+1 problems. Change to `fetch = FetchType.LAZY`.
+
+5. **What test slice annotation loads only the web layer for a specific controller?**
+   `@WebMvcTest(Controller.class)`
+
+6. **How do you change the log level of a package at runtime via Actuator?**
+   `curl -X POST .../actuator/loggers/com.example -H 'Content-Type: application/json' -d '{"configuredLevel":"DEBUG"}'`
+
+7. **What annotation makes a bean initialize only after another specific bean exists?**
+   `@ConditionalOnMissingBean` (creates only if no other bean of that type exists).
+
+8. **What HTTP status should a successful POST that creates a resource return?**
+   `201 CREATED`
+
+9. **How do you build a Docker image from a Spring Boot project using Buildpacks?**
+   `./mvnw spring-boot:build-image`
+
+10. **What annotation enables method-level security like `@PreAuthorize`?**
+    `@EnableMethodSecurity`
+:::
+
+::: danger Common Gotchas
+- **`spring.jpa.open-in-view=true` (default).** It keeps the Hibernate session open during the entire HTTP request, which hides lazy loading issues in development but causes performance problems in production. Set it to `false`.
+- **`@ManyToOne` defaults to EAGER fetch.** Every time you load an entity, JPA also loads the related entity. Always set `fetch = FetchType.LAZY` on `@ManyToOne`.
+- **Using `@Autowired` on fields instead of constructor injection.** Field injection makes testing harder and hides dependencies. Use `@RequiredArgsConstructor` with `final` fields.
+- **`ddl-auto=update` in production.** Hibernate's schema auto-update can drop columns or create wrong indexes. Use `validate` in production with Flyway or Liquibase for migrations.
+:::
+
+## One-Liner Summary
+
+Spring Boot is an opinionated Java framework that auto-configures everything -- master annotations, profiles, Actuator, and test slices to build production-ready APIs with minimal boilerplate.

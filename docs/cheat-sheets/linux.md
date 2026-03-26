@@ -462,3 +462,48 @@ watch -n 2 'ls -la /var/log/app.log'
 | High IO wait | `iostat -x 1`, `iotop` |
 | Too many open files | `ulimit -n`, `lsof -p PID \| wc -l` |
 | OOM killer | `dmesg \| grep -i oom`, `journalctl -k \| grep oom` |
+
+---
+
+::: details Test Yourself
+1. **What command shows listening TCP ports with process IDs?**
+   `ss -tlnp`
+
+2. **How do you create nested directories in one command?**
+   `mkdir -p a/b/c`
+
+3. **What is the numeric permission for a file readable/writable by owner only?**
+   `600`
+
+4. **How do you find files larger than 100MB?**
+   `find / -type f -size +100M`
+
+5. **What signal number is SIGKILL?**
+   `9`
+
+6. **How do you set up SSH local port forwarding from local 8080 to remote 3000?**
+   `ssh -L 8080:localhost:3000 user@host`
+
+7. **What command shows disk usage of top-level directories in human-readable format?**
+   `du -h --max-depth=1 /`
+
+8. **How do you check the status of a systemd service and see recent logs?**
+   `systemctl status service`
+
+9. **What command generates an Ed25519 SSH key?**
+   `ssh-keygen -t ed25519 -C "email@example.com"`
+
+10. **How do you follow a log file in real time and filter for a pattern?**
+    `tail -f app.log | grep --line-buffered "ERROR"`
+:::
+
+::: danger Common Gotchas
+- **`rm -rf /` with a misplaced space.** `rm -rf / tmp` deletes root, not `/tmp`. Always double-check paths, especially with variables.
+- **`chmod 777` on anything.** This gives everyone full access. Use the minimum permissions needed (644 for files, 755 for directories).
+- **Editing `/etc/sudoers` directly.** Always use `visudo` -- it validates syntax. A broken sudoers file locks you out of `sudo` entirely.
+- **Forgetting `nohup` for long-running SSH commands.** Without it, closing the SSH session kills the process. Use `nohup cmd &` or `tmux`/`screen`.
+:::
+
+## One-Liner Summary
+
+Linux is the operating system that runs the internet -- learn file permissions, process management, `ss`/`systemctl`/`journalctl`, and you can troubleshoot any server.

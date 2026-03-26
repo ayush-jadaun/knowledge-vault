@@ -554,3 +554,48 @@ def call_with_retry(fn, max_retries=3, base_delay=1.0):
 - [LLM Integration Patterns](/ai-ml-engineering/llm-integration) — Provider-agnostic architecture
 - [Embeddings Deep Dive](/ai-ml-engineering/embeddings) — Embedding strategies beyond the API
 - [AI Agents Architecture](/ai-ml-engineering/ai-agents) — Building agents with tool calling
+
+---
+
+::: details Test Yourself
+1. **What is the key difference in how Anthropic handles the system prompt vs OpenAI?**
+   Anthropic uses a separate `system` parameter; OpenAI puts it in the messages array with `role: "system"`.
+
+2. **How does Anthropic return tool call results differently from OpenAI?**
+   Anthropic requires tool results as a `user` message with a `tool_result` content block; OpenAI uses a separate `tool` role.
+
+3. **What parameter is required for Anthropic but optional for OpenAI?**
+   `max_tokens` is required for Anthropic.
+
+4. **Which provider offers the largest context window (as of early 2026)?**
+   Google Gemini 2.5 Pro with 1M tokens.
+
+5. **How do you force Anthropic to use a specific tool for structured output?**
+   `tool_choice={"type": "tool", "name": "tool_name"}`
+
+6. **What is the cheapest embedding model listed?**
+   Google text-embedding-004 at $0.006 per 1M tokens.
+
+7. **What key name does Anthropic use for the tool schema (vs OpenAI's `parameters`)?**
+   `input_schema`
+
+8. **How do you access the response text from an Anthropic API call?**
+   `response.content[0].text`
+
+9. **What OpenAI feature guarantees the response matches a JSON schema?**
+   Structured output with `response_format: {"type": "json_schema", ...}`
+
+10. **What retry strategy should you use for rate limit (429) errors?**
+    Exponential backoff: `delay = base_delay * (2 ** attempt)`
+:::
+
+::: danger Common Gotchas
+- **Anthropic requires `max_tokens` -- forgetting it raises an error.** OpenAI and others default to a reasonable value, but Anthropic forces you to be explicit.
+- **Tool result format differs between providers.** OpenAI/Mistral use `role: "tool"`, Anthropic uses `role: "user"` with a `tool_result` block. Mixing formats causes silent failures.
+- **LLM pricing changes frequently.** Architectural decisions based on pricing can become outdated in weeks. Always check current pricing on each provider's website.
+- **`temperature=0` does not guarantee determinism.** Most providers say "mostly deterministic" at temperature 0 but do not guarantee identical outputs across requests or model versions.
+:::
+
+## One-Liner Summary
+
+LLM APIs follow similar patterns across providers (chat completions, tool calling, streaming) but differ in subtle ways -- know each provider's system prompt placement, response paths, and tool calling syntax to switch between them effortlessly.

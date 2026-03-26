@@ -590,3 +590,48 @@ func BenchmarkSort(b *testing.B) {
 | Interface | Small (1-2 methods) | Large | Composability, flexibility | Only when genuinely needed |
 | String building | `strings.Builder` | `+` concat | Loop, many parts | 2-3 parts, simple concat |
 | JSON | Struct tags | `map[string]any` | Known schema | Dynamic / unknown schema |
+
+---
+
+::: details Test Yourself
+1. **What is the zero value of a `string` in Go?**
+   `""` (empty string)
+
+2. **How do you check if a key exists in a map?**
+   `val, ok := m["key"]` -- check the `ok` boolean.
+
+3. **What keyword launches a function as a goroutine?**
+   `go`
+
+4. **How do you create a buffered channel of capacity 100?**
+   `ch := make(chan int, 100)`
+
+5. **What function synchronizes goroutines to wait for all to finish?**
+   `sync.WaitGroup` with `Add`, `Done`, and `Wait`.
+
+6. **How do you wrap an error with context in Go?**
+   `fmt.Errorf("processing user %d: %w", id, err)`
+
+7. **What does `defer` do?**
+   Schedules a function call to run when the enclosing function exits (LIFO order).
+
+8. **How do you cross-compile a Go binary for Linux amd64?**
+   `GOOS=linux GOARCH=amd64 go build .`
+
+9. **What command runs the race condition detector?**
+   `go test -race ./...`
+
+10. **What is the difference between a value receiver and a pointer receiver?**
+    Value receivers `(t T)` work on a copy; pointer receivers `(t *T)` can modify the original and avoid copying large structs.
+:::
+
+::: danger Common Gotchas
+- **Goroutine leaks.** If a goroutine blocks on a channel that is never closed or read, it leaks forever. Always ensure channels are eventually closed or read.
+- **Loop variable capture in goroutines.** Before Go 1.22, `go func() { use(i) }()` captures the same variable. Pass it as a parameter: `go func(i int) { use(i) }(i)`.
+- **Nil map writes panic.** Reading from a nil map returns the zero value, but writing to one panics. Always initialize with `make(map[K]V)`.
+- **Ignoring errors.** `result, _ := doSomething()` silently discards errors. Always check `err != nil` in production code.
+:::
+
+## One-Liner Summary
+
+Go is a compiled, statically typed language built for simplicity and concurrency -- goroutines and channels make it trivial to write fast, concurrent network services.

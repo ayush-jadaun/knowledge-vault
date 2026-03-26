@@ -771,3 +771,48 @@ set_config(transform_output='pandas')
 | Cluster | `KMeans` | `n_clusters, n_init` |
 | Pipeline | `Pipeline` + `ColumnTransformer` | estimators list |
 | Save model | `joblib.dump` | filename |
+
+---
+
+::: details Test Yourself
+1. **What method trains a model and what method makes predictions?**
+   `.fit(X, y)` trains; `.predict(X)` predicts.
+
+2. **How do you split data with stratification to preserve class distribution?**
+   `train_test_split(X, y, test_size=0.2, stratify=y)`
+
+3. **What scaler is robust to outliers?**
+   `RobustScaler` (uses median and IQR instead of mean and std).
+
+4. **What is the difference between `OneHotEncoder` and `LabelEncoder`?**
+   `OneHotEncoder` is for features (creates binary columns); `LabelEncoder` is for the target variable only.
+
+5. **What class combines different preprocessing for numeric and categorical columns?**
+   `ColumnTransformer`
+
+6. **How do you perform cross-validation and get the mean score?**
+   `scores = cross_val_score(model, X, y, cv=5); scores.mean()`
+
+7. **What is the difference between `GridSearchCV` and `RandomizedSearchCV`?**
+   `GridSearchCV` tries every combination; `RandomizedSearchCV` samples a fixed number of random combinations (faster for large search spaces).
+
+8. **What metric should you use instead of accuracy for imbalanced datasets?**
+   `f1_score`, `precision_score`, `recall_score`, or `roc_auc_score`.
+
+9. **How do you save a trained pipeline for later use?**
+   `joblib.dump(pipeline, 'model.joblib')`
+
+10. **What is nested cross-validation used for?**
+    Unbiased evaluation -- the inner CV tunes hyperparameters, and the outer CV estimates generalization performance.
+:::
+
+::: danger Common Gotchas
+- **Fitting the scaler on test data.** Always `fit_transform` on training data and `transform` on test data. Fitting on test data leaks information and gives overoptimistic results.
+- **Not using pipelines.** Without pipelines, preprocessing steps applied to training data may not be applied consistently to test data, causing subtle bugs and data leakage.
+- **Using accuracy for imbalanced datasets.** A model that predicts the majority class for everything gets 95% accuracy on a 95/5 split. Use F1, precision-recall AUC, or balanced accuracy instead.
+- **Forgetting `random_state` for reproducibility.** Many estimators and splitters use randomness. Without `random_state`, results change every run, making debugging impossible.
+:::
+
+## One-Liner Summary
+
+Scikit-learn provides a unified API (`fit`/`predict`/`transform`) for the entire ML workflow -- master Pipelines, ColumnTransformer, cross-validation, and GridSearchCV to build reproducible, production-ready models.

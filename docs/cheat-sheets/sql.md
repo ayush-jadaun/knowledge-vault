@@ -508,3 +508,48 @@ SELECT
 FROM pg_stat_user_indexes
 ORDER BY idx_scan;
 ```
+
+---
+
+::: details Test Yourself
+1. **What SQL clause inserts a row or updates it if a unique constraint is violated (PostgreSQL)?**
+   `INSERT ... ON CONFLICT ... DO UPDATE`
+
+2. **What is the difference between `RANK()` and `DENSE_RANK()` for tied values?**
+   `RANK()` leaves gaps after ties (1,1,3), `DENSE_RANK()` does not (1,1,2).
+
+3. **How do you get the previous row's value in a window function?**
+   `LAG(column, 1) OVER (ORDER BY ...)`
+
+4. **What keyword makes a CTE reference itself for hierarchical queries?**
+   `RECURSIVE`
+
+5. **What anti-join pattern is usually fastest: LEFT JOIN + IS NULL, NOT EXISTS, or NOT IN?**
+   `LEFT JOIN + IS NULL` is usually fastest.
+
+6. **What command creates an index without locking the table in PostgreSQL?**
+   `CREATE INDEX CONCURRENTLY`
+
+7. **What does a Seq Scan on a large table indicate in EXPLAIN output?**
+   A missing index -- the database is scanning every row.
+
+8. **How do you perform keyset (cursor) pagination instead of OFFSET?**
+   `WHERE id > last_seen_id ORDER BY id LIMIT 20`
+
+9. **What function generates a series of dates in PostgreSQL?**
+   `generate_series('start'::date, 'end'::date, '1 day'::interval)`
+
+10. **What is the leftmost prefix rule for composite indexes?**
+    An index on `(A, B, C)` can serve queries on `A`, `A+B`, or `A+B+C`, but NOT `B` alone or `C` alone.
+:::
+
+::: danger Common Gotchas
+- **`NOT IN` returns zero rows if the subquery contains a NULL.** Use `NOT EXISTS` instead -- it handles NULLs correctly.
+- **Applying functions on indexed columns kills index usage.** `WHERE DATE(created_at) = '2025-01-01'` cannot use an index on `created_at`. Rewrite as a range query.
+- **OFFSET pagination gets slower on every page.** The database still scans and discards all skipped rows. Use keyset/cursor pagination for large datasets.
+- **Forgetting `ANALYZE` after bulk data loads.** Stale statistics cause the query planner to pick bad plans. Run `ANALYZE table_name` after large inserts.
+:::
+
+## One-Liner Summary
+
+SQL is the universal language for querying relational data -- master JOINs, window functions, CTEs, and EXPLAIN ANALYZE and you can answer any data question efficiently.

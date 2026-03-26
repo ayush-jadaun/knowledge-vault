@@ -401,3 +401,48 @@ docker-compose*.yml
 Dockerfile*
 .dockerignore
 ```
+
+---
+
+::: details Test Yourself
+1. **What flag auto-removes a container when it exits?**
+   `docker run --rm`
+
+2. **How do you map host port 8080 to container port 3000?**
+   `docker run -p 8080:3000 img`
+
+3. **What command shows live resource usage of running containers?**
+   `docker stats`
+
+4. **How do you build an image without using the layer cache?**
+   `docker build --no-cache .`
+
+5. **What command gets a shell into an already-running container?**
+   `docker exec -it container sh`
+
+6. **What Dockerfile instruction sets the default command that can be overridden at runtime?**
+   `CMD`
+
+7. **How do you stop and remove all containers, networks, and volumes created by Compose?**
+   `docker compose down -v`
+
+8. **What command scans an image for known vulnerabilities?**
+   `docker scout cves img`
+
+9. **How do you copy a file from a container to the host?**
+   `docker cp container:/path ./local`
+
+10. **What is the purpose of `EXPOSE` in a Dockerfile?**
+    It documents the port the container listens on but does NOT actually publish it.
+:::
+
+::: danger Common Gotchas
+- **Running as root inside containers.** Always add a `USER` instruction in production Dockerfiles -- running as root means a container escape grants root on the host.
+- **Using `latest` tag in production.** The `latest` tag is mutable and can change without warning. Pin image versions or use digests (`node@sha256:...`).
+- **Forgetting `.dockerignore`.** Without it, `COPY . .` sends your entire directory (including `node_modules`, `.git`, `.env`) to the build context, bloating images and leaking secrets.
+- **Putting `COPY . .` before `RUN npm install`.** This busts the dependency cache on every code change. Copy `package.json` and lock file first, install, then copy the rest.
+:::
+
+## One-Liner Summary
+
+Docker packages your app and its dependencies into an isolated, portable container that runs the same everywhere -- master the Dockerfile layer cache and multi-stage builds to keep images small and builds fast.

@@ -456,3 +456,49 @@ alias kdf='kubectl delete -f'
 alias kctx='kubectl config use-context'
 alias kns='kubectl config set-context --current --namespace'
 ```
+
+---
+
+::: details Test Yourself
+1. **What command sets the default namespace for your current context?**
+   `kubectl config set-context --current --namespace=ns`
+
+2. **How do you get pods from all namespaces?**
+   `kubectl get pods -A`
+
+3. **What command shows detailed information and recent events for a pod?**
+   `kubectl describe pod pod-name`
+
+4. **How do you view the logs of a crashed container's previous run?**
+   `kubectl logs pod-name --previous`
+
+5. **What command rolls back a deployment to the previous revision?**
+   `kubectl rollout undo deployment app`
+
+6. **How do you forward local port 8080 to a service's port 80?**
+   `kubectl port-forward svc/service 8080:80`
+
+7. **What is the short name for HorizontalPodAutoscaler in kubectl?**
+   `hpa`
+
+8. **What pod status means the container keeps crashing and restarting?**
+   `CrashLoopBackOff`
+
+9. **How do you apply all YAML files in a directory?**
+   `kubectl apply -f ./dir/`
+
+10. **What command creates a secret from a literal key-value pair?**
+    `kubectl create secret generic s --from-literal=k=v`
+:::
+
+::: danger Common Gotchas
+- **Not setting resource requests and limits.** Pods without requests can be scheduled on an overcommitted node and get OOMKilled. Always set both.
+- **`kubectl delete ns` deletes everything in that namespace.** There is no confirmation prompt and no undo. Triple-check before running this.
+- **Forgetting readiness probes.** Without them, traffic is sent to pods before the app is ready, causing 502 errors during deployments.
+- **Using `latest` image tag in Kubernetes.** The `imagePullPolicy` defaults to `Always` for `latest`, causing unexpected image pulls and non-reproducible deployments. Pin versions.
+- **Ignoring `CrashLoopBackOff` exit codes.** Exit code 137 means OOMKilled (increase memory limit), exit code 1 means application error (check `kubectl logs --previous`).
+:::
+
+## One-Liner Summary
+
+Kubernetes is a container orchestrator that automates deployment, scaling, and self-healing -- master `kubectl describe`, `logs --previous`, and resource requests/limits to debug 90% of production issues.

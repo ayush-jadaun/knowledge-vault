@@ -492,3 +492,48 @@ LASTSAVE
 | Keys not expiring | Check `maxmemory-policy`, run `INFO keyspace` |
 | Cluster slot errors | `CLUSTER INFO`, `CLUSTER NODES` |
 | Replication lag | `INFO replication`, check `master_link_status` |
+
+---
+
+::: details Test Yourself
+1. **What command sets a key only if it does not already exist?**
+   `SET key "value" NX` or `SETNX key "value"`
+
+2. **How do you get all fields and values of a hash?**
+   `HGETALL key`
+
+3. **What command blocks until an element is available in a list (with 30s timeout)?**
+   `BLPOP queue 30`
+
+4. **How do you get the top 10 members of a sorted set from highest to lowest score?**
+   `ZREVRANGE leaderboard 0 9`
+
+5. **What command should you NEVER use in production to find keys?**
+   `KEYS *` -- use `SCAN` instead.
+
+6. **How do you delete a key without blocking the server?**
+   `UNLINK key`
+
+7. **What Lua function executes a Redis command inside a script?**
+   `redis.call('COMMAND', KEYS[1], ARGV[1])`
+
+8. **How do you force keys with the same hash tag into the same cluster slot?**
+   Wrap the common part in braces: `{user:123}.profile` and `{user:123}.settings`
+
+9. **What eviction policy evicts the least recently used key?**
+   `allkeys-lru`
+
+10. **How do you create a consumer group for a Redis Stream?**
+    `XGROUP CREATE stream group 0`
+:::
+
+::: danger Common Gotchas
+- **Using `KEYS *` in production.** It blocks the single-threaded Redis server while scanning all keys. Use `SCAN` with `COUNT` for safe iteration.
+- **Forgetting to set TTLs on cache keys.** Without expiry, Redis fills up and either returns errors (`noeviction`) or evicts keys you may still need.
+- **Using `DEL` on large keys.** Deleting a key with millions of elements blocks Redis. Use `UNLINK` for non-blocking deletion.
+- **Not using Lua for multi-step atomic operations.** Without Lua, another client can modify state between your `GET` and `SET`, causing race conditions.
+:::
+
+## One-Liner Summary
+
+Redis is an in-memory data structure store that makes caching, queuing, rate limiting, and real-time leaderboards trivially fast -- just remember it is single-threaded, so never block it.

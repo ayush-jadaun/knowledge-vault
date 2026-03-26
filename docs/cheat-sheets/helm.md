@@ -364,4 +364,49 @@ helm install my-release oci://registry.example.com/charts/my-chart --version 1.0
 
 ---
 
+---
+
+::: details Test Yourself
+1. **What command installs a chart with a dry run to preview rendered templates?**
+   `helm install my-release bitnami/nginx --dry-run --debug`
+
+2. **How do you upgrade a release and automatically rollback if it fails?**
+   `helm upgrade my-release bitnami/nginx --atomic`
+
+3. **What command shows the user-supplied values of an installed release?**
+   `helm get values my-release`
+
+4. **How do you render templates locally without installing?**
+   `helm template my-release ./my-chart -f values.yaml`
+
+5. **What hook annotation runs a Job before resources are upgraded?**
+   `"helm.sh/hook": pre-upgrade`
+
+6. **How do you force a value to be treated as a string in `--set`?**
+   `--set-string image.tag="1.25"`
+
+7. **What does `--reuse-values` do during an upgrade?**
+   It merges new overrides with existing values. Without it, all values reset to chart defaults plus your overrides.
+
+8. **What command checks a chart for errors before deploying?**
+   `helm lint ./my-chart`
+
+9. **How do you keep release history after uninstalling?**
+   `helm uninstall my-release --keep-history`
+
+10. **What built-in object gives you the current release name in a template?**
+    `.Release.Name`
+:::
+
+::: danger Common Gotchas
+- **`--reuse-values` silently keeps old values.** If a chart adds new required values in an upgrade, `--reuse-values` will not include them. Review chart changelogs before upgrading.
+- **Forgetting `helm lint` before pushing.** A YAML indentation error in templates will not show up until install time. Always lint and template-render locally first.
+- **Hook resources are not managed by the release.** Hooks are created and deleted based on their delete policy. If a hook Job fails, it may linger and block future upgrades.
+- **`helm upgrade` without `--install` fails if the release does not exist.** Use `helm upgrade --install` for idempotent CI/CD pipelines.
+:::
+
+## One-Liner Summary
+
+Helm is the package manager for Kubernetes -- master `install`, `upgrade --atomic`, `template`, hooks, and `values.yaml` overrides to deploy and manage complex applications repeatably.
+
 *Last updated: 2026-03-20*

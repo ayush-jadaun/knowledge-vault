@@ -939,3 +939,48 @@ WHERE p.id = sub.product_id;
 | `CUME_DIST()` | Cumulative distribution (0-1) |
 | `PERCENT_RANK()` | Relative rank (0-1) |
 | `SUM/AVG/MIN/MAX() OVER()` | Aggregate as window function |
+
+---
+
+::: details Test Yourself
+1. **What window function gives unique sequential numbers even for ties?**
+   `ROW_NUMBER()`
+
+2. **What frame clause do you need for `LAST_VALUE` to work correctly across the entire partition?**
+   `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`
+
+3. **What is the base case in a recursive CTE called?**
+   The anchor member.
+
+4. **How does `LATERAL` differ from a correlated subquery?**
+   `LATERAL` can return multiple columns and rows; a correlated subquery in `SELECT` can only return a single value.
+
+5. **What JSONB operator checks if a JSON document contains a specific structure?**
+   `@>` (containment operator)
+
+6. **How do you pivot rows to columns without the `crosstab` extension?**
+   Use `SUM(CASE WHEN column = 'value' THEN amount ELSE 0 END) AS alias` with `GROUP BY`.
+
+7. **What index type should you use for JSONB containment queries?**
+   `GIN` index.
+
+8. **Why is `SELECT *` an anti-pattern?**
+   It fetches all columns (breaking covering indexes), is fragile to schema changes, and wastes network bandwidth.
+
+9. **What is the islands-and-gaps technique used for?**
+   Finding consecutive sequences (streaks) by using `ROW_NUMBER()` to create grouping keys.
+
+10. **How do you avoid the N+1 query problem in SQL?**
+    Use a single query with `JOIN` or `WHERE column = ANY(ARRAY[...])` instead of looping with individual queries.
+:::
+
+::: danger Common Gotchas
+- **`LAST_VALUE` returns the current row by default.** The default window frame is `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`, so `LAST_VALUE` gives the current row's value, not the last in the partition.
+- **Recursive CTEs without termination conditions run forever.** Always include `WHERE depth < N` or cycle detection. PostgreSQL 14+ has built-in `CYCLE` detection.
+- **`NOT IN` with NULLs returns zero rows.** If the subquery contains any NULL, `NOT IN` evaluates to UNKNOWN for every row and returns nothing. Use `NOT EXISTS` instead.
+- **Applying functions on indexed columns prevents index usage.** `WHERE LOWER(email) = 'x'` cannot use an index on `email`. Create an expression index or rewrite the query.
+:::
+
+## One-Liner Summary
+
+Advanced SQL unlocks window functions, recursive CTEs, LATERAL joins, JSONB, and EXPLAIN ANALYZE -- the tools that turn you from someone who can query data into someone who can query data efficiently at scale.

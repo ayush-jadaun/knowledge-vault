@@ -586,3 +586,48 @@ server {
 | Load balancing | `least_conn` | `ip_hash` | Uniform distribution | Session persistence |
 | Rate limit | `nodelay` | (default) | Reject excess immediately | Queue excess requests |
 | Cache | Proxy cache | Browser cache | Dynamic content, reduce backend load | Static assets |
+
+---
+
+::: details Test Yourself
+1. **What command tests Nginx configuration for syntax errors?**
+   `nginx -t`
+
+2. **Which location modifier has the highest priority?**
+   `=` (exact match).
+
+3. **What headers must you set to proxy WebSocket connections?**
+   `Upgrade $http_upgrade` and `Connection "upgrade"`
+
+4. **How do you redirect all HTTP traffic to HTTPS?**
+   `return 301 https://$host$request_uri;` in a server block listening on port 80.
+
+5. **What directive defines a rate limit zone in the http block?**
+   `limit_req_zone $binary_remote_addr zone=name:10m rate=10r/s;`
+
+6. **What is the difference between `root` and `alias`?**
+   `root` appends the URI path to the root path; `alias` replaces the matched location prefix.
+
+7. **How do you hide the Nginx version from response headers?**
+   `server_tokens off;`
+
+8. **What load balancing method provides sticky sessions by client IP?**
+   `ip_hash`
+
+9. **What does `try_files $uri $uri/ /index.html` do in an SPA configuration?**
+   It tries the requested file, then a directory, then falls back to `index.html` for client-side routing.
+
+10. **What proxy header passes the original client IP to the backend?**
+    `proxy_set_header X-Real-IP $remote_addr;`
+:::
+
+::: danger Common Gotchas
+- **Trailing slash in `proxy_pass` changes behavior.** `proxy_pass http://backend/` strips the location prefix; `proxy_pass http://backend` keeps the full URI. Getting this wrong breaks all your routes.
+- **`add_header` in a child block removes parent headers.** If you set `add_header` in a `location` block, all `add_header` directives from the `server` block are lost. You must repeat them.
+- **Forgetting `nginx -t` before `nginx -s reload`.** A syntax error in the config will crash the reload. Always test first.
+- **Applying rate limits without `burst`.** Without `burst`, legitimate traffic spikes get 429 errors. Set `burst=20 nodelay` to handle short bursts.
+:::
+
+## One-Liner Summary
+
+Nginx is a high-performance web server and reverse proxy -- master location blocks, upstream load balancing, SSL termination, and rate limiting to serve and protect any web application.

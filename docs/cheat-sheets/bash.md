@@ -548,3 +548,48 @@ main "$@"
 | Text search | `grep` | `awk` | Simple pattern matching | Column extraction, transforms |
 | Text replace | `sed` | `awk` | Simple substitutions | Complex field-based logic |
 | JSON | `jq` | `grep/sed` | Structured JSON data | Trivial extraction only |
+
+---
+
+::: details Test Yourself
+1. **What does `$?` contain?**
+   The exit status of the last executed command.
+
+2. **How do you assign a default value to a variable if it is unset?**
+   `${var:-default}` (use default) or `${var:=default}` (set and use default).
+
+3. **What `set` flags should every production script start with?**
+   `set -euo pipefail` (exit on error, unset variable error, pipe failure).
+
+4. **How do you remove the file extension from a variable?**
+   `${file%.*}` (shortest from end) or `${file%%.*}` (longest from end).
+
+5. **What is the difference between `$@` and `$*`?**
+   `$@` expands each argument as a separate word; `$*` expands all arguments as a single string.
+
+6. **How do you redirect both stdout and stderr to a file?**
+   `cmd &> file` or `cmd > file 2>&1`
+
+7. **What command reads a file line by line safely (handling spaces)?**
+   `while IFS= read -r line; do ... done < file.txt`
+
+8. **How do you run a command immune to hangup signals in the background?**
+   `nohup cmd &`
+
+9. **What jq command filters array elements where age is greater than 30?**
+   `jq '.[] | select(.age > 30)'`
+
+10. **How do you run cleanup code when a script exits, regardless of success or failure?**
+    `trap cleanup EXIT`
+:::
+
+::: danger Common Gotchas
+- **Unquoted variables cause word splitting.** `$var` splits on spaces; `"$var"` does not. Always quote your variables.
+- **`[ ]` vs `[[ ]]`.** Use `[[ ]]` in Bash scripts -- it handles spaces in variables, supports `&&`/`||`, and does regex matching. `[ ]` is POSIX but fragile.
+- **Spaces around `=` in assignment.** `name = "Alice"` tries to run `name` as a command. Assignment has no spaces: `name="Alice"`.
+- **`for f in $(cmd)` breaks on spaces.** If filenames have spaces, this breaks. Use `while IFS= read -r` instead.
+:::
+
+## One-Liner Summary
+
+Bash is the glue language of Unix -- master variables, conditionals, `set -euo pipefail`, pipes, and `trap` to write scripts that automate anything and fail gracefully.

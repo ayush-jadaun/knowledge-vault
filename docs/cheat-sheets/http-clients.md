@@ -625,3 +625,48 @@ graph TD
 - [Git Cheat Sheet](/cheat-sheets/git) — Version control
 - [Docker Cheat Sheet](/cheat-sheets/docker) — Container operations
 - [GraphQL Cheat Sheet](/cheat-sheets/graphql) — GraphQL query reference
+
+---
+
+::: details Test Yourself
+1. **What curl flag follows HTTP redirects?**
+   `-L` or `--location`
+
+2. **How do you send a JSON body with curl?**
+   `curl -X POST -H "Content-Type: application/json" -d '{"key":"value"}' URL`
+
+3. **What curl flag shows the full request and response headers?**
+   `-v` or `--verbose`
+
+4. **How do you get only the HTTP status code from a curl request?**
+   `curl -s -o /dev/null -w "%{http_code}" URL`
+
+5. **What httpie syntax sends a non-string value (number or boolean)?**
+   Use `:=` instead of `=`: `age:=30`, `active:=true`
+
+6. **How do you upload a file with curl using multipart form data?**
+   `curl -F "file=@document.pdf" URL`
+
+7. **What wget flag resumes an interrupted download?**
+   `-c`
+
+8. **How do you save and reuse cookies across curl requests?**
+   `-c cookies.txt` to save, `-b cookies.txt` to send.
+
+9. **What is Bruno's key advantage over Postman?**
+   Collections are stored as local files (git-friendly) instead of in the cloud.
+
+10. **What curl flag sets a maximum total timeout for the request?**
+    `--max-time 30`
+:::
+
+::: danger Common Gotchas
+- **`curl -k` disables TLS verification.** This makes you vulnerable to man-in-the-middle attacks. Use `--cacert ca-bundle.pem` for custom CAs instead.
+- **Forgetting `-s` in scripts.** Without silent mode, curl prints a progress bar that clutters your script output. Use `-sS` for silent with errors.
+- **httpie adds `Content-Type: application/json` by default for POST.** If your API expects form data, you must use `-f` flag: `http -f POST URL field=value`.
+- **wget `--mirror` without `--no-parent`.** Without it, wget follows links to parent directories and may download the entire site, not just the section you wanted.
+:::
+
+## One-Liner Summary
+
+curl is the universal HTTP client for scripting, httpie is the human-friendly alternative for exploration, Bruno is the git-friendly API client for teams, and wget is the champion for recursive downloads.

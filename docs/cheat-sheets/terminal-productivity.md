@@ -541,3 +541,48 @@ curl -sLI https://example.com
 - [Linux Cheat Sheet](/cheat-sheets/linux) — System administration
 - [HTTP Client Tools](/cheat-sheets/http-clients) — curl, httpie, wget in depth
 - [Docker Cheat Sheet](/cheat-sheets/docker) — Container operations
+
+---
+
+::: details Test Yourself
+1. **What tmux key binding splits the current pane vertically (with default prefix)?**
+   `Ctrl+b %`
+
+2. **How do you detach from a tmux session without closing it?**
+   `Ctrl+b d`
+
+3. **What zsh plugin provides fish-like command suggestions as you type?**
+   `zsh-autosuggestions`
+
+4. **What `z` command jumps to a frequently used directory by partial name?**
+   `z partial-name` (e.g., `z vault` to jump to `~/projects/knowledge-vault`)
+
+5. **What fzf key binding fuzzy-searches your command history?**
+   `Ctrl+R`
+
+6. **How do you search only TypeScript files with ripgrep?**
+   `rg "pattern" --type ts` or `rg -g "*.ts" "pattern"`
+
+7. **What jq expression filters array elements based on a condition?**
+   `.[] | select(.field > value)`
+
+8. **What ripgrep flag shows only filenames containing matches?**
+   `rg -l "pattern"`
+
+9. **What tmux command creates a new session named "work"?**
+   `tmux new -s work`
+
+10. **What jq flag gives raw output without quotes?**
+    `-r`
+:::
+
+::: danger Common Gotchas
+- **tmux prefix collision with readline.** The default `Ctrl+b` conflicts with backward-char in some shells. Remap to `Ctrl+a` for easier reach.
+- **fzf without `fd` as backend.** The default `find` command is slow and includes `.git` directories. Set `FZF_DEFAULT_COMMAND` to use `fd` for much faster results.
+- **ripgrep searches binary files.** By default rg skips binaries, but if you pass `--no-ignore`, it may match in node_modules or build artifacts. Use `-g '!node_modules'` to exclude.
+- **jq silently returns nothing on invalid paths.** If you query `.nonexistent`, jq returns `null` without error. Pipe through `select(. != null)` to catch missing fields.
+:::
+
+## One-Liner Summary
+
+Terminal productivity is a multiplier -- tmux gives you persistent sessions, fzf gives you fuzzy search, ripgrep gives you instant code search, and jq gives you structured JSON processing, all without leaving the command line.

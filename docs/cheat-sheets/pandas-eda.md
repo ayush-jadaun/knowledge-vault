@@ -452,3 +452,48 @@ print(skew[abs(skew) > 1])
 | Correlation | `df.corr()` |
 | Bin | `pd.cut(df['v'], bins=5)` |
 | Crosstab | `pd.crosstab(df['a'], df['b'], normalize='index')` |
+
+---
+
+::: details Test Yourself
+1. **What method shows dtypes, non-null counts, and memory usage for a DataFrame?**
+   `df.info()`
+
+2. **How do you get the percentage of missing values per column?**
+   `(df.isna().mean() * 100).round(2)`
+
+3. **What method fills missing values with the group median?**
+   `df.groupby('group')['col'].transform(lambda x: x.fillna(x.median()))`
+
+4. **How do you filter rows using a clean SQL-like syntax?**
+   `df.query('value > 0 and group == "A"')`
+
+5. **What is the difference between `groupby().agg()` and `groupby().transform()`?**
+   `agg()` returns one row per group (reduced shape); `transform()` returns the same shape as the input.
+
+6. **How do you get the top 3 rows per group by value?**
+   `df.sort_values('value', ascending=False).groupby('group').head(3)`
+
+7. **What method converts a wide DataFrame to long format?**
+   `pd.melt(df, id_vars=['id'], value_vars=['col1', 'col2'])`
+
+8. **How do you compute a 7-day rolling mean?**
+   `df['value'].rolling(7).mean()`
+
+9. **What method detects outliers using the IQR method?**
+   Compute `q1, q3 = df['col'].quantile([0.25, 0.75])`, then `iqr = q3 - q1`, then filter `< q1 - 1.5*iqr` or `> q3 + 1.5*iqr`.
+
+10. **How do you merge two DataFrames with an indicator showing which rows matched?**
+    `df.merge(other, on='key', how='outer', indicator=True)`
+:::
+
+::: danger Common Gotchas
+- **Chained assignment warning.** `df[df['x'] > 0]['y'] = 1` does NOT modify the original DataFrame. Use `df.loc[df['x'] > 0, 'y'] = 1` instead.
+- **Fitting scaler on test data.** Always `fit_transform` on training data and `transform` on test data. Fitting on test data leaks information.
+- **Using `inplace=True` everywhere.** It is being deprecated in many methods, makes debugging harder, and prevents method chaining. Prefer reassignment: `df = df.dropna()`.
+- **Forgetting `na=False` in `.str.contains()`.** If the column has NaN values, `.str.contains()` returns NaN for those rows, which causes boolean indexing to fail.
+:::
+
+## One-Liner Summary
+
+Pandas is Python's DataFrame library for exploratory data analysis -- master `groupby`, `merge`, `pivot_table`, `rolling`, and `query` to wrangle any dataset from raw CSV to analysis-ready form.

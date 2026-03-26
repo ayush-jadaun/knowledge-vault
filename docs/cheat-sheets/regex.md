@@ -379,4 +379,49 @@ Catastrophic backtracking is a real security vulnerability (ReDoS). Never use us
 
 ---
 
+---
+
+::: details Test Yourself
+1. **What is the difference between `*` and `+` quantifiers?**
+   `*` matches 0 or more; `+` matches 1 or more.
+
+2. **How do you make a quantifier lazy (match as little as possible)?**
+   Add `?` after it: `*?`, `+?`, `??`
+
+3. **What does `\b` match?**
+   A word boundary (the position between a word character and a non-word character).
+
+4. **How do you create a non-capturing group?**
+   `(?:pattern)` -- groups without saving the match.
+
+5. **What is a positive lookahead and its syntax?**
+   `(?=pattern)` -- asserts that the position is followed by the pattern, without consuming characters.
+
+6. **What regex flag makes `.` match newline characters?**
+   `s` (dotall / single-line mode).
+
+7. **How do you match a literal dot in regex?**
+   Escape it: `\.`
+
+8. **What backreference syntax matches a previously captured group?**
+   `\1` for group 1, `\k<name>` for named groups.
+
+9. **What Python function finds all matches in a string?**
+   `re.findall(r'\d+', text)`
+
+10. **Why is `(a+)+` dangerous on certain inputs?**
+    It causes catastrophic backtracking (exponential time) on inputs like `"aaaaaX"`.
+:::
+
+::: danger Common Gotchas
+- **Catastrophic backtracking (ReDoS).** Patterns like `(a+)+`, `(a|aa)+`, or `(.*a){10}` can take exponential time. Never use user-supplied patterns without timeouts.
+- **Greedy `.* ` matches too much.** `".*"` matches from the first quote to the LAST quote. Use `".*?"` for the shortest match.
+- **Go's `regexp` does not support lookahead/lookbehind.** It uses RE2 for guaranteed linear-time matching. Use a PCRE library if you need these features.
+- **Forgetting to anchor patterns.** Without `^` and `$`, a pattern matches anywhere in the string. An email regex without anchors will "validate" `xxinvalid@a.comxxx`.
+:::
+
+## One-Liner Summary
+
+Regular expressions are a pattern-matching language for text -- master character classes, quantifiers, groups, and lookaround to search, validate, and transform strings in any language.
+
 *Last updated: 2026-03-20*

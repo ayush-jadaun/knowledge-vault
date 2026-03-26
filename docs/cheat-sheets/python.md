@@ -513,3 +513,48 @@ for i, val in enumerate(items, start=1):
 | Concurrency | `multiprocessing` | `threading` | CPU-bound (bypass GIL) | I/O-bound |
 | Pkg mgmt | `pip + venv` | `poetry` | Simple projects | Complex deps, publishing |
 | String fmt | f-string | `.format()` | Simple interpolation (3.6+) | Dynamic format strings |
+
+---
+
+::: details Test Yourself
+1. **What method returns a value from a dict with a default if the key is missing?**
+   `d.get("key", default)`
+
+2. **How do you merge two dicts in Python 3.9+?**
+   `d1 | d2`
+
+3. **What module provides `defaultdict`, `Counter`, and `deque`?**
+   `collections`
+
+4. **How do you create a generator expression that sums squares lazily?**
+   `sum(x**2 for x in range(n))`
+
+5. **What decorator memoizes function results with an LRU cache?**
+   `@lru_cache(maxsize=128)` from `functools`
+
+6. **How do you remove duplicates from a list while preserving order?**
+   `list(dict.fromkeys(items))`
+
+7. **What is the walrus operator and when was it introduced?**
+   `:=` (Python 3.8+), it assigns a value inside an expression: `if (n := len(data)) > 10:`
+
+8. **How do you create an immutable dataclass?**
+   `@dataclass(frozen=True)`
+
+9. **What method on pathlib.Path recursively finds all Python files?**
+   `Path(".").rglob("*.py")`
+
+10. **What is the difference between `list` and `tuple`?**
+    `list` is mutable and variable-size; `tuple` is immutable and fixed-structure.
+:::
+
+::: danger Common Gotchas
+- **Mutable default arguments.** `def f(items=[])` shares the same list across all calls. Use `def f(items=None)` with `items = items or []`.
+- **Modifying a list while iterating over it.** This skips elements or raises errors. Iterate over a copy or use a comprehension to filter.
+- **Confusing `is` with `==`.** `is` checks identity (same object), `==` checks equality (same value). Use `is` only for `None`, `True`, `False`.
+- **Using `except Exception` without re-raising.** Silently swallowing exceptions hides bugs. Always log or re-raise.
+:::
+
+## One-Liner Summary
+
+Python is the Swiss Army knife of programming -- expressive syntax, batteries-included stdlib, and a massive ecosystem make it the go-to language for scripting, data science, web backends, and automation.

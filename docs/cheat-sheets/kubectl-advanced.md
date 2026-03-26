@@ -374,4 +374,49 @@ complete -o default -F __start_kubectl k  # alias completion
 
 ---
 
+---
+
+::: details Test Yourself
+1. **What JSONPath expression filters pods in CrashLoopBackOff?**
+   `{.items[?(@.status.containerStatuses[0].state.waiting.reason=="CrashLoopBackOff")].metadata.name}`
+
+2. **How do you launch an ephemeral debug container attached to an existing pod?**
+   `kubectl debug -it pod-name --image=busybox --target=app-container`
+
+3. **What command checks if your service account can create deployments?**
+   `kubectl auth can-i create deployments`
+
+4. **How do you view resource requests and limits for all pods with custom columns?**
+   `kubectl get pods -o custom-columns=NAME:.metadata.name,CPU_REQ:.spec.containers[0].resources.requests.cpu,...`
+
+5. **What command drains a node for maintenance?**
+   `kubectl drain node-name --ignore-daemonsets --delete-emptydir-data`
+
+6. **How do you delete all evicted/failed pods in one command?**
+   `kubectl get pods --field-selector=status.phase=Failed -o name | xargs kubectl delete`
+
+7. **What patch type allows precise JSON operations like add/replace/remove?**
+   `--type=json` (JSON Patch)
+
+8. **How do you see the details of a specific rollout revision?**
+   `kubectl rollout history deploy/my-app --revision=3`
+
+9. **What command checks what the last OOMKilled reason was for a pod?**
+   `kubectl get pod pod-name -o jsonpath='{.status.containerStatuses[*].lastState.terminated.reason}'`
+
+10. **How do you make the `k` alias work with kubectl tab completion?**
+    `complete -o default -F __start_kubectl k`
+:::
+
+::: danger Common Gotchas
+- **`kubectl auth can-i` does not check admission controllers.** RBAC may allow an action, but a webhook admission controller can still deny it. Do not rely solely on `can-i` for security auditing.
+- **`kubectl drain` without `--ignore-daemonsets` fails immediately.** DaemonSet pods cannot be evicted, so the drain command hangs. Always include this flag.
+- **Strategic merge patch does not delete fields.** To remove a field, you need a JSON patch with `{"op": "remove", "path": "/spec/..."}`.
+- **`kubectl delete pod` without understanding restarts.** If a Deployment manages the pod, Kubernetes immediately creates a replacement. Delete the Deployment or scale to 0 instead.
+:::
+
+## One-Liner Summary
+
+Advanced kubectl is about JSONPath queries, ephemeral debug containers, custom columns, and bulk operations -- master these to debug and manage production Kubernetes clusters efficiently.
+
 *Last updated: 2026-03-20*

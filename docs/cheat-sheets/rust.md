@@ -568,3 +568,48 @@ let c = Arc::clone(&counter);
 | Trait usage | `impl Trait` | `dyn Trait` | Static dispatch (perf) | Dynamic dispatch (flexibility) |
 | Copy | `Clone` | `Copy` | Explicit, heap types | Implicit, small stack types |
 | Iteration | `.iter()` | `.into_iter()` | Borrow elements | Consume collection |
+
+---
+
+::: details Test Yourself
+1. **What happens when you assign a `String` to another variable?**
+   Ownership is moved -- the original variable is no longer valid.
+
+2. **Can you have both a mutable and an immutable borrow at the same time?**
+   No. You can have multiple `&T` OR one `&mut T`, never both.
+
+3. **What operator propagates errors by returning `Err` early?**
+   The `?` operator.
+
+4. **What is the difference between `unwrap()` and `expect()`?**
+   Both panic on `None`/`Err`, but `expect()` lets you provide a custom panic message.
+
+5. **How do you create a vector with initial values?**
+   `let v = vec![1, 2, 3];`
+
+6. **What trait do you derive to enable `{:?}` debug formatting?**
+   `Debug`
+
+7. **What command runs the Rust linter?**
+   `cargo clippy`
+
+8. **How do you add a dependency with a specific feature enabled?**
+   `cargo add tokio -F full` or `cargo add tokio --features full`
+
+9. **What is the difference between `Box<T>` and `Rc<T>`?**
+   `Box<T>` has a single owner; `Rc<T>` enables multiple owners via reference counting (single thread).
+
+10. **What pattern do you use to match a specific enum variant and extract its data?**
+    `if let Some(val) = optional { ... }` or `match` with destructuring.
+:::
+
+::: danger Common Gotchas
+- **Using `unwrap()` in production code.** It panics on `None`/`Err`, crashing your program. Use `?`, `unwrap_or`, `unwrap_or_default`, or proper `match`/`if let`.
+- **Fighting the borrow checker with clones.** Excessive `.clone()` defeats Rust's zero-cost abstraction goal. Restructure your code to satisfy borrowing rules instead.
+- **Forgetting `Send + Sync` bounds for async.** Types shared across async tasks must implement `Send`. `Rc<T>` is not `Send` -- use `Arc<T>` instead.
+- **`String` vs `&str` confusion.** Use `&str` for function parameters (accepts both), `String` when you need ownership. Converting back and forth with `.to_string()` everywhere is a smell.
+:::
+
+## One-Liner Summary
+
+Rust guarantees memory safety without garbage collection through ownership and borrowing -- once you internalize the borrow checker, you get C-level performance with zero undefined behavior.

@@ -748,3 +748,48 @@ docker compose down -v --rmi local
 - [Supply Chain Security](/security/supply-chain/) — signing and verifying container images
 - [Kubernetes Cheat Sheet](/cheat-sheets/kubernetes) — when you outgrow Compose
 - [Observability Tools](/devops/observability-tools/) — adding monitoring to your Compose stack
+
+---
+
+::: details Test Yourself
+1. **What command rebuilds images and starts all services?**
+   `docker compose up --build`
+
+2. **How do you start only services tagged with the `debug` profile?**
+   `docker compose up --profile debug`
+
+3. **What `depends_on` condition waits for a health check to pass before starting a dependent service?**
+   `condition: service_healthy`
+
+4. **What file is automatically merged with `compose.yaml` when running `docker compose up`?**
+   `compose.override.yaml`
+
+5. **How do you make a network internal-only (no internet access)?**
+   Set `internal: true` on the network definition.
+
+6. **What Compose Watch action rebuilds the container when a file changes?**
+   `action: rebuild`
+
+7. **How do you run a one-off command in a new container without starting all services?**
+   `docker compose run service-name command`
+
+8. **What flag also removes named volumes when tearing down?**
+   `docker compose down -v`
+
+9. **How do you validate and view the fully resolved Compose configuration?**
+   `docker compose config`
+
+10. **Where are Docker Compose secrets mounted inside the container?**
+    `/run/secrets/secret-name`
+:::
+
+::: danger Common Gotchas
+- **`docker compose down -v` deletes your database data.** Named volumes containing PostgreSQL, MySQL, or Redis data are permanently deleted. Only use `-v` when you want a fresh start.
+- **`depends_on` without `condition` only waits for container start, not readiness.** A PostgreSQL container starts in ~1 second, but the database engine takes 5-10 seconds to accept connections. Always use `condition: service_healthy` for databases.
+- **Putting passwords in `environment:` in compose files.** The compose file is committed to version control. Use `secrets:`, `env_file:` with a `.gitignored` file, or external secret managers.
+- **Orphan containers from renamed services.** If you rename or remove a service, the old container stays. Use `docker compose up --remove-orphans` to clean up.
+:::
+
+## One-Liner Summary
+
+Docker Compose defines multi-container applications in a single YAML file -- master health checks, profiles, override files, and secrets to create reproducible development environments that mirror production.

@@ -564,4 +564,49 @@ function CreatePostForm() {
 
 ---
 
+---
+
+::: details Test Yourself
+1. **What does `!` mean after a type in GraphQL SDL?**
+   Non-null -- the field is guaranteed to return a value (never null).
+
+2. **How do you request the same field with different arguments in one query?**
+   Use aliases: `firstPost: post(id: "1") { title }`
+
+3. **What directive conditionally includes a field based on a variable?**
+   `@include(if: $variable)`
+
+4. **What is the difference between `input` types and regular types?**
+   `input` types are used for mutation arguments; regular `type` definitions are for output/return types.
+
+5. **How do you handle union types in a query?**
+   Use inline fragments: `... on User { name }` and `... on Post { title }`
+
+6. **What pagination style is recommended for real-time data?**
+   Cursor-based (Relay style) with `edges`, `node`, and `pageInfo`.
+
+7. **What Apollo Client fetch policy returns cached data immediately, then fetches and updates?**
+   `cache-and-network`
+
+8. **How do you mark a field as deprecated in the schema?**
+   `@deprecated(reason: "Use newField instead")`
+
+9. **What is the recommended approach for error handling in mutations?**
+   Union-based errors: `union CreatePostResult = CreatePostSuccess | ValidationError | AuthError`
+
+10. **How do you force the Apollo cache to update after a mutation?**
+    Use the `update` callback on `useMutation` to modify the cache directly with `cache.modify`.
+:::
+
+::: danger Common Gotchas
+- **N+1 query problem.** A naive resolver that fetches related data per-item creates N+1 database queries. Use DataLoader for batching.
+- **Over-fetching nested queries.** Deeply nested queries can explode into huge responses. Implement query depth limiting and complexity analysis on the server.
+- **`cache-first` shows stale data.** It is the Apollo Client default, but for frequently changing data, use `cache-and-network` or `network-only`.
+- **Confusing `null` field vs missing field.** A null field means the server returned null; a missing field means you did not request it. The `!` modifier prevents nulls at the schema level.
+:::
+
+## One-Liner Summary
+
+GraphQL lets clients request exactly the data they need in a single query -- master SDL types, fragments, variables, and cursor pagination to build flexible, efficient APIs.
+
 *Last updated: 2026-03-20*

@@ -367,3 +367,49 @@ git config --global alias.lg 'log --oneline --graph --all --decorate'
 git config --global alias.undo 'reset --soft HEAD~1'
 git config --global alias.wip 'commit -am "WIP"'
 ```
+
+---
+
+::: details Test Yourself
+1. **What command stages changes interactively by hunk?**
+   `git add -p`
+
+2. **How do you create and switch to a new branch in one command (modern syntax)?**
+   `git switch -c feature`
+
+3. **What command undoes the last commit but keeps changes staged?**
+   `git reset --soft HEAD~1`
+
+4. **How do you stash changes including untracked files?**
+   `git stash -u`
+
+5. **What command shows commits in branch B that are not in branch A?**
+   `git log A..B`
+
+6. **How do you force-delete a branch that has not been merged?**
+   `git branch -D feature`
+
+7. **What interactive rebase command merges a commit into the previous one while discarding its message?**
+   `fixup`
+
+8. **How do you find lost commits after a reset or rebase?**
+   `git reflog`
+
+9. **What command removes a file from Git tracking but keeps it on disk?**
+   `git rm --cached file`
+
+10. **How do you safely undo a pushed commit without rewriting history?**
+    `git revert abc123`
+:::
+
+::: danger Common Gotchas
+- **`git reset --hard` is irreversible for uncommitted work.** Always `git stash` first if you are unsure. There is no reflog entry for changes that were never committed.
+- **Rebasing shared branches breaks other people's history.** Never rebase commits that have been pushed to a branch others are working on.
+- **`git add .` stages everything, including files you may not want.** Prefer `git add -p` or staging specific files to avoid committing secrets or build artifacts.
+- **Forgetting `--no-ff` on merge loses the branch topology.** If you want to preserve that a feature branch existed, use `git merge --no-ff`.
+- **`git stash pop` drops the stash even if there are conflicts.** Use `git stash apply` instead so you can resolve conflicts without losing the stash entry.
+:::
+
+## One-Liner Summary
+
+Git is a distributed time machine for your code -- learn `reset`, `revert`, `rebase`, and `reflog` and you can recover from almost anything.

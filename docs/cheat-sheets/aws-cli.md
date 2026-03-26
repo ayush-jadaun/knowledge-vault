@@ -294,4 +294,49 @@ Use `--query` (JMESPath) for server-side filtering, and `jq` for client-side tra
 
 ---
 
+---
+
+::: details Test Yourself
+1. **What command verifies which AWS account and IAM identity you are using?**
+   `aws sts get-caller-identity`
+
+2. **How do you sync a local directory to S3, deleting files in S3 that no longer exist locally?**
+   `aws s3 sync . s3://bucket/ --delete`
+
+3. **What command generates a presigned URL valid for 1 hour?**
+   `aws s3 presign s3://bucket/file.txt --expires-in 3600`
+
+4. **How do you invoke a Lambda function asynchronously?**
+   `aws lambda invoke --function-name my-func --invocation-type Event --payload '{}' output.json`
+
+5. **What command tails CloudWatch logs in real time?**
+   `aws logs tail /aws/lambda/my-func --follow`
+
+6. **How do you list only running EC2 instances?**
+   `aws ec2 describe-instances --filters "Name=instance-state-name,Values=running"`
+
+7. **What flag switches the active AWS profile via environment variable?**
+   `export AWS_PROFILE=staging`
+
+8. **How do you force a new deployment of an ECS service?**
+   `aws ecs update-service --cluster my-cluster --service my-svc --force-new-deployment`
+
+9. **What flag disables the pager for scripting?**
+   `--no-cli-pager`
+
+10. **How do you assume a role in another AWS account?**
+    `aws sts assume-role --role-arn arn:aws:iam::TARGET:role/Role --role-session-name session`
+:::
+
+::: danger Common Gotchas
+- **`aws s3 sync --delete` can delete production data.** It removes files in the destination that are not in the source. Always double-check the sync direction (source vs destination).
+- **Running destructive commands in the wrong account.** Always verify with `aws sts get-caller-identity` before running `terminate-instances`, `delete-bucket`, or similar commands.
+- **`--apply-immediately` on RDS causes downtime.** Most RDS modifications trigger a restart. Use `--no-apply-immediately` to defer to the next maintenance window.
+- **Forgetting `--region` with global services.** Some resources (like S3 buckets) are global but created in a specific region. IAM is truly global but CloudWatch metrics are regional.
+:::
+
+## One-Liner Summary
+
+The AWS CLI is your command-line interface to every AWS service -- master `sts get-caller-identity`, `s3 sync`, `--query` JMESPath filters, and named profiles to operate safely across accounts.
+
 *Last updated: 2026-03-20*

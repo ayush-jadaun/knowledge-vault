@@ -628,3 +628,48 @@ terraform plan -no-color -out=plan.tfplan > plan.txt 2>&1
 | State file corrupted | Restore from backend versioning (S3 versioning) |
 | Module source changed | `terraform init -upgrade` |
 | Provider auth error | Check env vars, AWS profile, credentials |
+
+---
+
+::: details Test Yourself
+1. **What command previews infrastructure changes without applying them?**
+   `terraform plan`
+
+2. **How do you import an existing AWS S3 bucket into Terraform state?**
+   `terraform import aws_s3_bucket.main bucket-name`
+
+3. **What meta-argument creates multiple similar resources from a map or set?**
+   `for_each`
+
+4. **How do you remove a resource from state without destroying the real infrastructure?**
+   `terraform state rm resource`
+
+5. **What lifecycle rule prevents accidental deletion of a resource?**
+   `prevent_destroy = true`
+
+6. **What command forces recreation of a specific resource (replacing `-taint`)?**
+   `terraform apply -replace=aws_instance.web`
+
+7. **How do you set a Terraform variable via an environment variable?**
+   `export TF_VAR_region="us-west-2"`
+
+8. **What HCL function merges two maps together?**
+   `merge(var.tags, { Extra = "tag" })`
+
+9. **What is the difference between `count` and `for_each`?**
+   `count` is for conditional creation (0 or 1) or identical copies; `for_each` is for named instances from a map or set.
+
+10. **How do you unlock a stuck Terraform state lock?**
+    `terraform force-unlock LOCK_ID`
+:::
+
+::: danger Common Gotchas
+- **Forgetting to run `terraform plan` before `apply`.** Always review the plan. An innocent-looking change can trigger a resource replacement that causes downtime.
+- **Storing secrets in `.tf` files.** Use `sensitive = true` variables, environment variables, or a secrets manager. Never commit passwords to version control.
+- **Using `terraform destroy` without `-target`.** Without a target, it destroys ALL managed resources. Always double-check which workspace and state you are in.
+- **Not using remote state with locking.** Without a DynamoDB lock table, two people running `apply` simultaneously can corrupt the state file.
+:::
+
+## One-Liner Summary
+
+Terraform lets you define infrastructure as code in HCL, plan changes before applying them, and track everything in state -- master `plan`, `import`, `for_each`, and remote state to manage any cloud.
