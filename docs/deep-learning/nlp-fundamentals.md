@@ -151,10 +151,10 @@ Subword tokens are prefixed with `##` (e.g., "playing" becomes ["play", "##ing"]
 **Input corpus:** {"low": 5, "lowest": 2, "new": 4, "newest": 6}
 
 **Initial vocabulary** (character-level with end-of-word marker):
-- "l o w </w>" : 5
-- "l o w e s t </w>" : 2
-- "n e w </w>" : 4
-- "n e w e s t </w>" : 6
+- `l o w </w>` : 5
+- `l o w e s t </w>` : 2
+- `n e w </w>` : 4
+- `n e w e s t </w>` : 6
 
 **Step 1:** Count all adjacent pairs:
 - (e, s): 2 + 6 = 8
@@ -163,26 +163,26 @@ Subword tokens are prefixed with `##` (e.g., "playing" becomes ["play", "##ing"]
 - (e, w): 4 + 6 = 10
 - (l, o): 5 + 2 = 7
 - (o, w): 5 + 2 = 7
-- (w, </w>): 5 + 4 = 9
+- (w, `</w>`): 5 + 4 = 9
 - ...
 
 Most frequent pair: tie between (n, e) and (e, w) at 10. Pick (e, s) or break ties. Let's say (n, e) wins.
 
 **Merge "n" + "e" -> "ne":**
-- "l o w </w>" : 5
-- "l o w e s t </w>" : 2
-- "ne w </w>" : 4
-- "ne w e s t </w>" : 6
+- `l o w </w>` : 5
+- `l o w e s t </w>` : 2
+- `ne w </w>` : 4
+- `ne w e s t </w>` : 6
 
 **Step 2:** Recount. Now (e, s) = 2 + 6 = 8, (ne, w) = 4 + 6 = 10. Merge "ne" + "w" -> "new":
-- "l o w </w>" : 5
-- "l o w e s t </w>" : 2
-- "new </w>" : 4
-- "new e s t </w>" : 6
+- `l o w </w>` : 5
+- `l o w e s t </w>` : 2
+- `new </w>` : 4
+- `new e s t </w>` : 6
 
-**Step 3:** (e, s) = 8, (l, o) = 7, (new, </w>) = 4, etc. Merge "e" + "s" -> "es":
-- "new es t </w>" : 6
-- "l o w es t </w>" : 2
+**Step 3:** (e, s) = 8, (l, o) = 7, (new, `</w>`) = 4, etc. Merge "e" + "s" -> "es":
+- `new es t </w>` : 6
+- `l o w es t </w>` : 2
 
 After more merges: "est", "low", "newest", "lowest" become single tokens.
 
