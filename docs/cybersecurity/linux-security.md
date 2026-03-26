@@ -624,3 +624,105 @@ No single tool catches everything. Run rkhunter AND chkrootkit, set up AIDE for 
 - [Incident Response & Forensics](/cybersecurity/incident-response-forensics) — what to do when Linux is compromised
 - [Reverse Engineering](/cybersecurity/reverse-engineering) — analyzing malicious binaries found on compromised systems
 - [Security Tools Encyclopedia](/cybersecurity/security-tools) — comprehensive tool reference
+
+---
+
+::: tip Key Takeaway
+- Linux privilege escalation follows a systematic process: enumerate SUID binaries, capabilities, cron jobs, writable paths, and kernel version before exploiting anything
+- GTFOBins is your cheat sheet for SUID abuse — bookmark it and check every unusual SUID binary you find
+- Defense is layered: SSH hardening, firewall rules, SELinux/AppArmor, auditd, and rootkit detection together create a hardened system that resists attack
+:::
+
+::: details Hands-On Lab
+**Lab: Linux Privilege Escalation Practice**
+
+1. Deploy a vulnerable Linux VM (TryHackMe "Linux PrivEsc" room or VulnHub "Lin.Security")
+2. Gain an initial low-privilege shell (e.g., as `www-data`)
+3. Run manual enumeration: `id`, `sudo -l`, `find / -perm -4000`, `getcap -r /`, `cat /etc/crontab`
+4. Transfer and run LinPEAS — compare its output with your manual findings
+5. Identify at least 3 different privilege escalation vectors (SUID, cron, capability)
+6. Exploit each one to get a root shell
+7. After rooting the box, harden it: remove unnecessary SUID bits, fix cron permissions, configure iptables with a default deny policy, and enable auditd
+:::
+
+::: details CTF Challenge
+**Challenge: The Misconfigured Server**
+
+You have SSH access to a Linux server as user `webdev`. The admin left a backup script that runs every 5 minutes. Find the privilege escalation path and read the flag in `/root/flag.txt`.
+
+**Hints:**
+1. Check what cron jobs run as root
+2. The backup script uses a relative path for one of its commands
+3. The PATH in the crontab includes a writable directory
+
+::: details Answer
+Run `cat /etc/crontab` to find a root cron job running `backup.sh` without a full path. Check the `PATH` variable in the crontab — it includes `/usr/local/sbin` which is writable by `webdev`. Create a malicious `backup.sh` in `/usr/local/sbin/` that copies `/root/flag.txt` to `/tmp/` with world-readable permissions. Wait for the cron job to execute. The flag is `CTF{cron_path_hijack_is_too_easy}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"Running as root is fine on internal servers"** — Any service compromise gives the attacker full system access. Always run services as dedicated low-privilege users.
+- **"SUID binaries are always dangerous"** — Standard SUID binaries like `passwd`, `ping`, and `su` are designed to be safe. The danger is custom or unnecessary SUID binaries that can be abused via GTFOBins.
+- **"Kernel exploits are the go-to escalation method"** — Kernel exploits should be a last resort. They can crash the system and are noisy. Misconfigurations (SUID, cron, capabilities) are more reliable and stealthy.
+- **"SELinux should be disabled because it causes problems"** — SELinux in enforcing mode is one of the strongest defenses against privilege escalation. If it is "causing problems," the real issue is misconfigured policies.
+- **"Automated tools like LinPEAS find everything"** — Automated tools miss context-dependent escalation paths like password reuse, application-specific logic, and chained vulnerabilities. Manual enumeration is still essential.
+:::
+
+::: details Quiz
+**1. What does the SUID bit do when set on an executable?**
+
+a) Allows any user to delete the file
+b) Runs the executable with the file owner's permissions
+c) Encrypts the executable
+d) Prevents the file from being modified
+
+::: details Answer
+b) The SUID (Set User ID) bit causes the executable to run with the permissions of the file owner (often root), regardless of who executes it.
+:::
+
+**2. Which Linux capability allows a binary to change its UID to root?**
+
+a) cap_net_raw
+b) cap_dac_override
+c) cap_setuid
+d) cap_sys_admin
+
+::: details Answer
+c) cap_setuid allows a process to change its UID, enabling it to become root. If a binary like Python has this capability, you can escalate with `os.setuid(0)`.
+:::
+
+**3. What command finds all world-writable files on a Linux system?**
+
+a) `find / -perm -4000 -type f`
+b) `find / -writable -type f`
+c) `find / -perm -o=w -type f`
+d) Both b and c
+
+::: details Answer
+d) Both `find / -writable -type f` and `find / -perm -o=w -type f` find world-writable files. The `-writable` flag checks effective permissions while `-perm -o=w` checks the permission bits directly.
+:::
+
+**4. What is the primary purpose of the `chattr +i` command?**
+
+a) Make a file invisible
+b) Make a file immutable (even root cannot modify it)
+c) Change the file's owner to root
+d) Encrypt the file
+
+::: details Answer
+b) `chattr +i` sets the immutable flag. Even root cannot modify, delete, or rename the file until the flag is removed with `chattr -i`.
+:::
+
+**5. Which SSH configuration directive is most critical for preventing brute force attacks?**
+
+a) `X11Forwarding no`
+b) `PasswordAuthentication no`
+c) `Protocol 2`
+d) `LogLevel VERBOSE`
+
+::: details Answer
+b) `PasswordAuthentication no` forces key-based authentication only, making brute force attacks against SSH passwords impossible. This single setting eliminates the most common SSH attack vector.
+:::
+:::
+
+> **One-Liner Summary:** Linux privilege escalation is a puzzle of misconfigurations — the attacker who enumerates best, escalates first.

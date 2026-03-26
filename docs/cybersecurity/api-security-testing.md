@@ -550,3 +550,106 @@ APIs lack the browser's built-in protections (CORS enforcement, cookie flags, CS
 - [Secure Coding](/cybersecurity/secure-coding) — Building secure APIs
 - [Bug Bounty Hunting](/cybersecurity/bug-bounty) — APIs are the top bug bounty target
 - [OWASP Top 10](/security/owasp/) — Web application vulnerabilities
+
+---
+
+::: tip Key Takeaway
+- BOLA (Broken Object-Level Authorization) is the #1 API vulnerability — test every endpoint that uses an object ID by swapping it with another user's resource ID
+- JWTs are not encrypted — they are base64-encoded and readable by anyone; never store sensitive data in JWT payloads, and always validate signatures server-side
+- GraphQL introspection dumps the entire API schema including hidden types and mutations — disable it in production or use it as a recon goldmine during testing
+:::
+
+::: details Hands-On Lab
+**Lab: API Security Assessment**
+
+1. Deploy a vulnerable API (e.g., crAPI by OWASP or vAPI)
+2. Map all endpoints using Swagger documentation, traffic capture, and ffuf-based enumeration
+3. Create two user accounts and test every endpoint for BOLA: use Account A's session to access Account B's resources
+4. Decode and analyze the JWT token: check the algorithm, expiry, and payload contents
+5. Test JWT attacks: algorithm none, weak secret brute force with hashcat (`-m 16500`), and expired token reuse
+6. Test for mass assignment: add `role`, `isAdmin`, and `balance` fields to registration and profile update requests
+7. Test rate limiting: send 100 rapid requests to the login endpoint and check for lockout
+8. If the API has GraphQL, run introspection to dump the schema and query sensitive types
+:::
+
+::: details CTF Challenge
+**Challenge: The Broken API**
+
+An API uses JWTs for authentication. You notice the JWT header says `{"alg":"HS256","typ":"JWT"}` and the payload contains `{"sub":"user123","role":"user"}`. The API has an endpoint `GET /api/admin/users` that returns 403. Bypass the authorization and access the admin endpoint.
+
+**Hints:**
+1. Try changing the `alg` field to `none` and removing the signature
+2. Try brute-forcing the HMAC secret with hashcat
+3. Try modifying the `role` claim in the payload
+
+::: details Answer
+Method 1: Change the JWT header to `{"alg":"none","typ":"JWT"}`, set payload to `{"sub":"user123","role":"admin"}`, and remove the signature (token ends with a dot). If the server accepts `alg:none`, you have admin access. Method 2: Brute force with `hashcat -m 16500 jwt.txt rockyou.txt` — the secret is `secret123`. Sign a new JWT with `role:admin` using the cracked key. Flag: `CTF{jwt_none_algorithm_is_no_algorithm}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"JWTs are encrypted and secure"** — JWTs are signed, not encrypted. The payload is base64-encoded and readable by anyone. Use JWE (JSON Web Encryption) if payload confidentiality is needed.
+- **"API keys are sufficient authentication"** — API keys identify the calling application, not the user. They should not be used as the sole authentication mechanism for user-facing APIs.
+- **"Rate limiting on the login page is enough"** — Attackers bypass rate limits using IP rotation (X-Forwarded-For), endpoint variations, different HTTP methods, and GraphQL batching.
+- **"Disabling GraphQL introspection makes the schema private"** — Tools like Clairvoyance can extract the schema through field suggestion attacks even with introspection disabled.
+- **"CORS headers protect APIs"** — CORS is enforced by browsers, not by APIs. Custom API clients (curl, Python, Postman) ignore CORS entirely.
+:::
+
+::: details Quiz
+**1. What is BOLA in the context of API security?**
+
+a) A type of encryption
+b) Broken Object-Level Authorization — accessing resources belonging to other users
+c) A rate limiting technique
+d) A type of SQL injection
+
+::: details Answer
+b) BOLA (also called IDOR) occurs when an API does not verify that the authenticated user has permission to access the specific resource identified by the object ID in the request.
+:::
+
+**2. What JWT attack exploits the algorithm confusion between RS256 and HS256?**
+
+a) Use the public RS256 key as the HS256 HMAC secret to sign forged tokens
+b) Remove the signature entirely
+c) Encrypt the JWT
+d) Change the token expiry
+
+::: details Answer
+a) If a server uses RS256 but also accepts HS256, an attacker can take the public key (which is public), use it as the HMAC secret to sign a forged token with HS256, and the server will verify it.
+:::
+
+**3. What is mass assignment and how is it exploited?**
+
+a) Assigning the same variable twice
+b) Sending extra fields in API requests that get bound to internal object properties (e.g., adding `role:admin`)
+c) Mass-deleting records
+d) Brute-forcing passwords
+
+::: details Answer
+b) Mass assignment occurs when an API binds user-supplied JSON directly to an internal object. Attackers add fields like `role`, `isAdmin`, or `balance` that should not be user-settable.
+:::
+
+**4. What makes GraphQL batching attacks dangerous for rate limiting?**
+
+a) GraphQL is faster than REST
+b) Multiple operations can be sent in a single HTTP request, bypassing per-request rate limits
+c) GraphQL uses UDP
+d) Batching encrypts the requests
+
+::: details Answer
+b) GraphQL allows sending multiple queries or mutations in a single HTTP request (via batching or aliases), so an attacker can send 1000 login attempts in one request, bypassing per-request rate limits.
+:::
+
+**5. What tool automatically replays requests with a low-privilege session to detect BOLA vulnerabilities in Burp Suite?**
+
+a) Intruder
+b) Autorize extension
+c) Scanner
+d) Decoder
+
+::: details Answer
+b) The Autorize Burp extension automatically replays every request captured in a high-privilege session using a low-privilege session's cookies, highlighting which endpoints lack proper authorization checks.
+:::
+:::
+
+> **One-Liner Summary:** APIs expose raw data and business logic directly — and the most common vulnerability is simply not checking whether the requester is allowed to access what they asked for.

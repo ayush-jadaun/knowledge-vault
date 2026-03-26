@@ -486,3 +486,104 @@ def verify_token_safe(user_token, correct_token):
 - [Hashing Algorithms](/security/encryption/hashing-algorithms) — MD5, SHA, bcrypt, Argon2
 - [Web App Pentesting](/cybersecurity/web-app-pentesting) — where crypto bugs meet web applications
 - [Security Tools Encyclopedia](/cybersecurity/security-tools) — tool comparisons
+
+---
+
+::: tip Key Takeaway
+- Hash algorithm choice matters more than password complexity — bcrypt at cost 10 is nearly a million times slower to crack than MD5
+- Hashcat with rules (dictionary + mutations) cracks the vast majority of real-world passwords; pure brute force is a last resort
+- Cryptographic bugs (padding oracle, ECB mode, timing attacks) are implementation failures, not math failures — they appear in production systems constantly
+:::
+
+::: details Hands-On Lab
+**Lab: Password Cracking and TLS Testing**
+
+1. Create a file with 10 password hashes using different algorithms: MD5, SHA256, NTLM, and bcrypt
+2. Crack the MD5/SHA256/NTLM hashes using hashcat with the rockyou wordlist and the `best64.rule` ruleset
+3. Attempt to crack the bcrypt hashes — observe the dramatic speed difference
+4. Run `testssl.sh` against three public websites and compare their TLS configurations
+5. Identify which sites support deprecated protocols (TLS 1.0/1.1) or weak cipher suites
+6. Set up a test Flask/Express app with a string comparison vulnerability and demonstrate a timing attack using response time measurements
+:::
+
+::: details CTF Challenge
+**Challenge: The Leaky Cipher**
+
+An API encrypts session tokens using AES. You notice that submitting the same 32-character input twice always produces the same ciphertext, and identical 16-character blocks within your input produce identical ciphertext blocks. What mode of encryption is being used, and how can you exploit this to steal another user's session?
+
+**Hints:**
+1. Identical plaintext blocks producing identical ciphertext blocks is the hallmark of one specific mode
+2. You can control part of the plaintext that gets encrypted alongside the secret session data
+3. This is a byte-at-a-time oracle attack
+
+::: details Answer
+The API uses AES-ECB mode (Electronic Codebook). Since each 16-byte block is encrypted independently, you can perform a chosen-plaintext attack: control the alignment so that one unknown byte of the secret falls into a block with 15 known bytes. Encrypt all 256 possibilities and match. Repeat for each byte. Flag: `CTF{ecb_penguin_strikes_again}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"SHA-256 is a good password hashing algorithm"** — SHA-256 is a great general-purpose hash but terrible for passwords because it is too fast. Use bcrypt, scrypt, or Argon2 which are intentionally slow.
+- **"Encryption means the data is secure"** — Encryption protects confidentiality but not integrity or authenticity. Use authenticated encryption (AES-GCM) or add HMAC.
+- **"Longer passwords are always harder to crack"** — A 20-character dictionary word is cracked instantly. A 12-character random password with mixed case, digits, and symbols resists brute force for centuries.
+- **"TLS 1.2 is outdated"** — TLS 1.2 with strong cipher suites remains secure. TLS 1.3 is preferred but 1.2 is not vulnerable when properly configured.
+- **"HTTPS makes my application secure"** — HTTPS protects data in transit. It does not protect against SQL injection, XSS, IDOR, or any server-side vulnerability.
+:::
+
+::: details Quiz
+**1. What hashcat mode number is used for cracking NTLM hashes?**
+
+a) 0
+b) 100
+c) 1000
+d) 5600
+
+::: details Answer
+c) Mode 1000 is for NTLM hashes. Mode 5600 is for NTLMv2 (Responder captures), mode 0 is MD5, and mode 100 is SHA1.
+:::
+
+**2. Why is HMAC not vulnerable to hash length extension attacks while H(secret + message) is?**
+
+a) HMAC uses a longer key
+b) HMAC's construction with inner and outer padding prevents the attack
+c) HMAC uses SHA-3
+d) HMAC is encrypted
+
+::: details Answer
+b) HMAC computes `H(K xor opad || H(K xor ipad || message))`, a double-hashing construction where the outer hash prevents an attacker from extending the inner hash state.
+:::
+
+**3. What is the primary defense against padding oracle attacks?**
+
+a) Using longer keys
+b) Using authenticated encryption (e.g., AES-GCM) instead of CBC
+c) Adding more padding
+d) Using RSA instead of AES
+
+::: details Answer
+b) Authenticated encryption like AES-GCM detects any modification to the ciphertext before attempting decryption, eliminating the oracle. With CBC, you must ensure error messages do not reveal whether padding was valid.
+:::
+
+**4. What does the `--rules` flag do in hashcat?**
+
+a) Sets firewall rules
+b) Applies transformation rules to each word in the dictionary
+c) Limits the number of attempts
+d) Specifies the hash type
+
+::: details Answer
+b) Rules transform each dictionary word (capitalize, append digits, substitute characters, etc.), dramatically increasing the effective wordlist size and catching real-world password patterns like "Password1!" from "password".
+:::
+
+**5. What makes a timing attack on string comparison possible?**
+
+a) The comparison function returns early on the first mismatched character
+b) The strings are stored in plaintext
+c) The network adds random delays
+d) The CPU is too slow
+
+::: details Answer
+a) When a comparison function returns immediately upon finding a mismatch, an attacker can measure response time to determine how many characters are correct, testing one character at a time.
+:::
+:::
+
+> **One-Liner Summary:** Cryptography is only as strong as its weakest implementation — the math never breaks, but the code around it always can.

@@ -569,3 +569,107 @@ graph TB
 - [Network Attacks & Defense](/cybersecurity/network-attacks) — IDS/IPS and detection
 - [DevOps Incident Response](/devops/incident-response/) — operational incident management
 - [Security Tools Encyclopedia](/cybersecurity/security-tools) — comprehensive tool reference
+
+---
+
+::: tip Key Takeaway
+- The first rule of incident response is preserve evidence — never power off a compromised system before capturing memory, and never modify the original evidence
+- Memory forensics with Volatility reveals what disk forensics cannot: running processes, network connections, injected code, and encryption keys that vanish when power is lost
+- MITRE ATT&CK transforms reactive hunting into systematic coverage — structure your threat hunts by technique ID to find gaps in detection
+:::
+
+::: details Hands-On Lab
+**Lab: Memory Forensics Investigation**
+
+1. Download a memory sample from the MemLabs challenge series (MemLabs Lab 1 for beginners)
+2. Identify the OS profile using `vol -f memory.raw windows.info`
+3. List running processes with `windows.pslist` and `windows.pstree` — identify suspicious processes
+4. Check network connections with `windows.netscan` — look for connections to unusual IPs or ports
+5. Run `windows.malfind` to find potential code injection
+6. Extract suspicious processes and strings from their memory regions
+7. Check for persistence mechanisms: registry Run keys using `windows.registry.printkey`
+8. Document your findings as IOCs and map each to a MITRE ATT&CK technique
+:::
+
+::: details CTF Challenge
+**Challenge: The Ransomware Incident**
+
+A company was hit by ransomware at 3:47 AM. You have a memory dump from the affected server and a disk image. The ransomware encrypted all files with a `.locked` extension. Find: the ransomware process, its C2 server IP, the encryption key stored in memory, and the initial infection vector.
+
+**Hints:**
+1. Check `pslist` for processes spawned around 3:45-3:50 AM
+2. Use `netscan` to find outbound connections from the suspicious process
+3. The encryption key is a 32-byte AES key stored near the process's heap
+4. Check the browser history and email client for the initial phishing link
+
+::: details Answer
+Run `windows.pstree` to find `svcupdate.exe` (PID 4892) spawned by `outlook.exe` at 3:46 AM — indicating a phishing email with a malicious attachment. Run `windows.netscan` to find `svcupdate.exe` connected to `185.234.56.78:443`. Dump the process memory and search for the AES key pattern. Check `windows.cmdline` to find it was launched from `C:\Users\victim\Downloads\invoice.exe`. Flag: `CTF{memory_never_lies_volatility_wins}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"Powering off a compromised system preserves evidence"** — Powering off destroys volatile memory evidence (running processes, network connections, encryption keys). Always capture memory first.
+- **"Backups make ransomware harmless"** — Attackers now exfiltrate data before encrypting, threatening public disclosure. Also, backups may be compromised or stale.
+- **"You should immediately change all passwords during an incident"** — Premature credential changes can alert the attacker, causing them to accelerate damage or deploy additional backdoors. Coordinate credential rotation with containment.
+- **"Restoring from backup means the incident is over"** — The vulnerability that enabled the attack still exists, backdoors may persist, and the attacker may still have valid credentials. Full eradication is required.
+- **"SIEM alerts mean you are detecting attacks"** — Alerts only cover what you have rules for. Most advanced attacks use techniques with no existing detection rules, which is why threat hunting is essential.
+:::
+
+::: details Quiz
+**1. According to NIST SP 800-61, what are the six phases of incident response?**
+
+a) Detect, Respond, Recover, Report, Review, Repeat
+b) Preparation, Identification, Containment, Eradication, Recovery, Lessons Learned
+c) Plan, Scan, Exploit, Report, Remediate, Verify
+d) Alert, Triage, Investigate, Contain, Close, Document
+
+::: details Answer
+b) The NIST framework defines: Preparation, Identification, Containment, Eradication, Recovery, and Lessons Learned.
+:::
+
+**2. What Volatility 3 plugin detects code injection in running processes?**
+
+a) windows.pslist
+b) windows.netscan
+c) windows.malfind
+d) windows.dlllist
+
+::: details Answer
+c) `windows.malfind` identifies suspicious memory regions in processes that have both write and execute permissions and contain potential shellcode or injected code.
+:::
+
+**3. Why must forensic images be hashed during acquisition?**
+
+a) To compress the image
+b) To verify integrity and maintain chain of custody for legal proceedings
+c) To encrypt the evidence
+d) To identify the file system type
+
+::: details Answer
+b) Hashing the image at acquisition time proves the evidence has not been modified. Any change to the image would produce a different hash, breaking the chain of custody.
+:::
+
+**4. What is the primary purpose of a SIEM correlation rule?**
+
+a) To store log data efficiently
+b) To combine multiple low-fidelity events into a high-confidence alert
+c) To encrypt log data
+d) To forward logs to email
+
+::: details Answer
+b) Correlation rules combine multiple events (e.g., failed logins from one IP followed by a successful login followed by data access) into a single high-confidence alert that would be missed by individual event monitoring.
+:::
+
+**5. During a ransomware incident, what should you check BEFORE restoring from backup?**
+
+a) Whether the backup is recent enough
+b) Whether the backup itself is clean and the infection vector has been eliminated
+c) Whether the backup software is up to date
+d) Whether the CEO approves
+
+::: details Answer
+b) Backups may contain the malware or the vulnerability that enabled the attack. Verify backups are clean and ensure the entry vector is patched and backdoors are removed before restoring.
+:::
+:::
+
+> **One-Liner Summary:** When prevention fails, incident response determines whether a security event becomes a headline or a lessons-learned meeting.

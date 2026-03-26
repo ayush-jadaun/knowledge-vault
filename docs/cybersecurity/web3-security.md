@@ -509,3 +509,104 @@ echidna contracts/Vault.sol --contract VaultEchidnaTest --config echidna.yaml
 - [Bug Bounty Hunting](/cybersecurity/bug-bounty) — Bug bounty methodology applicable to Web3
 - [API Security Testing](/cybersecurity/api-security-testing) — RPC and API security for dApps
 - [Security Certifications](/cybersecurity/security-certifications) — Emerging blockchain security certifications
+
+---
+
+::: tip Key Takeaway
+- Smart contracts are immutable — a vulnerability discovered post-deployment is permanently exploitable unless an upgrade mechanism was built in
+- Reentrancy remains the most devastating vulnerability: always follow the Checks-Effects-Interactions pattern and use OpenZeppelin's ReentrancyGuard
+- Flash loans enable atomic composability attacks — any protocol using spot prices as oracles is vulnerable to price manipulation in a single transaction
+:::
+
+::: details Hands-On Lab
+**Lab: Exploit Vulnerable Smart Contracts**
+
+1. Install Foundry (`curl -L https://foundry.paradigm.xyz | bash && foundryup`)
+2. Complete the first 5 levels of Ethernaut (OpenZeppelin's Solidity CTF)
+3. Set up a local Ethereum environment with Anvil (`anvil`)
+4. Write a reentrancy exploit: deploy the VulnerableVault contract from this page, then deploy the Attacker contract and drain it
+5. Fix the vulnerability using the Checks-Effects-Interactions pattern
+6. Run Slither static analysis on both the vulnerable and fixed versions — verify Slither catches the reentrancy
+7. Write a Foundry fuzz test that verifies the solvency invariant (contract balance always equals total deposits)
+:::
+
+::: details CTF Challenge
+**Challenge: The Broken Vault**
+
+A DeFi vault contract allows users to deposit and withdraw ETH. The contract has a `withdraw()` function that sends ETH before updating the user's balance. There is also a `flashLoan()` function that lends ETH without collateral. The vault holds 100 ETH. Drain it.
+
+**Hints:**
+1. The `withdraw()` function is vulnerable to reentrancy
+2. You need to deposit some ETH first to have a non-zero balance
+3. Your attacker contract's `receive()` function should re-enter `withdraw()`
+
+::: details Answer
+Deploy an attacker contract that deposits 1 ETH, then calls `withdraw()`. In the attacker's `receive()` function, check if the vault balance is greater than 1 ETH and re-enter `withdraw()`. The loop drains 100 ETH because the balance is only set to zero after the external call. Fix: move `balances[msg.sender] = 0` before the external call. Flag: `CTF{checks_effects_interactions_saves_billions}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"Solidity 0.8 prevents all math bugs"** — Solidity 0.8 adds overflow checks by default, but `unchecked` blocks bypass them. Rounding errors, precision loss, and logic errors in calculations remain common.
+- **"An audit means the contract is safe"** — No single audit catches everything. Major exploits (Wormhole, Euler) occurred in audited contracts. Multiple independent audits, formal verification, and bug bounties provide layered assurance.
+- **"Decentralized means no single point of failure"** — Many DeFi protocols have admin keys, upgradeability, or oracle dependencies that are centralized. A compromised admin key is game over.
+- **"Using OpenZeppelin means your contract is secure"** — OpenZeppelin provides secure building blocks, but your custom logic that connects them can still be vulnerable. The most exploited code is almost always the custom parts.
+:::
+
+::: details Quiz
+**1. What is the Checks-Effects-Interactions pattern?**
+
+a) A design pattern for UI components
+b) Validate conditions first, update state second, make external calls last
+c) A method of testing smart contracts
+d) An encryption algorithm
+
+::: details Answer
+b) Checks-Effects-Interactions ensures all state changes (Effects) happen before any external calls (Interactions), preventing reentrancy attacks where external calls re-enter the function before state is updated.
+:::
+
+**2. Why are flash loans dangerous for DeFi protocols?**
+
+a) They charge high interest rates
+b) They allow atomic manipulation of prices and state within a single transaction
+c) They require collateral
+d) They are illegal
+
+::: details Answer
+b) Flash loans provide uncollateralized capital that must be repaid within the same transaction. This enables attackers to manipulate oracle prices, exploit arbitrage, and drain protocols — all atomically with zero risk.
+:::
+
+**3. What makes bridge protocols the highest-value targets in Web3?**
+
+a) They are the oldest protocols
+b) They hold locked assets from multiple chains, making them high-value honeypots
+c) They use the simplest code
+d) They have no security audits
+
+::: details Answer
+b) Bridges lock assets on one chain and mint wrapped assets on another. They aggregate value from multiple chains, making them the most lucrative targets — several bridges have lost hundreds of millions.
+:::
+
+**4. What tool performs static analysis on Solidity contracts?**
+
+a) Nmap
+b) Slither
+c) Burp Suite
+d) Wireshark
+
+::: details Answer
+b) Slither (by Trail of Bits) is the primary static analysis tool for Solidity. It detects reentrancy, access control issues, and other vulnerability patterns without executing the code.
+:::
+
+**5. Why should you never use a single DEX spot price as a price oracle?**
+
+a) DEX prices are always wrong
+b) Spot prices can be manipulated within a single transaction using flash loans
+c) Spot prices are too slow
+d) DEX prices require API keys
+
+::: details Answer
+b) A flash loan can temporarily manipulate a DEX's spot price by executing a large swap, interacting with the victim protocol at the manipulated price, then reversing the swap — all in one transaction.
+:::
+:::
+
+> **One-Liner Summary:** In Web3, code is law and bugs are permanent — a single smart contract vulnerability can drain billions in a single transaction.

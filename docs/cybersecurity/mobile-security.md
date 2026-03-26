@@ -557,3 +557,106 @@ docker run -it --rm -p 8000:8000 opensecurity/mobile-security-framework-mobsf
 - [Reverse Engineering](/cybersecurity/reverse-engineering) — Native library analysis with Ghidra
 - [Bug Bounty Hunting](/cybersecurity/bug-bounty) — Mobile bugs in bug bounty programs
 - [Security Certifications](/cybersecurity/security-certifications) — eMAPT, GMOB certifications
+
+---
+
+::: tip Key Takeaway
+- Mobile apps ship their code to the attacker — decompilation with jadx reveals source code, API keys, and hardcoded secrets in minutes
+- Frida is the most powerful mobile security testing tool: it hooks methods at runtime to bypass root detection, SSL pinning, and authentication checks
+- Client-side security is not security — every check performed only on the device (input validation, root detection, pinning) can and will be bypassed
+:::
+
+::: details Hands-On Lab
+**Lab: Android Application Security Assessment**
+
+1. Install an intentionally vulnerable Android app (e.g., DIVA, InsecureBankv2, or OWASP MSTG apps)
+2. Decompile the APK with jadx and search for hardcoded secrets (`grep -rn "API_KEY\|SECRET\|PASSWORD"`)
+3. Review the AndroidManifest.xml for `debuggable=true`, `allowBackup=true`, and exported components
+4. Set up Frida on a rooted emulator and write a script to hook the login method and log credentials
+5. Bypass SSL certificate pinning using Objection (`android sslpinning disable`)
+6. Intercept API traffic with Burp Suite and test for BOLA/IDOR vulnerabilities
+7. Check local storage: examine SharedPreferences, SQLite databases, and logcat for sensitive data
+8. Run MobSF automated analysis and compare findings with your manual analysis
+:::
+
+::: details CTF Challenge
+**Challenge: The Locked App**
+
+An Android banking app has root detection, SSL pinning, and an encrypted local database. You need to: bypass root detection, intercept the API traffic, and find the admin API endpoint hidden in the source code.
+
+**Hints:**
+1. Root detection checks for `/system/bin/su` and the `su` binary — hook `File.exists()` with Frida
+2. SSL pinning uses OkHttp3 CertificatePinner — use the universal bypass script
+3. The admin endpoint is in a decompiled class called `ApiConfig` or `Constants`
+
+::: details Answer
+Deploy Frida server, attach to the app, and run the root detection bypass script (hook `File.exists` to return false for su paths). Run the SSL pinning bypass script (hook OkHttp3 `CertificatePinner.check` to do nothing). Traffic now flows through Burp Suite. Decompile the APK with jadx and search for `ApiConfig` — find the hidden admin endpoint `/api/v1/admin/users`. Access it through Burp with the intercepted auth token. Flag: `CTF{frida_hooks_unlock_everything}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"Obfuscation protects mobile apps from reverse engineering"** — Obfuscation (ProGuard, R8) renames variables and classes but does not prevent decompilation. It slows attackers down but never stops them.
+- **"Root/jailbreak detection makes the app secure"** — Root detection is defense-in-depth, not a security boundary. Frida and Magisk modules bypass every known root detection technique.
+- **"iOS apps are more secure than Android apps"** — Both platforms have similar vulnerability classes. iOS's sandbox is slightly stronger, but jailbroken devices and Frida work equally well on both.
+- **"Certificate pinning prevents all MITM attacks"** — Pinning prevents interception by unauthorized proxies, but authorized testers bypass it trivially with Frida or Objection. It is defense-in-depth, not an absolute control.
+- **"Mobile apps do not need server-side validation"** — This is the most dangerous misconception. Every validation, business rule, and security check must be enforced server-side. The mobile client is untrusted.
+:::
+
+::: details Quiz
+**1. What tool decompiles Android APK files into readable Java source code?**
+
+a) Ghidra
+b) jadx
+c) Burp Suite
+d) Nmap
+
+::: details Answer
+b) jadx decompiles Dalvik bytecode (DEX files) in Android APKs back into readable Java source code, making it the primary tool for Android static analysis.
+:::
+
+**2. What does the `android:allowBackup="true"` flag in AndroidManifest.xml allow?**
+
+a) Automatic app updates
+b) App data extraction via `adb backup` without root
+c) Cloud synchronization
+d) Debug logging
+
+::: details Answer
+b) When `allowBackup` is true, anyone with physical access or ADB access can extract the app's data (databases, SharedPreferences, files) using `adb backup`, potentially exposing credentials and sensitive data.
+:::
+
+**3. What is the primary risk of storing sensitive data in Android SharedPreferences?**
+
+a) SharedPreferences are slow
+b) SharedPreferences are stored as plaintext XML files accessible on rooted devices
+c) SharedPreferences have a size limit
+d) SharedPreferences cannot store strings
+
+::: details Answer
+b) SharedPreferences store data as plaintext XML files in the app's data directory. On a rooted device, these files are directly readable, exposing any sensitive data stored in them.
+:::
+
+**4. Why is Frida more powerful than static analysis alone for mobile testing?**
+
+a) Frida is faster
+b) Frida can modify runtime behavior, bypass security controls, and observe actual data flow
+c) Frida works without a device
+d) Frida finds more CVEs
+
+::: details Answer
+b) Frida injects into the running process and can hook any method, modify arguments and return values, bypass runtime checks (root detection, pinning), and observe actual decrypted data flow — things impossible with static analysis alone.
+:::
+
+**5. According to OWASP Mobile Top 10, what is M1?**
+
+a) Insecure Communication
+b) Improper Credential Usage
+c) Insecure Data Storage
+d) Insufficient Cryptography
+
+::: details Answer
+b) M1 (2024) is Improper Credential Usage — hardcoded credentials, insecure credential storage, and improper handling of authentication tokens in mobile applications.
+:::
+:::
+
+> **One-Liner Summary:** Every mobile app is an open book to anyone with jadx and Frida — the real security must live on the server.

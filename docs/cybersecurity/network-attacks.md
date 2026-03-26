@@ -504,3 +504,104 @@ graph TB
 - [Incident Response & Forensics](/cybersecurity/incident-response-forensics) — responding to network breaches
 - [Security Tools Encyclopedia](/cybersecurity/security-tools) — tool comparisons and usage
 - [Practical Cryptography](/cybersecurity/cryptography-practical) — SSL/TLS testing and attacks
+
+---
+
+::: tip Key Takeaway
+- Network attacks exploit fundamental design flaws in protocols (ARP, DNS, LLMNR) that were built without authentication — they are not bugs, they are features misused
+- ARP spoofing and LLMNR/NBT-NS poisoning are the most common internal network attack techniques and can be performed by any device on the LAN
+- Defense requires layered controls: DAI, DHCP snooping, 802.1X, network segmentation, and IDS/IPS working together
+:::
+
+::: details Hands-On Lab
+**Lab: Man-in-the-Middle Attack and Detection**
+
+1. Set up a virtual network with three VMs: attacker (Kali), victim (Ubuntu/Windows), and gateway (pfSense or router)
+2. On the attacker VM, enable IP forwarding and run ARP spoofing with `arpspoof` or Bettercap
+3. Capture the victim's HTTP traffic with Wireshark while they browse a test website
+4. Extract credentials from the captured traffic using Wireshark display filters
+5. On the victim, verify the ARP cache is poisoned using `arp -a`
+6. Set up Suricata on a monitoring interface and write a custom rule to detect the ARP spoofing
+7. Implement Dynamic ARP Inspection on a managed switch (or simulate with arpwatch) and verify the attack is blocked
+:::
+
+::: details CTF Challenge
+**Challenge: The Rogue Access Point**
+
+A corporate network has reported intermittent connectivity issues. Users complain that their browser shows certificate warnings when visiting internal sites. Network captures show unusual ARP activity. Analyze the provided PCAP file and answer: What is the attacker's MAC address, which hosts were targeted, and what protocol was used for credential capture?
+
+**Hints:**
+1. Look for gratuitous ARP replies from a MAC that does not match the legitimate gateway
+2. Check for DNS responses redirecting to unexpected IPs
+3. The attacker is running SSL stripping
+
+::: details Answer
+Filter for `arp.opcode == 2` (ARP replies) and identify the MAC sending replies for the gateway IP that does not match the legitimate gateway MAC. The attacker's MAC is `AA:BB:CC:DD:EE:FF`. Targeted hosts are those whose ARP caches show the attacker's MAC for the gateway. DNS spoofing redirected `intranet.corp.local` to the attacker's IP. SSL stripping downgraded HTTPS to HTTP, capturing credentials in plaintext. Flag: `CTF{arp_poison_ssl_strip_detected}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"VLANs provide security isolation"** — VLANs are a network management tool, not a security boundary. VLAN hopping via DTP exploitation or double tagging can bypass VLAN segmentation.
+- **"HTTPS makes MITM attacks impossible"** — SSL stripping, certificate spoofing, and HSTS bypass techniques can defeat HTTPS in many scenarios. Certificate pinning and HSTS preloading are needed for strong protection.
+- **"MAC filtering prevents unauthorized network access"** — MAC addresses are trivially spoofable. Use 802.1X with RADIUS for real port-based authentication.
+- **"Wi-Fi WPA2 with a strong password is uncrackable"** — The PMKID attack can capture crackable material without any client interaction. WPA3 with SAE is the real fix.
+:::
+
+::: details Quiz
+**1. In an ARP spoofing attack, what does the attacker send to the victim?**
+
+a) A DNS query
+b) A gratuitous ARP reply claiming to be the gateway
+c) An ICMP redirect
+d) A TCP RST packet
+
+::: details Answer
+b) The attacker sends gratuitous ARP replies to the victim, claiming that the gateway's IP address maps to the attacker's MAC address.
+:::
+
+**2. What is the primary defense against LLMNR/NBT-NS poisoning on Windows networks?**
+
+a) Installing antivirus
+b) Disabling LLMNR and NBT-NS via Group Policy
+c) Using a VPN
+d) Enabling Windows Firewall
+
+::: details Answer
+b) Disabling LLMNR and NBT-NS via Group Policy prevents the fallback name resolution that Responder exploits. Without these protocols active, there is nothing to poison.
+:::
+
+**3. What makes a PMKID attack different from a traditional WPA2 handshake capture?**
+
+a) It is faster
+b) It does not require a client to be connected
+c) It works against WPA3
+d) It uses brute force instead of dictionary attack
+
+::: details Answer
+b) The PMKID attack captures the PMKID from the AP's first EAPOL frame, so no client needs to be connected or deauthenticated. Traditional attacks require capturing a 4-way handshake between a client and AP.
+:::
+
+**4. What Cisco switch feature validates ARP packets against the DHCP snooping binding table?**
+
+a) Port Security
+b) Dynamic ARP Inspection (DAI)
+c) BPDU Guard
+d) Storm Control
+
+::: details Answer
+b) Dynamic ARP Inspection (DAI) validates ARP packets by checking them against the DHCP snooping binding table, dropping ARP packets with invalid IP-to-MAC mappings.
+:::
+
+**5. Why is DNS tunneling difficult to detect?**
+
+a) It uses encrypted DNS
+b) DNS traffic is rarely monitored and is almost always allowed through firewalls
+c) It uses UDP which cannot be captured
+d) It does not generate any logs
+
+::: details Answer
+b) DNS traffic is typically allowed through firewalls and often not inspected. DNS tunneling hides data inside DNS queries and responses, which appear as normal DNS traffic unless you analyze query lengths, entropy, and volume.
+:::
+:::
+
+> **One-Liner Summary:** Network protocols were designed for trust, not security — and every unverified packet is an opportunity for the attacker in the middle.

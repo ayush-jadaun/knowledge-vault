@@ -513,3 +513,105 @@ Certifications open doors, but skills keep you employed. The best approach:
 - [Blue Team & SOC](/cybersecurity/blue-team-soc) — Skills for CySA+, GCIH, BTL1
 - [Bug Bounty Hunting](/cybersecurity/bug-bounty) — Real-world practice alongside certification study
 - [Malware Analysis](/cybersecurity/malware-analysis) — Skills for GREM certification
+
+---
+
+::: tip Key Takeaway
+- CompTIA Security+ is the universal starting point — it is required or preferred for most security positions and is worth getting first regardless of your career path
+- OSCP is the gold standard for offensive security roles — its 24-hour practical exam proves real-world exploitation skills that no multiple-choice exam can match
+- Certifications open doors, but skills keep you employed — practice in labs and CTFs first, then certify to validate what you already know
+:::
+
+::: details Hands-On Lab
+**Lab: OSCP Preparation Practice**
+
+1. Set up your OSCP lab environment: Kali Linux with all tools configured and note-taking ready (Obsidian or CherryTree)
+2. Complete 5 machines from TJ Null's OSCP-like list on HackTheBox (start with Easy, progress to Medium)
+3. For each machine, follow the methodology: enumerate, identify vulnerabilities, exploit, escalate privileges
+4. Write a pentest report for each machine: executive summary, findings, reproduction steps, and remediation
+5. Practice Active Directory: set up GOAD (Game of Active Directory) and practice the full attack chain from domain user to domain admin
+6. Time yourself: complete one machine in under 3 hours, simulating exam conditions
+7. Review your methodology gaps and create cheat sheets for common enumeration commands, privilege escalation paths, and AD attacks
+:::
+
+::: details CTF Challenge
+**Challenge: The Certification Decision**
+
+You are a junior SOC analyst with 1 year of experience. Your employer offers to sponsor one certification. You want to move into penetration testing within 2 years. Which certification should you choose, and what is your study plan?
+
+**Hints:**
+1. Consider the certification that would be most valuable for a pentesting career
+2. Think about prerequisites and whether you have them
+3. Consider ROI: cost vs salary increase vs career progression
+
+::: details Answer
+Choose OSCP. It is the gold standard for penetration testing roles, has the highest ROI for career transition, and proves practical skills. Study plan: Months 1-2: Complete PEN-200 course material and TryHackMe Offensive Pentesting path. Months 3-4: Complete 30+ machines from TJ Null's list and Proving Grounds. Month 5: Practice AD attacks and timed exam simulations. The OSCP title opens doors to pentesting roles immediately. Flag: `CTF{oscp_is_the_golden_ticket_to_pentesting}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"You need a degree to work in cybersecurity"** — Many successful security professionals have no degree. Certifications, practical experience, and a portfolio of CTF achievements matter more.
+- **"CEH is as valuable as OSCP"** — CEH tests theoretical knowledge with multiple-choice questions. OSCP tests real-world exploitation in a 24-hour practical exam. The industry overwhelmingly values OSCP higher.
+- **"CISSP is for technical roles"** — CISSP tests management thinking, not technical skills. It is designed for security managers, architects, and CISOs, not hands-on pentesters or analysts.
+- **"More certifications mean better job prospects"** — Employers value depth over breadth. Two relevant certifications with demonstrable skills beat five irrelevant certifications.
+- **"You should wait until you are ready before taking the exam"** — You will never feel 100% ready. If you consistently score 85%+ on practice exams, take the real one.
+:::
+
+::: details Quiz
+**1. What makes OSCP different from most other security certifications?**
+
+a) It is cheaper
+b) It is a 24-hour practical exam requiring real exploitation and a professional report
+c) It is multiple choice
+d) It does not expire
+
+::: details Answer
+b) OSCP requires exploiting machines in a 24-hour practical exam and submitting a professional penetration test report. This format proves real-world skills, unlike multiple-choice exams.
+:::
+
+**2. What is the minimum experience recommended for CISSP?**
+
+a) No experience required
+b) 2 years in IT
+c) 5 years in 2+ of 8 security domains (or 4 years + degree)
+d) 10 years in cybersecurity
+
+::: details Answer
+c) CISSP requires 5 years of cumulative paid work experience in two or more of the eight CISSP domains. A four-year degree or approved credential can substitute for one year.
+:::
+
+**3. Which certification path provides the best ROI for a career in SOC/blue team?**
+
+a) CEH then CISSP
+b) Security+ then CySA+ then BTL1
+c) eJPT then OSCP
+d) AWS Security then CCSP
+
+::: details Answer
+b) Security+ provides the foundation, CySA+ validates blue team analysis skills, and BTL1 proves practical incident response and detection capabilities — a focused blue team career path.
+:::
+
+**4. What is the OSCP passing score?**
+
+a) 70/100 points
+b) 750/900 points
+c) 85% on multiple choice
+d) 50/100 points
+
+::: details Answer
+a) OSCP requires 70 out of 100 points. The exam consists of an AD set (40 points), three standalone machines (20 points each), and up to 10 bonus points from lab exercises.
+:::
+
+**5. Why are SANS/GIAC certifications expensive compared to OffSec certifications?**
+
+a) They are more prestigious
+b) The price includes a week-long intensive training course (~$8,500 total)
+c) They are harder
+d) They include free retakes
+
+::: details Answer
+b) SANS certifications bundle a week-long intensive training course with the exam. The ~$8,500 price covers both the training and the GIAC exam. OffSec provides self-paced materials at a lower price point.
+:::
+:::
+
+> **One-Liner Summary:** Certifications prove what you know, but labs and CTFs build what you can do — the best professionals have both.

@@ -593,3 +593,107 @@ Use **Proxmox** or **VirtualBox** to build a free AD lab:
 - [Network Attacks & Defense](/cybersecurity/network-attacks) — LLMNR/NBT-NS poisoning for initial access
 - [Security Certifications](/cybersecurity/security-certifications) — OSCP, CRTO for AD-focused certs
 - [Malware Analysis](/cybersecurity/malware-analysis) — Analyzing post-exploitation tooling
+
+---
+
+::: tip Key Takeaway
+- Active Directory is the single highest-value target in enterprise networks — compromising it means access to every system, user, and secret in the organization
+- Kerberoasting requires only a regular domain user account and can yield service account credentials that often have domain admin privileges
+- Defense requires tiered administration, LAPS, Protected Users group, and monitoring of Windows Event IDs 4769 (Kerberoasting) and 4662 (DCSync)
+:::
+
+::: details Hands-On Lab
+**Lab: Active Directory Attack Chain**
+
+1. Build an AD lab: install Windows Server 2022 as Domain Controller with two Windows 10 workstations joined to the domain
+2. Create vulnerable configurations: a service account with an SPN and a weak password, a user with pre-auth disabled, and overly permissive ACLs
+3. From a domain user account, run SharpHound to collect AD data and import into BloodHound
+4. Use BloodHound's "Shortest Path to Domain Admin" query to find your attack path
+5. Perform Kerberoasting with Rubeus and crack the service ticket with hashcat (mode 13100)
+6. Perform AS-REP roasting on the pre-auth-disabled account
+7. Use the cracked credentials for lateral movement with CrackMapExec
+8. Achieve domain dominance with DCSync using Impacket's secretsdump
+9. Install Sysmon on the DC and verify that you can detect your attacks via Event IDs
+:::
+
+::: details CTF Challenge
+**Challenge: The Forgotten Service Account**
+
+You have a low-privilege domain user account (`jsmith:Welcome123!`) in the `corp.local` domain. BloodHound shows a Kerberoastable service account `svc_backup` that is a member of the `Backup Operators` group. Compromise the domain.
+
+**Hints:**
+1. Kerberoast `svc_backup` to get its TGS hash
+2. The password is in the rockyou wordlist
+3. Backup Operators can read `NTDS.dit` using `diskshadow` and `robocopy`
+
+::: details Answer
+Kerberoast with `impacket-GetUserSPNs corp.local/jsmith:'Welcome123!' -request`. Crack the hash with `hashcat -m 13100 hash.txt rockyou.txt` to find the password is `Backup2019!`. Use `svc_backup` credentials to create a shadow copy of the C: drive with `diskshadow`, copy `NTDS.dit` and the SYSTEM hive, then extract all domain hashes with `impacket-secretsdump -ntds ntds.dit -system SYSTEM LOCAL`. Flag: `CTF{kerberoast_to_domain_admin}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"Domain Admins are the only high-value accounts"** — Service accounts, accounts with DCSync rights, and accounts with write access to privileged groups are equally dangerous and often less monitored.
+- **"Kerberoasting requires admin privileges"** — Any authenticated domain user can request a TGS for any SPN. The attack is entirely within normal Kerberos behavior.
+- **"Golden Tickets expire when the user's password changes"** — Golden Tickets are signed with the krbtgt hash, not the user's hash. They remain valid until krbtgt is reset twice.
+- **"Disabling NTLM breaks everything"** — Modern environments can operate on Kerberos alone. NTLM should be disabled or heavily restricted; the migration just requires planning.
+- **"BloodHound is only for attackers"** — Defenders should run BloodHound regularly to find and fix attack paths before penetration testers exploit them.
+:::
+
+::: details Quiz
+**1. What Kerberos step does Kerberoasting exploit?**
+
+a) AS-REQ/AS-REP (Step 1)
+b) TGS-REQ/TGS-REP (Step 2)
+c) AP-REQ/AP-REP (Step 3)
+d) Pre-authentication
+
+::: details Answer
+b) Kerberoasting exploits TGS-REQ/TGS-REP. Any domain user can request a service ticket (TGS) for any SPN, and the ticket is encrypted with the service account's NTLM hash, which can be cracked offline.
+:::
+
+**2. What distinguishes a Golden Ticket from a Silver Ticket?**
+
+a) Golden Tickets are faster
+b) Golden Tickets forge TGTs (any user, any service) while Silver Tickets forge TGS for a single service
+c) Silver Tickets require more privileges to create
+d) Golden Tickets only work on Windows 10
+
+::: details Answer
+b) Golden Tickets forge TGTs using the krbtgt hash and grant access to any service in the domain. Silver Tickets forge service tickets using a service account hash and only work against that specific service.
+:::
+
+**3. What Windows Event ID indicates a potential DCSync attack from a non-DC source?**
+
+a) 4624
+b) 4769
+c) 4662
+d) 4688
+
+::: details Answer
+c) Event ID 4662 logs directory service access. When it contains the replication GUIDs (`1131f6aa-...` and `1131f6ad-...`) from a non-DC source, it indicates a DCSync attack.
+:::
+
+**4. What does adding an account to the Protected Users group prevent?**
+
+a) The user from logging in
+b) NTLM authentication, credential caching, and DES/RC4 Kerberos
+c) The user from changing their password
+d) Remote Desktop access
+
+::: details Answer
+b) Protected Users members cannot use NTLM (blocking Pass-the-Hash), their credentials are not cached on endpoints, and they must use AES for Kerberos (not RC4), making Kerberoasting much harder.
+:::
+
+**5. What is the purpose of LAPS in Active Directory?**
+
+a) Locking accounts after failed logins
+b) Randomizing local administrator passwords on every domain-joined computer
+c) Encrypting LDAP traffic
+d) Managing group policies
+
+::: details Answer
+b) LAPS (Local Administrator Password Solution) generates unique, random local admin passwords for each computer, stores them in AD, and rotates them regularly — preventing lateral movement via shared local admin credentials.
+:::
+:::
+
+> **One-Liner Summary:** Active Directory is the crown jewel of enterprise security — compromise the directory, and you own the kingdom.

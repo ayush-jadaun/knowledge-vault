@@ -500,3 +500,106 @@ graph TB
 - [Mobile Security](/cybersecurity/mobile-security) — Mobile app testing for bounties
 - [Web3 Security](/cybersecurity/web3-security) — Smart contract bounties (highest payouts)
 - [Security Certifications](/cybersecurity/security-certifications) — eJPT, OSCP to complement hunting
+
+---
+
+::: tip Key Takeaway
+- Spend 60-70% of your time on reconnaissance — the hunter who finds the most assets finds the most bugs; everyone else is competing on the same main domain
+- IDOR/BOLA is the highest-ROI vulnerability class for beginners: easy to find, high impact, and scanners cannot detect it
+- Report quality directly impacts your payout and reputation — a clear, well-structured report with reproduction steps and impact demonstration earns 2-3x more than a vague submission
+:::
+
+::: details Hands-On Lab
+**Lab: Bug Bounty Recon Pipeline**
+
+1. Choose a bug bounty program with wide scope (*.target.com) on HackerOne or Bugcrowd
+2. Run the full subdomain enumeration pipeline: subfinder + amass + crt.sh, deduplicate, and probe with httpx
+3. Scan all live subdomains with naabu for open ports beyond 80/443
+4. Run ffuf directory brute-forcing on the top 10 most interesting subdomains
+5. Extract and analyze JavaScript files from discovered URLs using gau and LinkFinder
+6. Run Nuclei with community templates against all discovered URLs
+7. Set up subdomain monitoring: run the pipeline daily with cron and diff against previous results
+8. Document everything in a tracking sheet: target, endpoints tested, findings, status
+:::
+
+::: details CTF Challenge
+**Challenge: The Forgotten Endpoint**
+
+A bug bounty target has a main application at `app.target.com`. Your recon reveals a subdomain `api-staging.target.com` that returns 403 on the root path. Find the hidden API documentation, discover an unauthenticated endpoint, and demonstrate data access.
+
+**Hints:**
+1. Try common documentation paths: `/swagger.json`, `/api-docs`, `/openapi.json`
+2. The staging API may not enforce authentication on all endpoints
+3. Check Wayback Machine for historical paths
+
+::: details Answer
+Run `ffuf -u https://api-staging.target.com/FUZZ -w api-wordlist.txt` to find `/v2/api-docs` returning the Swagger specification. The spec reveals `GET /api/v2/users/{id}` which does not require authentication on the staging environment. Access `GET /api/v2/users/1` to retrieve user data. Flag: `CTF{staging_apis_forget_auth}`. Write a report: BOLA on staging API, P2 severity, recommend adding authentication and restricting staging access.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"Bug bounty hunting is easy money"** — Most beginners earn nothing for the first few months. Consistent earnings require 3-6 months of dedicated skill building, methodology development, and target familiarity.
+- **"Run scanners and submit what they find"** — Scanner findings are usually duplicates or false positives. The bugs that pay well (IDOR, auth bypass, business logic) require manual testing.
+- **"You need expensive tools to hunt"** — The most successful hunters use free tools: Burp Community, ffuf, subfinder, httpx, and Nuclei. Skill matters more than tools.
+- **"Wide scope means easy bugs"** — Wide scope means more attack surface but also more competition. The advantage is finding forgotten subdomains and staging environments that narrow-scope programs do not expose.
+- **"Self-XSS is not worth reporting"** — Most programs accept self-XSS only if you can demonstrate it is exploitable (e.g., via CSRF). Do not report it as a standalone finding unless the program explicitly accepts it.
+:::
+
+::: details Quiz
+**1. What recon technique is most likely to find bugs that other hunters miss?**
+
+a) Running Nmap on the main domain
+b) Deep subdomain enumeration + port scanning on non-standard ports + JavaScript analysis
+c) Using only automated scanners
+d) Testing only the login page
+
+::: details Answer
+b) Comprehensive recon that combines subdomain discovery, full port scanning (not just top-1000), and JavaScript file analysis finds forgotten assets, staging environments, and hidden API endpoints that other hunters overlook.
+:::
+
+**2. Why should you test every API endpoint with two different user accounts?**
+
+a) To test performance
+b) To find BOLA/IDOR vulnerabilities where one user can access another's resources
+c) To test rate limiting
+d) To verify the API is working
+
+::: details Answer
+b) Using Account A's session to access Account B's resources (by changing IDs in the request) tests for BOLA/IDOR — the most common and impactful API vulnerability class.
+:::
+
+**3. What makes a P1 (Critical) bug bounty report?**
+
+a) Any XSS finding
+b) Remote code execution, authentication bypass affecting all users, or mass data breach
+c) A missing security header
+d) An information disclosure
+
+::: details Answer
+b) P1/Critical reports demonstrate severe impact: RCE, full authentication bypass, ability to access all users' data, or complete account takeover. The severity is about the impact, not just the vulnerability type.
+:::
+
+**4. What is the best strategy for choosing a bug bounty program as a beginner?**
+
+a) Pick the program with the highest payouts
+b) Choose programs with wide scope, high response rate, and recent launch
+c) Only hunt on invite-only programs
+d) Choose the most popular program
+
+::: details Answer
+b) Wide scope provides more attack surface, high response rate means your reports will actually be reviewed, and recently launched programs have less competition and more undiscovered bugs.
+:::
+
+**5. What is the most important section of a bug bounty report?**
+
+a) The title
+b) Steps to reproduce — exact, clear steps anyone can follow
+c) The suggested fix
+d) Your HackerOne profile link
+
+::: details Answer
+b) Steps to reproduce are the most critical section. If the security team cannot reproduce the bug, they will close the report. Include exact URLs, parameters, HTTP requests, and screenshots.
+:::
+:::
+
+> **One-Liner Summary:** Bug bounty success is 70% reconnaissance, 20% manual testing skill, and 10% clear report writing — and zero percent luck.

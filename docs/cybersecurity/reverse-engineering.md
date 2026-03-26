@@ -546,3 +546,106 @@ rule SuspiciousBinary {
 - [Incident Response & Forensics](/cybersecurity/incident-response-forensics) — using RE in IR workflows
 - [Practical Cryptography](/cybersecurity/cryptography-practical) — analyzing crypto in binaries
 - [Security Tools Encyclopedia](/cybersecurity/security-tools) — comprehensive tool reference
+
+---
+
+::: tip Key Takeaway
+- You do not need to write assembly — you need to read it; focus on recognizing common patterns like function prologues, loops, and string comparisons
+- Start every binary analysis with strings extraction and import analysis before opening a disassembler — these two steps reveal 80% of a binary's purpose
+- Ghidra's decompiler is the fastest path from assembly to understanding; rename variables and functions aggressively to build comprehension
+:::
+
+::: details Hands-On Lab
+**Lab: Reverse Engineer a Crackme**
+
+1. Download a beginner crackme from crackmes.one (difficulty 1-2)
+2. Run `file` and `strings` on the binary to identify its type and extract readable text
+3. Check security features with `checksec` (RELRO, stack canary, NX, PIE)
+4. Load the binary into Ghidra — let auto-analysis complete
+5. Find the `main` function and switch to the Decompiler view
+6. Identify the password validation logic in the decompiled C code
+7. Determine the correct password without brute forcing — use the decompiled logic
+8. Verify your answer by running the binary with the correct input
+9. Bonus: Patch the binary in Ghidra to always print "Access granted" regardless of input
+:::
+
+::: details CTF Challenge
+**Challenge: The License Checker**
+
+A binary `license_check` asks for a license key. When you enter anything, it says "Invalid license." The key is validated by computing a checksum of the input and comparing it to a hardcoded value. Find the correct license key.
+
+**Hints:**
+1. The checksum function XORs each character with a rotating key
+2. The expected checksum is stored as a constant in the `.rodata` section
+3. The key is exactly 8 characters long and only contains uppercase letters
+
+::: details Answer
+Load in Ghidra, find the validation function. The function XORs each character of input with the bytes `[0x13, 0x37, 0x42, 0x05, 0x13, 0x37, 0x42, 0x05]` and compares against the stored bytes `[0x52, 0x56, 0x07, 0x44, 0x5E, 0x04, 0x21, 0x40]`. XOR is reversible: `0x52 ^ 0x13 = 0x41 = 'A'`, etc. The license key is `AEON_KEY` and the flag is `CTF{xor_is_not_encryption}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"You need to be an expert programmer to do reverse engineering"** — You need to read code, not write it. Understanding control flow and common patterns is more important than language mastery.
+- **"Obfuscation makes reverse engineering impossible"** — Obfuscation slows down analysis but never prevents it. If the CPU can execute it, a human can understand it — it just takes more time.
+- **"IDA Pro is required for serious RE work"** — Ghidra (free, NSA-developed) has a world-class decompiler and handles most RE tasks. IDA Pro is excellent but not the only option.
+- **"Dynamic analysis is always better than static analysis"** — Both are essential. Static analysis is safe and reveals structure; dynamic analysis reveals runtime behavior. Use both together.
+:::
+
+::: details Quiz
+**1. What does the x86 instruction `xor eax, eax` do?**
+
+a) XORs two memory values
+b) Sets EAX to zero
+c) Reads from memory
+d) Triggers an interrupt
+
+::: details Answer
+b) XORing a register with itself always produces zero. This is a common compiler optimization for zeroing a register (more compact than `mov eax, 0`).
+:::
+
+**2. In the x64 System V calling convention (Linux), where is the first function argument passed?**
+
+a) RAX
+b) RCX
+c) RDI
+d) On the stack
+
+::: details Answer
+c) RDI holds the first argument, followed by RSI, RDX, RCX, R8, R9. Additional arguments go on the stack.
+:::
+
+**3. What tool would you use to monitor all system calls made by a Linux binary?**
+
+a) Ghidra
+b) strace
+c) Wireshark
+d) Nmap
+
+::: details Answer
+b) `strace` traces all system calls made by a process, showing file access, network connections, and memory operations in real time.
+:::
+
+**4. What is the purpose of binary diffing?**
+
+a) Merging two binaries into one
+b) Comparing two versions of a binary to identify changes
+c) Encrypting a binary
+d) Converting a binary to source code
+
+::: details Answer
+b) Binary diffing compares two versions of a binary (e.g., before and after a security patch) to identify exactly which functions were changed, added, or removed.
+:::
+
+**5. What does a high entropy value (> 7.0) in a PE section typically indicate?**
+
+a) The section contains debug symbols
+b) The section is compressed or encrypted (likely packed)
+c) The section has many strings
+d) The section is empty
+
+::: details Answer
+b) High entropy indicates data that appears random, which is characteristic of compression or encryption. Packed malware typically has sections with entropy above 7.0.
+:::
+:::
+
+> **One-Liner Summary:** Reverse engineering is reading the story a compiler told in machine code — and every binary has secrets for those patient enough to read.

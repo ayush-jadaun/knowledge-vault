@@ -680,3 +680,105 @@ spec:
 - [Red Team Operations](/cybersecurity/red-team-ops) — Container escape in red team engagements
 - [Blue Team & SOC](/cybersecurity/blue-team-soc) — Monitoring container workloads
 - [Security Certifications](/cybersecurity/security-certifications) — CKS (Certified Kubernetes Security Specialist)
+
+---
+
+::: tip Key Takeaway
+- A privileged container is equivalent to root on the host — `privileged: true` should never appear in production pod specs
+- Default Kubernetes configurations are insecure: no network policies (all pods can talk to all pods), default service account tokens mounted everywhere, and no pod security enforcement
+- Supply chain security starts with pinning images by digest, scanning with Trivy, signing with Cosign, and verifying with admission controllers
+:::
+
+::: details Hands-On Lab
+**Lab: Kubernetes Security Assessment**
+
+1. Deploy a local Kubernetes cluster with minikube or kind
+2. Deploy a deliberately misconfigured application: privileged container, no network policies, default service account
+3. From inside the pod, enumerate Kubernetes API access using the mounted service account token
+4. Attempt a container escape: mount the host filesystem from the privileged container
+5. Apply Pod Security Standards (Restricted level) to the namespace and verify the privileged pod is rejected
+6. Create network policies: default deny all, then explicitly allow only frontend-to-backend and backend-to-database
+7. Run kube-bench to check CIS benchmark compliance
+8. Install Falco and trigger a shell-in-container alert
+:::
+
+::: details CTF Challenge
+**Challenge: Escape the Pod**
+
+You have a shell inside a Kubernetes pod. The pod has `automountServiceAccountToken: true` and the service account has `list secrets` and `create pods` permissions. Escalate to cluster admin.
+
+**Hints:**
+1. Read the service account token from `/var/run/secrets/kubernetes.io/serviceaccount/token`
+2. List secrets across all namespaces — look for admin kubeconfig or service account tokens
+3. Create a new pod with `privileged: true` and a hostPath mount
+
+::: details Answer
+Read the token: `TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)`. List secrets: `curl -sk -H "Authorization: Bearer $TOKEN" https://kubernetes.default.svc/api/v1/secrets` to find a `cluster-admin-token` secret. Use the cluster-admin token to create a privileged pod with `hostPath: /` mounted. Enter the privileged pod and `chroot /host` for full node access. Flag: `CTF{sa_token_to_cluster_admin}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"Containers provide security isolation"** — Containers share the host kernel. A kernel exploit or privileged container escapes the container boundary entirely. Use gVisor or Kata Containers for true isolation.
+- **"Scanning images in CI/CD is sufficient"** — New CVEs are discovered daily. Images that passed scanning during build may be vulnerable by deployment time. Continuous scanning in the registry and runtime is needed.
+- **"Kubernetes namespaces are security boundaries"** — Namespaces are logical groupings, not security boundaries. Without network policies and RBAC, pods in different namespaces communicate freely.
+- **"Read-only root filesystem breaks applications"** — Most applications only need to write to `/tmp` or specific data directories. Mount writable emptyDir volumes for those paths while keeping the root filesystem read-only.
+:::
+
+::: details Quiz
+**1. What Kubernetes setting prevents a container from running as root?**
+
+a) `privileged: false`
+b) `runAsNonRoot: true`
+c) `readOnlyRootFilesystem: true`
+d) `allowPrivilegeEscalation: false`
+
+::: details Answer
+b) `runAsNonRoot: true` in the pod's securityContext ensures the container process does not run as UID 0. The kubelet will reject pods that attempt to run as root.
+:::
+
+**2. What does `automountServiceAccountToken: false` prevent?**
+
+a) The pod from starting
+b) Automatic mounting of the Kubernetes API service account token inside the pod
+c) Network access
+d) Volume mounts
+
+::: details Answer
+b) By default, Kubernetes mounts a service account token in every pod. Setting this to false prevents the token from being mounted, reducing the risk of API abuse from a compromised pod.
+:::
+
+**3. What is the purpose of a default deny network policy?**
+
+a) Block all internet access
+b) Deny all ingress and egress traffic to pods in the namespace unless explicitly allowed
+c) Prevent pod creation
+d) Disable DNS
+
+::: details Answer
+b) A default deny policy blocks all traffic to and from pods. You then create specific allow rules for required communication paths (e.g., frontend to backend on port 8080).
+:::
+
+**4. What tool is the de facto standard for Kubernetes runtime security?**
+
+a) Trivy
+b) Falco
+c) kube-bench
+d) Cosign
+
+::: details Answer
+b) Falco monitors system calls at runtime and detects anomalous behavior like shells spawned in containers, sensitive file access, and connections to mining pools.
+:::
+
+**5. Why should container images be pinned by digest instead of tag?**
+
+a) Digests are shorter
+b) Tags can be overwritten with a different image (supply chain attack), but digests are immutable content hashes
+c) Digests are faster to pull
+d) Tags are deprecated
+
+::: details Answer
+b) Tags like `latest` or `1.0` can be replaced with a completely different image. Digests (SHA256 hashes) are immutable — they always refer to the exact same image content.
+:::
+:::
+
+> **One-Liner Summary:** Kubernetes defaults are optimized for convenience, not security — every production cluster needs explicit hardening or it is one compromised pod away from total takeover.

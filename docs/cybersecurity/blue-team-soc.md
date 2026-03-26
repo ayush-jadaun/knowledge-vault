@@ -467,3 +467,106 @@ graph TB
 - [Malware Analysis](/cybersecurity/malware-analysis) — Deep dive into malware investigation
 - [Security Certifications](/cybersecurity/security-certifications) — CySA+, GCIH, BTL1 for blue team
 - [Incident Response & Forensics](/cybersecurity/incident-response-forensics) — IR process and forensic techniques
+
+---
+
+::: tip Key Takeaway
+- A SOC is only as good as its data sources — missing logs means missing attacks; enable Sysmon, PowerShell Script Block Logging, and DNS query logging before anything else
+- Sigma rules provide vendor-agnostic detection: write once, convert to Splunk SPL, Elastic KQL, or Sentinel KQL with a single command
+- The biggest enemy of a SOC is alert fatigue — tune aggressively, automate triage with SOAR, and track false positive rates per rule
+:::
+
+::: details Hands-On Lab
+**Lab: Build a Detection Engineering Pipeline**
+
+1. Set up a free Elastic SIEM instance (or Wazuh) on a lab VM
+2. Configure Windows Event forwarding from a test workstation with Sysmon installed
+3. Write a Sigma rule to detect Mimikatz execution (look for process name or command-line patterns)
+4. Convert the Sigma rule to your SIEM's query language using `sigma convert`
+5. Deploy the detection rule in your SIEM
+6. Execute a Mimikatz simulation using Atomic Red Team (`Invoke-AtomicTest T1003.001`)
+7. Verify the alert fires, then tune it to reduce false positives from legitimate LSASS access
+8. Create a SOAR playbook that automatically enriches alerts with VirusTotal lookups
+:::
+
+::: details CTF Challenge
+**Challenge: The Phantom Lateral Movement**
+
+Your SIEM shows a successful logon (Event ID 4624, Logon Type 3) from workstation `WS-042` to server `SRV-DB-01` at 2:17 AM using the `svc_sql` account. No legitimate admin activity was scheduled. Investigate the alert and determine: Is this a true positive? What attack technique was used? What should be contained?
+
+**Hints:**
+1. Check Event ID 4769 on the DC around 2:15 AM for TGS requests
+2. Look for Event ID 7045 on SRV-DB-01 for new service creation
+3. Check if `svc_sql` is a Kerberoastable service account
+
+::: details Answer
+Event ID 4769 at 2:15 AM shows a TGS request for `svc_sql` with RC4 encryption (type 0x17) from WS-042 — Kerberoasting. The attacker cracked the service ticket offline and used the password for lateral movement. Event ID 7045 on SRV-DB-01 shows a new service `BTOBTO` created by `svc_sql` — PsExec-style execution. Contain: isolate WS-042 and SRV-DB-01, reset `svc_sql` password, convert to gMSA. Flag: `CTF{kerberoast_lateral_move_detected}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"More alerts mean better security"** — Alert volume without context creates fatigue. Quality (high true positive rate) matters more than quantity.
+- **"SIEM deployment means threats are detected"** — A SIEM without tuned rules, sufficient log sources, and trained analysts is just an expensive log storage solution.
+- **"Threat hunting is just running queries"** — True threat hunting starts with a hypothesis based on threat intelligence, systematically searches for evidence, and creates new detections from findings.
+- **"Sigma rules replace SIEM-specific rules"** — Sigma provides portability, but converted rules often need platform-specific tuning for field names, log formats, and performance optimization.
+- **"L1 analysts just click buttons"** — Effective L1 triage requires understanding networking, OS internals, and attacker TTPs. The role is the foundation of SOC effectiveness.
+:::
+
+::: details Quiz
+**1. What is the primary advantage of Sigma detection rules?**
+
+a) They are faster than native SIEM rules
+b) They are vendor-agnostic and can be converted to any SIEM platform
+c) They automatically block threats
+d) They replace YARA rules
+
+::: details Answer
+b) Sigma rules are written in a universal YAML format and can be converted to Splunk SPL, Elastic KQL, Microsoft Sentinel KQL, and other SIEM query languages.
+:::
+
+**2. What SOC metric measures the time from an attack starting to the first alert firing?**
+
+a) MTTR (Mean Time to Respond)
+b) MTTD (Mean Time to Detect)
+c) MTTA (Mean Time to Acknowledge)
+d) SLA compliance rate
+
+::: details Answer
+b) MTTD measures the elapsed time between when an attack begins and when the SOC's first alert fires. Lower MTTD means faster detection.
+:::
+
+**3. Which Windows Event ID reveals the full text of PowerShell scripts executed on a system?**
+
+a) 4624
+b) 4688
+c) 4104
+d) 7045
+
+::: details Answer
+c) Event ID 4104 (PowerShell Script Block Logging) captures the full text of every PowerShell script executed, including deobfuscated content. This is critical for detecting encoded or obfuscated PowerShell attacks.
+:::
+
+**4. What is the purpose of SOAR in a SOC?**
+
+a) Replacing analysts entirely
+b) Automating repetitive triage and response tasks through playbooks
+c) Storing log data more efficiently
+d) Training new analysts
+
+::: details Answer
+b) SOAR (Security Orchestration, Automation, and Response) automates repetitive investigation steps like IOC enrichment, email quarantine, and IP blocking, freeing analysts for complex analysis.
+:::
+
+**5. What should a SOC do when a detection rule has a 95% false positive rate?**
+
+a) Ignore all alerts from that rule
+b) Disable the rule entirely
+c) Rewrite or tune the rule to improve precision, or remove it
+d) Increase the alert priority
+
+::: details Answer
+c) A rule with 95% FP rate wastes analyst time and contributes to alert fatigue. It should be rewritten with more specific conditions, additional context filters, or removed if it cannot be improved.
+:::
+:::
+
+> **One-Liner Summary:** The blue team's job is not to prevent every attack — it is to detect, contain, and recover faster than the attacker can cause damage.

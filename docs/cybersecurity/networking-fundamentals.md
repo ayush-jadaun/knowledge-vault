@@ -498,3 +498,108 @@ alert tcp any any -> $HOME_NET any (msg:"Possible Nmap SYN Scan"; \
 - [OSINT](/cybersecurity/osint) — passive recon, Shodan, Google dorking
 - [Security Tools Encyclopedia](/cybersecurity/security-tools) — comprehensive tool reference
 - [Web App Pentesting](/cybersecurity/web-app-pentesting) — testing web services found during recon
+
+---
+
+::: tip Key Takeaway
+- Every cyberattack starts with network reconnaissance — understanding TCP/IP, ports, and protocols is the foundation of both offense and defense
+- Nmap is the single most important tool; master its scan types, NSE scripts, and output formats before moving to any other tool
+- Wireshark turns invisible network traffic into readable evidence — learn its display filters to detect scans, MITM attacks, and data exfiltration
+:::
+
+::: details Hands-On Lab
+**Lab: Build a Network Reconnaissance Pipeline**
+
+1. Set up a target network using VulnHub (e.g., Metasploitable 2) or TryHackMe's "Network Services" room
+2. Perform passive recon: run `whois`, `dig`, and certificate transparency lookups against a test domain
+3. Perform active recon with Nmap:
+   - Run a host discovery scan (`-sn`) on the subnet
+   - Run a SYN scan on discovered hosts (`-sS --top-ports 1000`)
+   - Run version detection + default scripts (`-sV -sC`) on open ports
+   - Run a vulnerability scan (`--script vuln`) on interesting services
+4. Capture 5 minutes of traffic with Wireshark while running your scans
+5. Use Wireshark display filters to identify your own SYN scan traffic, then write a Suricata rule to detect it
+6. Save all Nmap output in all three formats (`-oA`) and practice parsing the grepable output with `grep` and `awk`
+:::
+
+::: details CTF Challenge
+**Challenge: The Hidden Service**
+
+A server at `10.10.10.42` has a secret web application running on an unusual port. The standard top-1000 Nmap scan returns only SSH (22) and HTTP (80). The HTTP server on port 80 shows a default page. Your mission: find the hidden service, identify the software and version, and retrieve the flag from its landing page.
+
+**Hints:**
+1. A top-1000 scan misses over 64,000 ports
+2. The service runs on a port above 40000
+3. The service requires a specific `Host` header to respond
+
+::: details Answer
+Run a full port scan: `nmap -sS -p- -T4 10.10.10.42`. This reveals port 41337 open. Then run `nmap -sV -sC -p 41337 10.10.10.42` to identify the service. Use `curl -H "Host: secret.target.local" http://10.10.10.42:41337/` to access the hidden application and find the flag. The flag is `CTF{full_port_scans_save_lives}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"A SYN scan is invisible to the target"** — SYN scans are stealthier than connect scans but still generate network traffic. Modern IDS/IPS (Suricata, Snort) detect SYN scans easily by monitoring for rapid SYN packets from a single source.
+- **"Filtered ports mean there is no service"** — Filtered means a firewall is blocking your probe. The service may still be running and accessible from a different network or through a different protocol.
+- **"Nmap is only for attackers"** — Network defenders use Nmap for asset discovery, compliance auditing, and verifying firewall rules. It is a universal network tool.
+- **"UDP scanning is not important"** — Critical services like DNS (53), SNMP (161), and DHCP (67/68) run on UDP. Ignoring UDP means missing major attack surfaces.
+- **"Wireshark can only capture live traffic"** — Wireshark excels at analyzing saved PCAP files, making it invaluable for post-incident forensics.
+:::
+
+::: details Quiz
+**1. What TCP flag combination indicates an open port during a SYN scan?**
+
+a) RST
+b) SYN-ACK
+c) FIN-ACK
+d) ACK only
+
+::: details Answer
+b) SYN-ACK. The target responds with SYN-ACK to indicate the port is open and accepting connections.
+:::
+
+**2. Which Nmap scan type requires root/admin privileges?**
+
+a) TCP connect scan (-sT)
+b) SYN scan (-sS)
+c) Both require root
+d) Neither requires root
+
+::: details Answer
+b) SYN scan (-sS) requires root because it crafts raw packets. TCP connect scan (-sT) uses the operating system's connect() call and works without root.
+:::
+
+**3. What does Wireshark filter `tcp.flags.syn==1 && tcp.flags.ack==0` detect?**
+
+a) Established connections
+b) Port scan SYN packets
+c) Connection teardown
+d) UDP traffic
+
+::: details Answer
+b) Port scan SYN packets. This filter shows packets with the SYN flag set but not the ACK flag — the initial packet in a TCP handshake, which is exactly what a SYN scan sends.
+:::
+
+**4. Why would an attacker use an idle scan (-sI)?**
+
+a) It is faster than a SYN scan
+b) It hides the attacker's IP address completely
+c) It works through firewalls
+d) It detects UDP services
+
+::: details Answer
+b) An idle scan uses a zombie host to send the scan packets, so the target only sees the zombie's IP address, not the attacker's. The attacker's IP never touches the target.
+:::
+
+**5. What Nmap output format is best for parsing with automated tools?**
+
+a) Normal output (-oN)
+b) Grepable output (-oG)
+c) XML output (-oX)
+d) Script kiddie output (-oS)
+
+::: details Answer
+c) XML output (-oX) is the most structured format and is best for automated parsing by tools like searchsploit, Metasploit, and custom scripts. Grepable (-oG) is useful for quick command-line parsing but lacks detail.
+:::
+:::
+
+> **One-Liner Summary:** Every attack starts with a packet — master how they move, and you control both offense and defense.

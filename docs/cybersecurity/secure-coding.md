@@ -554,3 +554,113 @@ security-scan:
 - [Authentication](/security/authentication/) — deep dives on JWT, OAuth2, sessions
 - [API Security](/security/api-security/) — rate limiting, CORS, CSP, input validation
 - [Secrets Management](/security/secrets-management/) — never hardcode secrets
+
+---
+
+::: tip Key Takeaway
+- Every vulnerability traces to one root cause: trusting untrusted input — validate with allowlists, encode output based on context, and use parameterized queries for database access
+- Client-side validation is UX, not security — always validate on the server because attackers bypass client-side checks trivially with Burp Suite or curl
+- SAST tools like Semgrep catch vulnerability patterns before code is committed, turning security from a gate into a guardrail
+:::
+
+::: details Hands-On Lab
+**Lab: Secure Coding Workshop**
+
+1. Clone OWASP WebGoat or a similar deliberately vulnerable application
+2. Identify three different vulnerability types in the source code: SQL injection, XSS, and CSRF
+3. Fix each vulnerability using secure coding patterns: parameterized queries, context-dependent output encoding, and CSRF tokens
+4. Set up Semgrep in your local environment and run it against the vulnerable and fixed versions
+5. Verify Semgrep catches the original vulnerabilities and produces no findings on the fixed versions
+6. Write a custom Semgrep rule to detect hardcoded passwords in your preferred language
+7. Integrate Semgrep into a CI/CD pipeline (GitHub Actions or GitLab CI) to block PRs with security findings
+8. Implement secure file upload: extension allowlist, MIME type validation by content, random filenames, and storage outside the web root
+:::
+
+::: details CTF Challenge
+**Challenge: The Insecure Application**
+
+A code review reveals the following Python Flask endpoint. Find all the vulnerabilities and write the secure version.
+
+```python
+@app.route('/search')
+def search():
+    query = request.args.get('q')
+    results = db.execute(f"SELECT * FROM products WHERE name LIKE '%{query}%'")
+    return f"<h1>Results for {query}</h1><ul>{''.join(f'<li>{r.name}</li>' for r in results)}</ul>"
+```
+
+**Hints:**
+1. Count the distinct vulnerability types (there are at least 3)
+2. The fix requires parameterized queries, output encoding, and input validation
+
+::: details Answer
+Vulnerabilities: (1) SQL Injection via string interpolation in the query, (2) Reflected XSS via unencoded `query` in the HTML response, (3) No input validation on the `query` parameter. Secure version: use `db.execute("SELECT * FROM products WHERE name LIKE ?", ('%' + query + '%',))` for parameterized queries, `html.escape(query)` for XSS prevention, and add input length validation. Flag: `CTF{parameterize_encode_validate}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"Input validation prevents SQL injection"** — Input validation is defense-in-depth but not sufficient. Parameterized queries (prepared statements) are the primary defense because they separate code from data.
+- **"Using a framework means my code is secure"** — Frameworks provide security features (auto-escaping, CSRF tokens, ORM), but developers must use them correctly. Disabling auto-escaping, using raw queries, or misconfiguring CORS defeats the framework's protections.
+- **"Encoding and sanitization are the same thing"** — Encoding transforms special characters for safe rendering in a specific context. Sanitization removes or modifies unwanted content. They serve different purposes and are not interchangeable.
+- **"Security is the security team's job, not developers'"** — The cheapest fix is at development time ($10 per bug). The most expensive is in production ($10,000+). Developers who write secure code prevent more breaches than any amount of pentesting.
+- **"SAST tools produce too many false positives to be useful"** — Modern tools like Semgrep have low false positive rates because they use pattern-based matching rather than abstract analysis. Tune rules and start with high-severity findings.
+:::
+
+::: details Quiz
+**1. What is the primary defense against SQL injection?**
+
+a) Input validation with a denylist
+b) Parameterized queries (prepared statements)
+c) Web Application Firewall
+d) HTTPS encryption
+
+::: details Answer
+b) Parameterized queries separate SQL code from data, making it impossible for user input to be interpreted as SQL commands. The database engine treats parameters as literal values, never as executable code.
+:::
+
+**2. Why must output encoding be context-dependent?**
+
+a) Different browsers require different encoding
+b) The same data needs different encoding for HTML body, HTML attributes, JavaScript, URLs, and CSS contexts
+c) Context-dependent encoding is faster
+d) It is a framework requirement
+
+::: details Answer
+b) `<script>` encoded for HTML body becomes `&lt;script&gt;`, but in a JavaScript string context it needs `\x3Cscript\x3E`. Using the wrong encoding for the context leaves the application vulnerable.
+:::
+
+**3. What is the most secure way to store user passwords?**
+
+a) SHA-256 with a salt
+b) bcrypt with cost factor 12+ or Argon2id
+c) AES-256 encryption
+d) Base64 encoding
+
+::: details Answer
+b) bcrypt and Argon2id are intentionally slow password hashing algorithms that resist GPU-accelerated cracking. SHA-256 is too fast (billions of hashes per second on modern GPUs).
+:::
+
+**4. What makes SameSite cookies effective against CSRF?**
+
+a) They encrypt the cookie value
+b) The browser will not send the cookie with cross-origin requests, preventing forged requests from including authentication
+c) They expire faster
+d) They are harder to steal via XSS
+
+::: details Answer
+b) SameSite=Lax or SameSite=Strict tells the browser not to include the cookie in requests originating from other domains, which is exactly what CSRF attacks rely on.
+:::
+
+**5. What type of security testing analyzes source code without executing it?**
+
+a) DAST (Dynamic Application Security Testing)
+b) SAST (Static Application Security Testing)
+c) IAST (Interactive Application Security Testing)
+d) Penetration Testing
+
+::: details Answer
+b) SAST analyzes source code, bytecode, or binaries for vulnerability patterns without executing the application. It catches bugs early in the development lifecycle before code is deployed.
+:::
+:::
+
+> **One-Liner Summary:** Secure coding is not about being paranoid — it is about building the habit of never trusting input, always encoding output, and letting tools catch what humans miss.

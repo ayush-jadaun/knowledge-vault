@@ -525,3 +525,104 @@ Operational security determines whether the engagement succeeds or gets burned e
 - [Web App Pentesting](/cybersecurity/web-app-pentesting) — Web-based initial access
 - [Malware Analysis](/cybersecurity/malware-analysis) — Understanding post-exploitation tooling
 - [Security Certifications](/cybersecurity/security-certifications) — CRTO, OSCP, OSCE3
+
+---
+
+::: tip Key Takeaway
+- Red teaming tests detection and response, not just vulnerability count — the goal is to measure whether the blue team can catch a realistic adversary
+- C2 infrastructure must be layered with redirectors separating the operator from the team server, so that burning one component does not expose the entire operation
+- Purple team exercises maximize ROI by combining red team attacks with real-time blue team detection review, closing gaps immediately
+:::
+
+::: details Hands-On Lab
+**Lab: Red Team Infrastructure and Phishing Campaign**
+
+1. Set up a basic C2 infrastructure: deploy Sliver on a VPS, configure an HTTPS listener with a legitimate-looking domain
+2. Create an HTTPS redirector using Apache `mod_rewrite` that forwards only valid C2 traffic to the team server
+3. Set up GoPhish on a separate server for phishing campaigns
+4. Create a phishing email template that delivers an HTML smuggling payload
+5. Generate a Sliver implant and test the full chain: phishing email delivers payload, payload connects to C2 through the redirector
+6. Execute basic post-exploitation: run `whoami`, enumerate the network, and collect system information
+7. On a separate monitoring VM, set up Suricata and attempt to detect your C2 traffic
+:::
+
+::: details CTF Challenge
+**Challenge: The Invisible Operator**
+
+You are conducting a red team engagement. Your initial phishing campaign succeeded and you have a beacon on an employee's workstation. The SOC has already detected one of your C2 domains and blocked it. You need to re-establish communication and achieve the objective: access the finance share at `\\fileserver\finance$`.
+
+**Hints:**
+1. You set up multiple C2 channels during planning — check your backup DNS channel
+2. The employee's workstation has cached Kerberos tickets
+3. The finance share requires membership in the `Finance` group, but the user has `GenericAll` permission on a Finance group member
+
+::: details Answer
+Switch to the DNS C2 channel that uses a different domain. Use the existing Kerberos tickets to authenticate. Run BloodHound to discover that the compromised user has GenericAll on `svc_finance`, a member of the Finance group. Reset `svc_finance`'s password or add the compromised user to the Finance group. Access `\\fileserver\finance$` and exfiltrate the target file. Flag: `CTF{resilient_c2_ad_abuse_chain}`.
+:::
+:::
+
+::: warning Common Misconceptions
+- **"Red teaming is just advanced penetration testing"** — Penetration testing finds vulnerabilities; red teaming tests detection and response against realistic adversary behavior. The methodologies, timelines, and objectives are fundamentally different.
+- **"Cobalt Strike is a hacking tool"** — Cobalt Strike, Sliver, and other C2 frameworks are adversary simulation tools designed for authorized security testing. They replicate real threat actor capabilities.
+- **"Zero-days are essential for red team success"** — Most successful red team engagements use phishing, password spraying, and misconfiguration exploitation — not zero-days. Real adversaries do the same.
+- **"LOLBins are undetectable"** — Living-off-the-Land binaries are harder to detect but not invisible. EDR tools track process trees, command-line arguments, and behavioral patterns that expose LOLBin abuse.
+:::
+
+::: details Quiz
+**1. What is the primary difference between a red team engagement and a penetration test?**
+
+a) Red teams use more tools
+b) Red teams test detection and response capabilities while pentests focus on finding vulnerabilities
+c) Pentests take longer
+d) Red teams only target web applications
+
+::: details Answer
+b) Red teams simulate real adversaries to test whether the blue team can detect and respond. Pentests focus on finding and exploiting as many vulnerabilities as possible within scope.
+:::
+
+**2. Why do red teams use redirectors in their infrastructure?**
+
+a) To make the C2 server faster
+b) To protect the team server — if a redirector is burned, the operation continues
+c) To encrypt traffic
+d) To bypass firewalls
+
+::: details Answer
+b) Redirectors are sacrificial servers that forward valid C2 traffic to the team server. If the blue team blocks a redirector's IP, the operator deploys a new one without losing the team server.
+:::
+
+**3. What does "sleep + jitter" mean in C2 communication?**
+
+a) The operator takes breaks during the engagement
+b) The implant waits a randomized interval between beacons to avoid regular-interval detection
+c) The C2 server goes offline periodically
+d) The payload is encrypted with a rotating key
+
+::: details Answer
+b) Sleep defines the base interval between beacons (e.g., 60 seconds), and jitter adds randomness (e.g., 25% means actual interval is 45-75 seconds), preventing detection by pattern analysis.
+:::
+
+**4. What framework provides a common language for describing adversary behavior?**
+
+a) OWASP Top 10
+b) MITRE ATT&CK
+c) ISO 27001
+d) NIST CSF
+
+::: details Answer
+b) MITRE ATT&CK categorizes adversary tactics and techniques, providing a shared language for red teams, blue teams, and threat intelligence to describe and compare adversary behavior.
+:::
+
+**5. What is Atomic Red Team used for?**
+
+a) Developing exploits
+b) Running small, discrete tests mapped to MITRE ATT&CK techniques for purple team exercises
+c) Scanning for vulnerabilities
+d) Generating phishing emails
+
+::: details Answer
+b) Atomic Red Team provides small, self-contained tests for specific ATT&CK techniques. Purple teams use them to verify detection coverage one technique at a time.
+:::
+:::
+
+> **One-Liner Summary:** Red teaming is not about breaking in — it is about proving whether anyone would notice if a real adversary did.
