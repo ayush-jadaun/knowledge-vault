@@ -617,6 +617,13 @@ export const sidebar: DefaultTheme.Sidebar = {
       ],
     },
     {
+      text: 'Scheduling',
+      collapsed: false,
+      items: [
+        { text: 'Cron Jobs', link: '/infrastructure/cron-jobs' },
+      ],
+    },
+    {
       text: 'Cloud Comparison',
       collapsed: false,
       items: [
@@ -935,6 +942,13 @@ export const sidebar: DefaultTheme.Sidebar = {
       collapsed: false,
       items: [
         { text: 'Disaster Recovery', link: '/devops/disaster-recovery/' },
+      ],
+    },
+    {
+      text: 'Scheduling & Cron',
+      collapsed: false,
+      items: [
+        { text: 'Cron Patterns & Reliability', link: '/devops/cron-patterns' },
       ],
     },
     {
