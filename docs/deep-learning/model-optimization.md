@@ -262,14 +262,65 @@ $$
 Q(w \cdot s) / s \approx w \quad \text{(better approximation for important weights)}
 $$
 
+### TurboQuant: KV Cache Compression (Google, ICLR 2026)
+
+While GPTQ and AWQ compress **model weights**, TurboQuant targets a different bottleneck: the **KV cache** that grows linearly with sequence length during inference. For long-context workloads (32K+ tokens), KV cache can consume more memory than the model weights themselves.
+
+**Paper:** "TurboQuant: Online Vector Quantization with Near-optimal Distortion Rate" — Zandieh, Daliri, Hadian, Mirrokni (Google Research & DeepMind, [arXiv:2504.19874](https://arxiv.org/abs/2504.19874))
+
+**The two-stage pipeline:**
+
+```
+┌─────────────┐    ┌──────────────┐    ┌─────────────────┐
+│  KV Vector   │ -> │  PolarQuant  │ -> │  QJL Error      │
+│  (FP16/BF16) │    │  (3-4 bits)  │    │  Correction     │
+│              │    │              │    │  (1-bit signs)  │
+└─────────────┘    └──────────────┘    └─────────────────┘
+```
+
+**Stage 1 — PolarQuant:**
+1. Apply random orthogonal rotation to spread energy uniformly across coordinates
+2. Convert pairs of Cartesian coordinates to polar (radius + angle)
+3. Recursively reduce until you have one radius + collection of angles
+4. Quantize the predictable angular distributions with optimal scalar quantizers
+5. No per-block normalization needed (unlike standard quantizers)
+
+**Stage 2 — QJL (Quantized Johnson-Lindenstrauss) Error Correction:**
+1. Project the residual quantization error to a lower-dimensional space
+2. Reduce each value to a single sign bit (+1 or -1)
+3. Use a hybrid estimator: high-precision query + low-precision cache
+4. Eliminates systematic bias in attention score calculations at negligible cost
+
+**Why it matters:**
+- **Data-oblivious** — no calibration data, no fine-tuning, works on any transformer
+- **3-bit quantization** with zero accuracy loss on Gemma, Mistral, Llama 3.1, Ministral
+- **6x KV cache memory reduction**, up to **8x attention speedup** on H100 GPUs
+- **Complements** GPTQ/AWQ — stack weight quantization + KV cache compression together
+- 100% retrieval accuracy on Needle-in-a-Haystack up to 104K tokens at 4x compression
+
+**Results across benchmarks:**
+
+| Bits | Memory Reduction | Quality Impact | Benchmarks |
+|------|-----------------|----------------|------------|
+| 3.5 | ~5x | Absolute quality neutrality | LongBench, RULER, ZeroSCROLLS |
+| 3.0 | ~5.5x | Negligible degradation | Needle-in-a-Haystack: 100% |
+| 2.5 | ~6.5x | Marginal degradation | L-Eval: within 1-2% |
+
+::: tip When to use TurboQuant vs weight quantization
+- **Short contexts (< 8K):** Weight quantization (GPTQ/AWQ) gives most savings
+- **Long contexts (32K+):** KV cache dominates — TurboQuant is essential
+- **Best of both:** GPTQ/AWQ for weights + TurboQuant for KV cache = maximum compression
+:::
+
 ### Quantization Comparison for LLMs
 
-| Method | Bits | Calibration | Speed | Quality |
-|--------|------|------------|-------|---------|
-| GPTQ | 4 | Requires data | Fast inference | Good |
-| AWQ | 4 | Requires data | Fastest inference | Best |
-| GGUF (llama.cpp) | 2-8 | No calibration | Good (CPU) | Varies |
-| bitsandbytes | 4/8 | None | Training + inference | Good |
+| Method | Target | Bits | Calibration | Speed | Quality |
+|--------|--------|------|------------|-------|---------|
+| GPTQ | Weights | 4 | Requires data | Fast inference | Good |
+| AWQ | Weights | 4 | Requires data | Fastest inference | Best |
+| **TurboQuant** | **KV Cache** | **3-4** | **None (data-oblivious)** | **8x attention speedup** | **Near-lossless** |
+| GGUF (llama.cpp) | Weights | 2-8 | No calibration | Good (CPU) | Varies |
+| bitsandbytes | Weights | 4/8 | None | Training + inference | Good |
 
 ## Knowledge Distillation
 

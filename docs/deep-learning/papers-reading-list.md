@@ -317,6 +317,40 @@ Built a foundation model for segmentation by training on 11M images with 1B mask
 
 **Key insight:** Foundation models are not limited to language. With sufficient data and scale, foundation models can be built for perception tasks like segmentation, enabling zero-shot generalization.
 
+## Efficiency and Optimization (Bonus Papers)
+
+### 31. TurboQuant (Zandieh et al., ICLR 2026)
+
+**"TurboQuant: Online Vector Quantization with Near-optimal Distortion Rate"** — [arXiv:2504.19874](https://arxiv.org/abs/2504.19874)
+
+Google Research's near-optimal online quantization method for KV cache compression and vector search. Uses a two-stage pipeline: PolarQuant (random rotation + polar coordinate quantization) followed by QJL error correction (1-bit sign projections using Johnson-Lindenstrauss transforms). Achieves 3-bit KV cache quantization with zero accuracy loss on Gemma, Mistral, and Llama 3.1. No calibration data or fine-tuning needed — completely data-oblivious.
+
+**Key insight:** Weight quantization (GPTQ/AWQ) and KV cache quantization solve different bottlenecks. For long-context inference (32K+ tokens), the KV cache dominates memory, not weights. TurboQuant's data-oblivious approach means it works on any transformer architecture without per-model calibration — a fundamental shift from existing quantization methods.
+
+**See also:** [Model Optimization](/deep-learning/model-optimization) for full TurboQuant implementation details alongside GPTQ, AWQ, and pruning techniques.
+
+---
+
+### 32. GPTQ (Frantar et al., 2023)
+
+**"GPTQ: Accurate Post-Training Quantization for Generative Pre-Trained Transformers"**
+
+The first practical method to quantize LLMs to 4-bit with minimal accuracy loss. Uses an approximate second-order method (based on Optimal Brain Quantization) to quantize weights one layer at a time, compensating for quantization error in remaining weights. Enabled running 175B-parameter models on a single GPU.
+
+**Key insight:** Layer-wise quantization with Hessian-based error compensation makes 4-bit post-training quantization practical for billion-parameter models, with the key trick being to update remaining unquantized weights to compensate for each quantized weight's error.
+
+---
+
+### 33. AWQ (Lin et al., 2024)
+
+**"AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration"**
+
+Instead of treating all weights equally during quantization, AWQ observes that a small fraction of weights (corresponding to large activation channels) are disproportionately important. Scaling these salient weights up before quantization protects them from precision loss. Simpler than GPTQ but often produces better results.
+
+**Key insight:** Not all weights matter equally — the ones connected to high-activation channels carry more information. Protecting just 1% of weights through activation-aware scaling dramatically improves quantized model quality.
+
+---
+
 ## Reading Roadmap
 
 ```mermaid
