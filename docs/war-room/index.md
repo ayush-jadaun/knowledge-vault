@@ -45,6 +45,11 @@ Incidents caused by bad deployments, missing rollback procedures, or insufficien
 - [CrowdStrike July 2024](/war-room/crowdstrike-july-2024) — Faulty kernel driver update bricked 8.5 million machines
 - [Cloudflare July 2019](/war-room/cloudflare-regex-2019) — Single regex rule took down the global CDN
 
+### Supply Chain Attacks
+Incidents where trusted packages, tools, or CI/CD pipelines were compromised to distribute malware at scale.
+- [Axios Supply Chain Attack (March 2026)](/war-room/axios-supply-chain-2026) — Stolen npm token turned 100M-download HTTP client into a North Korean RAT dropper
+- [LiteLLM Supply Chain Attack (March 2026)](/war-room/litellm-supply-chain-2026) — Compromised Trivy action exfiltrated PyPI token, backdooring a 95M-download AI library
+
 ### Scaling & Migration Stories
 Long-term engineering efforts to evolve systems under massive growth.
 - [Twitter's Fail Whale Era](/war-room/twitter-fail-whale) — Ruby on Rails to JVM, monolith to microservices
