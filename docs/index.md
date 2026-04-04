@@ -63,7 +63,7 @@ features:
 
   - icon: 🤖
     title: AI/ML Engineering
-    details: "25+ pages of pure AI engineering. LangChain (2000 lines), LangGraph (2200 lines), RAG, vector databases, Claude/OpenAI APIs, fine-tuning, guardrails, AI agents. The complete AI engineer's arsenal."
+    details: "35+ pages of pure AI engineering. MCP Protocol, A2A Protocol, Agentic RAG, Local LLMs, Fine-Tuning (LoRA/QLoRA), AI Safety, Structured Output, AI Coding Assistants, LangChain, LangGraph, RAG, vector databases, Claude/OpenAI APIs."
     link: /ai-ml-engineering/
     linkText: Build with AI
 
@@ -166,7 +166,7 @@ features:
 
 <div class="home-stats">
   <div class="stat-item">
-    <div class="stat-number">1170+</div>
+    <div class="stat-number">1180+</div>
     <div class="stat-label">Sacred texts</div>
   </div>
   <div class="stat-item">

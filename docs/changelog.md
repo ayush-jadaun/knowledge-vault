@@ -7,6 +7,21 @@ description: "What's new in Archon — recent additions and updates"
 
 ## March 2026
 
+### April 4, 2026 — AI/LLM Era: 8 New Pages
+
+**+8 new AI/LLM pages. Archon reaches 1,180+ pages.**
+
+- **MCP Protocol Deep Dive** (2,319 lines) — Architecture, tools/resources/prompts, building servers + clients in TS/Python, advanced patterns, production deployment
+- **Agentic RAG Patterns** (1,534 lines) — Self-correcting, multi-step, routing, agent-based RAG with LangGraph + LlamaIndex implementations
+- **Local LLMs Guide** (1,309 lines) — Ollama, llama.cpp, vLLM, GGUF quantization, hardware guide, model selection matrix
+- **Fine-Tuning LLMs** (1,752 lines) — LoRA, QLoRA, PEFT, data prep, RLHF/DPO, evaluation, Hugging Face + cloud platforms
+- **Structured Output from LLMs** (1,460 lines) — JSON mode, Instructor, Zod, function calling, validation, streaming
+- **AI Safety & Red Teaming** (1,430 lines) — Prompt injection, jailbreaks, guardrails, OWASP LLM Top 10, PII redaction
+- **A2A Protocol** (1,317 lines) — Google's agent-to-agent interop standard, Agent Cards, task lifecycle, vs MCP comparison
+- **AI Coding Assistants** (1,014 lines) — Copilot vs Cursor vs Claude Code vs Windsurf comparison, effective usage patterns
+
+---
+
 ### April 4, 2026 — Cloudflare, Email Security, OpenTelemetry, Regex, Redis Pub/Sub
 
 **+5 new pages. Archon reaches 1,170+ pages.**

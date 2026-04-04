@@ -1926,7 +1926,11 @@ export const sidebar: DefaultTheme.Sidebar = {
       items: [
         { text: 'LLM Integration', link: '/ai-ml-engineering/llm-integration' },
         { text: 'RAG Architecture', link: '/ai-ml-engineering/rag-architecture' },
+        { text: 'Agentic RAG Patterns', link: '/ai-ml-engineering/agentic-rag' },
         { text: 'AI Agents', link: '/ai-ml-engineering/ai-agents' },
+        { text: 'MCP Protocol', link: '/ai-ml-engineering/mcp-protocol' },
+        { text: 'A2A Protocol (Google)', link: '/ai-ml-engineering/a2a-protocol' },
+        { text: 'Structured Output', link: '/ai-ml-engineering/structured-output' },
       ],
     },
     {
@@ -1936,6 +1940,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Embeddings & Semantic Search', link: '/ai-ml-engineering/embeddings' },
         { text: 'Vector Databases', link: '/ai-ml-engineering/vector-databases' },
         { text: 'ML Pipelines & MLOps', link: '/ai-ml-engineering/ml-pipelines' },
+        { text: 'Local LLMs Guide', link: '/ai-ml-engineering/local-llms' },
       ],
     },
     {
@@ -1964,6 +1969,8 @@ export const sidebar: DefaultTheme.Sidebar = {
       collapsed: false,
       items: [
         { text: 'Fine-Tuning', link: '/ai-ml-engineering/fine-tuning' },
+        { text: 'Fine-Tuning LLMs (LoRA/QLoRA)', link: '/ai-ml-engineering/fine-tuning-llms' },
+        { text: 'AI Safety & Red Teaming', link: '/ai-ml-engineering/ai-safety' },
         { text: 'AI Guardrails', link: '/ai-ml-engineering/ai-guardrails' },
         { text: 'AI in Production', link: '/ai-ml-engineering/ai-in-production' },
         { text: 'Multimodal AI', link: '/ai-ml-engineering/multimodal-ai' },
@@ -1971,6 +1978,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Prompt Engineering Advanced', link: '/ai-ml-engineering/prompt-engineering-advanced' },
         { text: 'Data Annotation', link: '/ai-ml-engineering/data-annotation' },
         { text: 'AI Testing', link: '/ai-ml-engineering/ai-testing' },
+        { text: 'AI Coding Assistants', link: '/ai-ml-engineering/ai-coding-assistants' },
       ],
     },
   ],

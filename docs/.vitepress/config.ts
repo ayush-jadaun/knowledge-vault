@@ -9,7 +9,7 @@ const pkg = require('../../package.json')
 export default withMermaid(
   defineConfig({
     title: 'Archon',
-    description: 'The holy grail of engineering knowledge — 1170+ sacred texts from first principles to production mastery',
+    description: 'The holy grail of engineering knowledge — 1180+ sacred texts from first principles to production mastery',
     lang: 'en-US',
 
     head: [
