@@ -7,6 +7,22 @@ description: "What's new in Archon — recent additions and updates"
 
 ## March 2026
 
+### April 4, 2026 — OOP Fundamentals, Cron Jobs & Axios War Room
+
+**+4 new pages. Archon reaches 1,165+ pages.**
+
+#### New Pages
+- **OOP Fundamentals** (3,098 lines) — Complete OOP reference: 4 pillars, SOLID with before/after code, composition vs inheritance, 12 design patterns, mixins/metaclasses/generics, OOP in 5 languages (Java, Python, TypeScript, Go, Rust), anti-patterns, OOP vs FP, domain modeling. 74 code blocks, 6 Mermaid diagrams, 15 interview Qs, 10 quiz Qs.
+- **Cron Jobs** (infrastructure) — Cron syntax, crontab, systemd timers, K8s CronJobs, cloud schedulers (EventBridge, Cloud Scheduler), monitoring with dead man's switch
+- **Cron Patterns** (devops) — Distributed cron, leader election, idempotency, overlap prevention, failure handling, migration to Temporal/Airflow
+- **Axios Supply Chain Attack** (war room) — March 2026 North Korean state-linked attack on 100M+ weekly download npm package. Full timeline, attack chain, IOCs, decision scenarios.
+
+#### Enhancements
+- **Model Optimization** — Added Google TurboQuant (ICLR 2026) KV cache compression section
+- **Papers Reading List** — New "Efficiency and Optimization" section with TurboQuant, GPTQ, AWQ papers
+
+---
+
 ### March 27, 2026 — Mobile Engineering Expansion + Site-Wide Interactive Enhancements
 
 **+14 new mobile pages. Archon reaches 1,160+ pages.**

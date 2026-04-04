@@ -367,6 +367,13 @@ export const sidebar: DefaultTheme.Sidebar = {
       ],
     },
     {
+      text: 'OOP Fundamentals',
+      collapsed: false,
+      items: [
+        { text: 'Object-Oriented Programming', link: '/architecture-patterns/oop-fundamentals' },
+      ],
+    },
+    {
       text: 'Design Patterns',
       collapsed: false,
       items: [
