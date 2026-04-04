@@ -157,6 +157,14 @@ Each strategy has deep trade-offs covered in the [Rendering Strategies](/fronten
 
 - **[Bundle Optimization](/frontend-engineering/bundle-optimization)** — Tree shaking, code splitting, dynamic imports, bundle analysis, compression, and the module/nomodule pattern.
 
+### Tools & Runtimes
+
+- **[Bun Runtime](/frontend-engineering/bun-runtime)** — The all-in-one JavaScript runtime, bundler, test runner, and package manager. Bun vs Node.js vs Deno, Bun APIs, migration guide.
+
+- **[htmx](/frontend-engineering/htmx)** — Hypermedia-driven development with HTML attributes. AJAX patterns, server-side integration, progressive enhancement, and when NOT to use a JavaScript framework.
+
+- **[Tauri](/frontend-engineering/tauri)** — Build desktop apps with Rust backend and web frontend. The Electron alternative with 100x smaller bundles, capability-based security, and Tauri 2.0 mobile support.
+
 ## Learning Path
 
 Start with the browser rendering pipeline — you cannot optimize what you do not understand. Then move to performance and Core Web Vitals, which give you the metrics to measure against. Rendering strategies and state management are architectural decisions that should be informed by your performance requirements. Bundle optimization and micro-frontends are scaling concerns that matter once your application reaches a certain size.

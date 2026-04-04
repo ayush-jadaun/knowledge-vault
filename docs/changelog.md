@@ -5,6 +5,28 @@ description: "What's new in Archon — recent additions and updates"
 
 # Changelog
 
+## April 2026
+
+### April 4, 2026 — Dev Tools & Infrastructure: 8 New Pages
+
+**+8 new pages. Archon reaches 1,187+ pages.**
+
+#### Frontend Tools
+- **Bun Runtime** (1,331 lines) — All-in-one JS runtime, Bun vs Node.js vs Deno, Bun.serve/SQLite APIs, bundler, test runner
+- **htmx** (1,244 lines) — Hypermedia-driven development, AJAX patterns, server-side integration, htmx vs React/Vue
+- **Tauri** (1,335 lines) — Rust-based Electron alternative, commands, plugins, security model, Tauri 2.0 mobile
+- **WebAssembly Components** (1,090 lines) — WASI 0.2, WIT interfaces, component model, Spin/wasmCloud/SpinKube
+
+#### Architecture & Data
+- **Serverless Databases** (955 lines) — Neon, PlanetScale, Turso, D1, Supabase comparison
+- **Effect-TS** (1,204 lines) — Type-safe functional effects, typed errors, dependency injection, concurrency
+
+#### Infrastructure
+- **eBPF in Production** (1,408 lines) — Cilium, Falco, Tetragon, XDP DDoS mitigation, continuous profiling
+- **Platform Engineering Maturity** (980 lines) — Maturity model, Backstage, golden paths, DX metrics
+
+---
+
 ## March 2026
 
 ### April 4, 2026 — AI/LLM Era: 8 New Pages

@@ -93,6 +93,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Elasticsearch Internals', link: '/system-design/databases/elasticsearch-internals' },
         { text: 'ClickHouse Internals', link: '/system-design/databases/clickhouse-internals' },
         { text: 'SQLite Internals', link: '/system-design/databases/sqlite-internals' },
+        { text: 'Serverless Databases', link: '/system-design/databases/serverless-databases' },
         { text: 'Schema: E-Commerce', link: '/system-design/databases/schema-design-ecommerce' },
         { text: 'Schema: Social Media', link: '/system-design/databases/schema-design-social' },
         { text: 'Schema: SaaS Multi-Tenant', link: '/system-design/databases/schema-design-saas' },
@@ -414,6 +415,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Overview', link: '/architecture-patterns/functional-programming/' },
         { text: 'Core Concepts', link: '/architecture-patterns/functional-programming/core-concepts' },
         { text: 'Monads & Functors', link: '/architecture-patterns/functional-programming/monads-functors' },
+        { text: 'Effect-TS', link: '/architecture-patterns/functional-programming/effect-ts' },
         { text: 'FP in TypeScript', link: '/architecture-patterns/functional-programming/fp-typescript' },
       ],
     },
@@ -597,6 +599,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Memory Management', link: '/infrastructure/linux-internals/memory-management' },
         { text: 'Containers from Scratch', link: '/infrastructure/linux-internals/containers-from-scratch' },
         { text: 'eBPF', link: '/infrastructure/linux-internals/ebpf' },
+        { text: 'eBPF in Production', link: '/infrastructure/linux-internals/ebpf-production' },
       ],
     },
     {
@@ -614,6 +617,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Overview', link: '/infrastructure/platform-engineering/' },
         { text: 'Backstage & Dev Portals', link: '/infrastructure/platform-engineering/backstage' },
         { text: 'Developer Experience', link: '/infrastructure/platform-engineering/developer-experience' },
+        { text: 'Platform Maturity Model', link: '/infrastructure/platform-engineering/platform-maturity' },
       ],
     },
     {
@@ -1690,6 +1694,7 @@ export const sidebar: DefaultTheme.Sidebar = {
       items: [
         { text: 'Bundle Optimization', link: '/frontend-engineering/bundle-optimization' },
         { text: 'WebAssembly', link: '/frontend-engineering/webassembly' },
+        { text: 'WebAssembly Components (WASI 0.2)', link: '/frontend-engineering/webassembly-components' },
       ],
     },
     {
@@ -1704,6 +1709,15 @@ export const sidebar: DefaultTheme.Sidebar = {
       collapsed: false,
       items: [
         { text: 'Data Visualization', link: '/frontend-engineering/data-visualization' },
+      ],
+    },
+    {
+      text: 'Tools & Runtimes',
+      collapsed: false,
+      items: [
+        { text: 'Bun Runtime', link: '/frontend-engineering/bun-runtime' },
+        { text: 'htmx', link: '/frontend-engineering/htmx' },
+        { text: 'Tauri', link: '/frontend-engineering/tauri' },
       ],
     },
   ],
