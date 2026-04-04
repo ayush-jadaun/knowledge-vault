@@ -7,6 +7,18 @@ description: "What's new in Archon — recent additions and updates"
 
 ## March 2026
 
+### April 4, 2026 — Cloudflare, Email Security, OpenTelemetry, Regex, Redis Pub/Sub
+
+**+5 new pages. Archon reaches 1,170+ pages.**
+
+- **Cloudflare Complete Guide** (846 lines) — DNS, CDN, WAF, DDoS, SSL/TLS, Page Rules, Zero Trust, Workers ecosystem, migration guide
+- **Email Security & Deliverability** (1,227 lines) — SPF, DKIM, DMARC deep dive, BIMI, MTA-STS, deliverability scoring, transactional email comparison
+- **OpenTelemetry** (752 lines) — Traces, metrics, logs, Collector pipelines, auto-instrumentation in 4 languages, backend integration
+- **Regex Mastery** (885 lines) — Complete tutorial from basics to lookaround, regex in 6 languages, 12 worked examples, performance/ReDoS
+- **Redis Pub/Sub Patterns** (711 lines) — Production patterns, scaling, Pub/Sub vs Streams vs Kafka decision flowchart, reliability patterns
+
+---
+
 ### April 4, 2026 — OOP Fundamentals, Cron Jobs & Axios War Room
 
 **+4 new pages. Archon reaches 1,165+ pages.**

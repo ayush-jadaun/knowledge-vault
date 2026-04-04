@@ -1,11 +1,11 @@
 ---
 title: "Knowledge Graph"
-description: "Interactive visual map of all 1165+ topics and how they connect"
+description: "Interactive visual map of all 1170+ topics and how they connect"
 ---
 
 # Knowledge Graph
 
-Explore how all 1165+ topics in the Archon connect to each other. Each node is a page, colored by section. Lines connect pages that share topics. Click any node to open it.
+Explore how all 1170+ topics in the Archon connect to each other. Each node is a page, colored by section. Lines connect pages that share topics. Click any node to open it.
 
 - **Scroll** to zoom in/out
 - **Drag** nodes to rearrange

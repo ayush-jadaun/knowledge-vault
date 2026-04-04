@@ -124,6 +124,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Kafka Internals', link: '/system-design/message-queues/kafka-internals' },
         { text: 'RabbitMQ Internals', link: '/system-design/message-queues/rabbitmq-internals' },
         { text: 'Redis Streams', link: '/system-design/message-queues/redis-streams' },
+        { text: 'Redis Pub/Sub Patterns', link: '/system-design/message-queues/redis-pubsub-patterns' },
         { text: 'SQS & SNS', link: '/system-design/message-queues/sqs-sns' },
         { text: 'NATS', link: '/system-design/message-queues/nats' },
         { text: 'Apache Pulsar', link: '/system-design/message-queues/pulsar' },
@@ -559,6 +560,7 @@ export const sidebar: DefaultTheme.Sidebar = {
       collapsed: false,
       items: [
         { text: 'Observability Deep Dive', link: '/infrastructure/observability/' },
+        { text: 'OpenTelemetry', link: '/infrastructure/observability/opentelemetry' },
         { text: 'Observability Tools', link: '/devops/observability-tools/' },
       ],
     },
@@ -628,6 +630,13 @@ export const sidebar: DefaultTheme.Sidebar = {
       collapsed: false,
       items: [
         { text: 'Cron Jobs', link: '/infrastructure/cron-jobs' },
+      ],
+    },
+    {
+      text: 'Cloudflare',
+      collapsed: false,
+      items: [
+        { text: 'Cloudflare Complete Guide', link: '/infrastructure/cloudflare' },
       ],
     },
     {
@@ -793,6 +802,13 @@ export const sidebar: DefaultTheme.Sidebar = {
       collapsed: false,
       items: [
         { text: 'Overview', link: '/security/supply-chain/' },
+      ],
+    },
+    {
+      text: 'Email Security',
+      collapsed: false,
+      items: [
+        { text: 'Email Security & Deliverability', link: '/security/email-security' },
       ],
     },
   ],
@@ -1987,6 +2003,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Greedy Algorithms', link: '/algorithms/greedy' },
         { text: 'Bit Manipulation', link: '/algorithms/bit-manipulation' },
         { text: 'String Algorithms', link: '/algorithms/string-algorithms' },
+        { text: 'Regex Mastery', link: '/algorithms/regex-mastery' },
       ],
     },
     {

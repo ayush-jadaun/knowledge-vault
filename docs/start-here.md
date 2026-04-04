@@ -5,7 +5,7 @@ description: "Your quest through Archon begins here — choose your path, forge 
 
 # Begin Your Journey
 
-You stand before **1165+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
+You stand before **1170+ pages** of engineering knowledge — the collective wisdom of distributed systems, architecture, infrastructure, security, AI/ML, algorithms, and everything in between. Every page goes deep. Every page respects your intelligence. No hand-waving. No "left as an exercise for the reader."
 
 Choose your quest.
 
@@ -202,7 +202,7 @@ claude mcp add archon -- npx archon-mcp-server
 
 ### "I just want to browse and explore"
 
-- [Knowledge Graph](/graph) — visual map of all 1165+ topics and how they connect
+- [Knowledge Graph](/graph) — visual map of all 1170+ topics and how they connect
 - [Browse by Tag](/tags) — 3,000+ tags, filter by difficulty
 - [Compare Technologies](/compare) — side-by-side comparison (Kafka vs RabbitMQ, Postgres vs MongoDB, etc.)
 - [Cheat Sheets](/cheat-sheets/) — 22 quick reference cards
