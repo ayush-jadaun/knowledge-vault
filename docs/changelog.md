@@ -7,6 +7,21 @@ description: "What's new in Archon — recent additions and updates"
 
 ## April 2026
 
+### April 5, 2026 — Essential Engineering Pages: 8 More
+
+**+8 new pages. Archon reaches 1,195+ pages.**
+
+- **Docker Compose Deep Dive** (1,334 lines) — Multi-service patterns, healthchecks, networking, dev vs prod, Compose Watch
+- **Nginx Complete Guide** (1,208 lines) — Reverse proxy, load balancing, SSL, rate limiting, caching, security headers, tuning
+- **PostgreSQL Performance Tuning** (1,058 lines) — EXPLAIN ANALYZE, index strategies, VACUUM, PgBouncer, memory tuning
+- **TypeScript Advanced Patterns** (1,838 lines) — Generics, conditional types, mapped types, template literals, branded types, type-level programming
+- **AWS Services Cheat Sheet** (788 lines) — 60+ services by category with pricing, gotchas, decision matrices
+- **Incident Response Playbook** (1,082 lines) — Full lifecycle, SEV levels, communication templates, postmortem framework
+- **Database Migration Strategies** (964 lines) — Zero-downtime patterns, expand/contract, gh-ost, dual-write, tool comparison
+- **API Rate Limiting Deep Dive** (1,111 lines) — 5 algorithms with Redis Lua scripts, distributed patterns, adaptive limiting
+
+---
+
 ### April 4, 2026 — Dev Tools & Infrastructure: 8 New Pages
 
 **+8 new pages. Archon reaches 1,187+ pages.**

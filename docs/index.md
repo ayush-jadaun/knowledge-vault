@@ -166,7 +166,7 @@ features:
 
 <div class="home-stats">
   <div class="stat-item">
-    <div class="stat-number">1187+</div>
+    <div class="stat-number">1195+</div>
     <div class="stat-label">Sacred texts</div>
   </div>
   <div class="stat-item">

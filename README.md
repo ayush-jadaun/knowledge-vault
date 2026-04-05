@@ -2,9 +2,9 @@
 
 > *"Give me six hours to chop down a tree and I'll spend four sharpening the axe."* — This is the axe.
 
-The holy grail of engineering knowledge. 1,187+ sacred texts, from first principles to production mastery.
+The holy grail of engineering knowledge. 1,195+ sacred texts, from first principles to production mastery.
 
-**1,187+ pages | 21 Mobile | 30 ML | 25 DL | 140+ System Design | 55 Spring Boot | 69 EDA | 48 System Design Interviews | 25 Data Pipeline | 21 MCP Tools | AI Chatbot**
+**1,195+ pages | 21 Mobile | 30 ML | 25 DL | 140+ System Design | 55 Spring Boot | 69 EDA | 48 System Design Interviews | 25 Data Pipeline | 21 MCP Tools | AI Chatbot**
 
 [Live Site](https://archon-eight.vercel.app) · [Start Here](https://archon-eight.vercel.app/start-here) · [MCP Server](https://archon-eight.vercel.app/mcp) · [Spring Boot](https://archon-eight.vercel.app/spring-boot/) · [Cheat Sheets](https://archon-eight.vercel.app/cheat-sheets/)
 

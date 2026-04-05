@@ -82,6 +82,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Replication', link: '/system-design/databases/replication' },
         { text: 'Sharding', link: '/system-design/databases/sharding' },
         { text: 'PostgreSQL Internals', link: '/system-design/databases/postgres-internals' },
+        { text: 'PostgreSQL Performance Tuning', link: '/system-design/databases/postgres-performance-tuning' },
         { text: 'Redis Internals', link: '/system-design/databases/redis-internals' },
         { text: 'MongoDB Internals', link: '/system-design/databases/mongodb-internals' },
         { text: 'Database Selection Guide', link: '/system-design/databases/database-selection-guide' },
@@ -94,6 +95,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'ClickHouse Internals', link: '/system-design/databases/clickhouse-internals' },
         { text: 'SQLite Internals', link: '/system-design/databases/sqlite-internals' },
         { text: 'Serverless Databases', link: '/system-design/databases/serverless-databases' },
+        { text: 'Database Migration Strategies', link: '/system-design/databases/database-migrations' },
         { text: 'Schema: E-Commerce', link: '/system-design/databases/schema-design-ecommerce' },
         { text: 'Schema: Social Media', link: '/system-design/databases/schema-design-social' },
         { text: 'Schema: SaaS Multi-Tenant', link: '/system-design/databases/schema-design-saas' },
@@ -205,6 +207,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'OpenAPI & Swagger', link: '/system-design/api-design/openapi-swagger' },
         { text: 'Pagination Patterns', link: '/system-design/api-design/pagination-patterns' },
         { text: 'Webhooks', link: '/system-design/api-design/webhooks' },
+        { text: 'Rate Limiting Deep Dive', link: '/system-design/api-design/rate-limiting-deep-dive' },
         { text: 'API Security Patterns', link: '/system-design/api-design/api-security-patterns' },
         { text: 'GraphQL Advanced', link: '/system-design/api-design/graphql-advanced' },
         { text: 'gRPC Deep Dive', link: '/system-design/api-design/grpc-deep-dive' },
@@ -486,6 +489,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Security Hardening', link: '/infrastructure/docker/security-hardening' },
         { text: 'Production Dockerfiles', link: '/infrastructure/docker/production-dockerfiles' },
         { text: 'Compose Patterns', link: '/infrastructure/docker/compose-patterns' },
+        { text: 'Docker Compose Deep Dive', link: '/infrastructure/docker/docker-compose-patterns' },
         { text: 'Image Optimization', link: '/infrastructure/docker/image-optimization' },
       ],
     },
@@ -548,6 +552,7 @@ export const sidebar: DefaultTheme.Sidebar = {
       collapsed: false,
       items: [
         { text: 'Nginx Deep Dive', link: '/infrastructure/nginx/' },
+        { text: 'Nginx Complete Guide', link: '/infrastructure/nginx/nginx-deep-dive' },
       ],
     },
     {
@@ -892,6 +897,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Postmortem Framework', link: '/devops/incident-response/postmortem-framework' },
         { text: 'War Room Procedures', link: '/devops/incident-response/war-room-procedures' },
         { text: 'Chaos Engineering', link: '/devops/incident-response/chaos-engineering' },
+        { text: 'Incident Response Playbook', link: '/devops/incident-response/incident-response-playbook' },
       ],
     },
     {
@@ -1720,6 +1726,13 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Tauri', link: '/frontend-engineering/tauri' },
       ],
     },
+    {
+      text: 'Language Deep Dives',
+      collapsed: false,
+      items: [
+        { text: 'TypeScript Advanced Patterns', link: '/frontend-engineering/typescript-advanced' },
+      ],
+    },
   ],
 
   '/mobile-engineering/': [
@@ -1805,6 +1818,7 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'kubectl Advanced', link: '/cheat-sheets/kubectl-advanced' },
         { text: 'Regex', link: '/cheat-sheets/regex' },
         { text: 'Spring Boot', link: '/cheat-sheets/spring-boot' },
+        { text: 'AWS Services', link: '/cheat-sheets/aws-services' },
       ],
     },
   ],
