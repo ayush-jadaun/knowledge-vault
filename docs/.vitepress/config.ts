@@ -24,6 +24,8 @@ export default withMermaid(
       ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
       ['meta', { name: 'twitter:image', content: 'https://archon-eight.vercel.app/og-image.png' }],
       ['meta', { name: 'author', content: 'Ayush Jadaun' }],
+      ['meta', { name: 'google-site-verification', content: 'LH9d-jB3rCVx64YUaCjO18smYgicGghVs7Gi1ugXrOY' }],
+      ['meta', { name: 'robots', content: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1' }],
       ['meta', { name: 'keywords', content: 'system design, engineering, architecture, kubernetes, docker, aws, security, devops, performance, data engineering, algorithms, LangChain, LangGraph, RAG, EDA, exploratory data analysis, cybersecurity, pentesting, React, Node.js, PostgreSQL, machine learning, AI engineering, interview prep, cheat sheets' }],
       ['link', { rel: 'canonical', href: 'https://archon-eight.vercel.app/' }],
       ['link', { rel: 'manifest', href: '/manifest.json' }],
@@ -82,21 +84,84 @@ export default withMermaid(
         ['link', { rel: 'canonical', href: canonical }],
       )
 
-      // Per-page JSON-LD structured data
-      if (title && pageData.relativePath !== 'index.md') {
+      // Auto-generate breadcrumb JSON-LD from URL path
+      const pathParts = pageData.relativePath
+        .replace(/\/index\.md$/, '')
+        .replace(/\.md$/, '')
+        .split('/')
+        .filter(Boolean)
+
+      const slugToLabel = (slug: string) =>
+        slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
+      if (pathParts.length > 0 && pageData.relativePath !== 'index.md') {
+        const items = [
+          { "@type": "ListItem", "position": 1, "name": "Archon", "item": "https://archon-eight.vercel.app/" },
+          ...pathParts.map((part, i) => ({
+            "@type": "ListItem",
+            "position": i + 2,
+            "name": i === pathParts.length - 1 ? title : slugToLabel(part),
+            "item": `https://archon-eight.vercel.app/${pathParts.slice(0, i + 1).join('/')}/`
+          }))
+        ]
         pageData.frontmatter.head.push(
           ['script', { type: 'application/ld+json' }, JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "TechArticle",
-            "headline": title,
-            "description": description,
-            "url": url,
-            "author": { "@type": "Person", "name": "Ayush Jadaun" },
-            "publisher": { "@type": "Organization", "name": "Archon" },
-            "keywords": tags.join(', '),
-            "proficiencyLevel": difficulty === 'beginner' ? 'Beginner' : difficulty === 'expert' ? 'Expert' : 'Intermediate',
+            "@type": "BreadcrumbList",
+            "itemListElement": items
           })]
         )
+      }
+
+      // Per-page JSON-LD structured data
+      if (title && pageData.relativePath !== 'index.md') {
+        if (pageData.relativePath === 'about.md') {
+          pageData.frontmatter.head.push(
+            ['script', { type: 'application/ld+json' }, JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Person",
+              "name": "Ayush Jadaun",
+              "url": "https://archon-eight.vercel.app/about",
+              "sameAs": ["https://github.com/ayush-jadaun"],
+              "description": "A fellow coder who believes knowledge should be free, deep, and accessible to everyone. Creator and curator of Archon."
+            })]
+          )
+        } else {
+          pageData.frontmatter.head.push(
+            ['script', { type: 'application/ld+json' }, JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "TechArticle",
+              "headline": title,
+              "description": description,
+              "url": canonical,
+              "author": {
+                "@type": "Person",
+                "name": "Ayush Jadaun",
+                "url": "https://archon-eight.vercel.app/about"
+              },
+              "publisher": { "@type": "Organization", "name": "Archon" },
+              "keywords": tags.join(', '),
+              "proficiencyLevel": difficulty === 'beginner' ? 'Beginner' : difficulty === 'expert' ? 'Expert' : 'Intermediate',
+            })]
+          )
+        }
+
+        // FAQ schema — reads faq: array from page frontmatter if present
+        // Format: faq: [{q: "...", a: "..."}]
+        const faq = pageData.frontmatter.faq
+        if (Array.isArray(faq) && faq.length > 0) {
+          pageData.frontmatter.head.push(
+            ['script', { type: 'application/ld+json' }, JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": faq.map((item: { q: string; a: string }) => ({
+                "@type": "Question",
+                "name": item.q,
+                "acceptedAnswer": { "@type": "Answer", "text": item.a }
+              }))
+            })]
+          )
+        }
       }
     },
 
@@ -124,6 +189,7 @@ export default withMermaid(
 
       nav: [
         { text: 'Start Here', link: '/start-here' },
+        { text: 'About', link: '/about' },
         {
           text: 'Foundations',
           items: [
