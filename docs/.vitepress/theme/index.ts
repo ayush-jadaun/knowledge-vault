@@ -46,10 +46,17 @@ export default {
       'layout-bottom': () => [h(AskAI), h(KeyboardShortcuts), h(EnhancedUX), h(ImageZoom), h(CollapsibleCode), h(ScrollTitle), h(EasterEgg), h(MermaidA11y), h(SeasonalAccent), h(CodeBlockLinks), h(MermaidExport)],
     })
   },
-  enhanceApp({ app }) {
+  enhanceApp({ app, router }) {
     app.component('TagBrowse', TagBrowse)
     app.component('KnowledgeGraph', KnowledgeGraph)
     app.component('CompareMode', CompareMode)
     app.component('BookmarksList', BookmarksList)
+
+    if (typeof window !== 'undefined') {
+      import('@vercel/analytics').then(({ inject }) => {
+        inject({ framework: 'vitepress' })
+        router.onAfterRouteChanged = () => inject({ framework: 'vitepress' })
+      })
+    }
   },
 } satisfies Theme

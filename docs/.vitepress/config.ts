@@ -17,14 +17,15 @@ export default withMermaid(
       ['meta', { name: 'theme-color', content: '#5f67ee' }],
       ['meta', { property: 'og:type', content: 'website' }],
       ['meta', { property: 'og:site_name', content: 'Archon' }],
-      ['meta', { property: 'og:image', content: 'https://archon-eight.vercel.app/og-image.svg' }],
+      ['meta', { property: 'og:image', content: 'https://archon-eight.vercel.app/og-image.png' }],
+      ['meta', { property: 'og:image:type', content: 'image/png' }],
       ['meta', { property: 'og:image:width', content: '1200' }],
       ['meta', { property: 'og:image:height', content: '630' }],
       ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-      ['meta', { name: 'twitter:image', content: 'https://archon-eight.vercel.app/og-image.svg' }],
+      ['meta', { name: 'twitter:image', content: 'https://archon-eight.vercel.app/og-image.png' }],
       ['meta', { name: 'author', content: 'Ayush Jadaun' }],
       ['meta', { name: 'keywords', content: 'system design, engineering, architecture, kubernetes, docker, aws, security, devops, performance, data engineering, algorithms, LangChain, LangGraph, RAG, EDA, exploratory data analysis, cybersecurity, pentesting, React, Node.js, PostgreSQL, machine learning, AI engineering, interview prep, cheat sheets' }],
-      ['link', { rel: 'canonical', href: 'https://archon-eight.vercel.app' }],
+      ['link', { rel: 'canonical', href: 'https://archon-eight.vercel.app/' }],
       ['link', { rel: 'manifest', href: '/manifest.json' }],
       ['link', { rel: 'alternate', type: 'application/rss+xml', title: 'Archon RSS', href: '/feed.xml' }],
       ['script', {}, `if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js')`],
@@ -32,13 +33,8 @@ export default withMermaid(
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "Archon",
-        "description": "The holy grail of engineering knowledge — 1140+ deep dives from first principles to production mastery",
+        "description": "The holy grail of engineering knowledge — 1195+ sacred texts from first principles to production mastery",
         "url": "https://archon-eight.vercel.app",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": "https://archon-eight.vercel.app/?q={search_term_string}",
-          "query-input": "required name=search_term_string"
-        },
         "author": {
           "@type": "Person",
           "name": "Ayush Jadaun",
@@ -68,15 +64,22 @@ export default withMermaid(
       const tags = pageData.frontmatter.tags || []
       const difficulty = pageData.frontmatter.difficulty || ''
 
+      // Normalize canonical: ensure trailing slash for directory-style URLs
+      const canonical = url.endsWith('/') || url.includes('.') ? url : `${url}/`
+
       pageData.frontmatter.head ??= []
       pageData.frontmatter.head.push(
         ['meta', { property: 'og:title', content: `${title} | Archon` }],
         ['meta', { property: 'og:description', content: description }],
-        ['meta', { property: 'og:url', content: url }],
+        ['meta', { property: 'og:url', content: canonical }],
+        ['meta', { property: 'og:image', content: 'https://archon-eight.vercel.app/og-image.png' }],
+        ['meta', { property: 'og:image:alt', content: `${title} — Archon Engineering Knowledge` }],
         ['meta', { name: 'description', content: description }],
         ['meta', { name: 'twitter:title', content: `${title} | Archon` }],
         ['meta', { name: 'twitter:description', content: description }],
-        ['link', { rel: 'canonical', href: url }],
+        ['meta', { name: 'twitter:image', content: 'https://archon-eight.vercel.app/og-image.png' }],
+        ['meta', { name: 'twitter:image:alt', content: `${title} — Archon Engineering Knowledge` }],
+        ['link', { rel: 'canonical', href: canonical }],
       )
 
       // Per-page JSON-LD structured data

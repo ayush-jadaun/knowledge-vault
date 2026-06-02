@@ -14,13 +14,13 @@
   <text x="100" y="220" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="800" fill="url(#brand)">Archon</text>
   <text x="100" y="300" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="400" fill="#94a3b8">Engineering knowledge from first principles</text>
   <text x="100" y="350" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="400" fill="#94a3b8">to research-level depth</text>
-  <text x="100" y="460" font-family="system-ui, monospace" font-size="22" fill="#64748b">470+ pages</text>
-  <text x="330" y="460" font-family="system-ui, monospace" font-size="22" fill="#64748b">350K+ lines</text>
-  <text x="580" y="460" font-family="system-ui, monospace" font-size="22" fill="#64748b">30 interviews</text>
-  <text x="830" y="460" font-family="system-ui, monospace" font-size="22" fill="#64748b">500+ prompts</text>
+  <text x="100" y="460" font-family="system-ui, monospace" font-size="22" fill="#64748b">1195+ pages</text>
+  <text x="350" y="460" font-family="system-ui, monospace" font-size="22" fill="#64748b">40+ interviews</text>
+  <text x="610" y="460" font-family="system-ui, monospace" font-size="22" fill="#64748b">500+ prompts</text>
+  <text x="870" y="460" font-family="system-ui, monospace" font-size="22" fill="#64748b">free forever</text>
   <rect x="100" y="420" width="60" height="3" rx="1" fill="#5f67ee"/>
-  <rect x="330" y="420" width="60" height="3" rx="1" fill="#42d392"/>
-  <rect x="580" y="420" width="60" height="3" rx="1" fill="#5f67ee"/>
-  <rect x="830" y="420" width="60" height="3" rx="1" fill="#42d392"/>
+  <rect x="350" y="420" width="60" height="3" rx="1" fill="#42d392"/>
+  <rect x="610" y="420" width="60" height="3" rx="1" fill="#5f67ee"/>
+  <rect x="870" y="420" width="60" height="3" rx="1" fill="#42d392"/>
   <text x="100" y="560" font-family="system-ui, monospace" font-size="18" fill="#475569">archon-eight.vercel.app</text>
 </svg>
