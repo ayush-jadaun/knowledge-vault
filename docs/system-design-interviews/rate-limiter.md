@@ -5,6 +5,15 @@ tags: [system-design, interview, rate-limiting, distributed-systems, redis]
 difficulty: "advanced"
 prerequisites: [key-value-store]
 lastReviewed: "2026-03-18"
+faq:
+  - q: "What is the difference between token bucket and sliding window rate limiting?"
+    a: "Token bucket allows bursting — tokens accumulate up to a max capacity, so a user can send 10 requests instantly if they've been idle. Sliding window (or sliding window log) is stricter — it counts requests in a rolling time window with no burst allowance. Token bucket is better for bursty but well-behaved clients; sliding window is better when you need hard per-second limits regardless of history."
+  - q: "How do you implement a distributed rate limiter across multiple servers?"
+    a: "Use Redis as the central counter store. Each app server runs a Lua script (atomic in Redis) that checks and increments the counter for a given key (user ID, IP, API key) with a TTL. Since Lua scripts are atomic in Redis, you avoid race conditions without distributed locking. Alternatively, use Redis INCR + EXPIRE, or the Redis-based sliding window log pattern."
+  - q: "Where should rate limiting be enforced — client side, API gateway, or application?"
+    a: "API gateway is the standard answer for production systems. It centralizes enforcement before requests hit your services, supports multiple rate limit tiers (per user, per IP, per endpoint), and doesn't require changes to every service. Client-side rate limiting is easily bypassed. Application-level is a fallback for business-logic limits (e.g. max 5 email sends per hour per user)."
+  - q: "How do you handle rate limit headers and communicate limits to clients?"
+    a: "Return standard headers: X-RateLimit-Limit (max requests), X-RateLimit-Remaining (left in current window), X-RateLimit-Reset (Unix timestamp when the window resets), and Retry-After (seconds to wait) on 429 responses. These allow clients to implement exponential backoff rather than hammering your API."
 ---
 
 # Design a Rate Limiter

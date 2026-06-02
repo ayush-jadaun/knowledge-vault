@@ -5,6 +5,15 @@ tags: [system-design, interview, uber, geospatial, ride-sharing, location]
 difficulty: "advanced"
 prerequisites: [system-design-interviews/index]
 lastReviewed: "2026-03-18"
+faq:
+  - q: "How does Uber track driver locations in real time?"
+    a: "Drivers send GPS location updates every 4–5 seconds via WebSocket or HTTP. Locations are stored in a geospatial index (Redis with GEOADD, or a Quadtree/S2 geometry library). When a rider requests a trip, the system queries nearby drivers within a given radius using geospatial queries."
+  - q: "How does Uber match riders to drivers?"
+    a: "Uber uses a supply-demand matching engine. When a ride is requested, the system finds all available drivers within a radius (typically 2–3 km), ranks them by ETA (not just distance), and sends trip requests to the best match first. If declined within a timeout, it tries the next driver. The matching runs every few seconds in a loop."
+  - q: "How does Uber calculate surge pricing?"
+    a: "Surge pricing is a multiplier applied when demand (riders requesting) significantly exceeds supply (available drivers) in a given geographic cell. The city is divided into hexagonal cells (Uber uses H3). Each cell's demand/supply ratio is computed in real time, and a surge multiplier (1.2x, 1.5x, 2x, etc.) is applied. This incentivizes more drivers to enter the area."
+  - q: "What database does Uber use for trip data?"
+    a: "Uber uses a combination: Schemaless (built on MySQL) for trip records, Redis for real-time driver locations and matching state, and Kafka for the event stream between services. For geospatial queries, they use a custom H3 hexagonal grid system and have moved many workloads to their own distributed database (Docstore)."
 ---
 
 # Design Uber/Lyft

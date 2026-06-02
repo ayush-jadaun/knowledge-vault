@@ -5,6 +5,15 @@ tags: ["system-design", "caching", "consistent-hashing", "LRU", "distributed-sys
 difficulty: "advanced"
 prerequisites: ["distributed-systems", "data-structures", "networking", "hash-tables"]
 lastReviewed: "2026-03-18"
+faq:
+  - q: "What is the difference between Redis and Memcached?"
+    a: "Redis supports rich data structures (strings, lists, sets, sorted sets, hashes), persistence (RDB snapshots, AOF), pub/sub, Lua scripting, and clustering. Memcached is simpler — only key-value string storage, no persistence, no replication. Memcached can be slightly faster for pure caching workloads and uses memory more efficiently for simple values. Redis is preferred for almost all new systems due to its versatility."
+  - q: "How does consistent hashing work in a distributed cache?"
+    a: "Keys and cache nodes are both mapped to positions on a virtual ring using a hash function. A key is assigned to the first node clockwise from its position on the ring. When a node is added or removed, only the keys between the new/removed node and its predecessor need to be remapped — typically 1/N of all keys (N = number of nodes). This minimizes cache invalidation during scaling events."
+  - q: "What cache eviction policy should you use — LRU or LFU?"
+    a: "LRU (Least Recently Used) evicts the item accessed longest ago. It works well when recency correlates with future access — good for general-purpose caches. LFU (Least Frequently Used) evicts items with the fewest total accesses. Better when some items are always popular (viral content, product catalog). Redis supports both via the maxmemory-policy setting. Most use cases default to allkeys-lru."
+  - q: "How do you handle hot keys in a distributed cache?"
+    a: "A hot key (e.g. a viral tweet cached on one Redis node) creates a hotspot — one node gets 10x the traffic of others. Solutions: (1) Local in-process caching in each app server for the hottest keys, with a short TTL. (2) Key replication — store the hot key on multiple nodes with a suffix (hot_key_1, hot_key_2) and randomly select which replica to read. (3) Read replicas for Redis Cluster."
 ---
 
 # Design Memcached / Redis — Distributed Cache

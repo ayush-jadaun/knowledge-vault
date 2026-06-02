@@ -5,6 +5,17 @@ tags: [system-design, interview, url-shortener, hashing, caching]
 difficulty: "advanced"
 prerequisites: [system-design-interviews/index]
 lastReviewed: "2026-03-18"
+faq:
+  - q: "How do you handle hash collisions in a URL shortener?"
+    a: "Use a hash-and-retry approach: append a salt or counter to the original URL and re-hash. After 3–5 retries, fall back to a pre-generated random key. Alternatively, use a Key Generation Service (KGS) that pre-generates unique keys — this eliminates collisions entirely."
+  - q: "Should a URL shortener use 301 or 302 redirects?"
+    a: "301 (permanent) is better for SEO and reduces server load — browsers cache it and bypass your server on repeat visits. 302 (temporary) is better if you need accurate click analytics, since every click hits your server. Most URL shorteners use 302 for analytics."
+  - q: "How do you scale a URL shortener to handle 100,000 requests per second?"
+    a: "Cache hot URLs in Redis (a small percentage of URLs get the vast majority of clicks). Use read replicas for the database. Place a CDN in front for the most viral links. The redirect path is stateless so horizontal scaling is straightforward — just add more app servers behind a load balancer."
+  - q: "How do you prevent abuse and spam in a URL shortener?"
+    a: "Rate limit per API key and IP address. Scan destination URLs against a blocklist (e.g. Google Safe Browsing API). Require CAPTCHA for anonymous users. Blacklist known spam domains. Flag URLs that redirect to other shorteners."
+  - q: "How long should short URL codes be?"
+    a: "6–8 characters using Base62 (a–z, A–Z, 0–9). 6 characters gives 62^6 = 56 billion unique codes. 7 characters gives 3.5 trillion. For most services, 7 characters with Base62 is the sweet spot — short enough to be usable, large enough to never run out."
 ---
 
 # Design a URL Shortener (TinyURL / Bit.ly)

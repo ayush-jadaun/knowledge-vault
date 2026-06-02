@@ -5,6 +5,15 @@ tags: [system-design, interview, chat, messaging, websocket, real-time]
 difficulty: "advanced"
 prerequisites: [system-design-interviews/index]
 lastReviewed: "2026-03-18"
+faq:
+  - q: "Why do chat systems use WebSockets instead of HTTP polling?"
+    a: "HTTP polling (client repeatedly asking 'any new messages?') wastes bandwidth and adds latency. WebSockets establish a persistent, full-duplex TCP connection — the server pushes messages to the client the instant they arrive, with no polling overhead. For a chat system with millions of concurrent users, this is critical for both latency and server resource usage."
+  - q: "How do you deliver messages when a user is offline?"
+    a: "Messages are stored persistently in a database (e.g. Cassandra, partitioned by conversation_id). When the recipient comes online, their client fetches undelivered messages from the last seen message ID. Push notifications (APNS for iOS, FCM for Android) wake up the app when a message arrives while the user is offline."
+  - q: "How does WhatsApp scale to support billions of users?"
+    a: "WhatsApp used a small server fleet by keeping things simple: Erlang for WebSocket connections (great at handling millions of concurrent connections per machine), a message queue per user, Mnesia for routing tables, and avoiding the complexity of a central message bus. The key insight is that most users aren't online simultaneously — peak concurrency is a small fraction of total users."
+  - q: "How do you implement message delivery receipts (sent / delivered / read)?"
+    a: "Three states tracked per message: Sent (stored on server), Delivered (ACK received from recipient's device), Read (recipient opened the conversation). The sender's client receives a server-sent event or WebSocket push when each state changes. States are stored in the message record and updated asynchronously — reads trigger a batch update to avoid N database writes for N messages."
 ---
 
 # Design a Chat System (WhatsApp / Messenger)

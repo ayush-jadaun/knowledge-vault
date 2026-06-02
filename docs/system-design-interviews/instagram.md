@@ -5,6 +5,15 @@ tags: [system-design, interview, instagram, social-network, feed, cdn]
 difficulty: "advanced"
 prerequisites: [system-design-interviews/index]
 lastReviewed: "2026-03-18"
+faq:
+  - q: "How does Instagram generate the news feed at scale?"
+    a: "Instagram uses a hybrid push/pull (fanout) model. For regular users, posts are pushed to followers' feed cache on write (fanout-on-write). For celebrities with millions of followers, posts are pulled and merged at read time (fanout-on-read) to avoid writing to millions of caches on every post. The feed is precomputed and stored in Redis sorted sets."
+  - q: "How does Instagram store and serve photos?"
+    a: "Photos are stored in object storage (like S3). On upload, Instagram generates multiple resolutions (thumbnail, medium, full). Images are served via a CDN — the CDN caches images at edge nodes close to users, so most photo requests never hit the origin servers."
+  - q: "How do you handle the celebrity problem in a social network?"
+    a: "Celebrities (high-follower accounts) use fanout-on-read instead of fanout-on-write. When a celebrity posts, you don't push to all followers immediately. Instead, at read time, you fetch the celebrity's latest posts and merge them with the user's regular feed. This prevents write amplification (a single Cristiano Ronaldo post would otherwise write to 600M+ feed caches)."
+  - q: "What database should Instagram use for storing posts and user data?"
+    a: "A relational database (PostgreSQL) for user data and metadata, with sharding by user_id. Photo metadata (URL, filters applied, location) is stored in the DB. The actual photo files go to object storage. A graph database or adjacency list in Cassandra handles the social graph (follower/following relationships) at scale."
 ---
 
 # Design Instagram

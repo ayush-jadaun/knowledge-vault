@@ -5,6 +5,15 @@ tags: [system-design, interview, youtube, video, streaming, cdn, transcoding]
 difficulty: "advanced"
 prerequisites: [system-design-interviews/index]
 lastReviewed: "2026-03-18"
+faq:
+  - q: "How does YouTube transcode videos after upload?"
+    a: "After a video is uploaded to a staging blob store, a transcoding pipeline picks it up and generates multiple resolutions (360p, 480p, 720p, 1080p, 4K) and formats (H.264, VP9, AV1). This is done by a fleet of worker machines consuming from a job queue. Lower resolutions are processed first so the video becomes playable quickly while higher quality versions catch up."
+  - q: "How does adaptive bitrate streaming work in YouTube?"
+    a: "YouTube uses DASH (Dynamic Adaptive Streaming over HTTP). The video is split into small chunks (2–10 seconds each). The client player monitors available bandwidth and dynamically switches between quality levels per chunk. If bandwidth drops, it requests lower-resolution chunks; if bandwidth improves, it upgrades. This prevents buffering without sacrificing quality unnecessarily."
+  - q: "How does YouTube serve video to billions of users globally?"
+    a: "YouTube uses a massive CDN with thousands of edge nodes worldwide. Popular videos are pre-cached at edge locations close to viewers. The CDN serves byte-range requests so seeking in a video doesn't require downloading from the start. YouTube also uses ISP-level caches (Google Global Cache) installed directly in internet service providers' networks."
+  - q: "How does YouTube handle video storage at scale?"
+    a: "Videos are stored in Google's Colossus distributed file system. Each video has multiple encoded files (one per resolution/format). Metadata (title, description, views) is stored in a separate database (Bigtable/Spanner). Cold storage (rarely watched videos) uses cheaper storage tiers. Hot videos are cached closer to users."
 ---
 
 # Design YouTube
