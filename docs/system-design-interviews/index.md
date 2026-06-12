@@ -366,19 +366,108 @@ interface PaginatedResponse<T> {
 
 ## Walkthrough Index
 
-Each walkthrough follows the framework above with exhaustive detail:
+Each walkthrough follows the framework above. Ordered by complexity — start from the top if you're new, jump in anywhere if you're not.
+
+### Tier 1 — Core Primitives
+*Master these first. Every other system reuses these concepts.*
 
 | Problem | Key Concepts | Difficulty |
 |---------|-------------|------------|
-| [URL Shortener](/system-design-interviews/url-shortener) | Hashing, base62, read-heavy caching, analytics | Medium |
-| [Instagram](/system-design-interviews/instagram) | Image storage, CDN, news feed, fan-out | Medium-Hard |
-| [Chat System](/system-design-interviews/chat-system) | WebSockets, message delivery, E2E encryption | Hard |
-| [YouTube](/system-design-interviews/youtube) | Video transcoding, adaptive bitrate, CDN | Hard |
-| [Twitter Feed](/system-design-interviews/twitter-feed) | Fan-out, timeline, trending, search | Hard |
-| [Uber](/system-design-interviews/uber) | Geospatial indexing, real-time matching, surge pricing | Hard |
-| [Dropbox](/system-design-interviews/dropbox) | File sync, chunking, deduplication, conflict resolution | Hard |
-| [Web Crawler](/system-design-interviews/web-crawler) | URL frontier, Bloom filter, politeness, distributed crawl | Medium-Hard |
-| [Notification System](/system-design-interviews/notification-system) | Multi-channel, priority queues, rate limiting | Medium |
+| [URL Shortener](/system-design-interviews/url-shortener) | Hashing, Base62, read-heavy caching, analytics pipeline | Medium |
+| [Key-Value Store](/system-design-interviews/key-value-store) | Consistent hashing, LSM trees, replication, gossip protocol | Medium |
+| [Rate Limiter](/system-design-interviews/rate-limiter) | Token bucket, sliding window, Redis atomics, distributed enforcement | Medium |
+| [Distributed Cache](/system-design-interviews/distributed-cache) | Consistent hashing, LRU/LFU eviction, hot keys, cluster topology | Medium |
+
+### Tier 2 — Storage & Media
+*Adds blob storage, CDN, and file pipelines.*
+
+| Problem | Key Concepts | Difficulty |
+|---------|-------------|------------|
+| [Dropbox / Google Drive](/system-design-interviews/dropbox) | File chunking, deduplication, delta sync, conflict resolution | Medium-Hard |
+| [Instagram](/system-design-interviews/instagram) | Image storage, CDN, news feed, fan-out, celebrity problem | Medium-Hard |
+| [YouTube](/system-design-interviews/youtube) | Video transcoding, adaptive bitrate (DASH), CDN distribution | Hard |
+| [Netflix](/system-design-interviews/netflix) | Streaming, recommendation engine, Open Connect CDN | Hard |
+| [Spotify](/system-design-interviews/spotify) | Audio streaming, offline sync, playlist management | Hard |
+
+### Tier 3 — Social & Real-Time
+*Adds WebSockets, fan-out, and message delivery semantics.*
+
+| Problem | Key Concepts | Difficulty |
+|---------|-------------|------------|
+| [Chat System (WhatsApp)](/system-design-interviews/chat-system) | WebSockets, message delivery receipts, group chat, E2E encryption | Hard |
+| [Slack](/system-design-interviews/slack) | Channels, presence, search, workspace isolation | Hard |
+| [Twitter Feed](/system-design-interviews/twitter-feed) | Fan-out-on-write vs read, timelines, trending topics | Hard |
+| [Reddit](/system-design-interviews/reddit) | Voting, ranking algorithms, comment trees, federation | Medium-Hard |
+| [LinkedIn](/system-design-interviews/linkedin) | Social graph, feed ranking, job matching, InMail | Hard |
+| [Notification System](/system-design-interviews/notification-system) | Multi-channel (push/SMS/email), priority queues, rate limiting | Medium |
+
+### Tier 4 — Search & Crawling
+*Adds inverted indexes, ranking, and large-scale crawling.*
+
+| Problem | Key Concepts | Difficulty |
+|---------|-------------|------------|
+| [Typeahead / Autocomplete](/system-design-interviews/typeahead) | Trie, prefix search, ranking, real-time updates | Medium |
+| [Search Autocomplete](/system-design-interviews/search-autocomplete) | Distributed trie, top-K, personalization | Medium-Hard |
+| [Web Crawler](/system-design-interviews/web-crawler) | URL frontier, Bloom filter, politeness, distributed BFS | Medium-Hard |
+| [Search Engine](/system-design-interviews/search-engine) | Inverted index, PageRank, crawl + index + serve pipeline | Hard |
+| [Twitter Search](/system-design-interviews/twitter-search) | Real-time indexing, inverted index on tweets, ranking | Hard |
+| [Search Ranking](/system-design-interviews/search-ranking) | Relevance scoring, ML ranking models, A/B testing | Hard |
+
+### Tier 5 — Location & Matching
+*Adds geospatial indexing and real-time matching.*
+
+| Problem | Key Concepts | Difficulty |
+|---------|-------------|------------|
+| [Uber / Lyft](/system-design-interviews/uber) | Geospatial index (H3/Quadtree), real-time matching, surge pricing | Hard |
+| [Google Maps](/system-design-interviews/google-maps) | Graph shortest path, tile rendering, ETA, map updates | Hard |
+| [Tinder](/system-design-interviews/tinder) | Geospatial filtering, swipe matching, recommendation | Medium-Hard |
+| [Food Delivery](/system-design-interviews/food-delivery) | Real-time tracking, order routing, driver dispatch | Hard |
+
+### Tier 6 — Booking & Transactions
+*Adds distributed transactions, inventory, and payment flows.*
+
+| Problem | Key Concepts | Difficulty |
+|---------|-------------|------------|
+| [Ticket Booking (Ticketmaster)](/system-design-interviews/ticket-booking) | Seat locking, distributed transactions, flash sales | Hard |
+| [Hotel Booking (Airbnb)](/system-design-interviews/hotel-booking) | Inventory, double-booking prevention, calendar sync | Hard |
+| [E-Commerce](/system-design-interviews/e-commerce) | Product catalog, cart, inventory, order management | Hard |
+| [Payment System](/system-design-interviews/payment-system) | Idempotency, double-spend prevention, reconciliation | Hard |
+| [Stock Exchange](/system-design-interviews/stock-exchange) | Order book, matching engine, low-latency, market data | Expert |
+
+### Tier 7 — Developer & Infra Tools
+*Complex internal systems requiring deep infra knowledge.*
+
+| Problem | Key Concepts | Difficulty |
+|---------|-------------|------------|
+| [API Gateway](/system-design-interviews/api-gateway) | Auth, rate limiting, routing, observability | Medium |
+| [CDN](/system-design-interviews/cdn) | PoPs, cache hierarchy, origin offload, anycast routing | Medium-Hard |
+| [GitHub](/system-design-interviews/github) | Git object store, distributed VCS, PR workflow, CI/CD hooks | Hard |
+| [Google Docs](/system-design-interviews/google-docs) | Operational transformation, CRDT, conflict-free collaboration | Expert |
+| [Zoom](/system-design-interviews/zoom) | WebRTC, SFU vs MCU, bandwidth adaptation, recording | Expert |
+| [Live Streaming](/system-design-interviews/live-streaming) | RTMP ingest, HLS/DASH output, low-latency edge delivery | Hard |
+
+### Tier 8 — Advanced & Specialized
+*Niche but frequently asked at senior/staff levels.*
+
+| Problem | Key Concepts | Difficulty |
+|---------|-------------|------------|
+| [News Aggregator](/system-design-interviews/news-aggregator) | Feed aggregation, deduplication, ranking | Medium |
+| [Email Service](/system-design-interviews/email-service) | SMTP, deliverability, spam filtering, inbox storage | Medium-Hard |
+| [Leaderboard](/system-design-interviews/leaderboard) | Redis sorted sets, real-time ranking, time-windowed boards | Medium |
+| [Ad Platform](/system-design-interviews/ad-platform) | Bidding, targeting, impression tracking, fraud detection | Expert |
+| [Recommendation Engine](/system-design-interviews/recommendation-engine) | Collaborative filtering, embeddings, real-time serving | Expert |
+| [Fraud Detection](/system-design-interviews/fraud-detection) | Rule engines, ML scoring, graph analysis, real-time decisions | Expert |
+| [Content Moderation](/system-design-interviews/content-moderation) | ML classifiers, human review queues, appeal workflows | Hard |
+| [Social Network (General)](/system-design-interviews/social-network) | Graph storage, feed, privacy model, growth mechanics | Hard |
+| [Parking Lot](/system-design-interviews/parking-lot) | OOP design, slot allocation, pricing engine | Medium |
+
+### Tier 9 — AI Systems
+*Emerging category — increasingly asked at top companies.*
+
+| Problem | Key Concepts | Difficulty |
+|---------|-------------|------------|
+| [ChatGPT / LLM Service](/system-design-interviews/chatgpt) | Inference serving, token streaming, context management, cost | Expert |
+| [GitHub Copilot](/system-design-interviews/copilot) | Code completion, low-latency inference, context window, IDE integration | Expert |
 
 ---
 
