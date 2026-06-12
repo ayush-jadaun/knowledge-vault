@@ -224,6 +224,20 @@ This section assumes you are comfortable with:
 
 No prior machine learning experience is required. We build up from first principles where needed.
 
+## ML System Design Interviews
+
+A specialized track for engineers interviewing at companies where ML is core infrastructure. These pages cover how to design real production ML systems end-to-end — from data pipelines to model architecture to serving.
+
+| Problem | Companies That Ask It | Key Concepts |
+|---------|----------------------|-------------|
+| [Recommendation System](./ml-system-design-recommendation) | Netflix, YouTube, Amazon, Spotify | Two-tower model, candidate generation, ranking, cold start |
+| [Ad Click Prediction](./ml-system-design-ads) | Meta, Google, TikTok, Twitter | CTR model, calibration, real-time features, auction |
+| [Feed Ranking](./ml-system-design-feed-ranking) | Instagram, Twitter, TikTok, LinkedIn | Multi-objective ranking, online learning, creator fairness |
+| [Search Ranking](./ml-system-design-search-ranking) | Airbnb, DoorDash, LinkedIn, Etsy | BM25, dense retrieval, LambdaMART, position bias |
+| [ETA Prediction](./ml-system-design-eta) | Uber, Lyft, Google Maps, DoorDash | GPS traces, GNN, real-time traffic features |
+
+Each page follows the ML system design interview format: requirements → data → features → model → training → serving → evaluation → scale.
+
 ## Related Sections
 
 - [Prompt Engineering](/prompt-engineering/) — 500+ battle-tested prompts for engineering workflows
