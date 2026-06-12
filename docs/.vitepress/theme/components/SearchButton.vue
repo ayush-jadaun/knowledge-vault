@@ -61,10 +61,19 @@ function toggle() {
 
 async function initPagefind() {
   if (pagefindUI) {
+    // PagefindUI is already loaded but #pagefind-container was destroyed and recreated
+    // by v-if — re-mount the widget into the fresh container.
+    pagefindUI = new (window as any).PagefindUI({
+      element: '#pagefind-container',
+      showSubResults: true,
+      showImages: false,
+      excerptLength: 15,
+      resetStyles: true,
+    })
     setTimeout(() => {
       const input = document.querySelector('#pagefind-container input') as HTMLInputElement
       input?.focus()
-    }, 50)
+    }, 100)
     return
   }
 
