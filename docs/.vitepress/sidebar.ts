@@ -223,6 +223,11 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'CPU Scheduling', link: '/system-design/os-internals/cpu-scheduling' },
         { text: 'Virtual Memory', link: '/system-design/os-internals/virtual-memory' },
         { text: 'File Systems', link: '/system-design/os-internals/file-systems' },
+        { text: 'I/O & Storage Internals', link: '/system-design/os-internals/io-storage' },
+        { text: 'Memory Allocators', link: '/system-design/os-internals/memory-allocators' },
+        { text: 'Signals & Process Control', link: '/system-design/os-internals/signals' },
+        { text: 'Namespaces & cgroups', link: '/system-design/os-internals/namespaces-cgroups' },
+        { text: 'Syscalls & Kernel Internals', link: '/system-design/os-internals/syscalls-kernel' },
       ],
     },
     {

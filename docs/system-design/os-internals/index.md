@@ -40,6 +40,11 @@ Kernel Space:  syscall handler → scheduler / memory mgr / VFS / drivers
 | 2 | [CPU Scheduling](./cpu-scheduling) | How does the kernel decide who runs next? What is context switching? |
 | 3 | [Virtual Memory](./virtual-memory) | What is a page fault? How does `fork()` not copy all memory? |
 | 4 | [File Systems](./file-systems) | What is an inode? What happens when you `open()` a file? |
+| 5 | [I/O & Storage Internals](./io-storage) | epoll vs select, io_uring, DMA, disk scheduling, zero-copy |
+| 6 | [Memory Allocators](./memory-allocators) | How malloc works, buddy/slab, fragmentation, jemalloc vs tcmalloc |
+| 7 | [Signals & Process Control](./signals) | SIGTERM vs SIGKILL, async-signal safety, graceful shutdown |
+| 8 | [Namespaces & cgroups](./namespaces-cgroups) | How containers work at the kernel level, OOM killer, CPU throttling |
+| 9 | [Syscalls & Kernel Internals](./syscalls-kernel) | Syscall cost, vDSO, seccomp, eBPF, KPTI overhead |
 
 ---
 
