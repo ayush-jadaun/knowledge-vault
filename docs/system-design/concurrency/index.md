@@ -351,10 +351,21 @@ func getCount() int64 {
 | **Lock-free** | Use atomic operations instead of locks | [Lock-Free Data Structures](./lock-free) |
 | **Thread Pool** | Fixed set of threads processing queued tasks | HTTP servers, database connections |
 
-## Further Reading
+## Learning Path
 
-- [Lock-Free Data Structures](./lock-free) — CAS operations, ABA problem, memory ordering
-- [Actor Model](./actor-model) — Akka, Erlang/OTP, supervision trees
-- [Real-Time Systems](./real-time-systems) — WebSockets, SSE, CRDTs for collaborative editing
+| Order | Page | What You'll Learn |
+|-------|------|------------------|
+| 1 | [Race Conditions & Thread Safety](./race-conditions) | Non-atomic operations, memory visibility, Python GIL, TSan |
+| 2 | [Mutex, Semaphore & Monitor](./mutex-semaphore-monitor) | Lock ownership, condition variables, read-write lock |
+| 3 | [Deadlocks, Livelocks & Starvation](./deadlocks) | Coffman conditions, lock ordering, tryLock, CAS |
+| 4 | [Async Patterns & Event Loops](./async-patterns) | Callbacks → Promises → async/await, asyncio, Node.js phases |
+| 5 | [Concurrency Patterns](./concurrency-patterns) | Producer-consumer, thread pool sizing, work stealing, actor model |
+| 6 | [Lock-Free Data Structures](./lock-free) | CAS operations, ABA problem, memory ordering |
+| 7 | [Actor Model](./actor-model) | Akka, Erlang/OTP, supervision trees |
+| 8 | [Real-Time Systems](./real-time-systems) | WebSockets, SSE, CRDTs for collaborative editing |
+
+## Related Topics
+
 - [Distributed Systems](/system-design/distributed-systems/) — concurrency across machines
 - [Message Queues](/system-design/message-queues/) — asynchronous communication patterns
+- [OS Internals](/system-design/os-internals/) — processes, threads, scheduling, virtual memory

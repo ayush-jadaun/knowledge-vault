@@ -215,6 +215,17 @@ export const sidebar: DefaultTheme.Sidebar = {
       ],
     },
     {
+      text: 'OS Internals',
+      collapsed: false,
+      items: [
+        { text: 'Overview', link: '/system-design/os-internals/' },
+        { text: 'Processes & Threads', link: '/system-design/os-internals/processes-threads' },
+        { text: 'CPU Scheduling', link: '/system-design/os-internals/cpu-scheduling' },
+        { text: 'Virtual Memory', link: '/system-design/os-internals/virtual-memory' },
+        { text: 'File Systems', link: '/system-design/os-internals/file-systems' },
+      ],
+    },
+    {
       text: 'API Design',
       collapsed: false,
       items: [
