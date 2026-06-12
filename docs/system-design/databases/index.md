@@ -65,10 +65,26 @@ graph LR
 | 10 | [PostgreSQL Internals](./postgres-internals) | Deep dive into Postgres architecture — processes, shared buffers, VACUUM, WAL |
 | 11 | [Redis Internals](./redis-internals) | Single-threaded architecture, data structures, persistence, clustering |
 | 12 | [MongoDB Internals](./mongodb-internals) | WiredTiger, document model, replica sets, sharded clusters |
-| 13 | [Database Selection Guide](./database-selection-guide) | Decision framework for choosing the right database |
+| 13 | [Database Selection Guide](./database-selection-guide) | Decision framework for choosing the right database for any use case |
 | 14 | [Time-Series Databases](./time-series-databases) | TimescaleDB, InfluxDB, and the unique challenges of time-series data |
-| 15 | [Graph Databases](./graph-databases) | Neo4j, property graphs, Cypher, when graph models are the right choice |
+| 15 | [Graph Databases](./graph-databases) | Neo4j, property graphs, Cypher, when graph models outperform relational |
 | 16 | [NewSQL](./newsql) | CockroachDB, TiDB, Spanner — distributed SQL with strong consistency |
+| 17 | [DynamoDB Internals](./dynamodb-internals) | Single-table design, GSIs, partition key strategy, DynamoDB Streams |
+| 18 | [Cassandra Internals](./cassandra-internals) | LSM tree storage, wide-column model, ring topology, tunable consistency |
+| 19 | [Elasticsearch Internals](./elasticsearch-internals) | Inverted index, sharding, relevance scoring, aggregations pipeline |
+| 20 | [ClickHouse Internals](./clickhouse-internals) | Columnar storage, MergeTree engine, real-time analytics at petabyte scale |
+| 21 | [SQLite Internals](./sqlite-internals) | B-tree internals, WAL mode, the most deployed database in existence |
+| **Schema Design** | | |
+| 22 | [Schema Design: E-Commerce](./schema-design-ecommerce) | Products, orders, inventory, carts — modeling a real commerce system |
+| 23 | [Schema Design: Social Network](./schema-design-social) | Users, posts, follows, feeds — handling graph-like data in SQL |
+| 24 | [Schema Design: SaaS](./schema-design-saas) | Multi-tenancy strategies, row-level security, workspace isolation |
+| 25 | [Schema Design: Chat](./schema-design-chat) | Messages, threads, reactions — high-write, read-heavy messaging schemas |
+| **Operations** | | |
+| 26 | [Database Migrations](./database-migrations) | Zero-downtime schema changes, expand-contract, backward compatibility |
+| 27 | [PostgreSQL DBA](./postgresql-dba) | Vacuuming, autovacuum, bloat, pg_stat_*, connection limits, pg_hba.conf |
+| 28 | [PostgreSQL Performance Tuning](./postgres-performance-tuning) | work_mem, shared_buffers, checkpoint_completion_target — the knobs that matter |
+| 29 | [Multi-Region Databases](./multi-region-database) | Global distribution, active-active, CockroachDB vs Spanner vs Aurora Global |
+| 30 | [Serverless Databases](./serverless-databases) | PlanetScale, Neon, Aurora Serverless v2 — cold starts, scaling to zero, pricing |
 
 ## Key Insight
 

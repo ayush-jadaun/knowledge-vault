@@ -86,6 +86,28 @@ These patterns are not mutually exclusive — they operate at different levels o
 
 The most effective architectures layer these together. A mature system might use DDD to discover bounded contexts, clean architecture inside each service, microservices for deployment, event-driven communication between them, and CQRS for the few services that genuinely need separate read and write models. **[Design Patterns](/architecture-patterns/design-patterns/)** operate at the code level — they are the building blocks (Factory, Strategy, Repository, Decorator) that implement the internals of every higher-level pattern. **[Cloud-Native](/architecture-patterns/cloud-native/)** patterns operate at the infrastructure level — they provide the resilience (Circuit Breaker, Retry, Saga), deployment (serverless, containers), and operational strategies that make distributed architectures production-ready.
 
+## Learning Path
+
+Architecture patterns build on each other. Learn them in this order to avoid applying distributed solutions to problems that don't need them.
+
+| Order | Pattern | Why This Order |
+|-------|---------|---------------|
+| 1 | [SOLID Principles](/architecture-patterns/solid-principles/) | Code-level foundation — every other pattern assumes you understand SRP, OCP, DIP |
+| 2 | [Design Patterns](/architecture-patterns/design-patterns/) | GoF patterns — Strategy, Observer, Factory, Decorator. The vocabulary for the rest |
+| 3 | [Clean Architecture](/architecture-patterns/clean-architecture/) | Structuring a single application — dependency rule, use cases, boundaries |
+| 4 | [Hexagonal Architecture](/architecture-patterns/hexagonal/) | Ports and adapters — isolating business logic from frameworks and infrastructure |
+| 5 | [Domain-Driven Design](/architecture-patterns/domain-driven-design/) | Modeling complex domains — aggregates, bounded contexts, ubiquitous language |
+| 6 | [Microservices](/architecture-patterns/microservices/) | Decomposing a system into services — only after you've mastered the monolith |
+| 7 | [Event-Driven Architecture](/architecture-patterns/event-driven/) | Async communication between services — events, commands, choreography vs orchestration |
+| 8 | [CQRS & Event Sourcing](/architecture-patterns/cqrs-event-sourcing/) | Separating reads from writes, audit logs, temporal queries |
+| 9 | [Cloud-Native](/architecture-patterns/cloud-native/) | Designing for Kubernetes, managed services, elastic scale |
+| 10 | [Functional Programming](/architecture-patterns/functional-programming/) | Immutability, pure functions, composition — reduces entire classes of bugs |
+| 11 | [Multi-Tenancy](/architecture-patterns/multi-tenancy/) | SaaS architecture — data isolation, tenant routing, feature flags per tenant |
+
+::: tip The Golden Rule
+Master steps 1–5 before touching 6+. Most teams jump to microservices while their single application is still a mess. The patterns at the top of this list pay dividends at every scale; the patterns at the bottom only pay off at sufficient complexity.
+:::
+
 ## How to Use This Section
 
 Each pattern page includes: a first-principles explanation of the core idea, a TypeScript reference implementation, a decision checklist (should you use this?), common anti-patterns and pitfalls, and a migration guide for introducing the pattern into an existing codebase. Read the patterns that match your current needs first, then read the others to understand the trade-offs you are implicitly making.

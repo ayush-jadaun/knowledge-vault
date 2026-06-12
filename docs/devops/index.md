@@ -51,15 +51,30 @@ graph TB
 
 Most teams should aim to reach Level 3 within their first year and Level 4 within two years. Level 5 is for organizations where engineering velocity and reliability are core business differentiators.
 
-## Section Map
+## Learning Path
 
-| Subsection | What You'll Learn | Maturity Level Impact |
-|---|---|---|
-| [Monitoring](/devops/monitoring) | Prometheus setup, PromQL queries, Grafana dashboards (with importable JSON), the USE and RED methods, custom metrics | Level 1 to Level 2 |
-| [Logging](/devops/logging) | Structured logging with correlation IDs, ELK/Loki stack, log levels that mean something, log-based alerting | Level 2 to Level 3 |
-| [Alerting](/devops/alerting) | Alert design philosophy, routing with PagerDuty/OpsGenie, SLOs and error budgets, alert fatigue prevention | Level 2 to Level 4 |
-| [Deployment Strategies](/devops/deployment-strategies) | Rolling updates, blue-green, canary, feature flags, progressive delivery, automated rollback triggers | Level 2 to Level 4 |
-| [Incident Response](/devops/incident-response) | Incident commander framework, communication templates, blameless postmortem process, runbook structure, on-call practices | Level 2 to Level 3 |
+Follow this order — each section builds on the last. You can't alert on what you haven't measured, and you can't respond to incidents without alerts.
+
+| Order | Subsection | What You'll Learn | Maturity Impact |
+|-------|---|---|---|
+| 1 | [Monitoring](/devops/monitoring) | Prometheus, PromQL, Grafana dashboards, USE method, RED method, the four golden signals | Level 1 → 2 |
+| 2 | [Logging](/devops/logging) | Structured logging, correlation IDs, ELK/Loki stack, log levels, log-based alerting | Level 2 → 3 |
+| 3 | [Alerting](/devops/alerting) | Alert design, SLOs, error budgets, PagerDuty/OpsGenie routing, killing alert fatigue | Level 2 → 4 |
+| 4 | [SRE Practices](/devops/sre) | Error budgets, toil reduction, reliability targets, SLI/SLO/SLA distinctions, blameless culture | Level 3 → 5 |
+| 5 | [Deployment Strategies](/devops/deployment-strategies) | Rolling, blue-green, canary, feature flags, progressive delivery, automated rollback | Level 2 → 4 |
+| 6 | [Incident Response](/devops/incident-response) | Incident commander framework, comms templates, blameless postmortems, runbook structure, on-call | Level 2 → 3 |
+
+## Extended Topics
+
+| Subsection | What You'll Learn |
+|---|---|
+| [Git](/devops/git) | Branching strategies, rebase vs merge, monorepo patterns, large file handling |
+| [Release Engineering](/devops/release-engineering) | Versioning, changelogs, release trains, feature flags at scale |
+| [Disaster Recovery](/devops/disaster-recovery) | RTO/RPO targets, backup strategies, chaos engineering, runbooks |
+| [Engineering Practices](/devops/engineering-practices) | Code review culture, pair programming, tech debt management |
+| [Debugging Production](/devops/debugging-production) | Distributed tracing, flame graphs, memory dumps, live debugging |
+| [Feature Flags](/devops/feature-flags) | LaunchDarkly, Unleash, flag lifecycle, avoiding flag debt |
+| [FinOps](/devops/finops) | Cloud cost attribution, rightsizing, reserved instances, unit economics |
 
 ## The Three Pillars of Observability
 

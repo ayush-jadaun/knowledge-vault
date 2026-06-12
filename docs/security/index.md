@@ -48,17 +48,20 @@ graph LR
 
 **Step 4 — Did we do a good job?** Review, test, pentest, and repeat. Threat models are living documents.
 
-## Section Map
+## Learning Path
 
-| Subsection | What You'll Learn | Threat Category |
-|---|---|---|
-| [OWASP Top 10 (2021)](/security/owasp-top-10) | The ten most critical web application security risks, each with exploit demos and fixes | All categories |
-| [Authentication](/security/authentication) | JWT internals (header, payload, signature byte-by-byte), OAuth2/OIDC flows, session management, MFA | Spoofing, Elevation of Privilege |
-| [Encryption](/security/encryption) | Symmetric vs asymmetric, TLS 1.3 handshake, hashing, key derivation, encryption at rest and in transit | Information Disclosure, Tampering |
-| [Secrets Management](/security/secrets-management) | Vault, AWS Secrets Manager, environment variable anti-patterns, rotation strategies, CI/CD secrets | Information Disclosure |
-| [Zero Trust](/security/zero-trust) | Network segmentation, identity-based access, mTLS, BeyondCorp model, policy engines | All categories |
-| [API Security](/security/api-security) | Rate limiting, input validation, authz vs authn, CORS, CSRF, API key management, GraphQL-specific risks | Tampering, DoS, Information Disclosure |
-| [Exploits & Vulnerabilities](/security/exploits/) | Famous exploits (Log4Shell, Heartbleed, XZ Backdoor), attack techniques for defensive understanding, real-world case studies | All categories |
+Build security knowledge in this order — each layer depends on the previous one:
+
+| Order | Subsection | What You'll Learn | Threat Category |
+|-------|---|---|---|
+| 1 | [OWASP Top 10 (2021)](/security/owasp-top-10) | The ten most critical web application security risks, each with exploit demos and fixes. Start here for threat context. | All categories |
+| 2 | [Encryption](/security/encryption) | Symmetric vs asymmetric, TLS 1.3 handshake, hashing, key derivation, at-rest and in-transit. Foundation for everything else. | Information Disclosure, Tampering |
+| 3 | [Authentication](/security/authentication) | JWT internals byte-by-byte, OAuth2/OIDC flows, session management, MFA, passkeys | Spoofing, Elevation of Privilege |
+| 4 | [Authorization](/security/authorization) | RBAC, ABAC, Zanzibar-style ReBAC, policy engines (OPA), permission systems at scale | Elevation of Privilege |
+| 5 | [Secrets Management](/security/secrets-management) | Vault, AWS Secrets Manager, env var anti-patterns, rotation strategies, CI/CD secrets | Information Disclosure |
+| 6 | [Zero Trust](/security/zero-trust) | Network segmentation, identity-based access, mTLS, BeyondCorp model, policy engines | All categories |
+| 7 | [API Security](/security/api-security) | Rate limiting, input validation, CORS, CSRF, API key management, GraphQL-specific risks | Tampering, DoS, Information Disclosure |
+| 8 | [Exploits & Vulnerabilities](/security/exploits/) | Log4Shell, Heartbleed, XZ Backdoor — attack techniques for defensive understanding | All categories |
 
 ## Security Principles
 

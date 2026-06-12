@@ -45,54 +45,113 @@ graph TB
     FLP[FLP Impossibility] --> Consensus
     CAP[CAP Theorem] --> Tradeoffs[Consistency vs Availability]
 
-    Consensus --> Raft
     Consensus --> Paxos
+    Consensus --> Raft
     Consensus --> BFT[Byzantine Fault Tolerance]
+    Paxos --> Raft
 
     Tradeoffs --> Strong[Strong Consistency]
     Tradeoffs --> Eventual[Eventual Consistency]
 
     Strong --> TwoPC[2PC / 3PC]
     Strong --> Raft
+    Strong --> LeaderElection[Leader Election]
 
     Eventual --> CRDTs
     Eventual --> Gossip[Gossip Protocols]
+
+    LeaderElection --> DistLocking[Distributed Locking]
+    LeaderElection --> ExactlyOnce[Exactly-Once Semantics]
 
     CRDTs --> MergeFunction[Merge Functions]
     Gossip --> FailureDetection[Failure Detection]
 
     Time[Time & Ordering] --> Lamport[Lamport Timestamps]
     Time --> Vector[Vector Clocks]
-    Time --> HLC[Hybrid Logical Clocks]
+    Time --> ExactlyOnce
 
-    Partitioning[Data Partitioning] --> ConsistentHash[Consistent Hashing]
-    Partitioning --> Sharding
+    Replication --> Strong
+    Replication --> Eventual
+    ConsistentHashing[Consistent Hashing] --> Replication
 
     Snapshots[Global State] --> ChandyLamport[Chandy-Lamport]
 
     style FLP fill:#ff6b6b,color:#fff
     style CAP fill:#ff6b6b,color:#fff
     style Raft fill:#51cf66,color:#fff
+    style Paxos fill:#51cf66,color:#fff
     style CRDTs fill:#51cf66,color:#fff
+    style ExactlyOnce fill:#339af0,color:#fff
+    style Replication fill:#339af0,color:#fff
+    style LeaderElection fill:#339af0,color:#fff
 ```
 
 ## Learning Path
 
-Follow this order for the most coherent understanding:
+Follow this order for the most coherent understanding. Richer than any single course — covers theory, algorithms, and production patterns.
+
+### Part 1 — Foundations
+*The theorems and models that shape every design decision.*
 
 | Order | Topic | Why This Order |
 |-------|-------|---------------|
-| 1 | [CAP Theorem](./cap-theorem) | The foundational trade-off that shapes every design decision |
-| 2 | [Consistency Models](./consistency-models) | Understand what "consistent" actually means (it's not what you think) |
-| 3 | [Clock Synchronization](./clock-synchronization) | Why you can't trust time in distributed systems |
-| 4 | [Vector Clocks & Lamport Timestamps](./vector-clocks-lamport-timestamps) | How to order events without synchronized clocks |
-| 5 | [Failure Detectors](./failure-detectors) | How nodes determine if other nodes are dead |
-| 6 | [Gossip Protocols](./gossip-protocols) | How information spreads through a cluster |
-| 7 | [Consistent Hashing](./consistent-hashing) | How to distribute data across nodes evenly |
-| 8 | [Distributed Transactions](./distributed-transactions) | 2PC, 3PC, Sagas — coordinating across boundaries |
-| 9 | [Distributed Snapshots](./distributed-snapshots) | How to capture global state of a running system |
-| 10 | [Byzantine Fault Tolerance](./byzantine-fault-tolerance) | When nodes can lie — the hardest problem |
-| 11 | [CRDTs](./crdt-fundamentals) | Data structures that never conflict — the elegant alternative |
+| 1 | [CAP Theorem](./cap-theorem) | The foundational trade-off — consistency vs availability during partitions |
+| 2 | [Consistency Models](./consistency-models) | What "consistent" actually means — strong, causal, eventual, and everything between |
+| 3 | [FLP Impossibility](./flp-impossibility) | Why consensus is impossible in async systems — and how real protocols escape it |
+
+### Part 2 — Data Distribution
+*How data gets spread across nodes and kept in sync.*
+
+| Order | Topic | Why This Order |
+|-------|-------|---------------|
+| 4 | [Replication](./replication) | Single-leader, multi-leader, leaderless — the full spectrum with trade-offs |
+| 5 | [Consistent Hashing](./consistent-hashing) | How to partition data across nodes with minimal reshuffling |
+
+### Part 3 — Consensus & Coordination
+*The algorithms that let distributed nodes agree on things.*
+
+| Order | Topic | Why This Order |
+|-------|-------|---------------|
+| 6 | [Distributed Transactions](./distributed-transactions) | 2PC, 3PC, Sagas — coordinating writes across service boundaries |
+| 7 | [Paxos](./paxos) | The original consensus algorithm — theory every engineer should know |
+| 8 | [Leader Election](./leader-election) | Bully, Ring, Raft election, ZooKeeper — and how to avoid split-brain |
+| 9 | [Distributed Locking](./distributed-locking) | Mutex semantics over a network — fencing tokens, Redlock, and why it's hard |
+
+### Part 4 — Time & Order
+*Why clocks lie and how to order events without them.*
+
+| Order | Topic | Why This Order |
+|-------|-------|---------------|
+| 10 | [Clock Synchronization](./clock-synchronization) | NTP, PTP, TrueTime — and why you still can't trust wall clocks |
+| 11 | [Vector Clocks & Lamport Timestamps](./vector-clocks-lamport-timestamps) | Causal ordering of events without synchronized clocks |
+| 12 | [Exactly-Once Semantics](./exactly-once-semantics) | Idempotency, transactional outbox, Kafka EOS — the hardest messaging guarantee |
+
+### Part 5 — Failure & Recovery
+*How nodes detect, gossip about, and recover from failures.*
+
+| Order | Topic | Why This Order |
+|-------|-------|---------------|
+| 13 | [Failure Detectors](./failure-detectors) | Φ-accrual, heartbeats, timeouts — how nodes know when peers are dead |
+| 14 | [Gossip Protocols](./gossip-protocols) | Epidemic information spreading — membership, failure detection at scale |
+| 15 | [Distributed Snapshots](./distributed-snapshots) | Chandy-Lamport — capturing consistent global state of a running system |
+
+### Part 6 — Advanced Theory
+*The deep end — CRDTs, Byzantine failures, probabilistic structures.*
+
+| Order | Topic | Why This Order |
+|-------|-------|---------------|
+| 16 | [CRDTs](./crdt-fundamentals) | Data structures that merge without conflicts — the elegant alternative to locking |
+| 17 | [Byzantine Fault Tolerance](./byzantine-fault-tolerance) | When nodes can lie — PBFT, PoW, the 3f+1 requirement |
+
+### Part 7 — Practical Tools
+*Applied patterns you'll use daily in production.*
+
+| Order | Topic | Why This Order |
+|-------|-------|---------------|
+| 18 | [Rate Limiting](./rate-limiting) | Token bucket, sliding window, Redis-based distributed enforcement |
+| 19 | [Circuit Breaker](./circuit-breaker) | Failure isolation — preventing cascading failures across services |
+| 20 | [Bloom Filters](./bloom-filters) | Probabilistic set membership — space-efficient duplicate detection |
+| 21 | [Queueing Theory](./queueing-theory) | Little's Law, M/M/1 queues — the math behind capacity planning |
 
 ## Key Insight
 

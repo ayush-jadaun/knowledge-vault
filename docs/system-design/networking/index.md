@@ -146,20 +146,35 @@ Work through the pages in this order for the most coherent understanding:
 
 | Order | Page | Difficulty | Key Question It Answers |
 |-------|------|------------|------------------------|
-| 1 | [TCP/IP Deep Dive](./tcp-ip-deep-dive) | Intermediate | How does TCP actually work? Why does TIME_WAIT happen? |
-| 2 | [HTTP/2 and HTTP/3](./http2-http3) | Intermediate | What changed from HTTP/1.1? Why is QUIC over UDP? |
-| 3 | [gRPC Internals](./grpc-internals) | Advanced | How does protobuf encoding work? How do streams map to HTTP/2? |
-| 4 | [WebSockets](./websockets) | Intermediate | How do persistent connections work? How do you scale them? |
-| 5 | [DNS Deep Dive](./dns-deep-dive) | Intermediate | How does name resolution actually work? What is TTL? |
-| 6 | [TLS Handshake](./tls-handshake) | Advanced | How is a secure channel established? What is mTLS? |
-| 7 | [Service Discovery](./service-discovery) | Advanced | How do services find each other in dynamic environments? |
-| 8 | [Network Debugging](./network-debugging) | Intermediate | How do I diagnose a network problem in production? |
+| 1 | [OSI Model & TCP/IP Stack](./osi-model) | Beginner | What are the 7 layers? Where does my code live? How do packets flow through the stack? |
+| 2 | [IP Addressing & Subnetting](./ip-addressing-subnetting) | Beginner | How do IPv4/IPv6 addresses work? What is CIDR? How does AWS VPC/Kubernetes use subnets? |
+| 3 | [TCP/IP Deep Dive](./tcp-ip-deep-dive) | Intermediate | How does TCP actually work? Congestion control, TIME_WAIT, 3-way handshake |
+| 4 | [UDP](./udp) | Beginner | When is UDP better than TCP? How does DNS, gaming, and QUIC use it? |
+| 5 | [NAT](./nat) | Intermediate | How does a private network share one public IP? How does Docker/Kubernetes use NAT? |
+| 6 | [DNS Deep Dive](./dns-deep-dive) | Intermediate | How does name resolution work before any HTTP call is even made? |
+| 7 | [TLS Handshake](./tls-handshake) | Advanced | How is a secure channel established? What is mTLS? Certificate chains? |
+| 8 | [HTTP/2 and HTTP/3](./http2-http3) | Intermediate | What changed from HTTP/1.1? How does multiplexing work over a single TCP connection? |
+| 9 | [QUIC Protocol](./quic-protocol) | Advanced | Why is HTTP/3 built on UDP? How does QUIC replace TCP+TLS? |
+| 10 | [BGP](./bgp) | Advanced | How does the internet route between ISPs? What is anycast? How do CDNs use BGP? |
+| 11 | [gRPC Internals](./grpc-internals) | Advanced | How does protobuf encoding work? How do streams map to HTTP/2 frames? |
+| 12 | [WebSockets](./websockets) | Intermediate | How do persistent bidirectional connections work? How do you scale them? |
+| 13 | [WebRTC](./webrtc) | Advanced | How does peer-to-peer media work? STUN, TURN, ICE, SDP negotiation |
+| 14 | [MQTT](./mqtt) | Intermediate | Pub/sub for constrained devices — IoT messaging, QoS levels, retained messages |
+| 15 | [GraphQL vs REST](./graphql-vs-rest) | Intermediate | When to choose each? N+1 problem, schema stitching, subscriptions |
+| 16 | [Service Discovery](./service-discovery) | Advanced | How do services find each other in dynamic environments? Consul, Kubernetes DNS |
+| 17 | [Network Debugging](./network-debugging) | Intermediate | tcpdump, Wireshark, netstat — diagnosing production network problems |
 
 ## How the Pages Connect
 
-**Start with TCP** because HTTP/2, HTTP/3, gRPC, and WebSockets all build on it (or deliberately work around it). Understanding TCP's congestion control and flow control makes HTTP/2 multiplexing make sense. Understanding TCP's three-way handshake makes TLS's layering on top of it make sense.
+**Start with OSI and IP addressing** — every other page assumes you know what a Layer 4 problem is, what a CIDR block means, and how routers forward packets. These two pages are the vocabulary foundation.
+
+**Then TCP and UDP** because HTTP/2, HTTP/3, gRPC, and WebSockets all build on TCP (or deliberately work around it with UDP/QUIC). Understanding TCP's congestion control and flow control makes HTTP/2 multiplexing make sense.
+
+**NAT** before DNS and TLS — knowing that Docker, Kubernetes, and home routers all use NAT explains a lot of "why can't this pod reach the internet" and "why does WebRTC need STUN servers."
 
 **DNS and TLS** are prerequisites for understanding service discovery. Service discovery in Kubernetes uses CoreDNS under the hood. mTLS in service meshes requires understanding the TLS handshake deeply.
+
+**BGP** is the internet-scale routing layer. After understanding IP addressing, BGP explains how traffic gets from continent to continent, how CDNs use anycast, and why a single router misconfiguration can disrupt millions of users.
 
 **The debugging page** is a capstone — it assumes you know the protocols and teaches you how to inspect them in a running system. Read it after the protocol pages.
 
