@@ -42,6 +42,8 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Search Patterns', link: '/system-design/patterns/search-patterns' },
         { text: 'Event vs Request Driven', link: '/system-design/patterns/event-vs-request' },
         { text: 'Microservices vs Monolith', link: '/system-design/patterns/microservices-vs-monolith' },
+        { text: 'Stability Antipatterns', link: '/system-design/patterns/stability-antipatterns' },
+        { text: 'Stability Patterns', link: '/system-design/patterns/stability-patterns' },
       ],
     },
     {
@@ -202,6 +204,11 @@ export const sidebar: DefaultTheme.Sidebar = {
       collapsed: false,
       items: [
         { text: 'Overview', link: '/system-design/concurrency/' },
+        { text: 'Race Conditions & Thread Safety', link: '/system-design/concurrency/race-conditions' },
+        { text: 'Mutex, Semaphore & Monitor', link: '/system-design/concurrency/mutex-semaphore-monitor' },
+        { text: 'Deadlocks, Livelocks & Starvation', link: '/system-design/concurrency/deadlocks' },
+        { text: 'Async Patterns & Event Loops', link: '/system-design/concurrency/async-patterns' },
+        { text: 'Concurrency Patterns', link: '/system-design/concurrency/concurrency-patterns' },
         { text: 'Lock-Free Data Structures', link: '/system-design/concurrency/lock-free' },
         { text: 'Actor Model', link: '/system-design/concurrency/actor-model' },
         { text: 'Real-Time Systems', link: '/system-design/concurrency/real-time-systems' },
@@ -225,6 +232,8 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Webhook Infrastructure', link: '/system-design/api-design/webhook-infrastructure' },
         { text: 'API Gateway Patterns', link: '/system-design/api-design/api-gateway-patterns' },
         { text: 'tRPC', link: '/system-design/api-design/trpc' },
+        { text: 'Idempotency & Safe Retries', link: '/system-design/api-design/idempotency' },
+        { text: 'API Error Handling', link: '/system-design/api-design/api-errors' },
       ],
     },
     {
@@ -1743,6 +1752,13 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'TypeScript Advanced Patterns', link: '/frontend-engineering/typescript-advanced' },
       ],
     },
+    {
+      text: 'Interviews',
+      collapsed: false,
+      items: [
+        { text: 'Frontend System Design Interview', link: '/frontend-engineering/frontend-system-design-interview' },
+      ],
+    },
   ],
 
   '/mobile-engineering/': [
@@ -1794,6 +1810,13 @@ export const sidebar: DefaultTheme.Sidebar = {
         { text: 'Mobile Security', link: '/mobile-engineering/mobile-security' },
         { text: 'Mobile Deployment', link: '/mobile-engineering/mobile-deployment' },
         { text: 'App Store Optimization', link: '/mobile-engineering/app-store-optimization' },
+      ],
+    },
+    {
+      text: 'Interviews',
+      collapsed: false,
+      items: [
+        { text: 'Mobile System Design Interview', link: '/mobile-engineering/mobile-system-design-interview' },
       ],
     },
   ],
